@@ -105,15 +105,20 @@ interface HtmlStandingsSnapshot {
   rows: HtmlStandingRow[];
 }
 
+interface RuntimeEnvConfig {
+  SIMGRID_API_KEY?: string;
+  simgridApiKey?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SimgridApiService {
   private readonly http = inject(HttpClient);
-  private readonly apiKey = '';
+  private readonly apiKey = this.readApiKey();
   private readonly apiBaseUrl = '/simgrid-api/v1';
   private readonly siteBaseUrl = '/simgrid-site';
-  private readonly defaultHeaders = new HttpHeaders({
-    Authorization: `Bearer ${this.apiKey}`
-  });
+  private readonly defaultHeaders = this.apiKey
+    ? new HttpHeaders({ Authorization: `Bearer ${this.apiKey}` })
+    : new HttpHeaders();
 
   getChampionships(limit = 200): Observable<ChampionshipListItem[]> {
     const params = new HttpParams().set('limit', String(limit)).set('offset', '0');
@@ -462,6 +467,12 @@ export class SimgridApiService {
       return b.score - a.score;
     }
     return a.displayName.localeCompare(b.displayName);
+  }
+
+  private readApiKey(): string {
+    const runtimeEnv = (globalThis as { SKF_ENV?: RuntimeEnvConfig }).SKF_ENV;
+    const key = runtimeEnv?.SIMGRID_API_KEY ?? runtimeEnv?.simgridApiKey ?? '';
+    return key.trim();
   }
 
   private toNumber(value: unknown): number {
