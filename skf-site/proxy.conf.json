@@ -1,0 +1,18 @@
+{
+  "/simgrid-api": {
+    "target": "https://www.thesimgrid.com",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/simgrid-api": "/api"
+    }
+  },
+  "/simgrid-site": {
+    "target": "https://www.thesimgrid.com",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/simgrid-site": ""
+    }
+  }
+}

@@ -1,0 +1,116 @@
+<section class="standings-page">
+  <header class="page-intro">
+    <p class="eyebrow">SKF Racing Hub</p>
+    <h1>Championship Standings</h1>
+    <p class="subtitle">
+      Retrieve your championships from The SimGrid API and view current standings.
+    </p>
+  </header>
+
+  <div class="layout">
+    <aside class="card side-panel">
+      <div class="panel-header">
+        <h2>Championships</h2>
+        <button class="btn ghost small" type="button" (click)="loadChampionships()">
+          Reload
+        </button>
+      </div>
+
+      @if (loadingChampionships()) {
+        <p class="empty">Loading championships...</p>
+      } @else if (championships().length === 0) {
+        <p class="empty">No championships returned from API.</p>
+      } @else {
+        <div class="championship-list">
+          @for (item of championships(); track item.id) {
+            <button
+              class="championship-button"
+              type="button"
+              [class.active]="selectedChampionshipId() === item.id"
+              (click)="selectChampionship(item.id)"
+            >
+              <span class="championship-name">{{ item.name }}</span>
+              <span class="championship-id">#{{ item.id }}</span>
+            </button>
+          }
+        </div>
+      }
+    </aside>
+
+    <section class="card details-panel">
+      @if (loadingStandings()) {
+        <p class="empty">Loading standings...</p>
+      } @else if (errorMessage()) {
+        <p class="error">{{ errorMessage() }}</p>
+      } @else if (selectedChampionship(); as championship) {
+        <div class="details-header">
+          <div>
+            <h2>{{ championship.name }}</h2>
+            <p class="meta">
+              {{ championship.host_name }} - {{ championship.game_name }} -
+              {{ championship.spots_taken ?? 0 }}/{{ championship.capacity ?? 0 }} entries
+            </p>
+            <p class="meta">
+              Start date: {{ formatDate(championship.start_date) }}
+              @if (championship.end_date) {
+                - End date: {{ formatDate(championship.end_date) }}
+              }
+            </p>
+            @if (lastUpdated(); as updated) {
+              <p class="meta">Last refresh: {{ updated.toLocaleString() }}</p>
+            }
+          </div>
+          <button class="btn accent small" type="button" (click)="refreshSelectedChampionship()">
+            Refresh
+          </button>
+        </div>
+
+        @if (infoMessage()) {
+          <p class="notice">{{ infoMessage() }}</p>
+        }
+
+        <h3 class="section-title">Overall standings</h3>
+        <div class="table-wrap">
+          <table class="standings-table">
+            <thead>
+              <tr>
+                <th>Pos</th>
+                <th>Driver</th>
+                <th>Country</th>
+                <th>Car</th>
+                <th>Score</th>
+                @for (race of races(); track race.id; let raceIndex = $index) {
+                  <th [attr.title]="getRaceTitle(race, raceIndex)">{{ getRaceLabel(raceIndex) }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @if (standings().length === 0) {
+                <tr>
+                  <td class="empty-row" [attr.colspan]="getOverallColspan()">
+                    No standings available for this championship yet.
+                  </td>
+                </tr>
+              } @else {
+                @for (entry of standings(); track entry.id; let i = $index) {
+                  <tr>
+                    <td>{{ getPosition(entry, i) }}</td>
+                    <td class="driver-cell">{{ entry.displayName }}</td>
+                    <td>{{ entry.countryCode || '-' }}</td>
+                    <td>{{ entry.car || '-' }}</td>
+                    <td>{{ formatNumber(entry.score) }}</td>
+                    @for (race of races(); track race.id; let raceIndex = $index) {
+                      <td class="race-position">{{ formatRacePosition(entry, race, raceIndex) }}</td>
+                    }
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="empty">Select a championship to view standings.</p>
+      }
+    </section>
+  </div>
+</section>

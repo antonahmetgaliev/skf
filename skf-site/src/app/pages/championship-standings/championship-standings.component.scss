@@ -1,0 +1,255 @@
+:host {
+  display: block;
+}
+
+.standings-page {
+  min-height: 100vh;
+  padding: clamp(1.25rem, 2.5vw, 3rem);
+}
+
+.page-intro {
+  margin-bottom: 1.2rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.15rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--gold-deep);
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 2.3vw, 2.35rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.05;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  box-shadow: var(--card-shadow);
+  padding: 1rem;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.75rem;
+}
+
+h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.section-title {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.championship-list {
+  display: grid;
+  gap: 0.45rem;
+  max-height: 68vh;
+  overflow: auto;
+  padding-right: 0.2rem;
+}
+
+.championship-button {
+  border: 1px solid rgba(20, 18, 15, 0.15);
+  border-radius: 12px;
+  padding: 0.6rem 0.7rem;
+  background: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  text-align: left;
+  display: grid;
+  gap: 0.2rem;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.championship-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(243, 180, 25, 0.5);
+}
+
+.championship-button.active {
+  background: rgba(243, 180, 25, 0.2);
+  border-color: rgba(243, 180, 25, 0.75);
+}
+
+.championship-name {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.championship-id {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.meta {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.table-wrap {
+  border: 1px solid rgba(20, 18, 15, 0.14);
+  border-radius: 14px;
+  overflow: auto;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+
+th,
+td {
+  padding: 0.55rem 0.65rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(20, 18, 15, 0.1);
+  font-size: 0.84rem;
+}
+
+th {
+  font-family: var(--font-display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+  background: rgba(243, 180, 25, 0.1);
+}
+
+tbody tr:hover {
+  background: rgba(243, 180, 25, 0.08);
+}
+
+.standings-table th:nth-child(n + 7),
+.standings-table td:nth-child(n + 7),
+.race-position {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.driver-cell {
+  font-weight: 600;
+}
+
+.empty-row {
+  text-align: center;
+  color: var(--muted);
+  padding: 1rem;
+}
+
+.empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+}
+
+.notice {
+  margin: 0 0 0.75rem;
+  color: #8a5a00;
+  background: rgba(243, 180, 25, 0.2);
+  border: 1px solid rgba(243, 180, 25, 0.45);
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.84rem;
+}
+
+.btn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.64rem 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.btn.small {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+}
+
+.btn.accent {
+  background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+  color: #2b2214;
+}
+
+.btn.ghost {
+  background: transparent;
+  border: 1px solid rgba(20, 18, 15, 0.2);
+  color: var(--ink);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .championship-list {
+    max-height: 260px;
+  }
+
+  .details-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .championship-button {
+    transition: none;
+  }
+}
