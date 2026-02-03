@@ -60,9 +60,14 @@
               <p class="meta">Last refresh: {{ updated.toLocaleString() }}</p>
             }
           </div>
-          <button class="btn accent small" type="button" (click)="refreshSelectedChampionship()">
-            Refresh
-          </button>
+          <div class="details-actions">
+            <button class="btn ghost small" type="button" (click)="openStandingsExportPreview()">
+              Export 16:9
+            </button>
+            <button class="btn accent small" type="button" (click)="refreshSelectedChampionship()">
+              Refresh
+            </button>
+          </div>
         </div>
 
         @if (infoMessage()) {
@@ -114,3 +119,29 @@
     </section>
   </div>
 </section>
+
+  @if (exportPreviewOpen()) {
+    <div class="export-backdrop" (click)="closeStandingsExportPreview()">
+      <section class="export-modal" (click)="$event.stopPropagation()">
+        <header class="export-modal-header">
+          <h3>Standings Poster Preview (16:9)</h3>
+          <div class="export-modal-actions">
+            <button class="btn ghost small" type="button" (click)="closeStandingsExportPreview()">
+              Close
+            </button>
+            <button class="btn accent small" type="button" [disabled]="exportRendering()" (click)="downloadStandingsExportJpg()">
+              Download JPG
+            </button>
+          </div>
+        </header>
+
+        <div class="export-preview-frame">
+          <canvas #standingsExportCanvas width="1920" height="1080"></canvas>
+          @if (exportRendering()) {
+            <p class="export-rendering">Rendering preview...</p>
+          }
+        </div>
+      </section>
+    </div>
+  }
+

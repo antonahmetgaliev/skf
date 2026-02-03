@@ -163,8 +163,8 @@ tbody tr:hover {
   background: rgba(243, 180, 25, 0.08);
 }
 
-.standings-table th:nth-child(n + 7),
-.standings-table td:nth-child(n + 7),
+.standings-table th:nth-child(n + 6),
+.standings-table td:nth-child(n + 6),
 .race-position {
   text-align: center;
   white-space: nowrap;
@@ -252,4 +252,89 @@ tbody tr:hover {
   .championship-button {
     transition: none;
   }
+}
+
+
+.details-actions {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.export-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 13, 0.75);
+  display: grid;
+  place-items: center;
+  z-index: 1200;
+  padding: 1rem;
+  backdrop-filter: blur(2px);
+}
+
+.export-modal {
+  width: min(96vw, 1480px);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  box-shadow: var(--card-shadow);
+  padding: 0.9rem;
+}
+
+.export-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.7rem;
+}
+
+.export-modal-header h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.export-modal-actions {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.export-preview-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(20, 18, 15, 0.18);
+  background: #0a0d14;
+}
+
+.export-preview-frame canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.export-rendering {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  background: rgba(8, 12, 18, 0.84);
+  color: #f2f5fb;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
