@@ -1,8 +1,4 @@
-[build]
-builder = "railpack"
-
 [deploy]
-startCommand = "node server.js"
 healthcheckPath = "/healthz"
 healthcheckTimeout = 60
 restartPolicyType = "on_failure"
