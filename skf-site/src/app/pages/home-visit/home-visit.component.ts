@@ -257,19 +257,27 @@ export class HomeVisitComponent implements AfterViewInit, OnDestroy {
         const size = box.getSize(new THREE.Vector3());
         this.modelSize.copy(size);
 
-        // Centre the model but keep it sitting ON the ground
+        console.log('Model bounds:', {
+          min: box.min.toArray().map(v => v.toFixed(3)),
+          max: box.max.toArray().map(v => v.toFixed(3)),
+          size: size.toArray().map(v => v.toFixed(3)),
+          center: center.toArray().map(v => v.toFixed(3)),
+        });
+
+        // Centre X/Z, and place wheels on the ground (y=0)
         model.position.x = -center.x;
-        model.position.y = -box.min.y; // bottom of car at y=0
+        model.position.y = -box.min.y;
         model.position.z = -center.z;
         this.modelBottomY = 0;
 
         this.carGroup.add(model);
 
         // ── Soft contact shadow (radial gradient disc) ──
-        const groundRadius = Math.max(size.x, size.z) * 2.5;
+        // Shadow lives INSIDE the carGroup so it follows the car offset
+        const groundRadius = Math.max(size.x, size.z) * 1.8;
         const groundGeo = new THREE.CircleGeometry(groundRadius, 64);
 
-        // Create a radial gradient alpha map so the ground fades out at the edges
+        // Create a tighter, darker radial gradient to anchor the car visually
         const gradSize = 512;
         const gradCanvas = document.createElement('canvas');
         gradCanvas.width = gradSize;
@@ -279,9 +287,10 @@ export class HomeVisitComponent implements AfterViewInit, OnDestroy {
           gradSize / 2, gradSize / 2, 0,
           gradSize / 2, gradSize / 2, gradSize / 2,
         );
-        gradient.addColorStop(0, 'rgba(0,0,0,0.7)');
-        gradient.addColorStop(0.4, 'rgba(0,0,0,0.5)');
-        gradient.addColorStop(0.7, 'rgba(0,0,0,0.2)');
+        gradient.addColorStop(0, 'rgba(0,0,0,0.85)');
+        gradient.addColorStop(0.15, 'rgba(0,0,0,0.75)');
+        gradient.addColorStop(0.35, 'rgba(0,0,0,0.45)');
+        gradient.addColorStop(0.6, 'rgba(0,0,0,0.15)');
         gradient.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, gradSize, gradSize);
@@ -300,7 +309,7 @@ export class HomeVisitComponent implements AfterViewInit, OnDestroy {
         this.groundMesh.rotation.x = -Math.PI / 2;
         this.groundMesh.position.y = 0.001; // just above zero to avoid z-fighting
         this.groundMesh.receiveShadow = true;
-        this.scene.add(this.groundMesh);
+        this.carGroup.add(this.groundMesh); // add to carGroup so shadow follows the car
 
         // ── Camera framing ──
         const maxDim = Math.max(size.x, size.y, size.z);
@@ -310,10 +319,10 @@ export class HomeVisitComponent implements AfterViewInit, OnDestroy {
         // Offset car to the RIGHT so left side of screen has room for text
         this.carGroup.position.x = maxDim * 0.35;
 
-        // Camera slightly above, looking slightly down at the car
-        const camY = maxDim * 0.22;
+        // Camera at wheel height, looking level at the car (reduces "floating" look)
+        const camY = size.y * 0.35;
         this.camera.position.set(this.carGroup.position.x, camY, this.baseCameraDistance);
-        this.camera.lookAt(this.carGroup.position.x, size.y * 0.25, 0);
+        this.camera.lookAt(this.carGroup.position.x, size.y * 0.35, 0);
         this.camera.near = this.baseCameraDistance * 0.01;
         this.camera.far = this.baseCameraDistance * 30;
         this.camera.updateProjectionMatrix();
@@ -354,9 +363,9 @@ export class HomeVisitComponent implements AfterViewInit, OnDestroy {
 
     // Zoom — camera moves in/out along Z
     const dist = this.baseCameraDistance / this.zoomScale();
-    const camY = this.modelSize.y * 0.22;
+    const camY = this.modelSize.y * 0.35;
     this.camera.position.set(this.carGroup.position.x, camY, dist);
-    this.camera.lookAt(this.carGroup.position.x, this.modelSize.y * 0.25, 0);
+    this.camera.lookAt(this.carGroup.position.x, this.modelSize.y * 0.35, 0);
 
     this.renderFrame();
   }
