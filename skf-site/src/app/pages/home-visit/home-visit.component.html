@@ -1,12 +1,6 @@
 <!-- ═══════ Fixed 3D Background ═══════ -->
 <div class="three-bg">
-  @if (!modelLoaded()) {
-    <div class="loading-overlay">
-      <div class="spinner"></div>
-      <span>Loading 3D model…</span>
-    </div>
-  }
-  <canvas #threeCanvas class="three-canvas"></canvas>
+  <canvas #threeCanvas class="three-canvas" [class.loaded]="modelLoaded()"></canvas>
 </div>
 
 <!-- ═══════ Foreground Content ═══════ -->
