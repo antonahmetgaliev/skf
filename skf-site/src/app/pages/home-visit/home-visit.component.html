@@ -1,6 +1,16 @@
 <!-- ═══════ Fixed 3D Background ═══════ -->
 <div class="three-bg">
   <canvas #threeCanvas class="three-canvas" [class.loaded]="modelLoaded()"></canvas>
+
+  <!-- Loading indicator -->
+  @if (!modelLoaded()) {
+    <div class="loading-overlay">
+      <div class="loading-bar-track">
+        <div class="loading-bar-fill" [style.width.%]="loadingProgress()"></div>
+      </div>
+      <span class="loading-text">Loading 3D Model… {{ loadingProgress() }}%</span>
+    </div>
+  }
 </div>
 
 <!-- ═══════ Foreground Content ═══════ -->

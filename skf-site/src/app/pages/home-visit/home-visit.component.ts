@@ -29,6 +29,7 @@ export class HomeVisitComponent implements AfterViewInit, OnDestroy {
   readonly scrollY = signal(0);
   readonly progress = signal(0);
   readonly modelLoaded = signal(false);
+  readonly loadingProgress = signal(0);
 
   /** Parallax offset factors for each section (multiplied by scrollY) */
   readonly heroParallax = computed(() => `translateY(${this.scrollY() * 0.35}px)`);
@@ -119,7 +120,7 @@ export class HomeVisitComponent implements AfterViewInit, OnDestroy {
     const key = new THREE.DirectionalLight(0xfff8f0, 2.8);
     key.position.set(5, 8, 6);
     key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
+    key.shadow.mapSize.set(1024, 1024);
     key.shadow.camera.near = 0.5;
     key.shadow.camera.far = 60;
     key.shadow.camera.left = -15;
@@ -228,7 +229,8 @@ export class HomeVisitComponent implements AfterViewInit, OnDestroy {
     // Set up Draco decoder for compressed meshes
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
-    dracoLoader.setDecoderConfig({ type: 'js' });
+    dracoLoader.setDecoderConfig({ type: 'wasm' });
+    dracoLoader.preload();
     loader.setDRACOLoader(dracoLoader);
 
     loader.load(
@@ -237,20 +239,21 @@ export class HomeVisitComponent implements AfterViewInit, OnDestroy {
         dracoLoader.dispose(); // free decoder after load
         const model = gltf.scene;
 
-        // Enable shadow casting on all meshes and ensure env map
+        // Collect meshes first, then process in batches to avoid blocking UI
+        const meshes: THREE.Mesh[] = [];
         model.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-            // Ensure PBR materials use the environment map
-            const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
-            if (mat.isMeshStandardMaterial) {
-              mat.envMap = this.envMap;
-              mat.envMapIntensity = 1.0;
-              mat.needsUpdate = true;
-            }
-          }
+          if ((child as THREE.Mesh).isMesh) meshes.push(child as THREE.Mesh);
         });
+        for (const mesh of meshes) {
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          const mat = mesh.material as THREE.MeshStandardMaterial;
+          if (mat.isMeshStandardMaterial) {
+            mat.envMap = this.envMap;
+            mat.envMapIntensity = 1.0;
+            mat.needsUpdate = true;
+          }
+        }
 
         const box = new THREE.Box3().setFromObject(model);
         const center = box.getCenter(new THREE.Vector3());
@@ -330,7 +333,11 @@ export class HomeVisitComponent implements AfterViewInit, OnDestroy {
         this.ngZone.run(() => this.modelLoaded.set(true));
         this.renderFrame();
       },
-      undefined,
+      (event) => {
+        if (event.total > 0) {
+          this.ngZone.run(() => this.loadingProgress.set(Math.round((event.loaded / event.total) * 100)));
+        }
+      },
       (err) => console.error('GLTF load error:', err),
     );
   }
