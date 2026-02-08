@@ -18,7 +18,7 @@ $radius: 22px;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: #1a1a1f;
+  background: $dark;
 
   &::after {
     content: '';

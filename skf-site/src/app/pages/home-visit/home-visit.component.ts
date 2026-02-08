@@ -11,8 +11,9 @@ import {
 import { RouterLink } from '@angular/router';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
-const MODEL_PATH = 'models/acc-bmw-m4-gt3-evo/bmw-m4-gt3-evo.glb';
+const MODEL_PATH = 'models/acc-bmw-m4-gt3-evo/car-final.glb';
 
 @Component({
   selector: 'app-home-visit',
@@ -60,6 +61,7 @@ export class HomeVisitComponent implements AfterViewInit, OnDestroy {
   private baseCameraDistance = 1;
   private modelBottomY = 0;
   private modelSize = new THREE.Vector3();
+  private envMap!: THREE.Texture;
   private rafId: number | null = null;
   private resizeObserver?: ResizeObserver;
 
@@ -91,9 +93,9 @@ export class HomeVisitComponent implements AfterViewInit, OnDestroy {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.3;
+    this.renderer.toneMappingExposure = 1.4;
 
-    // Enable shadow mapping for ground contact shadow
+    // High-quality shadows
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -103,47 +105,110 @@ export class HomeVisitComponent implements AfterViewInit, OnDestroy {
     this.camera.position.set(0, 0.01, 0.06);
     this.camera.lookAt(0, 0, 0);
 
-    // Lights — natural studio / showroom lighting
-    this.scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+    // ── Generate procedural studio environment map ──
+    // Gives metallic paint and glossy surfaces realistic reflections
+    this.envMap = this.createStudioEnvironment();
+    this.scene.environment = this.envMap;
 
-    // Main key light — slightly warm, from front-right above
-    const key = new THREE.DirectionalLight(0xfff5e6, 2.2);
-    key.position.set(6, 10, 6);
+    // ── Lights — cinematic showroom rig ──
+
+    // Ambient — very subtle, let env map handle most ambient
+    this.scene.add(new THREE.AmbientLight(0xffffff, 0.15));
+
+    // KEY light — main illumination, warm white, front-right high
+    const key = new THREE.DirectionalLight(0xfff8f0, 2.8);
+    key.position.set(5, 8, 6);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
     key.shadow.camera.near = 0.5;
     key.shadow.camera.far = 60;
-    key.shadow.camera.left = -12;
-    key.shadow.camera.right = 12;
-    key.shadow.camera.top = 12;
-    key.shadow.camera.bottom = -12;
-    key.shadow.bias = -0.0005;
-    key.shadow.normalBias = 0.02;
+    key.shadow.camera.left = -15;
+    key.shadow.camera.right = 15;
+    key.shadow.camera.top = 15;
+    key.shadow.camera.bottom = -15;
+    key.shadow.bias = -0.0003;
+    key.shadow.normalBias = 0.03;
+    key.shadow.radius = 4;
     this.scene.add(key);
 
-    // Fill light — cool blue-ish from the left
-    const fill = new THREE.DirectionalLight(0xb8cfe8, 0.6);
-    fill.position.set(-5, 4, -2);
+    // FILL light — cool blue from opposite side
+    const fill = new THREE.DirectionalLight(0xb0c8e8, 0.8);
+    fill.position.set(-6, 5, -3);
     this.scene.add(fill);
 
-    // Rim light — warm gold accent from behind
-    const rim = new THREE.DirectionalLight(0xf5be2d, 0.4);
-    rim.position.set(-2, 3, -7);
+    // RIM / KICK light — gold accent from behind for edge separation
+    const rim = new THREE.DirectionalLight(0xf5be2d, 0.6);
+    rim.position.set(-3, 4, -8);
     this.scene.add(rim);
 
-    // Soft top/sky light
-    const top = new THREE.DirectionalLight(0xe8eeff, 0.6);
-    top.position.set(0, 12, 2);
+    // BOUNCE light — subtle warm from below to fill underbody shadows
+    const bounce = new THREE.DirectionalLight(0xffeedd, 0.25);
+    bounce.position.set(0, -2, 4);
+    this.scene.add(bounce);
+
+    // TOP softbox — broad overhead for roof/hood highlights
+    const top = new THREE.DirectionalLight(0xf0f2ff, 1.0);
+    top.position.set(1, 14, 1);
     this.scene.add(top);
 
-    // Hemisphere for natural ambient gradient (sky → ground)
-    this.scene.add(new THREE.HemisphereLight(0x8899bb, 0x222222, 0.5));
+    // Hemisphere — sky/ground ambient gradient
+    this.scene.add(new THREE.HemisphereLight(0x7799cc, 0x111111, 0.4));
 
     this.scene.add(this.carGroup);
 
     this.resizeCanvas();
     this.resizeObserver = new ResizeObserver(() => this.resizeCanvas());
     this.resizeObserver.observe(canvas.parentElement!);
+  }
+
+  /** Create a procedural studio HDRI environment for realistic reflections */
+  private createStudioEnvironment(): THREE.Texture {
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    pmrem.compileCubemapShader();
+
+    // Build a simple scene that acts as a studio backdrop
+    const envScene = new THREE.Scene();
+
+    // Very dark sky dome — only provides subtle reflection highlights, not a visible bg
+    const skyGeo = new THREE.SphereGeometry(50, 32, 16);
+    const skyMat = new THREE.MeshBasicMaterial({ side: THREE.BackSide, vertexColors: true });
+    const colors = new Float32Array(skyGeo.attributes['position'].count * 3);
+    const pos = skyGeo.attributes['position'];
+    for (let i = 0; i < pos.count; i++) {
+      const y = (pos.getY(i) / 50 + 1) * 0.5; // 0 bottom → 1 top
+      // Keep the dome very dark — just slight brightness at the top for reflections
+      colors[i * 3]     = THREE.MathUtils.lerp(0.01, 0.08, y);
+      colors[i * 3 + 1] = THREE.MathUtils.lerp(0.01, 0.09, y);
+      colors[i * 3 + 2] = THREE.MathUtils.lerp(0.015, 0.12, y);
+    }
+    skyGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    envScene.add(new THREE.Mesh(skyGeo, skyMat));
+
+    // Softbox panels — these create the highlight streaks on metallic paint
+    // They only appear as reflections, not as visible scene elements
+    const panelMat = (c: number) => new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide });
+
+    // Top softbox — broad overhead
+    const p1 = new THREE.Mesh(new THREE.PlaneGeometry(25, 8), panelMat(0x888888));
+    p1.position.set(0, 15, 5);
+    p1.lookAt(0, 0, 0);
+    envScene.add(p1);
+
+    // Right key — warm
+    const p2 = new THREE.Mesh(new THREE.PlaneGeometry(5, 8), panelMat(0x665544));
+    p2.position.set(18, 8, 3);
+    p2.lookAt(0, 0, 0);
+    envScene.add(p2);
+
+    // Left fill — cool
+    const p3 = new THREE.Mesh(new THREE.PlaneGeometry(5, 8), panelMat(0x445566));
+    p3.position.set(-18, 8, 3);
+    p3.lookAt(0, 0, 0);
+    envScene.add(p3);
+
+    const envMap = pmrem.fromScene(envScene, 0.04).texture;
+    pmrem.dispose();
+    return envMap;
   }
 
   private resizeCanvas(): void {
@@ -158,16 +223,32 @@ export class HomeVisitComponent implements AfterViewInit, OnDestroy {
   }
 
   private loadModel(): void {
-    new GLTFLoader().load(
+    const loader = new GLTFLoader();
+
+    // Set up Draco decoder for compressed meshes
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+    dracoLoader.setDecoderConfig({ type: 'js' });
+    loader.setDRACOLoader(dracoLoader);
+
+    loader.load(
       MODEL_PATH,
       (gltf) => {
+        dracoLoader.dispose(); // free decoder after load
         const model = gltf.scene;
 
-        // Enable shadow casting on all meshes
+        // Enable shadow casting on all meshes and ensure env map
         model.traverse((child) => {
           if ((child as THREE.Mesh).isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
+            // Ensure PBR materials use the environment map
+            const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
+            if (mat.isMeshStandardMaterial) {
+              mat.envMap = this.envMap;
+              mat.envMapIntensity = 1.0;
+              mat.needsUpdate = true;
+            }
           }
         });
 
@@ -184,19 +265,40 @@ export class HomeVisitComponent implements AfterViewInit, OnDestroy {
 
         this.carGroup.add(model);
 
-        // ── Ground plane — subtle reflective surface ──
-        const groundRadius = Math.max(size.x, size.z) * 3;
+        // ── Soft contact shadow (radial gradient disc) ──
+        const groundRadius = Math.max(size.x, size.z) * 2.5;
         const groundGeo = new THREE.CircleGeometry(groundRadius, 64);
+
+        // Create a radial gradient alpha map so the ground fades out at the edges
+        const gradSize = 512;
+        const gradCanvas = document.createElement('canvas');
+        gradCanvas.width = gradSize;
+        gradCanvas.height = gradSize;
+        const ctx = gradCanvas.getContext('2d')!;
+        const gradient = ctx.createRadialGradient(
+          gradSize / 2, gradSize / 2, 0,
+          gradSize / 2, gradSize / 2, gradSize / 2,
+        );
+        gradient.addColorStop(0, 'rgba(0,0,0,0.7)');
+        gradient.addColorStop(0.4, 'rgba(0,0,0,0.5)');
+        gradient.addColorStop(0.7, 'rgba(0,0,0,0.2)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, gradSize, gradSize);
+        const alphaMap = new THREE.CanvasTexture(gradCanvas);
+
         const groundMat = new THREE.MeshStandardMaterial({
-          color: 0x111111,
-          roughness: 0.55,
-          metalness: 0.1,
+          color: 0x000000,
+          roughness: 0.5,
+          metalness: 0,
           transparent: true,
-          opacity: 0.6,
+          alphaMap,
+          opacity: 1,
+          depthWrite: false,
         });
         this.groundMesh = new THREE.Mesh(groundGeo, groundMat);
         this.groundMesh.rotation.x = -Math.PI / 2;
-        this.groundMesh.position.y = 0;
+        this.groundMesh.position.y = 0.001; // just above zero to avoid z-fighting
         this.groundMesh.receiveShadow = true;
         this.scene.add(this.groundMesh);
 

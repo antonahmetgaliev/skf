@@ -5,6 +5,10 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 const DIST = path.join(__dirname, 'dist', 'skf-site', 'browser');
 
+// Enable gzip compression for all responses
+const compression = (() => { try { return require('compression'); } catch { return null; } })();
+if (compression) app.use(compression());
+
 // Serve static files with caching for hashed assets
 app.use(
   express.static(DIST, {
