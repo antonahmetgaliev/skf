@@ -1,9 +1,9 @@
 [build]
-builder = "nixpacks"
+builder = "railpack"
 
 [deploy]
 startCommand = "node server.js"
 healthcheckPath = "/healthz"
-healthcheckTimeout = 30
+healthcheckTimeout = 60
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
