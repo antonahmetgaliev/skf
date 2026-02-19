@@ -37,32 +37,49 @@ app.get('/healthz', (req, res) => res.status(200).send('ok'));
 // Proxy /api requests to the Python backend
 console.log(`[startup] BACKEND_URL=${BACKEND_URL}`);
 
-app.use(
-  '/api',
-  createProxyMiddleware({
-    target: BACKEND_URL,
-    changeOrigin: true,
-    on: {
-      proxyReq: (proxyReq, req) => {
-        console.log(`[proxy] ${req.method} ${req.url} → ${BACKEND_URL}${req.url}`);
+if (!BACKEND_URL || BACKEND_URL === 'http://localhost:8000') {
+  console.warn('[startup] WARNING: BACKEND_URL is not set or using localhost fallback!');
+  console.warn('[startup] Set BACKEND_URL env var to the backend internal URL.');
+}
+
+// Only set up proxy if we have a valid URL
+try {
+  new URL(BACKEND_URL);
+  app.use(
+    createProxyMiddleware({
+      target: BACKEND_URL,
+      changeOrigin: true,
+      pathFilter: '/api/**',
+      on: {
+        proxyReq: (proxyReq, req) => {
+          console.log(`[proxy] ${req.method} ${req.originalUrl} → ${BACKEND_URL}${req.originalUrl}`);
+        },
+        proxyRes: (proxyRes, req) => {
+          console.log(`[proxy] ${req.method} ${req.originalUrl} ← ${proxyRes.statusCode}`);
+        },
+        error: (err, req, res) => {
+          console.error(`[proxy] ERROR ${req.method} ${req.originalUrl}:`, err.code || err.message);
+          if (!res.headersSent) {
+            res.status(502).json({
+              error: 'Backend unavailable',
+              detail: err.code || err.message,
+              target: BACKEND_URL,
+            });
+          }
+        },
       },
-      proxyRes: (proxyRes, req) => {
-        console.log(`[proxy] ${req.method} ${req.url} ← ${proxyRes.statusCode}`);
-      },
-      error: (err, req, res) => {
-        console.error(`[proxy] ERROR ${req.method} ${req.url}:`, err.code || err.message);
-        if (!res.headersSent) {
-          res.status(502).json({
-            error: 'Backend unavailable',
-            detail: err.code || err.message,
-            target: BACKEND_URL,
-          });
-        }
-      },
-    },
-  })
-);
-console.log(`[startup] /api proxy → ${BACKEND_URL}`);
+    })
+  );
+  console.log(`[startup] /api proxy → ${BACKEND_URL}`);
+} catch (urlErr) {
+  console.error(`[startup] BACKEND_URL is not a valid URL: "${BACKEND_URL}"`);
+  app.use('/api', (req, res) => {
+    res.status(503).json({
+      error: 'Backend not configured',
+      detail: `BACKEND_URL="${BACKEND_URL}" is not a valid URL`,
+    });
+  });
+}
 
 // Serve static files with long-term caching for hashed assets
 app.use(
