@@ -35,11 +35,31 @@ try {
 app.get('/healthz', (req, res) => res.status(200).send('ok'));
 
 // Proxy /api requests to the Python backend
+console.log(`[startup] BACKEND_URL=${BACKEND_URL}`);
+
 app.use(
   '/api',
   createProxyMiddleware({
     target: BACKEND_URL,
     changeOrigin: true,
+    on: {
+      proxyReq: (proxyReq, req) => {
+        console.log(`[proxy] ${req.method} ${req.url} → ${BACKEND_URL}${req.url}`);
+      },
+      proxyRes: (proxyRes, req) => {
+        console.log(`[proxy] ${req.method} ${req.url} ← ${proxyRes.statusCode}`);
+      },
+      error: (err, req, res) => {
+        console.error(`[proxy] ERROR ${req.method} ${req.url}:`, err.code || err.message);
+        if (!res.headersSent) {
+          res.status(502).json({
+            error: 'Backend unavailable',
+            detail: err.code || err.message,
+            target: BACKEND_URL,
+          });
+        }
+      },
+    },
   })
 );
 console.log(`[startup] /api proxy → ${BACKEND_URL}`);
