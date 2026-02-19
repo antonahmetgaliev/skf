@@ -1,12 +1,14 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 const PORT = parseInt(process.env.PORT, 10) || 8080;
 const HOST = '0.0.0.0'; // Railway requires binding to 0.0.0.0
 const DIST = path.join(__dirname, 'dist', 'skf-site', 'browser');
 const INDEX = path.join(DIST, 'index.html');
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
 
 // ── Startup checks ──
 console.log(`[startup] Node ${process.version}`);
@@ -31,6 +33,16 @@ try {
 
 // Health check endpoint (Railway uses this to verify the app is alive)
 app.get('/healthz', (req, res) => res.status(200).send('ok'));
+
+// Proxy /api requests to the Python backend
+app.use(
+  '/api',
+  createProxyMiddleware({
+    target: BACKEND_URL,
+    changeOrigin: true,
+  })
+);
+console.log(`[startup] /api proxy → ${BACKEND_URL}`);
 
 // Serve static files with long-term caching for hashed assets
 app.use(

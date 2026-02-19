@@ -1,46 +1,24 @@
-<!-- ═══════ Fixed 3D Background ═══════ -->
-<div class="three-bg">
-  <canvas #threeCanvas class="three-canvas" [class.loaded]="modelLoaded()"></canvas>
-</div>
-
-<!-- ═══════ Foreground Content ═══════ -->
-<div class="page" #pageWrap>
+<section class="home-page">
 
   <!-- ───── HERO ───── -->
-  <section class="hero" [style.transform]="heroParallax()">
-    <div class="hero-inner">
-      <span class="tag">Sim Racing Community</span>
-      <h1>SKF<br /><span class="accent">Racing Hub</span></h1>
-      <p>
-        A tight-knit sim racing community built around clean racing, competitive
-        championships, and a shared passion for motorsport. Scroll to explore.
-      </p>
-      <div class="hero-actions">
-        <a routerLink="/championship-standings" class="btn btn--primary">View Standings</a>
-        <a routerLink="/race-results" class="btn btn--outline">Latest Results</a>
-      </div>
+  <div class="hero">
+    <p class="eyebrow">Sim Racing Community</p>
+    <h1>SKF <span class="accent">Racing Hub</span></h1>
+    <p class="subtitle">
+      A tight-knit sim racing community built around clean racing, competitive
+      championships, and a shared passion for motorsport.
+    </p>
+    <div class="hero-actions">
+      <a routerLink="/championship-standings" class="btn btn--primary">View Standings</a>
+      <a routerLink="/race-results" class="btn btn--outline">Latest Results</a>
     </div>
-    <div class="hero-hud">
-      <div class="hud-cell">
-        <span class="hud-label">View</span>
-        <strong>{{ viewLabel() }}</strong>
-      </div>
-      <div class="hud-cell">
-        <span class="hud-label">Angle</span>
-        <strong>{{ angleDeg() }}&deg;</strong>
-      </div>
-    </div>
-    <div class="scroll-indicator">
-      <span class="scroll-arrow">&#8595;</span>
-      Scroll
-    </div>
-  </section>
+  </div>
 
   <!-- ───── ABOUT ───── -->
-  <section class="section about" [style.transform]="aboutParallax()">
-    <div class="section-grid">
-      <div class="section-copy">
-        <span class="tag">Who We Are</span>
+  <div class="about">
+    <div class="about-grid">
+      <div class="about-copy">
+        <p class="eyebrow">Who We Are</p>
         <h2>Born from the Love of Racing</h2>
         <p>
           SKF Racing Hub is a community of sim racers who race together week after week
@@ -54,32 +32,32 @@
         </p>
       </div>
       <div class="stat-grid">
-        <div class="stat-card">
+        <div class="card stat-card">
           <strong>50+</strong>
           <span>Active Drivers</span>
         </div>
-        <div class="stat-card">
+        <div class="card stat-card">
           <strong>12</strong>
           <span>Race Weekends / Season</span>
         </div>
-        <div class="stat-card">
+        <div class="card stat-card">
           <strong>3</strong>
           <span>Championship Tiers</span>
         </div>
-        <div class="stat-card">
+        <div class="card stat-card">
           <strong>GT3</strong>
           <span>Primary Class</span>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
   <!-- ───── FEATURES ───── -->
-  <section class="section features">
-    <span class="tag center">What We Offer</span>
+  <div class="features">
+    <p class="eyebrow center">What We Offer</p>
     <h2 class="section-title">Built for Serious Sim Racers</h2>
     <div class="feature-grid">
-      <div class="feature-card">
+      <div class="card feature-card">
         <div class="feature-icon">🏁</div>
         <h3>Organised Championships</h3>
         <p>
@@ -87,7 +65,7 @@
           Every race matters.
         </p>
       </div>
-      <div class="feature-card">
+      <div class="card feature-card">
         <div class="feature-icon">📜</div>
         <h3>BWP Licence System</h3>
         <p>
@@ -95,7 +73,7 @@
           every event — earn your stripes on track.
         </p>
       </div>
-      <div class="feature-card">
+      <div class="card feature-card">
         <div class="feature-icon">⚖️</div>
         <h3>Fair Stewarding</h3>
         <p>
@@ -103,7 +81,7 @@
           is protected — always.
         </p>
       </div>
-      <div class="feature-card">
+      <div class="card feature-card">
         <div class="feature-icon">🎙️</div>
         <h3>Community & Events</h3>
         <p>
@@ -111,7 +89,7 @@
           and community game nights.
         </p>
       </div>
-      <div class="feature-card">
+      <div class="card feature-card">
         <div class="feature-icon">📊</div>
         <h3>Live Standings & Stats</h3>
         <p>
@@ -119,7 +97,7 @@
           breakdowns — all on this site.
         </p>
       </div>
-      <div class="feature-card">
+      <div class="card feature-card">
         <div class="feature-icon">🏎️</div>
         <h3>GT3 Focused</h3>
         <p>
@@ -128,11 +106,11 @@
         </p>
       </div>
     </div>
-  </section>
+  </div>
 
   <!-- ───── CALL TO ACTION ───── -->
-  <section class="section cta">
-    <div class="cta-card">
+  <div class="cta">
+    <div class="card cta-card">
       <h2>Ready to Race?</h2>
       <p>
         Join our next season, check the championship standings, or browse past results.
@@ -144,11 +122,11 @@
         <a routerLink="/skf-history" class="btn btn--outline">Our History</a>
       </div>
     </div>
-  </section>
+  </div>
 
   <!-- ───── FOOTER ───── -->
   <footer class="page-footer">
     <span>© 2026 SKF Racing Hub</span>
     <span>Sim Racing Community</span>
   </footer>
-</div>
+</section>

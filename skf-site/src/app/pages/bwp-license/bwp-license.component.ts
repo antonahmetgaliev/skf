@@ -1,26 +1,13 @@
-import { Component, computed, effect, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-
-interface BwpPoint {
-  id: string;
-  points: number;
-  issuedOn: string;
-  expiresOn: string;
-}
-
-interface Driver {
-  id: string;
-  name: string;
-  points: BwpPoint[];
-}
+import {
+  BwpApiService,
+  BwpPoint,
+  Driver,
+  PenaltyRule
+} from '../../services/bwp-api.service';
 
 type SortMode = 'bwp-desc' | 'bwp-asc' | 'name-asc' | 'name-desc';
-
-interface PenaltyRule {
-  id: string;
-  threshold: number;
-  label: string;
-}
 
 @Component({
   selector: 'app-bwp-license',
@@ -29,32 +16,13 @@ interface PenaltyRule {
   styleUrl: './bwp-license.component.scss'
 })
 export class BwpLicenseComponent {
-  private readonly storageKey = 'skf-bwp-drivers-v1';
-  private readonly settingsKey = 'skf-bwp-settings-v1';
-  private readonly defaultPenaltyRules: PenaltyRule[] = [
-    {
-      id: 'rule-6',
-      threshold: 6,
-      label: 'Disqualification from the next qualifying session'
-    },
-    {
-      id: 'rule-9',
-      threshold: 9,
-      label: 'Stop & Go penalty in the next race'
-    },
-    {
-      id: 'rule-12',
-      threshold: 12,
-      label: 'Skip the next race'
-    }
-  ];
-  private readonly settings = this.loadSettings();
+  private readonly api = inject(BwpApiService);
 
-  readonly drivers = signal<Driver[]>(this.loadDrivers());
+  readonly drivers = signal<Driver[]>([]);
   readonly sortedDrivers = computed(() =>
     [...this.drivers()].sort((a, b) => a.name.localeCompare(b.name))
   );
-  readonly penaltyRules = signal<PenaltyRule[]>(this.settings.penaltyRules);
+  readonly penaltyRules = signal<PenaltyRule[]>([]);
   readonly sortedPenaltyRules = computed(() =>
     [...this.penaltyRules()]
       .filter((rule) => Number.isFinite(rule.threshold) && rule.threshold > 0)
@@ -76,24 +44,14 @@ export class BwpLicenseComponent {
     const sorted = [...list];
     const mode = this.sortMode();
     sorted.sort((a, b) => {
-      if (mode === 'name-asc') {
-        return a.name.localeCompare(b.name);
-      }
-      if (mode === 'name-desc') {
-        return b.name.localeCompare(a.name);
-      }
+      if (mode === 'name-asc') return a.name.localeCompare(b.name);
+      if (mode === 'name-desc') return b.name.localeCompare(a.name);
       if (mode === 'bwp-asc') {
         const diff = this.getTotalPoints(a) - this.getTotalPoints(b);
-        if (diff !== 0) {
-          return diff;
-        }
-        return a.name.localeCompare(b.name);
+        return diff !== 0 ? diff : a.name.localeCompare(b.name);
       }
       const diff = this.getTotalPoints(b) - this.getTotalPoints(a);
-      if (diff !== 0) {
-        return diff;
-      }
-      return a.name.localeCompare(b.name);
+      return diff !== 0 ? diff : a.name.localeCompare(b.name);
     });
     return sorted;
   });
@@ -106,47 +64,53 @@ export class BwpLicenseComponent {
   driverError = '';
   pointError = '';
   nameFilter = signal('');
-  sortMode = signal<SortMode>(this.settings.sortMode);
+  sortMode = signal<SortMode>('bwp-desc');
   collapsedDrivers = signal<Set<string>>(new Set());
   hiddenExpiredDrivers = signal<Set<string>>(new Set());
   rulesModalOpen = signal(false);
+  loading = signal(true);
 
   constructor() {
-    effect(() => {
-      this.saveDrivers(this.drivers());
-    });
-
-    effect(() => {
-      this.saveSettings({
-        penaltyRules: this.penaltyRules(),
-        sortMode: this.sortMode()
-      });
-    });
+    this.loadData();
 
     effect((onCleanup) => {
-      if (typeof document === 'undefined') {
-        return;
-      }
+      if (typeof document === 'undefined') return;
       document.body.style.overflow = this.rulesModalOpen() ? 'hidden' : '';
       onCleanup(() => {
         document.body.style.overflow = '';
       });
     });
+  }
 
-    this.collapsedDrivers.set(new Set(this.drivers().map((driver) => driver.id)));
+  // ── Data loading ─────────────────────────────────────────────────
 
-    effect(() => {
-      const current = this.selectedDriverId;
-      const drivers = this.sortedDrivers();
-      if (drivers.length === 0) {
-        this.selectedDriverId = '';
-        return;
-      }
-      if (!current || !drivers.some((driver) => driver.id === current)) {
-        this.selectedDriverId = drivers[0].id;
-      }
+  private loadData(): void {
+    this.api.getDrivers().subscribe({
+      next: (drivers) => {
+        this.drivers.set(drivers);
+        this.collapsedDrivers.set(new Set(drivers.map((d) => d.id)));
+        if (drivers.length > 0 && !this.selectedDriverId) {
+          this.selectedDriverId = [...drivers].sort((a, b) =>
+            a.name.localeCompare(b.name)
+          )[0].id;
+        }
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
+    });
+
+    this.api.getPenaltyRules().subscribe({
+      next: (rules) => this.penaltyRules.set(rules)
     });
   }
+
+  private refreshDrivers(): void {
+    this.api.getDrivers().subscribe({
+      next: (drivers) => this.drivers.set(drivers)
+    });
+  }
+
+  // ── Drivers ──────────────────────────────────────────────────────
 
   addDriver(): void {
     const name = this.newDriverName.trim();
@@ -154,30 +118,40 @@ export class BwpLicenseComponent {
       this.driverError = 'Enter a driver name to continue.';
       return;
     }
-    const exists = this.drivers().some(
-      (driver) => driver.name.toLowerCase() === name.toLowerCase()
-    );
-    if (exists) {
-      this.driverError = 'Driver name already exists.';
-      return;
-    }
 
-    const nextDriver: Driver = {
-      id: this.createId(),
-      name,
-      points: []
-    };
-
-    this.drivers.update((drivers) => [...drivers, nextDriver]);
-    this.collapsedDrivers.update((current) => {
-      const next = new Set(current);
-      next.add(nextDriver.id);
-      return next;
-    });
-    this.newDriverName = '';
     this.driverError = '';
-    this.selectedDriverId = nextDriver.id;
+    this.api.createDriver(name).subscribe({
+      next: (driver) => {
+        this.drivers.update((list) => [...list, driver]);
+        this.collapsedDrivers.update((set) => {
+          const next = new Set(set);
+          next.add(driver.id);
+          return next;
+        });
+        this.newDriverName = '';
+        this.selectedDriverId = driver.id;
+      },
+      error: (err) => {
+        this.driverError =
+          err?.error?.detail ?? 'Failed to add driver.';
+      }
+    });
   }
+
+  deleteDriver(driverId: string): void {
+    const driver = this.drivers().find((d) => d.id === driverId);
+    if (!driver || !window.confirm(`Delete driver ${driver.name}?`)) return;
+
+    this.api.deleteDriver(driverId).subscribe({
+      next: () => {
+        this.drivers.update((list) =>
+          list.filter((d) => d.id !== driverId)
+        );
+      }
+    });
+  }
+
+  // ── Points ───────────────────────────────────────────────────────
 
   addPoint(): void {
     const driverId = this.selectedDriverId;
@@ -198,68 +172,87 @@ export class BwpLicenseComponent {
     }
 
     const expiresDate = this.addMonths(issuedDate, 3);
-    const newPoint: BwpPoint = {
-      id: this.createId(),
-      points,
-      issuedOn: this.formatInputDate(issuedDate),
-      expiresOn: this.formatInputDate(expiresDate)
-    };
-
-    this.drivers.update((drivers) =>
-      drivers.map((driver) =>
-        driver.id === driverId
-          ? { ...driver, points: [...driver.points, newPoint] }
-          : driver
-      )
-    );
     this.pointError = '';
+
+    this.api
+      .addPoint(driverId, {
+        points,
+        issuedOn: this.formatInputDate(issuedDate),
+        expiresOn: this.formatInputDate(expiresDate)
+      })
+      .subscribe({
+        next: () => this.refreshDrivers(),
+        error: () => {
+          this.pointError = 'Failed to add point.';
+        }
+      });
   }
+
+  deletePoint(driverId: string, pointId: string): void {
+    if (!window.confirm('Delete this point?')) return;
+
+    this.api.deletePoint(pointId).subscribe({
+      next: () => this.refreshDrivers()
+    });
+  }
+
+  // ── Penalty Rules ────────────────────────────────────────────────
 
   addPenaltyRule(): void {
     const rules = this.penaltyRules();
-    const maxThreshold = rules.reduce((max, rule) => Math.max(max, rule.threshold), 0);
-    const nextThreshold = maxThreshold > 0 ? maxThreshold + 3 : 3;
-    const nextRule: PenaltyRule = {
-      id: this.createId(),
-      threshold: nextThreshold,
-      label: 'New penalty'
-    };
-    this.penaltyRules.update((items) => [...items, nextRule]);
+    const maxThreshold = rules.reduce(
+      (max, r) => Math.max(max, r.threshold),
+      0
+    );
+    const next = maxThreshold > 0 ? maxThreshold + 3 : 3;
+
+    this.api.createPenaltyRule({ threshold: next, label: 'New penalty' }).subscribe({
+      next: (rule) => this.penaltyRules.update((list) => [...list, rule])
+    });
   }
 
-  updatePenaltyRule(ruleId: string, patch: Partial<PenaltyRule>): void {
+  updatePenaltyRule(ruleId: string, patch: { threshold?: number; label?: string }): void {
+    // Optimistic local update
     this.penaltyRules.update((rules) =>
-      rules.map((rule) => {
-        if (rule.id !== ruleId) {
-          return rule;
-        }
-        const nextRule: PenaltyRule = { ...rule };
+      rules.map((r) => {
+        if (r.id !== ruleId) return r;
+        const updated = { ...r };
         if (patch.threshold !== undefined) {
-          const threshold = Number(patch.threshold);
-          if (Number.isFinite(threshold) && threshold > 0) {
-            nextRule.threshold = Math.floor(threshold);
-          }
+          const t = Number(patch.threshold);
+          if (Number.isFinite(t) && t > 0) updated.threshold = Math.floor(t);
         }
-        if (patch.label !== undefined) {
-          nextRule.label = String(patch.label);
-        }
-        return nextRule;
+        if (patch.label !== undefined) updated.label = String(patch.label);
+        return updated;
       })
     );
+
+    const apiPatch: { threshold?: number; label?: string } = {};
+    if (patch.threshold !== undefined) {
+      const t = Number(patch.threshold);
+      if (Number.isFinite(t) && t > 0) apiPatch.threshold = Math.floor(t);
+    }
+    if (patch.label !== undefined) apiPatch.label = patch.label;
+
+    if (Object.keys(apiPatch).length > 0) {
+      this.api.updatePenaltyRule(ruleId, apiPatch).subscribe();
+    }
   }
 
   deletePenaltyRule(ruleId: string): void {
-    this.penaltyRules.update((rules) => rules.filter((rule) => rule.id !== ruleId));
+    this.api.deletePenaltyRule(ruleId).subscribe({
+      next: () =>
+        this.penaltyRules.update((list) =>
+          list.filter((r) => r.id !== ruleId)
+        )
+    });
   }
 
+  // ── UI helpers ───────────────────────────────────────────────────
+
   toggleExpiredVisibility(driverId: string): void {
-    this.hiddenExpiredDrivers.update((current) => {
-      const next = new Set(current);
-      if (next.has(driverId)) {
-        next.delete(driverId);
-      } else {
-        next.add(driverId);
-      }
+    this.hiddenExpiredDrivers.update((set) => {
+      const next = new Set(set);
+      next.has(driverId) ? next.delete(driverId) : next.add(driverId);
       return next;
     });
   }
@@ -269,13 +262,9 @@ export class BwpLicenseComponent {
   }
 
   toggleDriverCollapse(driverId: string): void {
-    this.collapsedDrivers.update((current) => {
-      const next = new Set(current);
-      if (next.has(driverId)) {
-        next.delete(driverId);
-      } else {
-        next.add(driverId);
-      }
+    this.collapsedDrivers.update((set) => {
+      const next = new Set(set);
+      next.has(driverId) ? next.delete(driverId) : next.add(driverId);
       return next;
     });
   }
@@ -284,76 +273,23 @@ export class BwpLicenseComponent {
     return this.collapsedDrivers().has(driverId);
   }
 
-  deleteDriver(driverId: string): void {
-    const driver = this.drivers().find((item) => item.id === driverId);
-    if (!driver) {
-      return;
-    }
-    if (!window.confirm(`Delete driver ${driver.name}?`)) {
-      return;
-    }
-    this.drivers.update((drivers) => drivers.filter((item) => item.id !== driverId));
-    this.collapsedDrivers.update((current) => {
-      if (!current.has(driverId)) {
-        return current;
-      }
-      const next = new Set(current);
-      next.delete(driverId);
-      return next;
-    });
-    this.hiddenExpiredDrivers.update((current) => {
-      if (!current.has(driverId)) {
-        return current;
-      }
-      const next = new Set(current);
-      next.delete(driverId);
-      return next;
-    });
-  }
-
-  deletePoint(driverId: string, pointId: string): void {
-    const driver = this.drivers().find((item) => item.id === driverId);
-    if (!driver) {
-      return;
-    }
-    if (!window.confirm('Delete this point?')) {
-      return;
-    }
-    this.drivers.update((drivers) =>
-      drivers.map((item) =>
-        item.id === driverId
-          ? { ...item, points: item.points.filter((point) => point.id !== pointId) }
-          : item
-      )
-    );
-  }
-
   getActivePoints(driver: Driver): BwpPoint[] {
-    return driver.points.filter((point) => !this.isExpired(point));
+    return driver.points.filter((p) => !this.isExpired(p));
   }
 
   getTotalPoints(driver: Driver): number {
-    return this.getActivePoints(driver).reduce((sum, point) => sum + point.points, 0);
+    return this.getActivePoints(driver).reduce((sum, p) => sum + p.points, 0);
   }
 
   getPenalty(driver: Driver): PenaltyRule | null {
     const total = this.getTotalPoints(driver);
-    if (total <= 0) {
-      return null;
-    }
+    if (total <= 0) return null;
     let match: PenaltyRule | null = null;
     for (const rule of this.sortedPenaltyRules()) {
-      if (total >= rule.threshold) {
-        match = rule;
-      } else {
-        break;
-      }
+      if (total >= rule.threshold) match = rule;
+      else break;
     }
-    if (!match) {
-      return null;
-    }
-    const label = match.label.trim() || 'Penalty';
-    return { ...match, label };
+    return match ? { ...match, label: match.label.trim() || 'Penalty' } : null;
   }
 
   sortedPoints(driver: Driver): BwpPoint[] {
@@ -362,17 +298,13 @@ export class BwpLicenseComponent {
 
   getVisiblePoints(driver: Driver): BwpPoint[] {
     const points = this.sortedPoints(driver);
-    if (!this.isExpiredHidden(driver.id)) {
-      return points;
-    }
-    return points.filter((point) => !this.isExpired(point));
+    if (!this.isExpiredHidden(driver.id)) return points;
+    return points.filter((p) => !this.isExpired(p));
   }
 
   isExpired(point: BwpPoint): boolean {
     const expires = this.parseDate(point.expiresOn);
-    if (!expires) {
-      return false;
-    }
+    if (!expires) return false;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return expires.getTime() < today.getTime();
@@ -380,22 +312,16 @@ export class BwpLicenseComponent {
 
   formatDate(value: string): string {
     const date = this.parseDate(value);
-    if (!date) {
-      return value;
-    }
+    if (!date) return value;
     const day = `${date.getDate()}`.padStart(2, '0');
     const month = `${date.getMonth() + 1}`.padStart(2, '0');
     return `${day}.${month}.${date.getFullYear()}`;
   }
 
   private parseDate(value: string): Date | null {
-    if (!value) {
-      return null;
-    }
-    const [year, month, day] = value.split('-').map((part) => Number(part));
-    if (!year || !month || !day) {
-      return null;
-    }
+    if (!value) return null;
+    const [year, month, day] = value.split('-').map(Number);
+    if (!year || !month || !day) return null;
     return new Date(year, month - 1, day);
   }
 
@@ -410,106 +336,12 @@ export class BwpLicenseComponent {
     const day = result.getDate();
     result.setDate(1);
     result.setMonth(result.getMonth() + months);
-    const daysInMonth = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
+    const daysInMonth = new Date(
+      result.getFullYear(),
+      result.getMonth() + 1,
+      0
+    ).getDate();
     result.setDate(Math.min(day, daysInMonth));
     return result;
-  }
-
-  private createId(): string {
-    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-      return crypto.randomUUID();
-    }
-    return `id-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-  }
-
-  private loadDrivers(): Driver[] {
-    if (typeof window === 'undefined') {
-      return [];
-    }
-    try {
-      const raw = localStorage.getItem(this.storageKey);
-      if (!raw) {
-        return [];
-      }
-      const parsed = JSON.parse(raw) as Driver[];
-      if (!Array.isArray(parsed)) {
-        return [];
-      }
-      return parsed
-        .filter((driver) => driver && typeof driver.name === 'string')
-        .map((driver) => ({
-          id: driver.id ?? this.createId(),
-          name: driver.name,
-          points: Array.isArray(driver.points)
-            ? driver.points
-                .map((point) => ({
-                  id: point?.id ?? this.createId(),
-                  points: Number(point?.points ?? 0),
-                  issuedOn: String(point?.issuedOn ?? ''),
-                  expiresOn: String(point?.expiresOn ?? '')
-                }))
-                .filter(
-                  (point) =>
-                    Number.isFinite(point.points) &&
-                    point.points > 0 &&
-                    Boolean(point.issuedOn) &&
-                    Boolean(point.expiresOn)
-                )
-            : []
-        }));
-    } catch {
-      return [];
-    }
-  }
-
-  private loadSettings(): { penaltyRules: PenaltyRule[]; sortMode: SortMode } {
-    const defaults = {
-      penaltyRules: this.defaultPenaltyRules.map((rule) => ({ ...rule })),
-      sortMode: 'bwp-desc' as SortMode
-    };
-    if (typeof window === 'undefined') {
-      return defaults;
-    }
-    try {
-      const raw = localStorage.getItem(this.settingsKey);
-      if (!raw) {
-        return defaults;
-      }
-      const parsed = JSON.parse(raw) as Partial<{
-        penaltyRules: PenaltyRule[];
-        sortMode: SortMode;
-      }>;
-      const penaltyRules = Array.isArray(parsed.penaltyRules)
-        ? parsed.penaltyRules
-            .map((rule) => ({
-              id: rule?.id ?? this.createId(),
-              threshold: Number(rule?.threshold ?? 0),
-              label: String(rule?.label ?? '')
-            }))
-            .filter((rule) => Number.isFinite(rule.threshold) && rule.threshold > 0)
-        : defaults.penaltyRules;
-      const sortMode = this.isSortMode(parsed.sortMode) ? parsed.sortMode : defaults.sortMode;
-      return { penaltyRules, sortMode };
-    } catch {
-      return defaults;
-    }
-  }
-
-  private saveSettings(settings: { penaltyRules: PenaltyRule[]; sortMode: SortMode }): void {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    localStorage.setItem(this.settingsKey, JSON.stringify(settings));
-  }
-
-  private saveDrivers(drivers: Driver[]): void {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    localStorage.setItem(this.storageKey, JSON.stringify(drivers));
-  }
-
-  private isSortMode(value: unknown): value is SortMode {
-    return value === 'bwp-desc' || value === 'bwp-asc' || value === 'name-asc' || value === 'name-desc';
   }
 }

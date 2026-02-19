@@ -47,13 +47,13 @@
           <div>
             <h2>{{ championship.name }}</h2>
             <p class="meta">
-              {{ championship.host_name }} - {{ championship.game_name }} -
-              {{ championship.spots_taken ?? 0 }}/{{ championship.capacity ?? 0 }} entries
+              {{ championship.hostName }} - {{ championship.gameName }} -
+              {{ championship.spotsTaken ?? 0 }}/{{ championship.capacity ?? 0 }} entries
             </p>
             <p class="meta">
-              Start date: {{ formatDate(championship.start_date) }}
-              @if (championship.end_date) {
-                - End date: {{ formatDate(championship.end_date) }}
+              Start date: {{ formatDate(championship.startDate) }}
+              @if (championship.endDate) {
+                - End date: {{ formatDate(championship.endDate) }}
               }
             </p>
             @if (lastUpdated(); as updated) {
