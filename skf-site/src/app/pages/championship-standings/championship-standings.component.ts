@@ -47,6 +47,9 @@ export class ChampionshipStandingsComponent {
   readonly loadingStandings = signal(false);
   readonly exportPreviewOpen = signal(false);
   readonly exportRendering = signal(false);
+  readonly giveawayOpen = signal(false);
+  readonly giveawayMinRaces = signal(1);
+  readonly giveawayDrivers = signal<{ id: number; displayName: string; racesCount: number }[]>([]);
   readonly errorMessage = signal('');
   readonly infoMessage = signal('');
   readonly lastUpdated = signal<Date | null>(null);
@@ -196,6 +199,40 @@ export class ChampionshipStandingsComponent {
     }
 
     return String(result.position);
+  }
+
+  // ------------------------------------------------------------------
+  // Giveaway modal
+  // ------------------------------------------------------------------
+
+  openGiveawayModal(): void {
+    this.giveawayMinRaces.set(1);
+    this.updateGiveawayList();
+    this.giveawayOpen.set(true);
+  }
+
+  closeGiveawayModal(): void {
+    this.giveawayOpen.set(false);
+  }
+
+  onGiveawayMinRacesChange(event: Event): void {
+    const value = parseInt((event.target as HTMLInputElement).value, 10);
+    this.giveawayMinRaces.set(Number.isFinite(value) && value > 0 ? value : 1);
+    this.updateGiveawayList();
+  }
+
+  private countRacesDriven(entry: StandingEntry): number {
+    return entry.raceResults.filter((r) => r.position !== null).length;
+  }
+
+  private updateGiveawayList(): void {
+    const min = this.giveawayMinRaces();
+    const eligible = this.standings()
+      .filter((e) => !e.dsq)
+      .map((e) => ({ id: e.id, displayName: e.displayName, racesCount: this.countRacesDriven(e) }))
+      .filter((d) => d.racesCount >= min)
+      .sort((a, b) => b.racesCount - a.racesCount || a.displayName.localeCompare(b.displayName));
+    this.giveawayDrivers.set(eligible);
   }
 
   private getRaceResult(

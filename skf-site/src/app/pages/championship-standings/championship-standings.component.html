@@ -61,6 +61,9 @@
             }
           </div>
           <div class="details-actions">
+            <button class="btn ghost small" type="button" (click)="openGiveawayModal()">
+              Giveaway
+            </button>
             <button class="btn ghost small" type="button" (click)="openStandingsExportPreview()">
               Export 16:9
             </button>
@@ -124,6 +127,48 @@
     </section>
   </div>
 </section>
+
+  @if (giveawayOpen()) {
+    <div class="export-backdrop" (click)="closeGiveawayModal()">
+      <section class="giveaway-modal" (click)="$event.stopPropagation()">
+        <header class="export-modal-header">
+          <h3>Giveaway — Eligible Drivers</h3>
+          <div class="export-modal-actions">
+            <label class="giveaway-input-label">
+              Min races
+              <input
+                class="giveaway-input"
+                type="number"
+                min="1"
+                [value]="giveawayMinRaces()"
+                (input)="onGiveawayMinRacesChange($event)"
+              />
+            </label>
+            <button class="btn ghost small" type="button" (click)="closeGiveawayModal()">
+              Close
+            </button>
+          </div>
+        </header>
+
+        <div class="giveaway-body">
+          @if (giveawayDrivers().length === 0) {
+            <p class="empty">No drivers match the minimum race requirement.</p>
+          } @else {
+            <p class="giveaway-count">{{ giveawayDrivers().length }} driver(s) eligible</p>
+            <div class="giveaway-list">
+              @for (driver of giveawayDrivers(); track driver.id; let i = $index) {
+                <div class="giveaway-driver">
+                  <span class="giveaway-rank">{{ i + 1 }}</span>
+                  <span class="giveaway-name">{{ driver.displayName }}</span>
+                  <span class="giveaway-races">{{ driver.racesCount }} race(s)</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+  }
 
   @if (exportPreviewOpen()) {
     <div class="export-backdrop" (click)="closeStandingsExportPreview()">
