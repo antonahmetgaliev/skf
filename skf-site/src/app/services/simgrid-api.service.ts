@@ -37,6 +37,7 @@ export interface StandingEntry {
   points: number;
   penalties: number;
   score: number;
+  dsq: boolean;
   raceResults: DriverRaceResult[];
 }
 

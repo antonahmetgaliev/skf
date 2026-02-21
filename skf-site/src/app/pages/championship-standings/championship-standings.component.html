@@ -100,7 +100,12 @@
                 @for (entry of standings(); track entry.id; let i = $index) {
                   <tr>
                     <td>{{ getPosition(entry, i) }}</td>
-                    <td class="driver-cell">{{ entry.displayName }}</td>
+                    <td class="driver-cell">
+                      {{ entry.displayName }}
+                      @if (entry.dsq) {
+                        <span class="dsq-badge">DSQ</span>
+                      }
+                    </td>
                     <td>{{ entry.countryCode || '-' }}</td>
                     <td>{{ entry.car || '-' }}</td>
                     <td>{{ formatNumber(entry.score) }}</td>

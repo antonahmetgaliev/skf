@@ -556,8 +556,25 @@ export class ChampionshipStandingsComponent {
 
       ctx.fillStyle = '#f6f9ff';
       ctx.font = '600 21px "Segoe UI", sans-serif';
-      const driverName = this.truncateText(ctx, entry.displayName, Math.max(120, driverWidth - 4));
+      const driverName = this.truncateText(ctx, entry.displayName, Math.max(120, driverWidth - (entry.dsq ? 54 : 4)));
       ctx.fillText(driverName, driverX, rowY + rowHeight * 0.69);
+
+      if (entry.dsq) {
+        const nameWidth = ctx.measureText(driverName).width;
+        const dsqX = driverX + nameWidth + 6;
+        const dsqY = rowY + rowHeight * 0.69 - 13;
+        const dsqW = 40;
+        const dsqH = 18;
+        ctx.fillStyle = '#c0392b';
+        this.fillRoundedRect(ctx, dsqX, dsqY, dsqW, dsqH, 4);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '800 11px "Segoe UI", sans-serif';
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('DSQ', dsqX + dsqW / 2, dsqY + dsqH / 2 + 0.5);
+        ctx.restore();
+      }
 
       ctx.fillStyle = '#f5be2d';
       ctx.font = '800 20px "Segoe UI", sans-serif';

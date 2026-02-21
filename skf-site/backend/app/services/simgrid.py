@@ -234,7 +234,10 @@ class SimgridService:
             merged_results = self._merge_race_results(
                 entry.race_results, row["race_cells"], races
             )
-            entries.append(entry.model_copy(update={"race_results": merged_results}))
+            update: dict[str, Any] = {"race_results": merged_results}
+            if row.get("dsq"):
+                update["dsq"] = True
+            entries.append(entry.model_copy(update=update))
 
         return ChampionshipStandingsData(entries=entries, races=races)
 
@@ -290,11 +293,18 @@ class SimgridService:
                 )
                 for i in range(len(race_columns))
             ]
+            # Championship-level DSQ badge:
+            # <span class="upcase badge bg-red" title="Disqualified">DSQ</span>
+            is_dsq = bool(re.search(
+                r'<span[^>]*title="Disqualified"[^>]*>\s*DSQ\s*</span>',
+                row_html, re.I,
+            ))
             rows.append(
                 {
                     "normalized_name": normalized,
                     "position": position,
                     "race_cells": race_cells,
+                    "dsq": is_dsq,
                 }
             )
 
