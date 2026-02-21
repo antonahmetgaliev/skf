@@ -394,6 +394,38 @@ tbody tr:hover {
   letter-spacing: 0.05em;
 }
 
+.giveaway-random-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.65rem;
+}
+
+.giveaway-winner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.65rem;
+  padding: 0.6rem 0.8rem;
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  background: rgba(243, 180, 25, 0.12);
+}
+
+.giveaway-winner-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+}
+
+.giveaway-winner-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
 .giveaway-list {
   display: grid;
   gap: 0.35rem;

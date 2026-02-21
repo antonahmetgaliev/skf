@@ -151,6 +151,24 @@
         </header>
 
         <div class="giveaway-body">
+          @if (giveawayWinner(); as winner) {
+            <div class="giveaway-winner">
+              <span class="giveaway-winner-label">Winner</span>
+              <span class="giveaway-winner-name">{{ winner }}</span>
+            </div>
+          }
+
+          <div class="giveaway-random-row">
+            <button
+              class="btn accent small"
+              type="button"
+              [disabled]="giveawayDrivers().length === 0"
+              (click)="pickRandomDriver()"
+            >
+              Get Random
+            </button>
+          </div>
+
           @if (giveawayDrivers().length === 0) {
             <p class="empty">No drivers match the minimum race requirement.</p>
           } @else {

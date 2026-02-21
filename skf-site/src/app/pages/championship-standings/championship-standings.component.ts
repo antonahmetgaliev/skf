@@ -50,6 +50,7 @@ export class ChampionshipStandingsComponent {
   readonly giveawayOpen = signal(false);
   readonly giveawayMinRaces = signal(1);
   readonly giveawayDrivers = signal<{ id: number; displayName: string; racesCount: number }[]>([]);
+  readonly giveawayWinner = signal<string | null>(null);
   readonly errorMessage = signal('');
   readonly infoMessage = signal('');
   readonly lastUpdated = signal<Date | null>(null);
@@ -207,6 +208,7 @@ export class ChampionshipStandingsComponent {
 
   openGiveawayModal(): void {
     this.giveawayMinRaces.set(1);
+    this.giveawayWinner.set(null);
     this.updateGiveawayList();
     this.giveawayOpen.set(true);
   }
@@ -218,7 +220,15 @@ export class ChampionshipStandingsComponent {
   onGiveawayMinRacesChange(event: Event): void {
     const value = parseInt((event.target as HTMLInputElement).value, 10);
     this.giveawayMinRaces.set(Number.isFinite(value) && value > 0 ? value : 1);
+    this.giveawayWinner.set(null);
     this.updateGiveawayList();
+  }
+
+  pickRandomDriver(): void {
+    const drivers = this.giveawayDrivers();
+    if (drivers.length === 0) return;
+    const index = Math.floor(Math.random() * drivers.length);
+    this.giveawayWinner.set(drivers[index].displayName);
   }
 
   private countRacesDriven(entry: StandingEntry): number {
