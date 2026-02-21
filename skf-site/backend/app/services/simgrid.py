@@ -13,6 +13,7 @@ import unicodedata
 from typing import Any
 
 import httpx
+from curl_cffi import requests as cf_requests
 
 from app.config import settings
 from app.schemas.championship import (
@@ -38,6 +39,9 @@ class SimgridService:
             headers=headers,
             timeout=30.0,
         )
+        # Separate session for HTML page fetches – curl_cffi impersonates
+        # a real browser TLS fingerprint so Cloudflare lets us through.
+        self._cf_session = cf_requests.Session(impersonate="chrome")
 
     # ------------------------------------------------------------------
     # Public API
@@ -69,11 +73,14 @@ class SimgridService:
         payload = resp.json()
         data = self._parse_standings(payload)
 
-        # If no race positions came from the API, try scraping the HTML page
+        # If no race positions came from the API, try scraping the HTML page.
+        # Use curl_cffi (browser-impersonation) because the SimGrid site
+        # sits behind Cloudflare which rejects plain httpx requests.
         if not self._has_race_positions(data) and len(data.races) > 0:
             try:
-                html_resp = await self._client.get(
-                    f"/championships/{championship_id}/standings"
+                html_resp = self._cf_session.get(
+                    f"{settings.simgrid_base_url}/championships/{championship_id}/standings",
+                    timeout=30,
                 )
                 if html_resp.status_code == 200:
                     data = self._merge_html_race_positions(data, html_resp.text)
@@ -265,8 +272,17 @@ class SimgridService:
                 re.I,
             )
             position = self._parse_html_int(pos_match.group(1) if pos_match else None)
+            # Each race cell has:
+            #   <span class="show_positions">
+            #       X<span class="text-secondary mx-1">·</span>Y
+            #   </span>
+            # where X = qualifying position, Y = race finish position.
+            # We use a greedy inner match so the capture reaches the
+            # outer </span> rather than stopping at the first nested one.
             race_pos_matches = re.findall(
-                r'<span class="show_positions">([\s\S]*?)</span>', row_html, re.I
+                r'<span class="show_positions">([\s\S]*?)</span>\s*(?=<span class="show_points|</td>)',
+                row_html,
+                re.I,
             )
             race_positions = [
                 self._parse_html_race_pos(
@@ -353,13 +369,25 @@ class SimgridService:
 
     @staticmethod
     def _parse_html_race_pos(value: str | None) -> int | None:
+        """Extract the race **finish** position from scraped text.
+
+        SimGrid standings cells show ``"X · Y"`` where X is the
+        qualifying position and Y is the race finish position.  We
+        prefer Y (the second number).  If only one number is present
+        we use it directly.  ``DNS``, ``—`` and empty strings yield
+        ``None``.
+        """
         if not value:
             return None
         cleaned = re.sub(r"[\u200b-\u200f\ufeff]", "", value).strip()
         if not cleaned or cleaned in ("-", "\u2014"):
             return None
-        m = re.match(r"-?\d+", cleaned)
-        return int(m.group(0)) if m else None
+        # Find all integer tokens (ignoring "DNS", "—", etc.)
+        numbers = re.findall(r"-?\d+", cleaned)
+        if not numbers:
+            return None
+        # Prefer the *last* number (race finish position in "X · Y")
+        return int(numbers[-1])
 
     @staticmethod
     def _to_int(value: Any) -> int:
