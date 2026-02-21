@@ -202,7 +202,7 @@ export class ChampionshipStandingsComponent {
     entry: StandingEntry,
     race: StandingRace,
     raceIndex: number
-  ): { points: number | null; position: number | null } | null {
+  ): { points: number | null; position: number | null; dns: boolean } | null {
     const byRaceId = entry.raceResults.find(
       (item) => item.raceId !== null && item.raceId === race.id
     );
