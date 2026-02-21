@@ -25,6 +25,7 @@ export interface DriverRaceResult {
   raceIndex: number;
   points: number | null;
   position: number | null;
+  dns: boolean;
 }
 
 export interface StandingEntry {

@@ -192,7 +192,7 @@ export class ChampionshipStandingsComponent {
   formatRacePosition(entry: StandingEntry, race: StandingRace, raceIndex: number): string {
     const result = this.getRaceResult(entry, race, raceIndex);
     if (!result || result.position === null) {
-      return '-';
+      return result?.dns ? 'DNS' : '-';
     }
 
     return String(result.position);

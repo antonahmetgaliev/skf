@@ -40,6 +40,7 @@ class DriverRaceResult(CamelModel):
     race_index: int
     points: float | None = None
     position: int | None = None
+    dns: bool = False
 
 
 class StandingEntry(CamelModel):

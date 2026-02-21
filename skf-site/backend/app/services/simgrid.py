@@ -232,7 +232,7 @@ class SimgridService:
             used.add(row_idx)
             row = snapshot["rows"][row_idx]
             merged_results = self._merge_race_results(
-                entry.race_results, row["race_positions"], races
+                entry.race_results, row["race_cells"], races
             )
             entries.append(entry.model_copy(update={"race_results": merged_results}))
 
@@ -284,8 +284,8 @@ class SimgridService:
                 row_html,
                 re.I,
             )
-            race_positions = [
-                self._parse_html_race_pos(
+            race_cells = [
+                self._parse_html_race_cell(
                     self._strip_html(race_pos_matches[i]) if i < len(race_pos_matches) else ""
                 )
                 for i in range(len(race_columns))
@@ -294,7 +294,7 @@ class SimgridService:
                 {
                     "normalized_name": normalized,
                     "position": position,
-                    "race_positions": race_positions,
+                    "race_cells": race_cells,
                 }
             )
 
@@ -322,11 +322,11 @@ class SimgridService:
     def _merge_race_results(
         self,
         current: list[DriverRaceResult],
-        html_positions: list[int | None],
+        html_cells: list[tuple[int | None, bool]],
         races: list[StandingRace],
     ) -> list[DriverRaceResult]:
         by_index: dict[int, DriverRaceResult] = {r.race_index: r for r in current}
-        for race_idx, pos in enumerate(html_positions):
+        for race_idx, (pos, is_dns) in enumerate(html_cells):
             existing = by_index.get(race_idx)
             if existing:
                 by_index[race_idx] = existing.model_copy(
@@ -334,14 +334,16 @@ class SimgridService:
                         "race_id": existing.race_id
                         or (races[race_idx].id if race_idx < len(races) else None),
                         "position": existing.position or pos,
+                        "dns": existing.dns or is_dns,
                     }
                 )
-            elif pos is not None:
+            elif pos is not None or is_dns:
                 by_index[race_idx] = DriverRaceResult(
                     race_id=races[race_idx].id if race_idx < len(races) else None,
                     race_index=race_idx,
                     points=None,
                     position=pos,
+                    dns=is_dns,
                 )
         return sorted(by_index.values(), key=lambda r: r.race_index)
 
@@ -368,26 +370,38 @@ class SimgridService:
         return int(m.group(0)) if m else None
 
     @staticmethod
-    def _parse_html_race_pos(value: str | None) -> int | None:
-        """Extract the race **finish** position from scraped text.
+    def _parse_html_race_cell(value: str | None) -> tuple[int | None, bool]:
+        """Extract the race **finish** position and DNS flag from scraped text.
 
         SimGrid standings cells show ``"X · Y"`` where X is the
-        qualifying position and Y is the race finish position.  We
-        prefer Y (the second number).  If only one number is present
-        we use it directly.  ``DNS``, ``—`` and empty strings yield
-        ``None``.
+        qualifying position and Y is the race finish position.
+
+        Returns ``(position, is_dns)``:
+        - ``(5, False)``  – "3 · 5"  → finished in P5
+        - ``(None, True)`` – "DNS · DNS" → Did Not Start
+        - ``(None, True)`` – "15 · DNS" → qualified but DNS race
+        - ``(7, False)``   – "DNS · 7"  → DNS quali, finished P7
+        - ``(None, False)`` – "—" or empty → no data / did not enter
         """
         if not value:
-            return None
+            return (None, False)
         cleaned = re.sub(r"[\u200b-\u200f\ufeff]", "", value).strip()
         if not cleaned or cleaned in ("-", "\u2014"):
-            return None
-        # Find all integer tokens (ignoring "DNS", "—", etc.)
-        numbers = re.findall(r"-?\d+", cleaned)
-        if not numbers:
-            return None
-        # Prefer the *last* number (race finish position in "X · Y")
-        return int(numbers[-1])
+            return (None, False)
+
+        # Split on the middle-dot separator to isolate quali vs race parts.
+        # The raw (stripped) text looks like "3 · 5", "DNS · DNS", "15 · DNS".
+        parts = re.split(r"\s*[·]\s*", cleaned)
+
+        if len(parts) >= 2:
+            race_part = parts[-1].strip()
+        else:
+            race_part = cleaned
+
+        race_is_dns = bool(re.search(r"(?i)\bDNS\b", race_part))
+        numbers = re.findall(r"-?\d+", race_part)
+        position = int(numbers[-1]) if numbers else None
+        return (position, race_is_dns or (position is None and bool(re.search(r"(?i)\bDNS\b", cleaned))))
 
     @staticmethod
     def _to_int(value: Any) -> int:
