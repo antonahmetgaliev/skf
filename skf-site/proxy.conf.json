@@ -2,6 +2,8 @@
   "/api": {
     "target": "https://back-production-16e8.up.railway.app",
     "secure": true,
-    "changeOrigin": true
+    "changeOrigin": true,
+    "cookieDomainRewrite": "localhost",
+    "cookiePathRewrite": "/"
   }
 }

@@ -50,6 +50,8 @@ try {
       target: BACKEND_URL,
       changeOrigin: true,
       pathFilter: '/api/**',
+      cookieDomainRewrite: '',
+      cookiePathRewrite: '/',
       on: {
         proxyReq: (proxyReq, req) => {
           // Preserve the original host so the backend knows the public domain

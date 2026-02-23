@@ -9,6 +9,7 @@ from urllib.parse import urlencode
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,7 +44,6 @@ async def discord_login_url():
 async def discord_callback(
     code: str,
     request: Request,
-    response: Response,
     db: AsyncSession = Depends(get_db),
 ):
     """Handle the OAuth2 callback from Discord."""
@@ -140,9 +140,8 @@ async def discord_callback(
     origin = f"{scheme}://{host}".rstrip("/")
     is_secure = scheme == "https"
 
-    response.status_code = 307
-    response.headers["Location"] = origin
-    response.set_cookie(
+    redirect = RedirectResponse(url=origin, status_code=302)
+    redirect.set_cookie(
         key=SESSION_COOKIE,
         value=str(session.id),
         httponly=True,
@@ -151,7 +150,7 @@ async def discord_callback(
         max_age=settings.session_max_age_hours * 3600,
         path="/",
     )
-    return response
+    return redirect
 
 
 @router.get("/me", response_model=UserOut)
