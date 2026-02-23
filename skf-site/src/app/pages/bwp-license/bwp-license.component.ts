@@ -30,6 +30,10 @@ export class BwpLicenseComponent {
       .filter((rule) => Number.isFinite(rule.threshold) && rule.threshold > 0)
       .sort((a, b) => a.threshold - b.threshold)
   );
+  readonly maxThreshold = computed(() => {
+    const rules = this.sortedPenaltyRules();
+    return rules.length > 0 ? rules[rules.length - 1].threshold : 0;
+  });
   readonly penaltySummary = computed(() => {
     const thresholds = this.sortedPenaltyRules().map((rule) => rule.threshold);
     if (thresholds.length === 0) {
@@ -247,6 +251,53 @@ export class BwpLicenseComponent {
           list.filter((r) => r.id !== ruleId)
         )
     });
+  }
+
+  // ── Penalty Clearances ───────────────────────────────────────────
+
+  isClearedPenalty(driver: Driver, ruleId: string): boolean {
+    return driver.clearances?.some((c) => c.penaltyRuleId === ruleId) ?? false;
+  }
+
+  toggleClearance(driver: Driver, ruleId: string): void {
+    const isCleared = this.isClearedPenalty(driver, ruleId);
+    if (isCleared) {
+      this.api.removeClearance(driver.id, ruleId).subscribe({
+        next: () => this.refreshDrivers()
+      });
+    } else {
+      this.api.setClearance(driver.id, ruleId).subscribe({
+        next: () => this.refreshDrivers()
+      });
+    }
+  }
+
+  /** Get the highest un-cleared penalty the driver has reached. */
+  getActivePenalty(driver: Driver): PenaltyRule | null {
+    const total = this.getTotalPoints(driver);
+    if (total <= 0) return null;
+    const rules = [...this.sortedPenaltyRules()].reverse();
+    for (const rule of rules) {
+      if (total >= rule.threshold && !this.isClearedPenalty(driver, rule.id)) {
+        return { ...rule, label: rule.label.trim() || 'Penalty' };
+      }
+    }
+    return null;
+  }
+
+  /** Progress percentage (0–100) for the bar. */
+  getProgressPercent(driver: Driver): number {
+    const max = this.maxThreshold();
+    if (max <= 0) return 0;
+    const total = this.getTotalPoints(driver);
+    return Math.min(100, (total / max) * 100);
+  }
+
+  /** Threshold position as percentage on the bar. */
+  getThresholdPercent(threshold: number): number {
+    const max = this.maxThreshold();
+    if (max <= 0) return 0;
+    return (threshold / max) * 100;
   }
 
   // ── UI helpers ───────────────────────────────────────────────────

@@ -24,6 +24,9 @@ class Driver(Base):
     points: Mapped[list["BwpPoint"]] = relationship(
         back_populates="driver", cascade="all, delete-orphan", lazy="selectin"
     )
+    clearances: Mapped[list["PenaltyClearance"]] = relationship(
+        back_populates="driver", cascade="all, delete-orphan", lazy="selectin"
+    )
 
 
 class BwpPoint(Base):
@@ -51,3 +54,33 @@ class PenaltyRule(Base):
     threshold: Mapped[int] = mapped_column(Integer, nullable=False)
     label: Mapped[str] = mapped_column(Text, nullable=False, default="")
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    clearances: Mapped[list["PenaltyClearance"]] = relationship(
+        back_populates="penalty_rule", cascade="all, delete-orphan", lazy="selectin"
+    )
+
+
+class PenaltyClearance(Base):
+    __tablename__ = "penalty_clearances"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    driver_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("drivers.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    penalty_rule_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("penalty_rules.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    cleared_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    driver: Mapped["Driver"] = relationship(back_populates="clearances")
+    penalty_rule: Mapped["PenaltyRule"] = relationship(back_populates="clearances")

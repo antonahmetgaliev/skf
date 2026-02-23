@@ -9,11 +9,19 @@ export interface BwpPoint {
   expiresOn: string;
 }
 
+export interface PenaltyClearance {
+  id: string;
+  driverId: string;
+  penaltyRuleId: string;
+  clearedAt: string;
+}
+
 export interface Driver {
   id: string;
   name: string;
   createdAt: string;
   points: BwpPoint[];
+  clearances: PenaltyClearance[];
 }
 
 export interface PenaltyRule {
@@ -83,5 +91,23 @@ export class BwpApiService {
 
   deletePenaltyRule(ruleId: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/penalty-rules/${ruleId}`);
+  }
+
+  // ── Penalty Clearances ───────────────────────────────────────────
+
+  setClearance(
+    driverId: string,
+    ruleId: string
+  ): Observable<PenaltyClearance> {
+    return this.http.post<PenaltyClearance>(
+      `${this.base}/drivers/${driverId}/clearances/${ruleId}`,
+      null
+    );
+  }
+
+  removeClearance(driverId: string, ruleId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.base}/drivers/${driverId}/clearances/${ruleId}`
+    );
   }
 }

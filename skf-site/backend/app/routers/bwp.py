@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_admin
 from app.database import get_db
-from app.models.bwp import BwpPoint, Driver, PenaltyRule
+from app.models.bwp import BwpPoint, Driver, PenaltyClearance, PenaltyRule
 from app.models.user import User
 from app.schemas.bwp import (
     BwpPointCreate,
@@ -18,6 +18,7 @@ from app.schemas.bwp import (
     DriverBrief,
     DriverCreate,
     DriverOut,
+    PenaltyClearanceOut,
     PenaltyRuleCreate,
     PenaltyRuleOut,
     PenaltyRuleUpdate,
@@ -186,4 +187,69 @@ async def delete_penalty_rule(
     if not rule:
         raise HTTPException(status_code=404, detail="Penalty rule not found.")
     await db.delete(rule)
+    await db.commit()
+
+
+# ---------------------------------------------------------------------------
+# Penalty Clearances
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/drivers/{driver_id}/clearances/{rule_id}",
+    response_model=PenaltyClearanceOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def set_clearance(
+    driver_id: uuid.UUID,
+    rule_id: uuid.UUID,
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Mark a penalty rule as cleared for a driver."""
+    result = await db.execute(select(Driver).where(Driver.id == driver_id))
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Driver not found.")
+    result = await db.execute(select(PenaltyRule).where(PenaltyRule.id == rule_id))
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Penalty rule not found.")
+    # Check if already cleared
+    result = await db.execute(
+        select(PenaltyClearance).where(
+            PenaltyClearance.driver_id == driver_id,
+            PenaltyClearance.penalty_rule_id == rule_id,
+        )
+    )
+    existing = result.scalar_one_or_none()
+    if existing:
+        return existing
+
+    clearance = PenaltyClearance(driver_id=driver_id, penalty_rule_id=rule_id)
+    db.add(clearance)
+    await db.commit()
+    await db.refresh(clearance)
+    return clearance
+
+
+@router.delete(
+    "/drivers/{driver_id}/clearances/{rule_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def remove_clearance(
+    driver_id: uuid.UUID,
+    rule_id: uuid.UUID,
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Un-mark a penalty rule as cleared for a driver."""
+    result = await db.execute(
+        select(PenaltyClearance).where(
+            PenaltyClearance.driver_id == driver_id,
+            PenaltyClearance.penalty_rule_id == rule_id,
+        )
+    )
+    clearance = result.scalar_one_or_none()
+    if not clearance:
+        raise HTTPException(status_code=404, detail="Clearance not found.")
+    await db.delete(clearance)
     await db.commit()

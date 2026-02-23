@@ -168,7 +168,7 @@
                   <p class="driver-meta">
                     {{ getActivePoints(driver).length }} active points -
                     {{ getTotalPoints(driver) }} BWP
-                    @if (getPenalty(driver); as penalty) {
+                    @if (getActivePenalty(driver); as penalty) {
                       <span class="driver-penalty">· {{ penalty.label }}</span>
                     }
                   </p>
@@ -176,7 +176,7 @@
                 <div class="driver-actions">
                   <div class="pill-group">
                     <span class="pill">{{ getTotalPoints(driver) }} BWP</span>
-                    @if (getPenalty(driver)) {
+                    @if (getActivePenalty(driver)) {
                       <span class="pill danger">Penalty</span>
                     }
                   </div>
@@ -207,6 +207,67 @@
                   </div>
                 </div>
               </header>
+
+              <!-- ── Progress bar ── -->
+              @if (sortedPenaltyRules().length > 0) {
+                <div class="progress-section">
+                  <div class="progress-track">
+                    <div
+                      class="progress-fill"
+                      [style.width.%]="getProgressPercent(driver)"
+                    ></div>
+                    @for (rule of sortedPenaltyRules(); track rule.id) {
+                      <div
+                        class="progress-marker"
+                        [class.reached]="getTotalPoints(driver) >= rule.threshold"
+                        [class.cleared]="isClearedPenalty(driver, rule.id)"
+                        [style.left.%]="getThresholdPercent(rule.threshold)"
+                      >
+                        <span class="marker-line"></span>
+                        <span class="marker-label">{{ rule.threshold }}</span>
+                      </div>
+                    }
+                  </div>
+                  <div class="penalty-checklist">
+                    @for (rule of sortedPenaltyRules(); track rule.id) {
+                      <div
+                        class="penalty-check-row"
+                        [class.reached]="getTotalPoints(driver) >= rule.threshold"
+                        [class.cleared]="isClearedPenalty(driver, rule.id)"
+                      >
+                        @if (auth.isAdmin()) {
+                          <label class="penalty-check-label">
+                            <input
+                              type="checkbox"
+                              class="penalty-checkbox"
+                              [checked]="isClearedPenalty(driver, rule.id)"
+                              [disabled]="getTotalPoints(driver) < rule.threshold"
+                              (change)="toggleClearance(driver, rule.id)"
+                            />
+                            <span class="penalty-check-text">
+                              {{ rule.threshold }} BWP — {{ rule.label || 'Penalty' }}
+                            </span>
+                            @if (isClearedPenalty(driver, rule.id)) {
+                              <span class="cleared-badge">Cleared</span>
+                            } @else if (getTotalPoints(driver) >= rule.threshold) {
+                              <span class="pending-badge">Pending</span>
+                            }
+                          </label>
+                        } @else {
+                          <span class="penalty-check-text">
+                            {{ rule.threshold }} BWP — {{ rule.label || 'Penalty' }}
+                          </span>
+                          @if (isClearedPenalty(driver, rule.id)) {
+                            <span class="cleared-badge">Cleared</span>
+                          } @else if (getTotalPoints(driver) >= rule.threshold) {
+                            <span class="pending-badge">Pending</span>
+                          }
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
 
               @if (!isDriverCollapsed(driver.id)) {
                 <div class="points">

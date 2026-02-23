@@ -585,6 +585,164 @@ input::placeholder {
   }
 }
 
+/* ── Progress bar & penalty checklist ── */
+
+.progress-section {
+  margin: 0.75rem 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.progress-track {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(20, 18, 15, 0.08);
+  overflow: visible;
+}
+
+.progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-deep));
+  transition: width 0.4s ease;
+  z-index: 1;
+}
+
+.progress-marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.marker-line {
+  display: block;
+  width: 3px;
+  height: 18px;
+  border-radius: 2px;
+  background: rgba(20, 18, 15, 0.25);
+  transition: background 0.2s ease;
+}
+
+.progress-marker.reached .marker-line {
+  background: var(--danger);
+}
+
+.progress-marker.cleared .marker-line {
+  background: #2e8b57;
+}
+
+.marker-label {
+  position: absolute;
+  top: 100%;
+  margin-top: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.progress-marker.reached .marker-label {
+  color: var(--danger);
+}
+
+.progress-marker.cleared .marker-label {
+  color: #2e8b57;
+}
+
+.penalty-checklist {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.penalty-check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  border: 1px solid transparent;
+  transition: background 0.2s ease;
+}
+
+.penalty-check-row.reached {
+  color: var(--ink);
+  background: rgba(185, 71, 46, 0.06);
+  border-color: rgba(185, 71, 46, 0.15);
+}
+
+.penalty-check-row.cleared {
+  color: var(--ink);
+  background: rgba(46, 139, 87, 0.06);
+  border-color: rgba(46, 139, 87, 0.15);
+}
+
+.penalty-check-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  flex: 1;
+  font-size: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: normal;
+  color: inherit;
+}
+
+.penalty-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #2e8b57;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.penalty-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.penalty-check-text {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.cleared-badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(46, 139, 87, 0.15);
+  color: #2e8b57;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-left: auto;
+}
+
+.pending-badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(185, 71, 46, 0.15);
+  color: var(--danger);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-left: auto;
+}
+
 @media (max-width: 1200px) {
   .content-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

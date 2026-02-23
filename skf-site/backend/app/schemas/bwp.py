@@ -25,6 +25,18 @@ class BwpPointOut(CamelModel):
 
 
 # ---------------------------------------------------------------------------
+# PenaltyClearance
+# ---------------------------------------------------------------------------
+class PenaltyClearanceOut(CamelModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    driver_id: uuid.UUID
+    penalty_rule_id: uuid.UUID
+    cleared_at: datetime
+
+
+# ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
 class DriverCreate(CamelModel):
@@ -38,6 +50,7 @@ class DriverOut(CamelModel):
     name: str
     created_at: datetime
     points: list[BwpPointOut] = []
+    clearances: list[PenaltyClearanceOut] = []
 
 
 class DriverBrief(CamelModel):
