@@ -1,0 +1,89 @@
+<div class="page">
+  <header class="page-header">
+    <h1>User Management</h1>
+    <p class="subtitle">Manage user roles, block/unblock accounts, and force logouts.</p>
+  </header>
+
+  <div class="card">
+    <div class="toolbar">
+      <div class="filter-field">
+        <label for="userFilter">Filter</label>
+        <input
+          id="userFilter"
+          type="text"
+          placeholder="Search by name or Discord ID"
+          [ngModel]="filter()"
+          (ngModelChange)="filter.set($event)"
+          autocomplete="off"
+        />
+      </div>
+      <span class="meta">{{ filteredUsers().length }} user(s)</span>
+    </div>
+
+    @if (loading()) {
+      <p class="empty">Loading users…</p>
+    } @else if (filteredUsers().length === 0) {
+      <p class="empty">No users found.</p>
+    } @else {
+      <div class="user-list">
+        @for (user of filteredUsers(); track user.id) {
+          <article class="user-row" [class.blocked]="user.blocked">
+            <div class="user-identity">
+              @if (user.avatarUrl) {
+                <img class="user-avatar" [src]="user.avatarUrl" alt="" />
+              } @else {
+                <span class="user-avatar user-avatar--fallback">{{ user.displayName.charAt(0) || '?' }}</span>
+              }
+              <div>
+                <h3>{{ user.displayName }}</h3>
+                <p class="user-meta">&#64;{{ user.username }} · {{ user.discordId }}</p>
+              </div>
+            </div>
+
+            <div class="user-controls">
+              <div class="control-group">
+                <label>Role</label>
+                <select
+                  [ngModel]="user.role"
+                  (ngModelChange)="changeRole(user, $event)"
+                  [disabled]="!canEdit(user)"
+                >
+                  @for (role of availableRoles(); track role) {
+                    <option [value]="role">{{ role.replace('_', ' ') }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="action-buttons">
+                @if (canEdit(user) && user.role !== 'super_admin') {
+                  <button
+                    class="btn small"
+                    [class.danger]="!user.blocked"
+                    [class.ghost]="user.blocked"
+                    type="button"
+                    (click)="toggleBlock(user)"
+                  >
+                    {{ user.blocked ? 'Unblock' : 'Block' }}
+                  </button>
+                }
+                @if (canEdit(user)) {
+                  <button class="btn ghost small" type="button" (click)="forceLogout(user)">
+                    Force logout
+                  </button>
+                }
+              </div>
+            </div>
+
+            @if (user.blocked) {
+              <span class="blocked-badge">Blocked</span>
+            }
+
+            @if (user.lastLoginAt) {
+              <p class="last-login">Last login: {{ user.lastLoginAt | date:'medium' }}</p>
+            }
+          </article>
+        }
+      </div>
+    }
+  </div>
+</div>

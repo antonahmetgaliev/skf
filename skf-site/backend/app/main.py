@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import bwp, championships
+from app.routers import auth, bwp, championships, users
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,8 +20,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router, prefix="/api")
 app.include_router(bwp.router, prefix="/api")
 app.include_router(championships.router, prefix="/api")
+app.include_router(users.router, prefix="/api")
 
 
 @app.get("/healthz")
@@ -31,6 +33,15 @@ async def healthz():
 
 @app.on_event("startup")
 async def on_startup():
+    # Auto-create any missing tables (users, sessions, etc.)
+    from app.database import engine
+    from app.models.bwp import Base
+    import app.models  # noqa: F401 – ensure all models are registered
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database tables ensured")
+
     logger.info(f"DATABASE_URL scheme: {settings.database_url.split('@')[0].split('://')[0]}")
     logger.info(f"PORT: {settings.port}")
     logger.info(f"CORS origins: {origins}")

@@ -8,8 +8,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import require_admin
 from app.database import get_db
 from app.models.bwp import BwpPoint, Driver, PenaltyRule
+from app.models.user import User
 from app.schemas.bwp import (
     BwpPointCreate,
     BwpPointOut,
@@ -36,7 +38,11 @@ async def list_drivers(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/drivers", response_model=DriverOut, status_code=status.HTTP_201_CREATED)
-async def create_driver(body: DriverCreate, db: AsyncSession = Depends(get_db)):
+async def create_driver(
+    body: DriverCreate,
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
     existing = await db.execute(
         select(Driver).where(Driver.name.ilike(body.name.strip()))
     )
@@ -53,7 +59,11 @@ async def create_driver(body: DriverCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.delete("/drivers/{driver_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_driver(driver_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def delete_driver(
+    driver_id: uuid.UUID,
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(Driver).where(Driver.id == driver_id))
     driver = result.scalar_one_or_none()
     if not driver:
@@ -73,7 +83,10 @@ async def delete_driver(driver_id: uuid.UUID, db: AsyncSession = Depends(get_db)
     status_code=status.HTTP_201_CREATED,
 )
 async def add_point(
-    driver_id: uuid.UUID, body: BwpPointCreate, db: AsyncSession = Depends(get_db)
+    driver_id: uuid.UUID,
+    body: BwpPointCreate,
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Driver).where(Driver.id == driver_id))
     if not result.scalar_one_or_none():
@@ -92,7 +105,11 @@ async def add_point(
 
 
 @router.delete("/points/{point_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_point(point_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def delete_point(
+    point_id: uuid.UUID,
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(BwpPoint).where(BwpPoint.id == point_id))
     point = result.scalar_one_or_none()
     if not point:
@@ -118,7 +135,9 @@ async def list_penalty_rules(db: AsyncSession = Depends(get_db)):
     status_code=status.HTTP_201_CREATED,
 )
 async def create_penalty_rule(
-    body: PenaltyRuleCreate, db: AsyncSession = Depends(get_db)
+    body: PenaltyRuleCreate,
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
 ):
     # Auto-increment sort_order
     result = await db.execute(
@@ -138,7 +157,10 @@ async def create_penalty_rule(
 
 @router.patch("/penalty-rules/{rule_id}", response_model=PenaltyRuleOut)
 async def update_penalty_rule(
-    rule_id: uuid.UUID, body: PenaltyRuleUpdate, db: AsyncSession = Depends(get_db)
+    rule_id: uuid.UUID,
+    body: PenaltyRuleUpdate,
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(PenaltyRule).where(PenaltyRule.id == rule_id))
     rule = result.scalar_one_or_none()
@@ -154,7 +176,11 @@ async def update_penalty_rule(
 
 
 @router.delete("/penalty-rules/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_penalty_rule(rule_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def delete_penalty_rule(
+    rule_id: uuid.UUID,
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(PenaltyRule).where(PenaltyRule.id == rule_id))
     rule = result.scalar_one_or_none()
     if not rule:

@@ -20,6 +20,18 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:4200"
     port: int = 8000
 
+    # Discord OAuth2
+    discord_client_id: str = ""
+    discord_client_secret: str = ""
+    discord_redirect_uri: str = "http://localhost:4200/api/auth/discord/callback"
+
+    # Session
+    session_secret: str = "change-me-in-production"
+    session_max_age_hours: int = 24 * 7  # 1 week
+
+    # Bootstrap super-admin on first login by Discord user ID
+    super_admin_discord_id: str = ""
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
     @model_validator(mode="after")

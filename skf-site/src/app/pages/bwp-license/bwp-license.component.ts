@@ -6,6 +6,7 @@ import {
   Driver,
   PenaltyRule
 } from '../../services/bwp-api.service';
+import { AuthService } from '../../services/auth.service';
 
 type SortMode = 'bwp-desc' | 'bwp-asc' | 'name-asc' | 'name-desc';
 
@@ -17,6 +18,7 @@ type SortMode = 'bwp-desc' | 'bwp-asc' | 'name-asc' | 'name-desc';
 })
 export class BwpLicenseComponent {
   private readonly api = inject(BwpApiService);
+  readonly auth = inject(AuthService);
 
   readonly drivers = signal<Driver[]>([]);
   readonly sortedDrivers = computed(() =>

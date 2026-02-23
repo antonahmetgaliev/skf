@@ -1,0 +1,44 @@
+<div class="page">
+  @if (auth.user(); as user) {
+    <div class="profile-card card">
+      <div class="profile-header">
+        @if (user.avatarUrl) {
+          <img class="profile-avatar" [src]="user.avatarUrl" alt="Avatar" />
+        } @else {
+          <span class="profile-avatar profile-avatar--fallback">{{ user.displayName.charAt(0) || '?' }}</span>
+        }
+        <div class="profile-info">
+          <h1>{{ user.displayName }}</h1>
+          <p class="profile-username">&#64;{{ user.username }}</p>
+          <span class="role-badge" [attr.data-role]="user.role">{{ user.role.replace('_', ' ') }}</span>
+        </div>
+      </div>
+
+      <div class="profile-details">
+        <div class="detail-row">
+          <span class="detail-label">Discord ID</span>
+          <span class="detail-value">{{ user.discordId }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Member since</span>
+          <span class="detail-value">{{ user.createdAt | date:'mediumDate' }}</span>
+        </div>
+        @if (user.lastLoginAt) {
+          <div class="detail-row">
+            <span class="detail-label">Last login</span>
+            <span class="detail-value">{{ user.lastLoginAt | date:'medium' }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="profile-actions">
+        <button class="btn danger" type="button" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  } @else {
+    <div class="card">
+      <p>You are not signed in.</p>
+      <button class="btn accent" type="button" (click)="auth.login()">Sign in with Discord</button>
+    </div>
+  }
+</div>

@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from app.config import settings
 from app.models.bwp import Base
 from app.models.simgrid_cache import SimgridCache  # noqa: F401 – register model
+from app.models.user import User, Session  # noqa: F401 – register models
 
 config = context.config
 
