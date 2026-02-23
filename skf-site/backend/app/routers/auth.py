@@ -133,11 +133,11 @@ async def discord_callback(
     await db.commit()
 
     # 5. Set cookie & redirect to frontend
-    # Derive origin from the incoming request (works because callback
-    # comes through the frontend proxy, so Host = frontend domain).
+    # Use X-Forwarded-Host (set by the frontend proxy) to get the
+    # public domain, falling back to the Host header.
     scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
-    host = request.headers.get("host", "localhost")
-    origin = f"{scheme}://{host}"
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host", "localhost")
+    origin = f"{scheme}://{host}".rstrip("/")
     is_secure = scheme == "https"
 
     response.status_code = 307

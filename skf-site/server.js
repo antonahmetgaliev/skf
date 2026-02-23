@@ -52,6 +52,9 @@ try {
       pathFilter: '/api/**',
       on: {
         proxyReq: (proxyReq, req) => {
+          // Preserve the original host so the backend knows the public domain
+          proxyReq.setHeader('X-Forwarded-Host', req.headers.host);
+          proxyReq.setHeader('X-Forwarded-Proto', req.protocol);
           console.log(`[proxy] ${req.method} ${req.originalUrl} → ${BACKEND_URL}${req.originalUrl}`);
         },
         proxyRes: (proxyRes, req) => {
