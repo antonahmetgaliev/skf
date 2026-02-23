@@ -96,6 +96,9 @@ h1 {
 .stack {
   display: grid;
   gap: 1.5rem;
+  position: sticky;
+  top: 1.5rem;
+  align-self: start;
 }
 
 .card {
