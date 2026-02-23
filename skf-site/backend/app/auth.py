@@ -9,6 +9,7 @@ from typing import Callable
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.models.user import Session, User, UserRole
@@ -30,7 +31,9 @@ async def get_current_user_optional(
         return None
 
     result = await db.execute(
-        select(Session).where(
+        select(Session)
+        .options(selectinload(Session.user))
+        .where(
             Session.id == session_id,
             Session.expires_at > datetime.now(timezone.utc),
         )
