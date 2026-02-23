@@ -51,6 +51,7 @@ export class ChampionshipStandingsComponent {
   readonly giveawayMinRaces = signal(1);
   readonly giveawayDrivers = signal<{ id: number; displayName: string; racesCount: number }[]>([]);
   readonly giveawayWinner = signal<string | null>(null);
+  readonly refreshingCache = signal(false);
   readonly errorMessage = signal('');
   readonly infoMessage = signal('');
   readonly lastUpdated = signal<Date | null>(null);
@@ -120,6 +121,26 @@ export class ChampionshipStandingsComponent {
       return;
     }
     void this.loadStandings(championshipId, true);
+  }
+
+  async refreshCache(): Promise<void> {
+    const championshipId = this.selectedChampionshipId();
+    if (championshipId === null || this.refreshingCache()) {
+      return;
+    }
+    this.refreshingCache.set(true);
+    this.infoMessage.set('');
+    this.errorMessage.set('');
+    try {
+      await firstValueFrom(this.api.refreshCache(championshipId));
+      // Re-load standings with force to pick up the fresh data
+      await this.loadStandings(championshipId, true);
+      this.infoMessage.set('Cache refreshed successfully from SimGrid.');
+    } catch (error) {
+      this.errorMessage.set('Failed to refresh cache from SimGrid.');
+    } finally {
+      this.refreshingCache.set(false);
+    }
   }
 
   openStandingsExportPreview(): void {

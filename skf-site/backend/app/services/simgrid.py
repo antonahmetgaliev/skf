@@ -1,21 +1,27 @@
 """Server-side proxy for The SimGrid API.
 
 Moves the API key and all parsing logic to the backend so the frontend
-never touches SimGrid directly.
+never touches SimGrid directly.  Responses are cached in the database
+for 10 minutes to avoid hammering the SimGrid API.
 """
 
 from __future__ import annotations
 
 import html as html_mod
+import json
+import logging
 import re
-import time
 import unicodedata
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
 from curl_cffi import requests as cf_requests
+from sqlalchemy import select, delete
 
 from app.config import settings
+from app.database import async_session
+from app.models.simgrid_cache import SimgridCache
 from app.schemas.championship import (
     ChampionshipDetails,
     ChampionshipListItem,
@@ -25,8 +31,8 @@ from app.schemas.championship import (
     StandingRace,
 )
 
-_CACHE: dict[int, tuple[float, ChampionshipStandingsData]] = {}
-_CACHE_TTL = 60.0  # seconds
+_CACHE_TTL = timedelta(minutes=10)
+logger = logging.getLogger(__name__)
 
 
 class SimgridService:
@@ -47,24 +53,44 @@ class SimgridService:
     # Public API
     # ------------------------------------------------------------------
 
-    async def get_championships(self, limit: int = 200) -> list[ChampionshipListItem]:
+    async def get_championships(self, limit: int = 200, *, force: bool = False) -> list[ChampionshipListItem]:
+        cache_key = f"championships_list_{limit}"
+
+        if not force:
+            cached = await self._read_cache(cache_key)
+            if cached is not None:
+                return [ChampionshipListItem(**item) for item in cached]
+
         resp = await self._client.get(
             "/api/v1/championships",
             params={"limit": limit, "offset": 0},
         )
         resp.raise_for_status()
-        return [ChampionshipListItem(**item) for item in resp.json()]
+        items = resp.json()
+        await self._write_cache(cache_key, items)
+        return [ChampionshipListItem(**item) for item in items]
 
-    async def get_championship(self, championship_id: int) -> ChampionshipDetails:
+    async def get_championship(self, championship_id: int, *, force: bool = False) -> ChampionshipDetails:
+        cache_key = f"championship_{championship_id}"
+
+        if not force:
+            cached = await self._read_cache(cache_key)
+            if cached is not None:
+                return ChampionshipDetails(**cached)
+
         resp = await self._client.get(f"/api/v1/championships/{championship_id}")
         resp.raise_for_status()
-        return ChampionshipDetails(**resp.json())
+        raw = resp.json()
+        await self._write_cache(cache_key, raw)
+        return ChampionshipDetails(**raw)
 
-    async def get_standings(self, championship_id: int) -> ChampionshipStandingsData:
-        now = time.time()
-        cached = _CACHE.get(championship_id)
-        if cached and now - cached[0] < _CACHE_TTL:
-            return cached[1]
+    async def get_standings(self, championship_id: int, *, force: bool = False) -> ChampionshipStandingsData:
+        cache_key = f"standings_{championship_id}"
+
+        if not force:
+            cached = await self._read_cache(cache_key)
+            if cached is not None:
+                return ChampionshipStandingsData(**cached)
 
         resp = await self._client.get(
             f"/api/v1/championships/{championship_id}/standings"
@@ -87,7 +113,7 @@ class SimgridService:
             except Exception:
                 pass
 
-        _CACHE[championship_id] = (now, data)
+        await self._write_cache(cache_key, data.model_dump())
         return data
 
     # ------------------------------------------------------------------
@@ -456,6 +482,69 @@ class SimgridService:
         if isinstance(value, str) and value.strip():
             return value
         return None
+
+    # ------------------------------------------------------------------
+    # Database cache helpers
+    # ------------------------------------------------------------------
+
+    async def _read_cache(self, key: str) -> dict | list | None:
+        """Return cached JSON data if present and not expired, else None."""
+        try:
+            async with async_session() as session:
+                row = (
+                    await session.execute(
+                        select(SimgridCache).where(SimgridCache.cache_key == key)
+                    )
+                ).scalar_one_or_none()
+                if row is None:
+                    return None
+                age = datetime.now(timezone.utc) - row.fetched_at.replace(
+                    tzinfo=timezone.utc
+                )
+                if age > _CACHE_TTL:
+                    return None
+                return row.data  # type: ignore[return-value]
+        except Exception:
+            logger.warning("DB cache read failed for key=%s", key, exc_info=True)
+            return None
+
+    async def _write_cache(self, key: str, data: Any) -> None:
+        """Upsert a JSON blob into the cache table."""
+        try:
+            async with async_session() as session:
+                existing = (
+                    await session.execute(
+                        select(SimgridCache).where(SimgridCache.cache_key == key)
+                    )
+                ).scalar_one_or_none()
+                now = datetime.now(timezone.utc)
+                if existing:
+                    existing.data = data
+                    existing.fetched_at = now
+                else:
+                    session.add(SimgridCache(cache_key=key, data=data, fetched_at=now))
+                await session.commit()
+        except Exception:
+            logger.warning("DB cache write failed for key=%s", key, exc_info=True)
+
+    async def invalidate_cache(self, championship_id: int | None = None) -> None:
+        """Delete cached entries. If championship_id given, only that one."""
+        try:
+            async with async_session() as session:
+                if championship_id is not None:
+                    await session.execute(
+                        delete(SimgridCache).where(
+                            SimgridCache.cache_key.in_([
+                                f"championship_{championship_id}",
+                                f"standings_{championship_id}",
+                            ])
+                        )
+                    )
+                else:
+                    await session.execute(delete(SimgridCache))
+                await session.commit()
+        except Exception:
+            logger.warning("DB cache invalidation failed", exc_info=True)
 
 
 simgrid_service = SimgridService()

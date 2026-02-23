@@ -67,6 +67,9 @@
             <button class="btn ghost small" type="button" (click)="openStandingsExportPreview()">
               Export 16:9
             </button>
+            <button class="btn ghost small" type="button" [disabled]="refreshingCache()" (click)="refreshCache()">
+              {{ refreshingCache() ? 'Refreshing...' : 'Refresh Cache' }}
+            </button>
             <button class="btn accent small" type="button" (click)="refreshSelectedChampionship()">
               Refresh
             </button>
