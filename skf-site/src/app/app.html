@@ -1,4 +1,22 @@
 <div class="app-shell">
+  @if (auth.isRealSuperAdmin()) {
+    <div class="view-as-bar">
+      <label class="view-as-label" for="viewAsRole">Viewing as</label>
+      <select
+        id="viewAsRole"
+        class="view-as-select"
+        [ngModel]="auth.viewAsRole() ?? 'super_admin'"
+        (ngModelChange)="auth.viewAsRole.set($event === 'super_admin' ? null : $event)"
+      >
+        <option value="super_admin">Super Admin</option>
+        <option value="admin">Admin</option>
+        <option value="driver">Driver</option>
+      </select>
+      @if (auth.viewAsRole() !== null) {
+        <span class="view-as-badge">Preview mode</span>
+      }
+    </div>
+  }
   <header class="site-header">
     <div class="brand">
       <img class="brand-logo" src="skf-logo.png" alt="SKF Racing Hub logo" />
