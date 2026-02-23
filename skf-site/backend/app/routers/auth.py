@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import SESSION_COOKIE, get_current_user
 from app.config import settings
 from app.database import get_db
-from app.models.user import Session, User, UserRole
+from app.models.user import Role, Session, User, ROLE_DRIVER, ROLE_SUPER_ADMIN
 from app.schemas.auth import AuthUrlOut, UserOut
 
 logger = logging.getLogger(__name__)
@@ -93,19 +93,24 @@ async def discord_callback(
 
     if user is None:
         # Determine role – bootstrap super-admin if configured
-        role = UserRole.driver
+        role_name = ROLE_DRIVER
         if (
             settings.super_admin_discord_id
             and discord_id == settings.super_admin_discord_id
         ):
-            role = UserRole.super_admin
+            role_name = ROLE_SUPER_ADMIN
+
+        role_result = await db.execute(
+            select(Role).where(Role.name == role_name)
+        )
+        role_obj = role_result.scalar_one()
 
         user = User(
             discord_id=discord_id,
             username=username,
             display_name=display_name,
             avatar_hash=avatar_hash,
-            role=role,
+            role_id=role_obj.id,
         )
         db.add(user)
     else:
@@ -162,7 +167,7 @@ async def get_me(user: User = Depends(get_current_user)):
         username=user.username,
         display_name=user.display_name,
         avatar_url=user.avatar_url,
-        role=user.role.value,
+        role=user.role.name,
         blocked=user.blocked,
         created_at=user.created_at,
         last_login_at=user.last_login_at,

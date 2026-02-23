@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_admin, require_role
 from app.database import get_db
-from app.models.user import Session, User, UserRole
+from app.models.user import Role, Session, User, ROLE_SUPER_ADMIN
 from app.schemas.auth import UserOut, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -30,7 +30,7 @@ async def list_users(
             username=u.username,
             display_name=u.display_name,
             avatar_url=u.avatar_url,
-            role=u.role.value,
+            role=u.role.name,
             blocked=u.blocked,
             created_at=u.created_at,
             last_login_at=u.last_login_at,
@@ -52,32 +52,34 @@ async def update_user(
         raise HTTPException(status_code=404, detail="User not found.")
 
     # Super-admin protections
-    if target.role == UserRole.super_admin and admin.role != UserRole.super_admin:
+    if target.role.name == ROLE_SUPER_ADMIN and admin.role.name != ROLE_SUPER_ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only a super-admin can modify another super-admin.",
         )
 
     if body.role is not None:
-        try:
-            new_role = UserRole(body.role)
-        except ValueError:
+        role_result = await db.execute(
+            select(Role).where(Role.name == body.role)
+        )
+        new_role = role_result.scalar_one_or_none()
+        if new_role is None:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Invalid role: {body.role}",
             )
         # Only super-admin can grant or revoke super_admin
         if (
-            new_role == UserRole.super_admin or target.role == UserRole.super_admin
-        ) and admin.role != UserRole.super_admin:
+            new_role.name == ROLE_SUPER_ADMIN or target.role.name == ROLE_SUPER_ADMIN
+        ) and admin.role.name != ROLE_SUPER_ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only a super-admin can grant or revoke the super-admin role.",
             )
-        target.role = new_role
+        target.role_id = new_role.id
 
     if body.blocked is not None:
-        if target.role == UserRole.super_admin:
+        if target.role.name == ROLE_SUPER_ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Cannot block a super-admin.",
@@ -93,7 +95,7 @@ async def update_user(
         username=target.username,
         display_name=target.display_name,
         avatar_url=target.avatar_url,
-        role=target.role.value,
+        role=target.role.name,
         blocked=target.blocked,
         created_at=target.created_at,
         last_login_at=target.last_login_at,

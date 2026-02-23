@@ -1,22 +1,34 @@
-"""User & Session models for Discord OAuth."""
+"""User, Role & Session models for Discord OAuth."""
 
 from __future__ import annotations
 
-import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.bwp import Base
 
 
-class UserRole(str, enum.Enum):
-    driver = "driver"
-    admin = "admin"
-    super_admin = "super_admin"
+# ── Role lookup table ────────────────────────────────────────────────
+class Role(Base):
+    __tablename__ = "roles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+
+    users: Mapped[list["User"]] = relationship(back_populates="role", lazy="selectin")
+
+    def __repr__(self) -> str:
+        return f"Role(id={self.id}, name={self.name!r})"
+
+
+# Pre-defined role names (used for seeding & comparisons)
+ROLE_DRIVER = "driver"
+ROLE_ADMIN = "admin"
+ROLE_SUPER_ADMIN = "super_admin"
 
 
 class User(Base):
@@ -31,10 +43,8 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(200), nullable=False)
     display_name: Mapped[str] = mapped_column(String(200), nullable=False, default="")
     avatar_hash: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    role: Mapped[UserRole] = mapped_column(
-        Enum(UserRole, name="user_role", native_enum=False),
-        nullable=False,
-        default=UserRole.driver,
+    role_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("roles.id"), nullable=False
     )
     blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -43,6 +53,8 @@ class User(Base):
     last_login_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+
+    role: Mapped["Role"] = relationship(back_populates="users", lazy="joined")
 
     sessions: Mapped[list["Session"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", lazy="selectin"

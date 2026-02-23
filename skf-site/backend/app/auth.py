@@ -9,10 +9,10 @@ from typing import Callable
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.database import get_db
-from app.models.user import Session, User, UserRole
+from app.models.user import Session, User, ROLE_SUPER_ADMIN
 
 SESSION_COOKIE = "session_id"
 
@@ -32,7 +32,9 @@ async def get_current_user_optional(
 
     result = await db.execute(
         select(Session)
-        .options(selectinload(Session.user))
+        .options(
+            selectinload(Session.user).joinedload(User.role),
+        )
         .where(
             Session.id == session_id,
             Session.expires_at > datetime.now(timezone.utc),
@@ -45,6 +47,7 @@ async def get_current_user_optional(
     user = session.user
     if user.blocked:
         return None
+    # Ensure role is loaded (joined eager load on User.role)
     return user
 
 
@@ -64,7 +67,7 @@ def require_role(*roles: str) -> Callable:
     """Return a FastAPI dependency that checks the user's role."""
 
     async def _check(user: User = Depends(get_current_user)) -> User:
-        if user.role.value not in roles:
+        if user.role.name not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions.",
