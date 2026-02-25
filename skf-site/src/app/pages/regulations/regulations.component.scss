@@ -1,0 +1,240 @@
+:host {
+  display: block;
+}
+
+.page {
+  padding: clamp(1.5rem, 3vw, 3.5rem);
+  position: relative;
+  overflow: hidden;
+}
+
+.page > * {
+  position: relative;
+  z-index: 1;
+}
+
+// ── Hero ─────────────────────────────────────────────────────────
+
+.hero {
+  margin-bottom: 2.5rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.brand-logo {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: var(--sand-strong);
+  padding: 0.4rem;
+  box-shadow: 0 0 24px rgba(244, 196, 48, 0.2);
+  border: 1px solid rgba(244, 196, 48, 0.35);
+  object-fit: cover;
+}
+
+.brand-text {
+  max-width: 520px;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--gold);
+  margin: 0 0 0.35rem;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 3.2vw, 3.6rem);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+// ── Regulation Sections ──────────────────────────────────────────
+
+.reg-section {
+  margin-bottom: 1.5rem;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  padding: clamp(1.25rem, 2.5vw, 2rem);
+  box-shadow: var(--card-shadow);
+  position: relative;
+  overflow: hidden;
+  animation: rise 0.6s ease both;
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+  height: 6px;
+  background: linear-gradient(90deg, rgba(244, 196, 48, 0.7), transparent);
+}
+
+h2 {
+  margin: 0 0 1rem;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  color: var(--ink);
+}
+
+h3 {
+  margin: 1.25rem 0 0.6rem;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+  color: var(--ink-soft);
+}
+
+h4 {
+  margin: 1rem 0 0.5rem;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: clamp(0.85rem, 1.4vw, 0.95rem);
+  color: var(--muted);
+}
+
+// ── Lists ────────────────────────────────────────────────────────
+
+.rules {
+  margin: 0;
+  padding-left: 1.4rem;
+  display: grid;
+  gap: 0.5rem;
+  line-height: 1.65;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.rules.sub {
+  padding-left: 1.6rem;
+}
+
+.rules.deep {
+  padding-left: 1.8rem;
+}
+
+.rules.nested {
+  margin-top: 0.5rem;
+  padding-left: 1.4rem;
+}
+
+.rules li::marker {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.penalty-tiers,
+.protest-requirements {
+  list-style: disc;
+  margin: 0.5rem 0 0;
+  padding-left: 1.4rem;
+  display: grid;
+  gap: 0.35rem;
+  line-height: 1.65;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.penalty-tiers li::marker,
+.protest-requirements li::marker {
+  color: var(--gold);
+}
+
+.tier-intro {
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+// ── Discord Link ─────────────────────────────────────────────────
+
+.discord-link {
+  display: inline-block;
+  margin-top: 0.35rem;
+  color: var(--gold);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(244, 196, 48, 0.4);
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: var(--gold);
+  }
+}
+
+// ── Animation ────────────────────────────────────────────────────
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@for $i from 1 through 12 {
+  .reg-section:nth-child(#{$i + 1}) {
+    animation-delay: #{$i * 0.05}s;
+  }
+}
+
+// ── Responsive ───────────────────────────────────────────────────
+
+@media (max-width: 600px) {
+  .brand {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .brand-logo {
+    width: 64px;
+    height: 64px;
+  }
+
+  .rules {
+    padding-left: 1.2rem;
+  }
+
+  .rules.sub {
+    padding-left: 1.2rem;
+  }
+
+  .rules.deep {
+    padding-left: 1.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+}

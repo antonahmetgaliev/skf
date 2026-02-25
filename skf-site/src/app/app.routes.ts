@@ -7,6 +7,7 @@ import { ChampionshipStandingsComponent } from './pages/championship-standings/c
 import { ProfileComponent } from './pages/profile/profile.component';
 import { RaceResultsComponent } from './pages/race-results/race-results.component';
 import { SkfHistoryComponent } from './pages/skf-history/skf-history.component';
+import { RegulationsComponent } from './pages/regulations/regulations.component';
 
 export const appRoutes: Routes = [
   { path: '', component: HomeVisitComponent },
@@ -16,6 +17,7 @@ export const appRoutes: Routes = [
   { path: 'championship-standings', component: ChampionshipStandingsComponent },
   { path: 'skf-history', component: SkfHistoryComponent },
   { path: 'race-results', component: RaceResultsComponent },
+  { path: 'regulations', component: RegulationsComponent },
   { path: 'profile', component: ProfileComponent },
   { path: 'admin/users', component: AdminUsersComponent, canActivate: [adminGuard] },
   { path: '**', redirectTo: '' }
