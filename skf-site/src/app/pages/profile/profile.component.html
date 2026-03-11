@@ -29,6 +29,12 @@
             <span class="detail-value">{{ user.lastLoginAt | date:'medium' }}</span>
           </div>
         }
+        @if (user.guildNickname) {
+          <div class="detail-row">
+            <span class="detail-label">Name in SKF Racing Hub</span>
+            <span class="detail-value">{{ user.guildNickname }}</span>
+          </div>
+        }
       </div>
 
       <!-- Driver profile section -->
