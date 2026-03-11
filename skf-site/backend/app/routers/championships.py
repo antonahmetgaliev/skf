@@ -28,6 +28,21 @@ async def list_championships(force: bool = Query(False)):
         raise HTTPException(status_code=502, detail=str(exc))
 
 
+@router.get("/raw-cache", include_in_schema=False)
+async def raw_championship_cache(db: AsyncSession = Depends(get_db)):
+    """Debug: return the raw cached SimGrid championship list to inspect field names."""
+    result = await db.execute(
+        select(SimgridCache).where(SimgridCache.cache_key.like("championships_list%"))
+    )
+    row = result.scalars().first()
+    if not row:
+        return {"error": "no cache entry found"}
+    items = row.data
+    if not items:
+        return {"error": "empty cache"}
+    return {"keys": list(items[0].keys()) if items else [], "sample": items[0] if items else {}}
+
+
 @router.get("/driver/{simgrid_driver_id}/results", response_model=list[DriverChampionshipResult])
 async def get_driver_championship_results(
     simgrid_driver_id: int,

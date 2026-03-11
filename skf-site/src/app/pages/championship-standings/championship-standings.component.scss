@@ -112,6 +112,15 @@ h2 {
   }
 }
 
+.championship-button.championship--future {
+  border-color: rgba(100, 180, 255, 0.5);
+  background: rgba(100, 180, 255, 0.06);
+
+  .championship-name {
+    color: #4a9fd4;
+  }
+}
+
 .championship-button.championship--finished {
   opacity: 0.45;
 

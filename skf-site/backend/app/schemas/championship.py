@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, model_validator
 from pydantic.alias_generators import to_camel
 
 
@@ -23,6 +25,24 @@ class ChampionshipListItem(CamelModel):
     start_date: str | None = None
     end_date: str | None = None
     accepting_registrations: bool = False
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalise_date_aliases(cls, data: Any) -> Any:
+        """Map alternative SimGrid date field names into our canonical names."""
+        if not isinstance(data, dict):
+            return data
+        if not data.get("start_date") and not data.get("startDate"):
+            for alt in ("starts_at", "startsAt", "start_at", "startAt"):
+                if data.get(alt):
+                    data["start_date"] = data[alt]
+                    break
+        if not data.get("end_date") and not data.get("endDate"):
+            for alt in ("ends_at", "endsAt", "end_at", "endAt"):
+                if data.get(alt):
+                    data["end_date"] = data[alt]
+                    break
+        return data
 
 
 class ChampionshipDetails(CamelModel):

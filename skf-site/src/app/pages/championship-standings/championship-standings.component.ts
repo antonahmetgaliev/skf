@@ -77,22 +77,22 @@ export class ChampionshipStandingsComponent {
 
   private getStatusOrder(item: ChampionshipListItem): number {
     const today = new Date().toISOString().slice(0, 10);
-    // Definitely finished if end date is in the past
-    if (item.endDate && item.endDate < today) return 2;
-    // Definitely upcoming if start date is in the future
+    // Confirmed finished: has an end date and it's in the past
+    if (item.endDate && item.endDate < today) return 3;
+    // Confirmed future: has a start date and it hasn't arrived yet
     if (item.startDate && item.startDate > today) return 1;
-    // Active if still accepting registrations or has a current end date
+    // Confirmed active: registration window is open (season in progress or opening soon)
     if (item.acceptingRegistrations) return 0;
-    // No end date + not accepting + start date is past = old finished championship
-    if (!item.endDate && !item.acceptingRegistrations) return 2;
-    return 0;
+    // Ambiguous (no reliable dates, regs closed) – don't gray out, just show neutral
+    return 2;
   }
 
   getChampionshipStatusClass(item: ChampionshipListItem): string {
     const order = this.getStatusOrder(item);
     if (order === 0) return 'championship--active';
     if (order === 1) return 'championship--future';
-    return 'championship--finished';
+    if (order === 3) return 'championship--finished';
+    return ''; // order === 2: ambiguous, no special styling
   }
 
   async loadChampionships(): Promise<void> {
