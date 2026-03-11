@@ -32,13 +32,26 @@
         <div class="detail-row">
           <span class="detail-label">Name in SKF Racing Hub</span>
           <span class="detail-value guild-nickname-row">
-            <span>{{ user.guildNickname || '—' }}</span>
-            <button
-              class="btn ghost tiny"
-              type="button"
-              [disabled]="syncingNickname()"
-              (click)="syncGuildNickname()"
-            >{{ syncingNickname() ? 'Syncing…' : 'Sync' }}</button>
+            @if (editingNickname()) {
+              <input
+                class="nickname-input"
+                type="text"
+                [(ngModel)]="editNicknameValue"
+                (keydown.enter)="saveNickname()"
+                (keydown.escape)="cancelEditNickname()"
+                autofocus
+              />
+              <button class="btn ghost tiny" type="button" [disabled]="savingNickname()" (click)="saveNickname()">
+                {{ savingNickname() ? 'Saving…' : 'Save' }}
+              </button>
+              <button class="btn ghost tiny" type="button" (click)="cancelEditNickname()">Cancel</button>
+            } @else {
+              <span>{{ user.guildNickname || '—' }}</span>
+              <button class="btn ghost tiny" type="button" (click)="startEditNickname()">Edit</button>
+              <button class="btn ghost tiny" type="button" [disabled]="syncingNickname()" (click)="syncGuildNickname()">
+                {{ syncingNickname() ? 'Syncing…' : 'Sync' }}
+              </button>
+            }
           </span>
         </div>
       </div>

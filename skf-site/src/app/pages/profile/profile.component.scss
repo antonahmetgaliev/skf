@@ -135,6 +135,22 @@
   gap: 0.6rem;
 }
 
+.nickname-input {
+  border: 1px solid rgba(20, 18, 15, 0.25);
+  border-radius: 8px;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: transparent;
+  outline: none;
+  width: 18rem;
+  max-width: 100%;
+
+  &:focus {
+    border-color: var(--gold-deep);
+  }
+}
+
 .profile-actions {
   display: flex;
   gap: 0.75rem;

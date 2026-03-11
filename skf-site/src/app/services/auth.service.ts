@@ -75,6 +75,11 @@ export class AuthService {
     return this.http.post<AuthUser>('/api/auth/refresh-guild-nickname', null);
   }
 
+  /** Manually set the user's racing/guild name. */
+  updateGuildNickname(name: string): Observable<AuthUser> {
+    return this.http.patch<AuthUser>('/api/auth/guild-nickname', { guildNickname: name });
+  }
+
   /** End the current session. */
   logout(): void {
     this.http.post('/api/auth/logout', null).subscribe({

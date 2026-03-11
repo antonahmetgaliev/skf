@@ -1,12 +1,13 @@
 import { DatePipe } from '@angular/common';
 import { Component, effect, inject, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { DriverPublic, LinkCandidate, ProfileApiService } from '../../services/profile-api.service';
 
 @Component({
   selector: 'app-profile',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, FormsModule],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
 })
@@ -20,6 +21,9 @@ export class ProfileComponent implements OnInit {
   readonly linking = signal(false);
   readonly linkError = signal('');
   readonly syncingNickname = signal(false);
+  readonly editingNickname = signal(false);
+  editNicknameValue = '';
+  readonly savingNickname = signal(false);
 
   readonly linkedDriver = signal<DriverPublic | null>(null);
   readonly loadingDriver = signal(false);
@@ -121,6 +125,29 @@ export class ProfileComponent implements OnInit {
         this.syncingNickname.set(false);
       },
       error: () => this.syncingNickname.set(false),
+    });
+  }
+
+  startEditNickname(): void {
+    this.editNicknameValue = this.auth.user()?.guildNickname ?? '';
+    this.editingNickname.set(true);
+  }
+
+  cancelEditNickname(): void {
+    this.editingNickname.set(false);
+  }
+
+  saveNickname(): void {
+    const name = this.editNicknameValue.trim();
+    if (!name) return;
+    this.savingNickname.set(true);
+    this.auth.updateGuildNickname(name).subscribe({
+      next: (user) => {
+        this.auth.user.set(user);
+        this.savingNickname.set(false);
+        this.editingNickname.set(false);
+      },
+      error: () => this.savingNickname.set(false),
     });
   }
 

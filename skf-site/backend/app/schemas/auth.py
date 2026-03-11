@@ -28,6 +28,10 @@ class UserOut(CamelModel):
 
 class UserUpdate(CamelModel):
     role: str | None = None
+
+
+class GuildNicknameUpdate(CamelModel):
+    guild_nickname: str
     blocked: bool | None = None
 
 

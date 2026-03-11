@@ -17,7 +17,7 @@ from app.auth import SESSION_COOKIE, get_current_user
 from app.config import settings
 from app.database import get_db
 from app.models.user import Role, Session, User, ROLE_DRIVER, ROLE_SUPER_ADMIN
-from app.schemas.auth import AuthUrlOut, UserOut
+from app.schemas.auth import AuthUrlOut, UserOut, GuildNicknameUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -196,6 +196,37 @@ async def get_me(
 
     result = await db.execute(select(Driver).where(Driver.user_id == user.id))
     linked_driver = result.scalar_one_or_none()
+    return UserOut(
+        id=user.id,
+        discord_id=user.discord_id,
+        username=user.username,
+        display_name=user.display_name,
+        guild_nickname=user.guild_nickname,
+        avatar_url=user.avatar_url,
+        role=user.role.name,
+        blocked=user.blocked,
+        created_at=user.created_at,
+        last_login_at=user.last_login_at,
+        driver_id=linked_driver.id if linked_driver else None,
+    )
+
+
+@router.patch("/guild-nickname", response_model=UserOut)
+async def update_guild_nickname(
+    body: GuildNicknameUpdate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Allow the current user to manually set their racing/guild name."""
+    name = body.guild_nickname.strip()
+    if not name:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Name cannot be empty.")
+    user.guild_nickname = name
+    await db.commit()
+
+    from app.models.bwp import Driver as DriverModel
+    drv_result = await db.execute(select(DriverModel).where(DriverModel.user_id == user.id))
+    linked_driver = drv_result.scalar_one_or_none()
     return UserOut(
         id=user.id,
         discord_id=user.discord_id,
