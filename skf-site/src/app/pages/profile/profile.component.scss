@@ -171,3 +171,204 @@
     transform: translateY(0);
   }
 }
+
+/* ── Driver section ── */
+
+.driver-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(20, 18, 15, 0.1);
+}
+
+.section-title {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+}
+
+.driver-card {
+  background: rgba(20, 18, 15, 0.04);
+  border: 1px solid rgba(20, 18, 15, 0.1);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.driver-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.driver-name-link {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  text-decoration: none;
+
+  &:hover { color: var(--gold-deep); }
+}
+
+.driver-country {
+  margin-left: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bwp-badge {
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  background: rgba(20, 18, 15, 0.08);
+  color: var(--ink);
+
+  &.bwp-active {
+    background: rgba(185, 71, 46, 0.15);
+    color: var(--danger);
+  }
+}
+
+.driver-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.no-driver {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.loading-row {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ── Modal ── */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(10, 14, 20, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  backdrop-filter: blur(4px);
+  animation: rise 0.2s ease;
+}
+
+.modal-panel {
+  background: var(--surface, #fff);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 1.75rem;
+  width: min(480px, 100%);
+  box-shadow: 0 32px 64px rgba(10, 14, 20, 0.25);
+  display: grid;
+  gap: 1rem;
+}
+
+.modal-title {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+}
+
+.candidates {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.candidate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(20, 18, 15, 0.04);
+  border: 1px solid rgba(20, 18, 15, 0.1);
+  border-radius: 12px;
+}
+
+.candidate-info {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.candidate-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.candidate-meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(20, 18, 15, 0.08);
+}
+
+.form-error {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.btn.ghost {
+  background: transparent;
+  border: 1px solid rgba(20, 18, 15, 0.2);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.btn.ghost:hover {
+  border-color: var(--gold);
+  background: rgba(243, 180, 25, 0.08);
+}
+
+.btn.small {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.72rem;
+}
+
+.danger-ghost {
+  color: var(--danger) !important;
+  border-color: rgba(185, 71, 46, 0.3) !important;
+
+  &:hover {
+    background: rgba(185, 71, 46, 0.08) !important;
+    border-color: var(--danger) !important;
+  }
+}

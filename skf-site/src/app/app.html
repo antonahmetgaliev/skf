@@ -60,4 +60,9 @@
   <main class="site-main">
     <router-outlet></router-outlet>
   </main>
+  @if (loadingService.loading()) {
+    <div class="loading-overlay" role="status" aria-label="Loading">
+      <div class="loading-spinner"></div>
+    </div>
+  }
 </div>

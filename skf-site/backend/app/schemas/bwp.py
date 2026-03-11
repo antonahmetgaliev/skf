@@ -48,6 +48,10 @@ class DriverOut(CamelModel):
 
     id: uuid.UUID
     name: str
+    simgrid_driver_id: int | None = None
+    simgrid_display_name: str | None = None
+    country_code: str | None = None
+    user_id: uuid.UUID | None = None
     created_at: datetime
     points: list[BwpPointOut] = []
     clearances: list[PenaltyClearanceOut] = []
@@ -58,6 +62,28 @@ class DriverBrief(CamelModel):
 
     id: uuid.UUID
     name: str
+
+
+class LinkCandidateOut(CamelModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    simgrid_display_name: str | None = None
+    country_code: str | None = None
+
+
+class DriverPublicOut(CamelModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    simgrid_driver_id: int | None = None
+    simgrid_display_name: str | None = None
+    country_code: str | None = None
+    created_at: datetime
+    points: list[BwpPointOut] = []
+    clearances: list[PenaltyClearanceOut] = []
 
 
 # ---------------------------------------------------------------------------

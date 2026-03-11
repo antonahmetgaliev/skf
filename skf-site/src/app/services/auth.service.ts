@@ -11,6 +11,7 @@ export interface AuthUser {
   blocked: boolean;
   createdAt: string;
   lastLoginAt: string | null;
+  driverId: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

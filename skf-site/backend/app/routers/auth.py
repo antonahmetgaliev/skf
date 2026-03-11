@@ -159,8 +159,15 @@ async def discord_callback(
 
 
 @router.get("/me", response_model=UserOut)
-async def get_me(user: User = Depends(get_current_user)):
+async def get_me(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     """Return the currently authenticated user."""
+    from app.models.bwp import Driver
+
+    result = await db.execute(select(Driver).where(Driver.user_id == user.id))
+    linked_driver = result.scalar_one_or_none()
     return UserOut(
         id=user.id,
         discord_id=user.discord_id,
@@ -171,6 +178,7 @@ async def get_me(user: User = Depends(get_current_user)):
         blocked=user.blocked,
         created_at=user.created_at,
         last_login_at=user.last_login_at,
+        driver_id=linked_driver.id if linked_driver else None,
     )
 
 

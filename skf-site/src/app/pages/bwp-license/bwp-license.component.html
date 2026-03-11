@@ -19,17 +19,34 @@
       <div class="card delay-1">
         <h2>Add driver</h2>
         <form class="form" (ngSubmit)="addDriver()">
-          <label for="driverName">Driver name</label>
-          <input
-            id="driverName"
-            name="driverName"
-            type="text"
-            placeholder="Andrea Muscarella"
-            [(ngModel)]="newDriverName"
-            autocomplete="off"
+          <label for="newDriverSelect">Driver</label>
+          <select
+            id="newDriverSelect"
+            name="newDriverSelect"
+            [ngModel]="newDriverSelection()"
+            (ngModelChange)="newDriverSelection.set($event)"
             required
-          />
-          <button class="btn accent" type="submit">Add driver</button>
+          >
+            <option value="__none__" disabled>Select a driver…</option>
+            @for (driver of sortedDrivers(); track driver.id) {
+              <option [value]="driver.id">{{ driver.name }}</option>
+            }
+            <option value="__new__">── Add new driver ──</option>
+          </select>
+          @if (newDriverSelection() === '__new__') {
+            <input
+              id="newDriverName"
+              name="newDriverName"
+              type="text"
+              placeholder="Andrea Muscarella"
+              [(ngModel)]="newDriverNameOverride"
+              autocomplete="off"
+              required
+            />
+          }
+          <button class="btn accent" type="submit">
+            {{ newDriverSelection() === '__new__' ? 'Create driver' : 'Select driver' }}
+          </button>
         </form>
         @if (driverError) {
           <p class="form-error">{{ driverError }}</p>
@@ -164,7 +181,7 @@
             <article class="driver">
               <header class="driver-header">
                 <div>
-                  <h3>{{ driver.name }}</h3>
+                  <h3><a [routerLink]="['/drivers', driver.id]" class="driver-name-link">{{ driver.name }}</a></h3>
                   <p class="driver-meta">
                     {{ getActivePoints(driver).length }} active points -
                     {{ getTotalPoints(driver) }} BWP

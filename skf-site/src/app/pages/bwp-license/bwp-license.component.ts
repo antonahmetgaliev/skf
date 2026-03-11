@@ -1,5 +1,6 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import {
   BwpApiService,
   BwpPoint,
@@ -12,7 +13,7 @@ type SortMode = 'bwp-desc' | 'bwp-asc' | 'name-asc' | 'name-desc';
 
 @Component({
   selector: 'app-bwp-license',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './bwp-license.component.html',
   styleUrl: './bwp-license.component.scss'
 })
@@ -62,7 +63,8 @@ export class BwpLicenseComponent {
     return sorted;
   });
 
-  newDriverName = '';
+  newDriverSelection = signal<string>('__none__'); // '__none__' | '__new__' | driverId
+  newDriverNameOverride = '';
   selectedDriverId = '';
   pointValue = 3;
   pointDate = this.formatInputDate(new Date());
@@ -119,29 +121,39 @@ export class BwpLicenseComponent {
   // ── Drivers ──────────────────────────────────────────────────────
 
   addDriver(): void {
-    const name = this.newDriverName.trim();
-    if (!name) {
-      this.driverError = 'Enter a driver name to continue.';
-      return;
-    }
+    const selection = this.newDriverSelection();
 
-    this.driverError = '';
-    this.api.createDriver(name).subscribe({
-      next: (driver) => {
-        this.drivers.update((list) => [...list, driver]);
-        this.collapsedDrivers.update((set) => {
-          const next = new Set(set);
-          next.add(driver.id);
-          return next;
-        });
-        this.newDriverName = '';
-        this.selectedDriverId = driver.id;
-      },
-      error: (err) => {
-        this.driverError =
-          err?.error?.detail ?? 'Failed to add driver.';
+    if (selection === '__new__') {
+      const name = this.newDriverNameOverride.trim();
+      if (!name) {
+        this.driverError = 'Enter a driver name to continue.';
+        return;
       }
-    });
+      this.driverError = '';
+      this.api.createDriver(name).subscribe({
+        next: (driver) => {
+          this.drivers.update((list) => [...list, driver]);
+          this.collapsedDrivers.update((set) => {
+            const next = new Set(set);
+            next.add(driver.id);
+            return next;
+          });
+          this.newDriverNameOverride = '';
+          this.newDriverSelection.set('__none__');
+          this.selectedDriverId = driver.id;
+        },
+        error: (err) => {
+          this.driverError = err?.error?.detail ?? 'Failed to add driver.';
+        }
+      });
+    } else if (selection !== '__none__') {
+      // Driver already in DB — just set them as selected for the points form
+      this.selectedDriverId = selection;
+      this.newDriverSelection.set('__none__');
+      this.driverError = '';
+    } else {
+      this.driverError = 'Select a driver or choose \'Add new driver\'.';
+    }
   }
 
   deleteDriver(driverId: string): void {

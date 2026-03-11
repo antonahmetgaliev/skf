@@ -31,6 +31,49 @@
         }
       </div>
 
+      <!-- Driver profile section -->
+      <div class="driver-section">
+        <h2 class="section-title">Driver Profile</h2>
+        @if (user.driverId) {
+          @if (loadingDriver()) {
+            <p class="loading-row">Loading driver data…</p>
+          } @else if (linkedDriver(); as driver) {
+            <div class="driver-card">
+              <div class="driver-card-header">
+                <div>
+                  <a class="driver-name-link" [routerLink]="['/drivers', driver.id]">{{ driver.name }}</a>
+                  @if (driver.countryCode) {
+                    <span class="driver-country">{{ driver.countryCode }}</span>
+                  }
+                </div>
+                <span class="bwp-badge" [class.bwp-active]="getActiveBwp(driver) > 0">
+                  {{ getActiveBwp(driver) }} BWP
+                </span>
+              </div>
+              @if (driver.simgridDisplayName && driver.simgridDisplayName !== driver.name) {
+                <div class="detail-row">
+                  <span class="detail-label">SimGrid name</span>
+                  <span class="detail-value">{{ driver.simgridDisplayName }}</span>
+                </div>
+              }
+              <div class="driver-card-actions">
+                <a class="btn ghost small" [routerLink]="['/drivers', driver.id]">View full profile</a>
+                <button class="btn ghost small danger-ghost" type="button" (click)="unlinkDriver()">Unlink</button>
+              </div>
+            </div>
+          }
+        } @else {
+          @if (loadingCandidates()) {
+            <p class="loading-row">Searching for matches…</p>
+          } @else {
+            <div class="no-driver">
+              <p class="hint">No driver profile linked to your account yet.</p>
+              <button class="btn accent small" type="button" (click)="fetchLinkCandidates()">Find my profile</button>
+            </div>
+          }
+        }
+      </div>
+
       <div class="profile-actions">
         <button class="btn danger" type="button" (click)="logout()">Logout</button>
       </div>
@@ -42,3 +85,47 @@
     </div>
   }
 </div>
+
+<!-- Link Driver Modal -->
+@if (showLinkModal()) {
+  <div class="modal-backdrop" (click)="skipLink()">
+    <div class="modal-panel" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">Link your driver profile</h2>
+          <p class="hint">We found the following matches for <strong>{{ auth.user()?.displayName }}</strong>. Select the correct one to link your account:</p>
+        </div>
+      </div>
+      <div class="candidates">
+        @for (candidate of linkCandidates(); track candidate.id) {
+          <div class="candidate">
+            <div class="candidate-info">
+              <span class="candidate-name">{{ candidate.name }}</span>
+              @if (candidate.simgridDisplayName && candidate.simgridDisplayName !== candidate.name) {
+                <span class="candidate-meta">SimGrid: {{ candidate.simgridDisplayName }}</span>
+              }
+              @if (candidate.countryCode) {
+                <span class="candidate-meta">{{ candidate.countryCode }}</span>
+              }
+            </div>
+            <button
+              class="btn accent small"
+              type="button"
+              [disabled]="linking()"
+              (click)="confirmLink(candidate.id)"
+            >
+              {{ linking() ? 'Linking…' : 'Link' }}
+            </button>
+          </div>
+        }
+      </div>
+      @if (linkError()) {
+        <p class="form-error">{{ linkError() }}</p>
+      }
+      <div class="modal-footer">
+        <button class="btn ghost" type="button" (click)="skipLink()">Skip for now</button>
+      </div>
+    </div>
+  </div>
+}
+

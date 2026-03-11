@@ -1,0 +1,84 @@
+<div class="page">
+  @if (error()) {
+    <div class="card error-card">
+      <p>{{ error() }}</p>
+      <a class="btn ghost" routerLink="/bwp-license">Back to BWP License</a>
+    </div>
+  } @else if (driver(); as d) {
+    <div class="driver-page-card card">
+
+      <div class="driver-header">
+        <div class="driver-identity">
+          <div class="driver-avatar">
+            {{ d.name.charAt(0).toUpperCase() }}
+          </div>
+          <div>
+            <h1>{{ d.name }}</h1>
+            @if (d.countryCode) {
+              <span class="country-tag">{{ d.countryCode }}</span>
+            }
+            @if (d.simgridDisplayName && d.simgridDisplayName !== d.name) {
+              <p class="simgrid-name">SimGrid: {{ d.simgridDisplayName }}</p>
+            }
+          </div>
+        </div>
+        <div class="bwp-summary">
+          <span class="bwp-value" [class.bwp-active]="getActiveBwp(d) > 0">{{ getActiveBwp(d) }}</span>
+          <span class="bwp-label">Active BWP</span>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat">
+          <span class="stat-value">{{ d.points.length }}</span>
+          <span class="stat-label">Total points issued</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">{{ getActivePoints(d).length }}</span>
+          <span class="stat-label">Active entries</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">{{ getExpiredPoints(d).length }}</span>
+          <span class="stat-label">Expired entries</span>
+        </div>
+      </div>
+
+      @if (d.points.length === 0) {
+        <p class="empty">No BWP points recorded for this driver.</p>
+      } @else {
+        <div class="points-section">
+          <h2>BWP History</h2>
+          <div class="points-table">
+            <div class="points-header" aria-hidden="true">
+              <span>Points</span>
+              <span>Issued</span>
+              <span>Expires</span>
+              <span>Status</span>
+            </div>
+            @for (point of d.points; track point.id) {
+              <div class="point-row" [class.expired]="isExpired(point.expiresOn)">
+                <span class="point-value">{{ point.points }} BWP</span>
+                <span>{{ point.issuedOn | date:'dd MMM yyyy' }}</span>
+                <span>{{ point.expiresOn | date:'dd MMM yyyy' }}</span>
+                <span class="status-tag" [class.status-expired]="isExpired(point.expiresOn)">
+                  {{ isExpired(point.expiresOn) ? 'Expired' : 'Active' }}
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="page-actions">
+        <a class="btn ghost" routerLink="/bwp-license">BWP License</a>
+        <a class="btn ghost" routerLink="/championship-standings">Standings</a>
+      </div>
+
+    </div>
+  } @else {
+    <!-- loading state handled by global overlay -->
+    <div class="card loading-card">
+      <p class="loading-row">Loading driver profile…</p>
+    </div>
+  }
+</div>
