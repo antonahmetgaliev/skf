@@ -35,7 +35,7 @@ async def discord_login_url():
         "client_id": settings.discord_client_id,
         "redirect_uri": settings.discord_redirect_uri,
         "response_type": "code",
-        "scope": "identify",
+        "scope": "identify guilds.members.read",
     }
     return AuthUrlOut(url=f"{DISCORD_AUTH_URL}?{urlencode(params)}")
 
@@ -87,14 +87,15 @@ async def discord_callback(
     display_name = discord_user.get("global_name") or username
     avatar_hash = discord_user.get("avatar")
 
-    # 3a. Optionally fetch the user's server nickname from the SKF guild.
-    # Priority: server nick → member's global_name → OAuth global_name (display_name)
+    # 3a. Fetch the user's server nickname using their own bearer token.
+    # guilds.members.read scope lets us call /users/@me/guilds/{id}/member directly.
+    # Priority: server nick (nick) → member's global_name → display_name fallback
     guild_nickname: str | None = None
-    if settings.discord_guild_id and settings.discord_bot_token:
-        async with httpx.AsyncClient() as bot_client:
-            member_resp = await bot_client.get(
-                f"https://discord.com/api/guilds/{settings.discord_guild_id}/members/{discord_id}",
-                headers={"Authorization": f"Bot {settings.discord_bot_token}"},
+    if settings.discord_guild_id:
+        async with httpx.AsyncClient() as bearer_client:
+            member_resp = await bearer_client.get(
+                f"https://discord.com/api/users/@me/guilds/{settings.discord_guild_id}/member",
+                headers={"Authorization": f"Bearer {access_token}"},
             )
             if member_resp.status_code == 200:
                 member_data = member_resp.json()
@@ -103,11 +104,18 @@ async def discord_callback(
                     or member_data.get("user", {}).get("global_name")
                     or None
                 )
+                logger.info(
+                    "Guild member fetch OK for %s: nick=%r global_name=%r",
+                    discord_id,
+                    member_data.get("nick"),
+                    member_data.get("user", {}).get("global_name"),
+                )
             else:
                 logger.warning(
-                    "Could not fetch guild member for %s: %s",
+                    "Guild member fetch failed for %s (status %s): %s",
                     discord_id,
                     member_resp.status_code,
+                    member_resp.text,
                 )
     # Final fallback: use the Discord global display name so it's never empty
     if guild_nickname is None:
@@ -247,11 +255,14 @@ async def refresh_guild_nickname(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Re-fetch and update the current user's guild nickname from Discord."""
-    if not settings.discord_guild_id or not settings.discord_bot_token:
-        # No bot configured — fall back to the user's global display name
-        user.guild_nickname = user.display_name or None
-    else:
+    """Re-fetch the current user's guild nickname via bot token."""
+    if not settings.discord_guild_id:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="DISCORD_GUILD_ID is not configured on the server.",
+        )
+
+    if settings.discord_bot_token:
         async with httpx.AsyncClient() as client:
             member_resp = await client.get(
                 f"https://discord.com/api/guilds/{settings.discord_guild_id}/members/{user.discord_id}",
@@ -265,13 +276,26 @@ async def refresh_guild_nickname(
                     or user.display_name
                     or None
                 )
+                logger.info(
+                    "Bot guild member fetch for %s: nick=%r global_name=%r → saved %r",
+                    user.discord_id,
+                    member_data.get("nick"),
+                    member_data.get("user", {}).get("global_name"),
+                    user.guild_nickname,
+                )
             elif member_resp.status_code == 404:
                 user.guild_nickname = user.display_name or None
             else:
                 raise HTTPException(
                     status_code=status.HTTP_502_BAD_GATEWAY,
-                    detail="Failed to fetch guild member data from Discord.",
+                    detail=f"Discord API returned {member_resp.status_code}.",
                 )
+    else:
+        # No bot token — bearer token from OAuth is not stored, user must re-login.
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="No bot token configured. Log out and log back in to refresh your guild name.",
+        )
 
     await db.commit()
 

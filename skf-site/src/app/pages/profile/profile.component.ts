@@ -124,7 +124,15 @@ export class ProfileComponent implements OnInit {
         this.auth.user.set(user);
         this.syncingNickname.set(false);
       },
-      error: () => this.syncingNickname.set(false),
+      error: (err) => {
+        this.syncingNickname.set(false);
+        const detail: string = err?.error?.detail ?? '';
+        if (detail.toLowerCase().includes('log out')) {
+          if (window.confirm('Guild name can only be refreshed by logging out and back in. Log out now?')) {
+            this.auth.logout();
+          }
+        }
+      },
     });
   }
 
