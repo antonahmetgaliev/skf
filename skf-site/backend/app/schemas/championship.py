@@ -70,3 +70,14 @@ class StandingRace(CamelModel):
 class ChampionshipStandingsData(CamelModel):
     entries: list[StandingEntry] = []
     races: list[StandingRace] = []
+
+
+class DriverChampionshipResult(CamelModel):
+    championship_id: int
+    championship_name: str
+    position: int | None = None
+    score: float = 0
+    dsq: bool = False
+    start_date: str | None = None
+    end_date: str | None = None
+    accepting_registrations: bool = False

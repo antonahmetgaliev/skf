@@ -77,9 +77,15 @@ export class ChampionshipStandingsComponent {
 
   private getStatusOrder(item: ChampionshipListItem): number {
     const today = new Date().toISOString().slice(0, 10);
-    if (item.endDate && item.endDate < today) return 2; // finished
-    if (item.startDate && item.startDate > today) return 1; // upcoming
-    return 0; // active
+    // Definitely finished if end date is in the past
+    if (item.endDate && item.endDate < today) return 2;
+    // Definitely upcoming if start date is in the future
+    if (item.startDate && item.startDate > today) return 1;
+    // Active if still accepting registrations or has a current end date
+    if (item.acceptingRegistrations) return 0;
+    // No end date + not accepting + start date is past = old finished championship
+    if (!item.endDate && !item.acceptingRegistrations) return 2;
+    return 0;
   }
 
   getChampionshipStatusClass(item: ChampionshipListItem): string {

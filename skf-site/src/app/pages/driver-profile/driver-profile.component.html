@@ -69,7 +69,36 @@
         </div>
       }
 
+      @if (championshipResults().length > 0) {
+        <div class="championships-section">
+          <h2>Championship Results</h2>
+          <div class="champ-list">
+            @for (result of championshipResults(); track result.championshipId) {
+              <div class="champ-row" [class.champ-finished]="isFinishedChampionship(result)">
+                <div class="champ-meta">
+                  <span class="champ-name">{{ result.championshipName }}</span>
+                  @if (!isFinishedChampionship(result)) {
+                    <span class="champ-status-tag active">Active</span>
+                  }
+                </div>
+                <div class="champ-result">
+                  @if (getPositionBadge(result); as badge) {
+                    <span class="position-badge" [attr.data-badge]="badge">
+                      {{ getPositionLabel(result) }}
+                    </span>
+                  } @else {
+                    <span class="position-plain">{{ getPositionLabel(result) }}</span>
+                  }
+                  <span class="champ-score">{{ result.score | number:'1.0-1' }} pts</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
       <div class="page-actions">
+        <a class="btn ghost" routerLink="/drivers">All Drivers</a>
         <a class="btn ghost" routerLink="/bwp-license">BWP License</a>
         <a class="btn ghost" routerLink="/championship-standings">Standings</a>
       </div>

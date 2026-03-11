@@ -3,6 +3,7 @@ import { adminGuard } from './guards/admin.guard';
 import { AdminUsersComponent } from './pages/admin-users/admin-users.component';
 import { BwpLicenseComponent } from './pages/bwp-license/bwp-license.component';
 import { DriverProfileComponent } from './pages/driver-profile/driver-profile.component';
+import { DriversListComponent } from './pages/drivers-list/drivers-list.component';
 import { HomeVisitComponent } from './pages/home-visit/home-visit.component';
 import { ChampionshipStandingsComponent } from './pages/championship-standings/championship-standings.component';
 import { ProfileComponent } from './pages/profile/profile.component';
@@ -20,6 +21,7 @@ export const appRoutes: Routes = [
   { path: 'race-results', component: RaceResultsComponent },
   { path: 'regulations', component: RegulationsComponent },
   { path: 'profile', component: ProfileComponent },
+  { path: 'drivers', component: DriversListComponent },
   { path: 'drivers/:id', component: DriverProfileComponent },
   { path: 'admin/users', component: AdminUsersComponent, canActivate: [adminGuard] },
   { path: '**', redirectTo: '' }

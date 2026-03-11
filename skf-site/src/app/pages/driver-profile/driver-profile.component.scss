@@ -249,6 +249,123 @@ h1 {
   border-top: 1px solid rgba(20, 18, 15, 0.08);
 }
 
+/* ── Championship results ── */
+
+.championships-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(20, 18, 15, 0.08);
+
+  h2 {
+    margin: 0 0 0.85rem;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+  }
+}
+
+.champ-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.champ-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(20, 18, 15, 0.1);
+  background: rgba(20, 18, 15, 0.03);
+  transition: opacity 0.2s;
+
+  &.champ-finished {
+    opacity: 0.55;
+  }
+}
+
+.champ-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.champ-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.champ-status-tag {
+  flex-shrink: 0;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
+  &.active {
+    background: rgba(243, 180, 25, 0.15);
+    color: var(--gold-deep);
+    border: 1px solid rgba(243, 180, 25, 0.35);
+  }
+}
+
+.champ-result {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.position-badge {
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+
+  &[data-badge='champion'] {
+    background: linear-gradient(135deg, #f3b419, #d49a10);
+    color: #2b2214;
+    box-shadow: 0 2px 8px rgba(243, 180, 25, 0.4);
+  }
+
+  &[data-badge='top2'] {
+    background: linear-gradient(135deg, #c0c0c0, #a0a0a0);
+    color: #1a1a1a;
+  }
+
+  &[data-badge='top3'] {
+    background: linear-gradient(135deg, #cd7f32, #a0632a);
+    color: #fff;
+  }
+}
+
+.position-plain {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+.champ-score {
+  font-size: 0.78rem;
+  color: var(--muted);
+  min-width: 4rem;
+  text-align: right;
+}
+
 .empty {
   color: var(--muted);
   font-size: 0.9rem;
