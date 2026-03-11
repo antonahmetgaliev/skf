@@ -24,6 +24,7 @@ class Driver(Base):
         String(200), nullable=True
     )
     country_code: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    photo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),

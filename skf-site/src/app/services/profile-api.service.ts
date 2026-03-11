@@ -15,6 +15,7 @@ export interface DriverPublic {
   simgridDriverId: number | null;
   simgridDisplayName: string | null;
   countryCode: string | null;
+  photoUrl: string | null;
   createdAt: string;
   points: Array<{
     id: string;
@@ -68,5 +69,9 @@ export class ProfileApiService {
 
   getDriverChampionshipResults(simgridDriverId: number): Observable<DriverChampionshipResult[]> {
     return this.http.get<DriverChampionshipResult[]>(`/api/championships/driver/${simgridDriverId}/results`);
+  }
+
+  updateDriverPhoto(photoUrl: string | null): Observable<DriverPublic> {
+    return this.http.patch<DriverPublic>(`${this.base}/me/driver-photo`, { photo_url: photoUrl });
   }
 }

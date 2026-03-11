@@ -11,7 +11,7 @@
 }
 
 .profile-card {
-  width: min(520px, 100%);
+  width: min(680px, 100%);
   animation: rise 0.6s ease both;
 }
 
@@ -154,6 +154,9 @@
 .profile-actions {
   display: flex;
   gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(20, 18, 15, 0.1);
 }
 
 .btn {
@@ -194,7 +197,7 @@
   }
 }
 
-/* ── Driver section ── */
+/* ── Driver section (expanded inline) ── */
 
 .driver-section {
   margin-top: 1.5rem;
@@ -211,36 +214,87 @@
   color: var(--muted);
 }
 
-.driver-card {
-  background: rgba(20, 18, 15, 0.04);
-  border: 1px solid rgba(20, 18, 15, 0.1);
-  border-radius: 14px;
-  padding: 1rem 1.1rem;
+/* Driver photo + identity */
+.driver-profile-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.driver-photo-wrap {
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover .driver-photo-hint {
+    opacity: 1;
+  }
+}
+
+.driver-photo {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(243, 180, 25, 0.4);
+  display: block;
+}
+
+.driver-photo--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.5rem;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+}
+
+.driver-photo-hint {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.18s;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.driver-identity {
   display: grid;
+  gap: 0.3rem;
+  align-self: center;
+}
+
+.driver-identity-row {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
 }
 
-.driver-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.driver-name-link {
+.driver-display-name {
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--ink);
-  text-decoration: none;
-
-  &:hover { color: var(--gold-deep); }
 }
 
 .driver-country {
-  margin-left: 0.5rem;
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--muted);
@@ -248,7 +302,14 @@
   text-transform: uppercase;
 }
 
+.simgrid-name {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
 .bwp-badge {
+  display: inline-block;
   padding: 0.2rem 0.65rem;
   border-radius: 999px;
   font-size: 0.72rem;
@@ -263,10 +324,193 @@
   }
 }
 
-.driver-card-actions {
+/* Photo URL editor */
+.photo-edit-row {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+  padding: 0.75rem;
+  background: rgba(20, 18, 15, 0.04);
+  border-radius: 10px;
+  border: 1px solid rgba(20, 18, 15, 0.08);
+}
+
+.photo-url-input {
+  border: 1px solid rgba(20, 18, 15, 0.25);
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: transparent;
+  outline: none;
+  width: 100%;
+
+  &:focus {
+    border-color: var(--gold-deep);
+  }
+}
+
+.photo-edit-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* Sub-sections (BWP history, championships) */
+.driver-detail-section {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(20, 18, 15, 0.08);
+}
+
+.detail-section-title {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+
+/* BWP points table */
+.points-table {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.points-header {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr 60px;
+  gap: 0.5rem;
+  padding: 0 0.5rem 0.25rem;
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.point-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr 60px;
+  gap: 0.5rem;
+  padding: 0.38rem 0.5rem;
+  background: rgba(20, 18, 15, 0.03);
+  border-radius: 7px;
+  font-size: 0.8rem;
+  align-items: center;
+
+  &.expired {
+    opacity: 0.5;
+  }
+}
+
+.point-value {
+  font-weight: 600;
+}
+
+.status-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(30, 180, 90, 0.14);
+  color: #1a7a45;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.status-expired {
+  background: rgba(20, 18, 15, 0.07);
+  color: var(--muted);
+}
+
+/* Championship results */
+.champ-list {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.champ-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.6rem;
+  background: rgba(20, 18, 15, 0.03);
+  border-radius: 7px;
+
+  &.champ-finished {
+    opacity: 0.5;
+  }
+}
+
+.champ-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.champ-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.champ-status-tag {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(243, 180, 25, 0.18);
+  color: var(--gold-deep);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.champ-result {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.champ-score {
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.position-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(20, 18, 15, 0.08);
+  color: var(--ink);
+
+  &[data-badge='champion'] { background: rgba(243,180,25,0.25); color: var(--gold-deep); }
+  &[data-badge='top2']     { background: rgba(180,195,210,0.35); color: #5a7a8c; }
+  &[data-badge='top3']     { background: rgba(180,120,60,0.22); color: #8a5a2a; }
+}
+
+.position-plain {
+  font-size: 0.8rem;
+  color: var(--ink);
+}
+
+.driver-actions {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.4rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(20, 18, 15, 0.08);
 }
 
 .no-driver {

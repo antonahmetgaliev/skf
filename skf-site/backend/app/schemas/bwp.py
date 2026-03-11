@@ -51,6 +51,7 @@ class DriverOut(CamelModel):
     simgrid_driver_id: int | None = None
     simgrid_display_name: str | None = None
     country_code: str | None = None
+    photo_url: str | None = None
     user_id: uuid.UUID | None = None
     created_at: datetime
     points: list[BwpPointOut] = []
@@ -81,6 +82,7 @@ class DriverPublicOut(CamelModel):
     simgrid_driver_id: int | None = None
     simgrid_display_name: str | None = None
     country_code: str | None = None
+    photo_url: str | None = None
     created_at: datetime
     points: list[BwpPointOut] = []
     clearances: list[PenaltyClearanceOut] = []

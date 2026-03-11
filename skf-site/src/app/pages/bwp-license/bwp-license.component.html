@@ -56,27 +56,29 @@
       <div class="card delay-2">
         <h2>Add BWP point</h2>
         <form class="form" (ngSubmit)="addPoint()">
-          <label for="driverSelect">Driver</label>
-          <input
-            class="driver-search-input"
-            type="text"
-            placeholder="Search driver…"
-            [ngModel]="pointDriverFilter()"
-            (ngModelChange)="pointDriverFilter.set($event)"
-            autocomplete="off"
-          />
-          <select
-            id="driverSelect"
-            name="driverSelect"
-            [(ngModel)]="selectedDriverId"
-            [disabled]="drivers().length === 0"
-            required
-          >
-            <option value="" disabled>Select a driver</option>
-            @for (driver of filteredSelectDrivers(); track driver.id) {
-              <option [value]="driver.id">{{ driver.name }}</option>
-            }
-          </select>
+          <div class="driver-search-group">
+            <label for="driverSelect">Driver</label>
+            <input
+              class="driver-search-input"
+              type="text"
+              placeholder="Search driver…"
+              [ngModel]="pointDriverFilter()"
+              (ngModelChange)="pointDriverFilter.set($event)"
+              autocomplete="off"
+            />
+            <select
+              id="driverSelect"
+              name="driverSelect"
+              [(ngModel)]="selectedDriverId"
+              [disabled]="drivers().length === 0"
+              required
+            >
+              <option value="" disabled>Select a driver</option>
+              @for (driver of filteredSelectDrivers(); track driver.id) {
+                <option [value]="driver.id">{{ driver.name }}</option>
+              }
+            </select>
+          </div>
 
           <div class="form-grid">
             <div>

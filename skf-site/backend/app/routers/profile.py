@@ -22,6 +22,10 @@ class LinkDriverBody(BaseModel):
     driver_id: uuid.UUID
 
 
+class PhotoUrlBody(BaseModel):
+    photo_url: str | None = None
+
+
 @router.get("/link-candidates", response_model=list[LinkCandidateOut])
 async def get_link_candidates(
     user: User = Depends(get_current_user),
@@ -116,4 +120,30 @@ async def get_public_driver(
     driver = result.scalar_one_or_none()
     if not driver:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found.")
+    return driver
+
+
+@router.patch("/me/driver-photo", response_model=DriverPublicOut)
+async def update_driver_photo(
+    body: PhotoUrlBody,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Allow the linked user to set or clear their driver profile photo URL."""
+    result = await db.execute(select(Driver).where(Driver.user_id == user.id))
+    driver = result.scalar_one_or_none()
+    if not driver:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No linked driver.")
+    if body.photo_url:
+        url = body.photo_url.strip()
+        if not url.startswith(("http://", "https://")):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Photo URL must start with http:// or https://",
+            )
+        driver.photo_url = url
+    else:
+        driver.photo_url = None
+    await db.commit()
+    await db.refresh(driver)
     return driver

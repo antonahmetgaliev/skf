@@ -32,59 +32,126 @@
         <div class="detail-row">
           <span class="detail-label">Name in SKF Racing Hub</span>
           <span class="detail-value guild-nickname-row">
-            @if (editingNickname()) {
-              <input
-                class="nickname-input"
-                type="text"
-                [(ngModel)]="editNicknameValue"
-                (keydown.enter)="saveNickname()"
-                (keydown.escape)="cancelEditNickname()"
-                autofocus
-              />
-              <button class="btn ghost tiny" type="button" [disabled]="savingNickname()" (click)="saveNickname()">
-                {{ savingNickname() ? 'Saving…' : 'Save' }}
-              </button>
-              <button class="btn ghost tiny" type="button" (click)="cancelEditNickname()">Cancel</button>
-            } @else {
-              <span>{{ user.guildNickname || '—' }}</span>
-              <button class="btn ghost tiny" type="button" (click)="startEditNickname()">Edit</button>
-              <button class="btn ghost tiny" type="button" [disabled]="syncingNickname()" (click)="syncGuildNickname()">
-                {{ syncingNickname() ? 'Syncing…' : 'Sync' }}
-              </button>
-            }
+            <span>{{ user.guildNickname || '—' }}</span>
+            <button class="btn ghost tiny" type="button" [disabled]="syncingNickname()" (click)="syncGuildNickname()">
+              {{ syncingNickname() ? 'Syncing…' : 'Sync' }}
+            </button>
           </span>
         </div>
       </div>
 
-      <!-- Driver profile section -->
+      <!-- Driver profile section (expanded inline) -->
       <div class="driver-section">
         <h2 class="section-title">Driver Profile</h2>
         @if (user.driverId) {
           @if (loadingDriver()) {
             <p class="loading-row">Loading driver data…</p>
           } @else if (linkedDriver(); as driver) {
-            <div class="driver-card">
-              <div class="driver-card-header">
-                <div>
-                  <a class="driver-name-link" [routerLink]="['/drivers', driver.id]">{{ driver.name }}</a>
+
+            <!-- Photo + identity header -->
+            <div class="driver-profile-head">
+              <div class="driver-photo-wrap" (click)="startEditPhoto()" title="Click to change photo">
+                @if (driver.photoUrl) {
+                  <img class="driver-photo" [src]="driver.photoUrl" alt="{{ driver.name }}" />
+                } @else {
+                  <span class="driver-photo driver-photo--fallback">{{ driver.name.charAt(0).toUpperCase() }}</span>
+                }
+                <span class="driver-photo-hint">Change</span>
+              </div>
+              <div class="driver-identity">
+                <div class="driver-identity-row">
+                  <span class="driver-display-name">{{ driver.name }}</span>
                   @if (driver.countryCode) {
                     <span class="driver-country">{{ driver.countryCode }}</span>
                   }
                 </div>
+                @if (driver.simgridDisplayName && driver.simgridDisplayName !== driver.name) {
+                  <p class="simgrid-name">SimGrid: {{ driver.simgridDisplayName }}</p>
+                }
                 <span class="bwp-badge" [class.bwp-active]="getActiveBwp(driver) > 0">
                   {{ getActiveBwp(driver) }} BWP
                 </span>
               </div>
-              @if (driver.simgridDisplayName && driver.simgridDisplayName !== driver.name) {
-                <div class="detail-row">
-                  <span class="detail-label">SimGrid name</span>
-                  <span class="detail-value">{{ driver.simgridDisplayName }}</span>
+            </div>
+
+            <!-- Photo URL editor -->
+            @if (editingPhoto()) {
+              <div class="photo-edit-row">
+                <input
+                  class="photo-url-input"
+                  type="url"
+                  placeholder="https://example.com/your-photo.jpg"
+                  [(ngModel)]="editPhotoValue"
+                  (keydown.enter)="savePhoto()"
+                  (keydown.escape)="cancelEditPhoto()"
+                  autofocus
+                />
+                <div class="photo-edit-actions">
+                  <button class="btn ghost tiny" type="button" [disabled]="savingPhoto()" (click)="savePhoto()">
+                    {{ savingPhoto() ? 'Saving…' : 'Save' }}
+                  </button>
+                  <button class="btn ghost tiny" type="button" (click)="cancelEditPhoto()">Cancel</button>
+                  @if (driver.photoUrl) {
+                    <button class="btn ghost tiny danger-ghost" type="button" [disabled]="savingPhoto()" (click)="editPhotoValue = ''; savePhoto()">Remove</button>
+                  }
                 </div>
-              }
-              <div class="driver-card-actions">
-                <a class="btn ghost small" [routerLink]="['/drivers', driver.id]">View full profile</a>
-                <button class="btn ghost small danger-ghost" type="button" (click)="unlinkDriver()">Unlink</button>
               </div>
+            }
+
+            <!-- BWP History -->
+            @if (driver.points.length > 0) {
+              <div class="driver-detail-section">
+                <h3 class="detail-section-title">BWP History</h3>
+                <div class="points-table">
+                  <div class="points-header" aria-hidden="true">
+                    <span>Pts</span>
+                    <span>Issued</span>
+                    <span>Expires</span>
+                    <span>Status</span>
+                  </div>
+                  @for (point of driver.points; track point.id) {
+                    <div class="point-row" [class.expired]="isExpired(point.expiresOn)">
+                      <span class="point-value">{{ point.points }} BWP</span>
+                      <span>{{ point.issuedOn | date:'dd MMM yyyy' }}</span>
+                      <span>{{ point.expiresOn | date:'dd MMM yyyy' }}</span>
+                      <span class="status-tag" [class.status-expired]="isExpired(point.expiresOn)">
+                        {{ isExpired(point.expiresOn) ? 'Expired' : 'Active' }}
+                      </span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Championship Results -->
+            @if (championshipResults().length > 0) {
+              <div class="driver-detail-section">
+                <h3 class="detail-section-title">Championship Results</h3>
+                <div class="champ-list">
+                  @for (result of championshipResults(); track result.championshipId) {
+                    <div class="champ-row" [class.champ-finished]="isFinishedChampionship(result)">
+                      <div class="champ-meta">
+                        <span class="champ-name">{{ result.championshipName }}</span>
+                        @if (!isFinishedChampionship(result)) {
+                          <span class="champ-status-tag">Active</span>
+                        }
+                      </div>
+                      <div class="champ-result">
+                        @if (getPositionBadge(result); as badge) {
+                          <span class="position-badge" [attr.data-badge]="badge">{{ getPositionLabel(result) }}</span>
+                        } @else {
+                          <span class="position-plain">{{ getPositionLabel(result) }}</span>
+                        }
+                        <span class="champ-score">{{ result.score | number:'1.0-1' }} pts</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="driver-actions">
+              <button class="btn ghost small danger-ghost" type="button" (click)="unlinkDriver()">Unlink</button>
             </div>
           }
         } @else {
