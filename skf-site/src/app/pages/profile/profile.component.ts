@@ -19,6 +19,7 @@ export class ProfileComponent implements OnInit {
   readonly showLinkModal = signal(false);
   readonly linking = signal(false);
   readonly linkError = signal('');
+  readonly syncingNickname = signal(false);
 
   readonly linkedDriver = signal<DriverPublic | null>(null);
   readonly loadingDriver = signal(false);
@@ -110,6 +111,17 @@ export class ProfileComponent implements OnInit {
     return driver.points
       .filter((p) => p.expiresOn >= today)
       .reduce((sum, p) => sum + p.points, 0);
+  }
+
+  syncGuildNickname(): void {
+    this.syncingNickname.set(true);
+    this.auth.refreshGuildNickname().subscribe({
+      next: (user) => {
+        this.auth.user.set(user);
+        this.syncingNickname.set(false);
+      },
+      error: () => this.syncingNickname.set(false),
+    });
   }
 
   logout(): void {

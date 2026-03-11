@@ -87,7 +87,8 @@ async def discord_callback(
     display_name = discord_user.get("global_name") or username
     avatar_hash = discord_user.get("avatar")
 
-    # 3a. Optionally fetch the user's server nickname from the SKF guild
+    # 3a. Optionally fetch the user's server nickname from the SKF guild.
+    # Priority: server nick → member's global_name → OAuth global_name (display_name)
     guild_nickname: str | None = None
     if settings.discord_guild_id and settings.discord_bot_token:
         async with httpx.AsyncClient() as bot_client:
@@ -96,13 +97,21 @@ async def discord_callback(
                 headers={"Authorization": f"Bot {settings.discord_bot_token}"},
             )
             if member_resp.status_code == 200:
-                guild_nickname = member_resp.json().get("nick") or None
+                member_data = member_resp.json()
+                guild_nickname = (
+                    member_data.get("nick")
+                    or member_data.get("user", {}).get("global_name")
+                    or None
+                )
             else:
                 logger.warning(
                     "Could not fetch guild member for %s: %s",
                     discord_id,
                     member_resp.status_code,
                 )
+    # Final fallback: use the Discord global display name so it's never empty
+    if guild_nickname is None:
+        guild_nickname = display_name or None
 
     # 3. Upsert user
     result = await db.execute(select(User).where(User.discord_id == discord_id))
@@ -187,6 +196,57 @@ async def get_me(
 
     result = await db.execute(select(Driver).where(Driver.user_id == user.id))
     linked_driver = result.scalar_one_or_none()
+    return UserOut(
+        id=user.id,
+        discord_id=user.discord_id,
+        username=user.username,
+        display_name=user.display_name,
+        guild_nickname=user.guild_nickname,
+        avatar_url=user.avatar_url,
+        role=user.role.name,
+        blocked=user.blocked,
+        created_at=user.created_at,
+        last_login_at=user.last_login_at,
+        driver_id=linked_driver.id if linked_driver else None,
+    )
+
+
+@router.post("/refresh-guild-nickname", response_model=UserOut)
+async def refresh_guild_nickname(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Re-fetch and update the current user's guild nickname from Discord."""
+    if not settings.discord_guild_id or not settings.discord_bot_token:
+        # No bot configured — fall back to the user's global display name
+        user.guild_nickname = user.display_name or None
+    else:
+        async with httpx.AsyncClient() as client:
+            member_resp = await client.get(
+                f"https://discord.com/api/guilds/{settings.discord_guild_id}/members/{user.discord_id}",
+                headers={"Authorization": f"Bot {settings.discord_bot_token}"},
+            )
+            if member_resp.status_code == 200:
+                member_data = member_resp.json()
+                user.guild_nickname = (
+                    member_data.get("nick")
+                    or member_data.get("user", {}).get("global_name")
+                    or user.display_name
+                    or None
+                )
+            elif member_resp.status_code == 404:
+                user.guild_nickname = user.display_name or None
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Failed to fetch guild member data from Discord.",
+                )
+
+    await db.commit()
+
+    from app.models.bwp import Driver as DriverModel
+    drv_result = await db.execute(select(DriverModel).where(DriverModel.user_id == user.id))
+    linked_driver = drv_result.scalar_one_or_none()
     return UserOut(
         id=user.id,
         discord_id=user.discord_id,

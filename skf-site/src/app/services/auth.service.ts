@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { Observable } from 'rxjs';
 
 export interface AuthUser {
   id: string;
@@ -67,6 +68,11 @@ export class AuthService {
     this.http.get<{ url: string }>('/api/auth/discord').subscribe({
       next: (res) => (window.location.href = res.url),
     });
+  }
+
+  /** Re-fetch and store the user's SKF Racing Hub server nickname. */
+  refreshGuildNickname(): Observable<AuthUser> {
+    return this.http.post<AuthUser>('/api/auth/refresh-guild-nickname', null);
   }
 
   /** End the current session. */

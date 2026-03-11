@@ -29,12 +29,18 @@
             <span class="detail-value">{{ user.lastLoginAt | date:'medium' }}</span>
           </div>
         }
-        @if (user.guildNickname) {
-          <div class="detail-row">
-            <span class="detail-label">Name in SKF Racing Hub</span>
-            <span class="detail-value">{{ user.guildNickname }}</span>
-          </div>
-        }
+        <div class="detail-row">
+          <span class="detail-label">Name in SKF Racing Hub</span>
+          <span class="detail-value guild-nickname-row">
+            <span>{{ user.guildNickname || '—' }}</span>
+            <button
+              class="btn ghost tiny"
+              type="button"
+              [disabled]="syncingNickname()"
+              (click)="syncGuildNickname()"
+            >{{ syncingNickname() ? 'Syncing…' : 'Sync' }}</button>
+          </span>
+        </div>
       </div>
 
       <!-- Driver profile section -->
