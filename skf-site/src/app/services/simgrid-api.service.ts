@@ -5,6 +5,9 @@ import { Observable } from 'rxjs';
 export interface ChampionshipListItem {
   id: number;
   name: string;
+  startDate: string | null;
+  endDate: string | null;
+  acceptingRegistrations: boolean;
 }
 
 export interface ChampionshipDetails {

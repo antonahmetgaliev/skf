@@ -27,12 +27,15 @@ async def get_link_candidates(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Return unlinked drivers whose name overlaps the user's Discord display name."""
-    display_name = (user.display_name or user.username or "").strip()
-    if not display_name:
+    """Return unlinked drivers whose name overlaps the user's SKF server nickname
+    (guild_nickname), falling back to global display name or username."""
+    search_name = (
+        user.guild_nickname or user.display_name or user.username or ""
+    ).strip()
+    if not search_name:
         return []
 
-    term = f"%{display_name}%"
+    term = f"%{search_name}%"
     result = await db.execute(
         select(Driver).where(
             Driver.user_id.is_(None),

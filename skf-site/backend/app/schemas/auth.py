@@ -17,6 +17,7 @@ class UserOut(CamelModel):
     discord_id: str
     username: str
     display_name: str
+    guild_nickname: str | None = None
     avatar_url: str | None = None
     role: str
     blocked: bool

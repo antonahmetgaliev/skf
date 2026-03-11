@@ -27,6 +27,7 @@
               class="championship-button"
               type="button"
               [class.active]="selectedChampionshipId() === item.id"
+              [ngClass]="getChampionshipStatusClass(item)"
               (click)="selectChampionship(item.id)"
             >
               <span class="championship-name">{{ item.name }}</span>
@@ -107,7 +108,11 @@
                   <tr>
                     <td>{{ getPosition(entry, i) }}</td>
                     <td class="driver-cell">
-                      {{ entry.displayName }}
+                      @if (driverUuidBySimgridId().get(entry.id); as uuid) {
+                        <a [routerLink]="['/drivers', uuid]" class="driver-link">{{ entry.displayName }}</a>
+                      } @else {
+                        {{ entry.displayName }}
+                      }
                       @if (entry.dsq) {
                         <span class="dsq-badge">DSQ</span>
                       }

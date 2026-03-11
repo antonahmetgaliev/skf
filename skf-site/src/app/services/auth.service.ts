@@ -6,6 +6,7 @@ export interface AuthUser {
   discordId: string;
   username: string;
   displayName: string;
+  guildNickname: string | null;
   avatarUrl: string | null;
   role: string;
   blocked: boolean;

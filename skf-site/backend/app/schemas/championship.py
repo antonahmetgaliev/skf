@@ -20,6 +20,9 @@ class CamelModel(BaseModel):
 class ChampionshipListItem(CamelModel):
     id: int
     name: str
+    start_date: str | None = None
+    end_date: str | None = None
+    accepting_registrations: bool = False
 
 
 class ChampionshipDetails(CamelModel):

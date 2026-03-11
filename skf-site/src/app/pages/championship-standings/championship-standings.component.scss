@@ -103,6 +103,23 @@ h2 {
   border-color: rgba(243, 180, 25, 0.75);
 }
 
+.championship-button.championship--active {
+  border-color: rgba(243, 180, 25, 0.55);
+  background: rgba(243, 180, 25, 0.1);
+
+  .championship-name {
+    color: var(--gold-deep);
+  }
+}
+
+.championship-button.championship--finished {
+  opacity: 0.45;
+
+  .championship-name {
+    color: var(--muted);
+  }
+}
+
 .championship-name {
   font-weight: 600;
   color: var(--ink);
@@ -172,6 +189,16 @@ tbody tr:hover {
 
 .driver-cell {
   font-weight: 600;
+}
+
+.driver-link {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--gold-deep);
+    text-decoration: underline;
+  }
 }
 
 .dsq-badge {

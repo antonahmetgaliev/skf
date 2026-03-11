@@ -19,6 +19,7 @@ export interface PenaltyClearance {
 export interface Driver {
   id: string;
   name: string;
+  simgridDriverId: number | null;
   createdAt: string;
   points: BwpPoint[];
   clearances: PenaltyClearance[];

@@ -1,5 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { NgClass } from '@angular/common';
 import { Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
   ChampionshipDetails,
@@ -8,6 +10,7 @@ import {
   StandingEntry,
   StandingRace
 } from '../../services/simgrid-api.service';
+import { BwpApiService } from '../../services/bwp-api.service';
 
 interface CachedStandingsData {
   details: ChampionshipDetails;
@@ -18,11 +21,13 @@ interface CachedStandingsData {
 
 @Component({
   selector: 'app-championship-standings',
+  imports: [RouterLink, NgClass],
   templateUrl: './championship-standings.component.html',
   styleUrl: './championship-standings.component.scss'
 })
 export class ChampionshipStandingsComponent {
   private readonly api = inject(SimgridApiService);
+  private readonly bwpApi = inject(BwpApiService);
   private readonly cacheTtlMs = 60000;
   private readonly standingsCache = new Map<number, CachedStandingsData>();
   private standingsLoadToken = 0;
@@ -55,9 +60,33 @@ export class ChampionshipStandingsComponent {
   readonly errorMessage = signal('');
   readonly infoMessage = signal('');
   readonly lastUpdated = signal<Date | null>(null);
+  readonly driverUuidBySimgridId = signal<Map<number, string>>(new Map());
 
   constructor() {
     void this.loadChampionships();
+    this.bwpApi.getDrivers().subscribe({
+      next: (drivers) => {
+        const m = new Map<number, string>();
+        for (const d of drivers) {
+          if (d.simgridDriverId != null) m.set(d.simgridDriverId, d.id);
+        }
+        this.driverUuidBySimgridId.set(m);
+      },
+    });
+  }
+
+  private getStatusOrder(item: ChampionshipListItem): number {
+    const today = new Date().toISOString().slice(0, 10);
+    if (item.endDate && item.endDate < today) return 2; // finished
+    if (item.startDate && item.startDate > today) return 1; // upcoming
+    return 0; // active
+  }
+
+  getChampionshipStatusClass(item: ChampionshipListItem): string {
+    const order = this.getStatusOrder(item);
+    if (order === 0) return 'championship--active';
+    if (order === 1) return 'championship--future';
+    return 'championship--finished';
   }
 
   async loadChampionships(): Promise<void> {
@@ -72,7 +101,9 @@ export class ChampionshipStandingsComponent {
         return;
       }
 
-      const sorted = [...list].sort((a, b) => b.id - a.id);
+      const sorted = [...list].sort(
+        (a, b) => this.getStatusOrder(a) - this.getStatusOrder(b) || b.id - a.id
+      );
       this.championships.set(sorted);
 
       if (sorted.length === 0) {

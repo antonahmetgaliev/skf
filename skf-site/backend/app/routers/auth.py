@@ -87,6 +87,23 @@ async def discord_callback(
     display_name = discord_user.get("global_name") or username
     avatar_hash = discord_user.get("avatar")
 
+    # 3a. Optionally fetch the user's server nickname from the SKF guild
+    guild_nickname: str | None = None
+    if settings.discord_guild_id and settings.discord_bot_token:
+        async with httpx.AsyncClient() as bot_client:
+            member_resp = await bot_client.get(
+                f"https://discord.com/api/guilds/{settings.discord_guild_id}/members/{discord_id}",
+                headers={"Authorization": f"Bot {settings.discord_bot_token}"},
+            )
+            if member_resp.status_code == 200:
+                guild_nickname = member_resp.json().get("nick") or None
+            else:
+                logger.warning(
+                    "Could not fetch guild member for %s: %s",
+                    discord_id,
+                    member_resp.status_code,
+                )
+
     # 3. Upsert user
     result = await db.execute(select(User).where(User.discord_id == discord_id))
     user = result.scalar_one_or_none()
@@ -109,6 +126,7 @@ async def discord_callback(
             discord_id=discord_id,
             username=username,
             display_name=display_name,
+            guild_nickname=guild_nickname,
             avatar_hash=avatar_hash,
             role_id=role_obj.id,
         )
@@ -116,6 +134,7 @@ async def discord_callback(
     else:
         user.username = username
         user.display_name = display_name
+        user.guild_nickname = guild_nickname
         user.avatar_hash = avatar_hash
 
     user.last_login_at = datetime.now(timezone.utc)
@@ -173,6 +192,7 @@ async def get_me(
         discord_id=user.discord_id,
         username=user.username,
         display_name=user.display_name,
+        guild_nickname=user.guild_nickname,
         avatar_url=user.avatar_url,
         role=user.role.name,
         blocked=user.blocked,

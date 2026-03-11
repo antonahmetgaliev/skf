@@ -386,6 +386,18 @@ input::placeholder {
   box-shadow: none;
 }
 
+.driver-search-input {
+  border-radius: 10px 10px 0 0;
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.driver-search-input + select {
+  border-radius: 0 0 10px 10px;
+  border-top: none;
+  margin-top: 0;
+}
+
 .form-error {
   margin: 0.5rem 0 0;
   color: var(--danger);

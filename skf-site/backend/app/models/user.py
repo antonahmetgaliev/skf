@@ -42,6 +42,7 @@ class User(Base):
     )
     username: Mapped[str] = mapped_column(String(200), nullable=False)
     display_name: Mapped[str] = mapped_column(String(200), nullable=False, default="")
+    guild_nickname: Mapped[str | None] = mapped_column(String(200), nullable=True)
     avatar_hash: Mapped[str | None] = mapped_column(String(200), nullable=True)
     role_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("roles.id"), nullable=False

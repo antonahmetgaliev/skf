@@ -66,6 +66,13 @@ export class BwpLicenseComponent {
   newDriverSelection = signal<string>('__none__'); // '__none__' | '__new__' | driverId
   newDriverNameOverride = '';
   selectedDriverId = '';
+  pointDriverFilter = signal('');
+  readonly filteredSelectDrivers = computed(() => {
+    const q = this.pointDriverFilter().trim().toLowerCase();
+    return q
+      ? this.sortedDrivers().filter((d) => d.name.toLowerCase().includes(q))
+      : this.sortedDrivers();
+  });
   pointValue = 3;
   pointDate = this.formatInputDate(new Date());
 
