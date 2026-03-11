@@ -40,7 +40,7 @@ export class ProfileApiService {
   }
 
   linkDriver(driverId: string): Observable<void> {
-    return this.http.post<void>(`${this.base}/link-driver`, { driverId });
+    return this.http.post<void>(`${this.base}/link-driver`, { driver_id: driverId });
   }
 
   unlinkDriver(): Observable<void> {
