@@ -78,12 +78,12 @@ export class ChampionshipStandingsComponent {
 
   private getStatusOrder(item: ChampionshipListItem): number {
     const today = new Date().toISOString().slice(0, 10);
+    // Future start date always wins — can't be anything other than upcoming
+    if (item.startDate && item.startDate.slice(0, 10) > today) return 1;
     // Confirmed finished via standings races data
     if (item.eventCompleted) return 3;
     // Confirmed finished: has an end date and it's in the past
     if (item.endDate && item.endDate.slice(0, 10) < today) return 3;
-    // Confirmed upcoming: has a start date still in the future
-    if (item.startDate && item.startDate.slice(0, 10) > today) return 1;
     // Started (startDate exists and is today or in the past) → active
     if (item.startDate && item.startDate.slice(0, 10) <= today) return 0;
     // Registration window is open even without reliable dates → active
