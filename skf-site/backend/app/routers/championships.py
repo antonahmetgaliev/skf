@@ -31,6 +31,8 @@ async def list_championships(force: bool = Query(False), db: AsyncSession = Depe
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc))
 
+    champ_map = {item.id: item for item in items}
+
     # Derive event_completed from cached standings.
     # Primary signal: championship end_date is in the past (most reliable).
     # Fallback for championships with no end_date: all races ended AND the
