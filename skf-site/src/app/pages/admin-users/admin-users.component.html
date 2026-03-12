@@ -21,7 +21,7 @@
     </div>
 
     @if (loading()) {
-      <p class="empty">Loading users…</p>
+      <div class="inline-loading"><div class="inline-spinner"></div></div>
     } @else if (filteredUsers().length === 0) {
       <p class="empty">No users found.</p>
     } @else {

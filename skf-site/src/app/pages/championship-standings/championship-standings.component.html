@@ -17,7 +17,7 @@
       </div>
 
       @if (loadingChampionships()) {
-        <p class="empty">Loading championships...</p>
+        <div class="inline-loading"><div class="inline-spinner"></div></div>
       } @else if (championships().length === 0) {
         <p class="empty">No championships returned from API.</p>
       } @else {
@@ -45,7 +45,7 @@
 
     <section class="card details-panel">
       @if (loadingStandings()) {
-        <p class="empty">Loading standings...</p>
+        <div class="inline-loading"><div class="inline-spinner"></div></div>
       } @else if (errorMessage()) {
         <p class="error">{{ errorMessage() }}</p>
       } @else if (selectedChampionship(); as championship) {

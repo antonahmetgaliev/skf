@@ -45,7 +45,7 @@
         <h2 class="section-title">Driver Profile</h2>
         @if (user.driverId) {
           @if (loadingDriver()) {
-            <p class="loading-row">Loading driver data…</p>
+            <div class="inline-loading"><div class="inline-spinner"></div></div>
           } @else if (linkedDriver(); as driver) {
 
             <!-- Photo + identity header -->
@@ -156,7 +156,7 @@
           }
         } @else {
           @if (loadingCandidates()) {
-            <p class="loading-row">Searching for matches…</p>
+            <div class="inline-loading"><div class="inline-spinner"></div></div>
           } @else {
             <div class="no-driver">
               <p class="hint">No driver profile linked to your account yet.</p>

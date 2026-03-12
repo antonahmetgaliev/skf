@@ -18,7 +18,7 @@
   </div>
 
   @if (loading()) {
-    <p class="empty">Loading drivers…</p>
+    <div class="inline-loading"><div class="inline-spinner"></div></div>
   } @else if (filtered().length === 0) {
     <p class="empty">No drivers found.</p>
   } @else {

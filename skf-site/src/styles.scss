@@ -48,3 +48,25 @@ textarea {
 pre {
   margin: 0;
 }
+
+/* ── Inline loading spinner (used by individual data areas) ── */
+
+.inline-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+}
+
+.inline-spinner {
+  width: 32px;
+  height: 32px;
+  border: 2.5px solid rgba(243, 180, 25, 0.25);
+  border-top-color: #f3b419;
+  border-radius: 50%;
+  animation: inline-spin 0.7s linear infinite;
+}
+
+@keyframes inline-spin {
+  to { transform: rotate(360deg); }
+}
