@@ -1,3 +1,6 @@
+@use 'sass:list';
+@use 'sass:color';
+
 :host {
   display: block;
 }
@@ -292,6 +295,80 @@ tbody tr:hover {
   color: var(--danger);
   font-size: 0.82rem;
   font-weight: 500;
+}
+
+// ------------------------------------------------------------------
+// Multiclass: filter tabs
+// ------------------------------------------------------------------
+
+.class-tabs {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.class-tab {
+  border: 1px solid rgba(20, 18, 15, 0.15);
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  background: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  color: var(--ink-soft);
+
+  &.active {
+    color: var(--ink);
+    background: rgba(20, 18, 15, 0.09);
+    border-color: rgba(20, 18, 15, 0.3);
+  }
+
+  // When a class-color-N variant is active, use its colour variables
+  &[class*='class-color-'].active {
+    border-color: var(--class-color);
+    background: var(--class-bg);
+    color: var(--class-color);
+  }
+}
+
+// ------------------------------------------------------------------
+// Multiclass: class badge in table cell
+// ------------------------------------------------------------------
+
+.class-badge {
+  display: inline-block;
+  padding: 0.15em 0.5em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 4px;
+  border: 1px solid var(--class-color, rgba(20, 18, 15, 0.2));
+  color: var(--class-color, var(--ink-soft));
+  background: var(--class-bg, transparent);
+}
+
+// ------------------------------------------------------------------
+// Multiclass: 6-colour palette  (class-color-0 … class-color-5)
+// ------------------------------------------------------------------
+
+$class-palette: #f3b419, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
+
+@for $i from 0 through 5 {
+  $color: list.nth($class-palette, $i + 1);
+
+  .class-color-#{$i} {
+    --class-color: #{$color};
+    --class-bg: #{color.adjust($color, $alpha: -0.86)};
+  }
+
+  tr.class-strip-#{$i} > td:first-child {
+    box-shadow: inset 3px 0 0 #{$color};
+  }
 }
 
 .btn {

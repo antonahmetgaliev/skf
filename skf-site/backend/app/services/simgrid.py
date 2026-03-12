@@ -186,12 +186,21 @@ class SimgridService:
             else raw.get("overall_partial_standings")
         )
         participant = raw.get("participant") or {}
+        car_class = self._to_text(
+            raw.get("class_name")
+            or raw.get("car_class_name")
+            or raw.get("car_class")
+            or raw.get("category_name")
+            or raw.get("category"),
+            "",
+        )
         return StandingEntry(
             id=self._to_int(raw.get("id")),
             position=self._to_nullable_int(raw.get("position_cache")),
             display_name=self._to_text(raw.get("display_name"), "Unknown driver"),
             country_code=self._to_text(participant.get("country_code"), ""),
             car=self._to_text(raw.get("car"), ""),
+            car_class=car_class,
             points=self._to_float(raw.get("championship_points")),
             penalties=self._to_float(raw.get("championship_penalties")),
             score=self._to_float(raw.get("championship_score")),

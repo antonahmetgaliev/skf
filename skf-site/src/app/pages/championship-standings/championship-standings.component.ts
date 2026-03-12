@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgClass } from '@angular/common';
-import { Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
+import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -62,6 +62,18 @@ export class ChampionshipStandingsComponent {
   readonly staleWarning = signal(false);
   readonly lastUpdated = signal<Date | null>(null);
   readonly driverUuidBySimgridId = signal<Map<number, string>>(new Map());
+
+  readonly carClasses = computed(() => {
+    const classes = [...new Set(this.standings().map(e => e.carClass).filter(c => c.length > 0))];
+    return classes.sort();
+  });
+  readonly isMulticlass = computed(() => this.carClasses().length > 1);
+  readonly selectedClass = signal<string | null>(null);
+  readonly visibleStandings = computed(() => {
+    const cls = this.selectedClass();
+    if (!this.isMulticlass() || cls === null) return this.standings();
+    return this.standings().filter(e => e.carClass === cls);
+  });
 
   constructor() {
     void this.loadChampionships();
@@ -140,6 +152,7 @@ export class ChampionshipStandingsComponent {
           : sorted[0].id;
 
       this.selectedChampionshipId.set(selectedId);
+      this.selectedClass.set(null);
       await this.loadStandings(selectedId);
     } catch (error) {
       if (token !== this.championshipsLoadToken) {
@@ -161,6 +174,7 @@ export class ChampionshipStandingsComponent {
     if (this.selectedChampionshipId() === championshipId && this.standings().length > 0) {
       return;
     }
+    this.selectedClass.set(null);
     this.selectedChampionshipId.set(championshipId);
     void this.loadStandings(championshipId);
   }
@@ -232,11 +246,27 @@ export class ChampionshipStandingsComponent {
   }
 
   getPosition(entry: StandingEntry, index: number): number {
+    if (this.isMulticlass() && this.selectedClass() !== null) {
+      return index + 1;
+    }
     return entry.position ?? index + 1;
   }
 
+  getClassIndex(carClass: string): number {
+    return this.carClasses().indexOf(carClass);
+  }
+
+  getClassTabClasses(cls: string): Record<string, boolean> {
+    const idx = this.getClassIndex(cls);
+    return {
+      'class-tab': true,
+      'active': this.selectedClass() === cls,
+      [`class-color-${idx}`]: true,
+    };
+  }
+
   getOverallColspan(): number {
-    return 5 + this.races().length;
+    return 5 + this.races().length + (this.isMulticlass() ? 1 : 0);
   }
 
   formatDate(value: string | null): string {

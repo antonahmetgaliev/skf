@@ -38,6 +38,7 @@ export interface StandingEntry {
   displayName: string;
   countryCode: string;
   car: string;
+  carClass: string;
   points: number;
   penalties: number;
   score: number;

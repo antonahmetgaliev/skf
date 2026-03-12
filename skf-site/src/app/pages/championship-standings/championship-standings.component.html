@@ -92,7 +92,31 @@
           </div>
         }
 
-        <h3 class="section-title">Overall standings</h3>
+        @if (isMulticlass()) {
+          <div class="class-tabs">
+            <button
+              class="class-tab"
+              type="button"
+              [class.active]="selectedClass() === null"
+              (click)="selectedClass.set(null)"
+            >All</button>
+            @for (cls of carClasses(); track cls) {
+              <button
+                type="button"
+                [ngClass]="getClassTabClasses(cls)"
+                (click)="selectedClass.set(cls)"
+              >{{ cls }}</button>
+            }
+          </div>
+        }
+
+        <h3 class="section-title">
+          @if (isMulticlass() && selectedClass(); as cls) {
+            {{ cls }} class standings
+          } @else {
+            Overall standings
+          }
+        </h3>
         <div class="table-wrap">
           <table class="standings-table">
             <thead>
@@ -100,6 +124,9 @@
                 <th>Pos</th>
                 <th>Driver</th>
                 <th>Country</th>
+                @if (isMulticlass()) {
+                  <th>Class</th>
+                }
                 <th>Car</th>
                 <th>Score</th>
                 @for (race of races(); track race.id; let raceIndex = $index) {
@@ -108,15 +135,15 @@
               </tr>
             </thead>
             <tbody>
-              @if (standings().length === 0) {
+              @if (visibleStandings().length === 0) {
                 <tr>
                   <td class="empty-row" [attr.colspan]="getOverallColspan()">
                     No standings available for this championship yet.
                   </td>
                 </tr>
               } @else {
-                @for (entry of standings(); track entry.id; let i = $index) {
-                  <tr>
+                @for (entry of visibleStandings(); track entry.id; let i = $index) {
+                  <tr [ngClass]="isMulticlass() ? 'class-strip-' + getClassIndex(entry.carClass) : ''">
                     <td>{{ getPosition(entry, i) }}</td>
                     <td class="driver-cell">
                       @if (driverUuidBySimgridId().get(entry.id); as uuid) {
@@ -129,6 +156,9 @@
                       }
                     </td>
                     <td>{{ entry.countryCode || '-' }}</td>
+                    @if (isMulticlass()) {
+                      <td><span class="class-badge" [ngClass]="'class-color-' + getClassIndex(entry.carClass)">{{ entry.carClass || '-' }}</span></td>
+                    }
                     <td>{{ entry.car || '-' }}</td>
                     <td>{{ formatNumber(entry.score) }}</td>
                     @for (race of races(); track race.id; let raceIndex = $index) {

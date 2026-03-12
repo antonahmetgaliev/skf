@@ -78,6 +78,7 @@ class StandingEntry(CamelModel):
     display_name: str
     country_code: str = ""
     car: str = ""
+    car_class: str = ""
     points: float = 0
     penalties: float = 0
     score: float = 0
