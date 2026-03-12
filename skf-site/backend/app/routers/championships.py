@@ -21,11 +21,35 @@ router = APIRouter(prefix="/championships", tags=["Championships"])
 
 
 @router.get("", response_model=list[ChampionshipListItem])
-async def list_championships(force: bool = Query(False)):
+async def list_championships(force: bool = Query(False), db: AsyncSession = Depends(get_db)):
     try:
-        return await simgrid_service.get_championships(force=force)
+        items = await simgrid_service.get_championships(force=force)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc))
+
+    # Derive event_completed from cached standings: if all races are ended, the championship is over.
+    result = await db.execute(
+        select(SimgridCache).where(SimgridCache.cache_key.like("standings_%"))
+    )
+    caches = result.scalars().all()
+
+    completed_ids: set[int] = set()
+    for cache in caches:
+        try:
+            champ_id = int(cache.cache_key.split("_", 1)[1])
+        except (ValueError, IndexError):
+            continue
+        data = cache.data
+        if not isinstance(data, dict):
+            continue
+        races = data.get("races", [])
+        if races and all(r.get("ended", False) for r in races):
+            completed_ids.add(champ_id)
+
+    return [
+        item.model_copy(update={"event_completed": True}) if item.id in completed_ids else item
+        for item in items
+    ]
 
 
 @router.get("/raw-cache", include_in_schema=False)

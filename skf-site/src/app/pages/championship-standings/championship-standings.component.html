@@ -86,6 +86,12 @@
           <p class="notice">{{ infoMessage() }}</p>
         }
 
+        @if (staleWarning()) {
+          <div class="stale-warning">
+            ⚠ SimGrid is rate-limiting requests — showing cached data that may not be current. Try refreshing in a few minutes.
+          </div>
+        }
+
         <h3 class="section-title">Overall standings</h3>
         <div class="table-wrap">
           <table class="standings-table">

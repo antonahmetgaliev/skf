@@ -59,6 +59,7 @@ export class ChampionshipStandingsComponent {
   readonly refreshingCache = signal(false);
   readonly errorMessage = signal('');
   readonly infoMessage = signal('');
+  readonly staleWarning = signal(false);
   readonly lastUpdated = signal<Date | null>(null);
   readonly driverUuidBySimgridId = signal<Map<number, string>>(new Map());
 
@@ -77,6 +78,8 @@ export class ChampionshipStandingsComponent {
 
   private getStatusOrder(item: ChampionshipListItem): number {
     const today = new Date().toISOString().slice(0, 10);
+    // Confirmed finished via standings races data
+    if (item.eventCompleted) return 3;
     // Confirmed finished: has an end date and it's in the past
     if (item.endDate && item.endDate.slice(0, 10) < today) return 3;
     // Confirmed upcoming: has a start date still in the future
@@ -1027,6 +1030,7 @@ export class ChampionshipStandingsComponent {
       this.selectedChampionship.set(details);
       this.standings.set(standingsData.entries);
       this.races.set(standingsData.races);
+      this.staleWarning.set(standingsData.stale ?? false);
       this.lastUpdated.set(fetchedAt);
       this.standingsCache.set(championshipId, {
         details,

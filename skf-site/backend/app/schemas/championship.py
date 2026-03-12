@@ -25,6 +25,7 @@ class ChampionshipListItem(CamelModel):
     start_date: str | None = None
     end_date: str | None = None
     accepting_registrations: bool = False
+    event_completed: bool = False
 
     @model_validator(mode="before")
     @classmethod
@@ -41,6 +42,11 @@ class ChampionshipListItem(CamelModel):
             for alt in ("ends_at", "endsAt", "end_at", "endAt"):
                 if data.get(alt):
                     data["end_date"] = data[alt]
+                    break
+        if not data.get("event_completed") and not data.get("eventCompleted"):
+            for alt in ("completed", "is_completed", "isCompleted", "ended", "is_ended", "isEnded"):
+                if data.get(alt):
+                    data["event_completed"] = True
                     break
         return data
 
@@ -90,6 +96,7 @@ class StandingRace(CamelModel):
 class ChampionshipStandingsData(CamelModel):
     entries: list[StandingEntry] = []
     races: list[StandingRace] = []
+    stale: bool = False
 
 
 class DriverChampionshipResult(CamelModel):

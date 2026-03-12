@@ -283,6 +283,17 @@ tbody tr:hover {
   font-size: 0.84rem;
 }
 
+.stale-warning {
+  margin: 0 0 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  background: rgba(185, 71, 46, 0.1);
+  border: 1px solid rgba(185, 71, 46, 0.25);
+  color: var(--danger);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
 .btn {
   border: none;
   border-radius: 999px;

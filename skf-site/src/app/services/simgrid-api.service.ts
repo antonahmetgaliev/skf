@@ -8,6 +8,7 @@ export interface ChampionshipListItem {
   startDate: string | null;
   endDate: string | null;
   acceptingRegistrations: boolean;
+  eventCompleted: boolean;
 }
 
 export interface ChampionshipDetails {
@@ -55,6 +56,7 @@ export interface StandingRace {
 export interface ChampionshipStandingsData {
   entries: StandingEntry[];
   races: StandingRace[];
+  stale: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
