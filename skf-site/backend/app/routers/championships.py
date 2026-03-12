@@ -118,7 +118,7 @@ async def get_champions_podium(db: AsyncSession = Depends(get_db)):
         entries = data.get("entries", [])
         top3 = [
             e for e in entries
-            if e.get("position") in (1, 2, 3) and not e.get("dsq", False)
+            if e.get("position") in (1, 2, 3) and not (e.get("dsq") or e.get("dsq", False))
         ]
         top3.sort(key=lambda e: e.get("position", 999))
         if not top3:
@@ -130,7 +130,7 @@ async def get_champions_podium(db: AsyncSession = Depends(get_db)):
             podium=[
                 PodiumEntry(
                     simgrid_driver_id=e.get("id"),
-                    display_name=e.get("display_name", ""),
+                    display_name=e.get("displayName") or e.get("display_name", ""),
                     position=e.get("position"),
                 )
                 for e in top3
