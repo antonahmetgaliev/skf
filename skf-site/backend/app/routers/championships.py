@@ -13,8 +13,10 @@ from app.models.simgrid_cache import SimgridCache
 from app.schemas.championship import (
     ChampionshipDetails,
     ChampionshipListItem,
+    ChampionshipPodium,
     ChampionshipStandingsData,
     DriverChampionshipResult,
+    PodiumEntry,
 )
 from app.services.drivers import sync_drivers_from_standings
 from app.services.simgrid import simgrid_service
@@ -72,6 +74,71 @@ async def list_championships(force: bool = Query(False), db: AsyncSession = Depe
         item.model_copy(update={"event_completed": True}) if item.id in completed_ids else item
         for item in items
     ]
+
+
+@router.get("/podium", response_model=list[ChampionshipPodium])
+async def get_champions_podium(db: AsyncSession = Depends(get_db)):
+    """Return top-3 finishers for each completed championship."""
+    result = await db.execute(
+        select(SimgridCache).where(SimgridCache.cache_key.like("standings_%"))
+    )
+    caches = result.scalars().all()
+    cutoff = datetime.now(timezone.utc) - timedelta(days=90)
+
+    try:
+        championships = await simgrid_service.get_championships()
+        champ_map = {c.id: c for c in championships}
+    except Exception:
+        champ_map = {}
+
+    podiums: list[ChampionshipPodium] = []
+    for cache in caches:
+        try:
+            champ_id = int(cache.cache_key.split("_", 1)[1])
+        except (ValueError, IndexError):
+            continue
+        data = cache.data
+        if not isinstance(data, dict):
+            continue
+        races = data.get("races", [])
+        if not races or not all(r.get("ended", False) for r in races):
+            continue
+        latest: datetime | None = None
+        for r in races:
+            dt_str = r.get("starts_at") or r.get("startsAt")
+            if dt_str:
+                try:
+                    dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
+                    if latest is None or dt > latest:
+                        latest = dt
+                except ValueError:
+                    pass
+        if latest is None or latest > cutoff:
+            continue
+        entries = data.get("entries", [])
+        top3 = [
+            e for e in entries
+            if e.get("position") in (1, 2, 3) and not e.get("dsq", False)
+        ]
+        top3.sort(key=lambda e: e.get("position", 999))
+        if not top3:
+            continue
+        champ = champ_map.get(champ_id)
+        podiums.append(ChampionshipPodium(
+            championship_id=champ_id,
+            championship_name=champ.name if champ else f"Championship #{champ_id}",
+            podium=[
+                PodiumEntry(
+                    simgrid_driver_id=e.get("id"),
+                    display_name=e.get("display_name", ""),
+                    position=e.get("position"),
+                )
+                for e in top3
+            ],
+        ))
+
+    podiums.sort(key=lambda p: -p.championship_id)
+    return podiums
 
 
 @router.get("/raw-cache", include_in_schema=False)

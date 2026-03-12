@@ -59,6 +59,18 @@ export interface ChampionshipStandingsData {
   stale: boolean;
 }
 
+export interface PodiumEntry {
+  simgridDriverId: number | null;
+  displayName: string;
+  position: number;
+}
+
+export interface ChampionshipPodium {
+  championshipId: number;
+  championshipName: string;
+  podium: PodiumEntry[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class SimgridApiService {
   private readonly http = inject(HttpClient);
@@ -84,6 +96,10 @@ export class SimgridApiService {
     return this.http.post<{ status: string }>(
       `${this.apiBase}/${championshipId}/refresh-cache`, {}
     );
+  }
+
+  getChampionshipsPodium(): Observable<ChampionshipPodium[]> {
+    return this.http.get<ChampionshipPodium[]>(`${this.apiBase}/podium`);
   }
 }
 
