@@ -61,11 +61,18 @@ class SimgridService:
             if cached is not None:
                 return [ChampionshipListItem(**item) for item in cached]
 
-        resp = await self._client.get(
-            "/api/v1/championships",
-            params={"limit": limit, "offset": 0},
-        )
-        resp.raise_for_status()
+        try:
+            resp = await self._client.get(
+                "/api/v1/championships",
+                params={"limit": limit, "offset": 0},
+            )
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 429:
+                stale = await self._read_stale_cache(cache_key)
+                if stale is not None:
+                    return [ChampionshipListItem(**item) for item in stale]
+            raise
         items = resp.json()
         await self._write_cache(cache_key, items)
         return [ChampionshipListItem(**item) for item in items]
@@ -78,8 +85,15 @@ class SimgridService:
             if cached is not None:
                 return ChampionshipDetails(**cached)
 
-        resp = await self._client.get(f"/api/v1/championships/{championship_id}")
-        resp.raise_for_status()
+        try:
+            resp = await self._client.get(f"/api/v1/championships/{championship_id}")
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 429:
+                stale = await self._read_stale_cache(cache_key)
+                if stale is not None:
+                    return ChampionshipDetails(**stale)
+            raise
         raw = resp.json()
         await self._write_cache(cache_key, raw)
         return ChampionshipDetails(**raw)

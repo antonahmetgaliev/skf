@@ -108,3 +108,15 @@ class DriverChampionshipResult(CamelModel):
     start_date: str | None = None
     end_date: str | None = None
     accepting_registrations: bool = False
+
+
+class PodiumEntry(CamelModel):
+    simgrid_driver_id: int | None = None
+    display_name: str
+    position: int  # 1, 2, or 3
+
+
+class ChampionshipPodium(CamelModel):
+    championship_id: int
+    championship_name: str
+    podium: list[PodiumEntry] = []
