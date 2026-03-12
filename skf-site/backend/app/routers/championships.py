@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,11 +29,15 @@ async def list_championships(force: bool = Query(False), db: AsyncSession = Depe
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc))
 
-    # Derive event_completed from cached standings: if all races are ended, the championship is over.
+    # Derive event_completed from cached standings.
+    # Rules: all known races must be ended AND the most recent race must be
+    # older than 90 days.  The recency gate prevents flagging in-progress
+    # championships whose future rounds simply haven't been cached yet.
     result = await db.execute(
         select(SimgridCache).where(SimgridCache.cache_key.like("standings_%"))
     )
     caches = result.scalars().all()
+    cutoff = datetime.now(timezone.utc) - timedelta(days=90)
 
     completed_ids: set[int] = set()
     for cache in caches:
@@ -43,8 +49,24 @@ async def list_championships(force: bool = Query(False), db: AsyncSession = Depe
         if not isinstance(data, dict):
             continue
         races = data.get("races", [])
-        if races and all(r.get("ended", False) for r in races):
-            completed_ids.add(champ_id)
+        if not races:
+            continue
+        if not all(r.get("ended", False) for r in races):
+            continue
+        # Require the latest race to be older than 90 days
+        latest: datetime | None = None
+        for r in races:
+            dt_str = r.get("starts_at") or r.get("startsAt")
+            if dt_str:
+                try:
+                    dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
+                    if latest is None or dt > latest:
+                        latest = dt
+                except ValueError:
+                    pass
+        if latest is None or latest > cutoff:
+            continue
+        completed_ids.add(champ_id)
 
     return [
         item.model_copy(update={"event_completed": True}) if item.id in completed_ids else item
