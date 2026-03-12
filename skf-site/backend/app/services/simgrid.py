@@ -121,10 +121,14 @@ class SimgridService:
         payload = resp.json()
         data = self._parse_standings(payload)
 
-        # If no race positions came from the API, try scraping the HTML page.
+        # Scrape the public HTML standings page when we need:
+        #  a) race-by-race positions that the API didn't include, OR
+        #  b) car-class info (multiclass championships)
         # Use curl_cffi (browser-impersonation) because the SimGrid site
         # sits behind Cloudflare which rejects plain httpx requests.
-        if not self._has_race_positions(data) and len(data.races) > 0:
+        needs_race_pos = not self._has_race_positions(data) and len(data.races) > 0
+        needs_class   = any(not e.car_class for e in data.entries if e.car)
+        if (needs_race_pos or needs_class) and len(data.entries) > 0:
             try:
                 html_resp = self._cf_session.get(
                     f"{settings.simgrid_base_url}/championships/{championship_id}/standings",
@@ -132,6 +136,29 @@ class SimgridService:
                 )
                 if html_resp.status_code == 200:
                     data = self._merge_html_race_positions(data, html_resp.text)
+                    # Discover additional class pages (e.g. LMGT3 when default is Hypercar)
+                    extra_classes = self._extract_class_filters(html_resp.text)
+                    for class_name, filter_id in extra_classes:
+                        try:
+                            cls_resp = self._cf_session.get(
+                                f"{settings.simgrid_base_url}/championships/{championship_id}"
+                                f"/standings?filter_class={filter_id}&overall=0",
+                                timeout=30,
+                            )
+                            if cls_resp.status_code == 200:
+                                extra_entries = self._extract_entries_from_class_html(
+                                    cls_resp.text, data.races, class_name
+                                )
+                                existing_ids = {e.id for e in data.entries}
+                                new_entries = [e for e in extra_entries if e.id not in existing_ids]
+                                if new_entries:
+                                    data = ChampionshipStandingsData(
+                                        entries=data.entries + new_entries,
+                                        races=data.races,
+                                        stale=data.stale,
+                                    )
+                        except Exception:
+                            pass
             except Exception:
                 pass
 
@@ -294,9 +321,75 @@ class SimgridService:
             update: dict[str, Any] = {"race_results": merged_results}
             if row.get("dsq"):
                 update["dsq"] = True
+            # Fill car_class from HTML when the API didn't supply it
+            if not entry.car_class and row.get("car_class"):
+                update["car_class"] = row["car_class"]
             entries.append(entry.model_copy(update=update))
 
         return ChampionshipStandingsData(entries=entries, races=races)
+
+    def _extract_class_filters(self, html: str) -> list[tuple[str, str]]:
+        """Return [(class_name, filter_id), ...] for non-default classes found
+        in the SimGrid standings class-filter dropdown."""
+        matches = re.findall(
+            r'filter_class=(\d+)&(?:amp;)?overall=0"[^>]*>\s*([^<]{2,40}?)\s*</a>',
+            html, re.I,
+        )
+        return [(name.strip(), fid) for fid, name in matches]
+
+    def _extract_entries_from_class_html(
+        self, html: str, races: list[StandingRace], class_name: str
+    ) -> list[StandingEntry]:
+        """Build StandingEntry objects from a class-filtered standings HTML page."""
+        snapshot = self._extract_html_standings(html)
+        if not snapshot or not snapshot["rows"]:
+            return []
+
+        entries: list[StandingEntry] = []
+        for row in snapshot["rows"]:
+            race_results = self._build_race_results_from_html(
+                row["race_cells"], row.get("race_points", []), races
+            )
+            entry = StandingEntry(
+                id=row.get("driver_id", 0),
+                position=row.get("position"),
+                display_name=row.get("display_name") or row.get("normalized_name", "Unknown"),
+                country_code=row.get("country_code", ""),
+                car=row.get("car", ""),
+                car_class=row.get("car_class") or class_name,
+                score=row.get("score", 0.0),
+                dsq=row.get("dsq", False),
+                race_results=race_results,
+            )
+            entries.append(entry)
+        return entries
+
+    def _build_race_results_from_html(
+        self,
+        race_cells: list[tuple[int | None, bool]],
+        race_points: list[float],
+        races: list[StandingRace],
+    ) -> list[DriverRaceResult]:
+        results: list[DriverRaceResult] = []
+        for idx, (pos, is_dns) in enumerate(race_cells):
+            pts = race_points[idx] if idx < len(race_points) else None
+            results.append(
+                DriverRaceResult(
+                    race_id=races[idx].id if idx < len(races) else None,
+                    race_index=idx,
+                    points=pts,
+                    position=pos,
+                    dns=is_dns,
+                )
+            )
+        return results
+
+    def _flag_emoji_to_code(self, text: str) -> str:
+        """Convert a flag emoji (e.g. 🇺🇦) to a 2-letter ISO country code."""
+        flags = re.findall(r"[\U0001F1E0-\U0001F1FF]{2}", text)
+        if not flags:
+            return ""
+        return "".join(chr(ord(c) - 0x1F1E6 + ord("A")) for c in flags[0])
 
     def _extract_html_standings(self, html: str) -> dict[str, Any] | None:
         table_match = re.search(
@@ -356,9 +449,51 @@ class SimgridService:
                 r'<span[^>]*title="Disqualified"[^>]*>\s*DSQ\s*</span>',
                 row_html, re.I,
             ))
+            # Car class: <span class="car-class"> Hypercar </span>
+            car_class_match = re.search(
+                r'class="car-class"[^>]*>\s*([^<]+?)\s*</span>',
+                row_html, re.I,
+            )
+            car_class = car_class_match.group(1).strip() if car_class_match else ""
+            # SimGrid driver ID from href: /drivers/{id}-name/grid_feed
+            driver_id_match = re.search(r'href="/drivers/(\d+)-[^/"]+', row_html, re.I)
+            driver_id = int(driver_id_match.group(1)) if driver_id_match else 0
+            # Display name: text in entrant-name link before the first nested <span>
+            display_name_match = re.search(
+                r'class="entrant-name[^"]*"[^>]*>([\s\S]*?)(?=<span|</a>)', row_html, re.I
+            )
+            raw_name = self._strip_html(display_name_match.group(1) if display_name_match else "")
+            # Strip flag emoji regional indicators (🇺🇦 etc.) and whitespace
+            display_name = re.sub(r"[\U0001F1E0-\U0001F1FF]", "", raw_name).strip()
+            country_code = self._flag_emoji_to_code(
+                display_name_match.group(1) if display_name_match else ""
+            )
+            # Car name: <span class="d-lg-inline d-none fs-xs"> BMW M4 GT3 </span>
+            car_match = re.search(
+                r'class="d-lg-inline d-none fs-xs"\s*>\s*([^<]+?)\s*</span>', row_html, re.I
+            )
+            car = car_match.group(1).strip() if car_match else ""
+            # Total score: <td class="text-center fw-bold"> 41 </td>
+            score_match = re.search(
+                r'<td[^>]*text-center fw-bold[^>]*>\s*([\d\.]+)\s*</td>', row_html, re.I
+            )
+            score = float(score_match.group(1)) if score_match else 0.0
+            # Per-race points: <span class="show_points d-none"> 25 </span>
+            race_points = [
+                float(p) for p in re.findall(
+                    r'class="show_points[^"]*"[^>]*>\s*([\d\.]+)\s*</span>', row_html, re.I
+                )
+            ]
             rows.append(
                 {
                     "normalized_name": normalized,
+                    "display_name": display_name,
+                    "country_code": country_code,
+                    "driver_id": driver_id,
+                    "car": car,
+                    "car_class": car_class,
+                    "score": score,
+                    "race_points": race_points,
                     "position": position,
                     "race_cells": race_cells,
                     "dsq": is_dsq,
