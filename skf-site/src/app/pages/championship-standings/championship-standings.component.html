@@ -31,7 +31,12 @@
               (click)="selectChampionship(item.id)"
             >
               <span class="championship-name">{{ item.name }}</span>
-              <span class="championship-id">#{{ item.id }}</span>
+              <span class="championship-footer">
+                <span class="championship-id">#{{ item.id }}</span>
+                @if (getChampionshipStatusLabel(item); as label) {
+                  <span class="championship-status-tag">{{ label }}</span>
+                }
+              </span>
             </button>
           }
         </div>
