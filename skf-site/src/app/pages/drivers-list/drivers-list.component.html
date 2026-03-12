@@ -5,31 +5,6 @@
     <p class="subtitle">All registered drivers in the SKF system.</p>
   </header>
 
-  @if (resolvedChampions().length > 0) {
-    <section class="champions-section">
-      <h2 class="champions-title">Our Recent Champions</h2>
-      <div class="champions-grid">
-        @for (champ of resolvedChampions(); track champ.championshipId) {
-          <div class="champion-card">
-            <p class="champion-series">{{ champ.championshipName }}</p>
-            <div class="podium-list">
-              @for (entry of champ.podium; track entry.position) {
-                <div class="podium-entry">
-                  <span class="podium-medal">{{ entry.position === 1 ? '🥇' : entry.position === 2 ? '🥈' : '🥉' }}</span>
-                  @if (entry.driverUuid) {
-                    <a class="podium-name" [routerLink]="['/drivers', entry.driverUuid]">{{ entry.displayName }}</a>
-                  } @else {
-                    <span class="podium-name">{{ entry.displayName }}</span>
-                  }
-                </div>
-              }
-            </div>
-          </div>
-        }
-      </div>
-    </section>
-  }
-
   <div class="toolbar">
     <input
       class="search-input"
