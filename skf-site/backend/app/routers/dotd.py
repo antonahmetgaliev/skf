@@ -5,12 +5,12 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.auth import get_current_user, get_current_user_optional, require_admin
+from app.auth import get_current_user, get_current_user_optional, require_admin, require_moderator
 from app.database import get_db
 from app.models.dotd import DotdCandidate, DotdPoll, DotdVote
 from app.models.user import User
@@ -25,7 +25,7 @@ _RESULT_VISIBLE_HOURS = 24  # keep closed polls visible for 24 h
 
 def _can_see_counts(poll: DotdPoll, user: User | None, my_vote: DotdVote | None) -> bool:
     """Return True if this requester should see vote counts."""
-    if user is not None and user.role.name in ("admin", "super_admin"):
+    if user is not None and user.role.name in ("moderator", "admin", "super_admin"):
         return True
     if my_vote is not None:
         return True
@@ -138,9 +138,9 @@ async def list_polls(
 async def create_poll(
     payload: DotdPollCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_moderator),
 ) -> DotdPollOut:
-    """Create a new DOTD poll (admin only)."""
+    """Create a new DOTD poll (moderator/admin only)."""
     closes = payload.closes_at
     if closes.tzinfo is None:
         closes = closes.replace(tzinfo=timezone.utc)
@@ -179,9 +179,9 @@ async def create_poll(
 async def close_poll(
     poll_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_moderator),
 ) -> DotdPollOut:
-    """Manually close a poll (admin only)."""
+    """Manually close a poll (moderator/admin only)."""
     poll = await _get_poll_or_404(poll_id, db)
     poll.is_manually_closed = True
     # Set closes_at to now so the 24h window starts correctly
@@ -237,3 +237,15 @@ async def cast_vote(
     # an async session.
     db.expire(poll)
     return _build_poll_out(await _get_poll_or_404(poll_id, db), current_user)
+
+
+@router.delete("/polls/{poll_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
+async def delete_poll(
+    poll_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(require_moderator),
+):
+    """Permanently delete a poll and all its votes (moderator/admin only)."""
+    poll = await _get_poll_or_404(poll_id, db)
+    await db.delete(poll)
+    await db.commit()

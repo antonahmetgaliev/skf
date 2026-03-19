@@ -1,14 +1,16 @@
 <div class="app-shell">
-  @if (auth.isRealSuperAdmin()) {
+  @if (auth.isRealAdmin()) {
     <div class="view-as-bar">
       <label class="view-as-label" for="viewAsRole">Viewing as</label>
       <select
         id="viewAsRole"
         class="view-as-select"
-        [ngModel]="auth.viewAsRole() ?? 'super_admin'"
-        (ngModelChange)="auth.viewAsRole.set($event === 'super_admin' ? null : $event)"
+        [ngModel]="auth.viewAsRole() ?? (auth.isRealSuperAdmin() ? 'super_admin' : 'admin')"
+        (ngModelChange)="auth.viewAsRole.set(($event === 'super_admin' && auth.isRealSuperAdmin()) || ($event === 'admin' && !auth.isRealSuperAdmin()) ? null : $event)"
       >
-        <option value="super_admin">Super Admin</option>
+        @if (auth.isRealSuperAdmin()) {
+          <option value="super_admin">Super Admin</option>
+        }
         <option value="admin">Admin</option>
         <option value="racing_judge">Racing Judge</option>
         <option value="driver">Driver</option>

@@ -24,7 +24,7 @@ export class AuthService {
   readonly isLoggedIn = computed(() => this.user() !== null);
 
   /**
-   * Super-admins can override the effective role for previewing the site.
+   * Super-admins and admins can override the effective role for previewing the site.
    * null = no override (use real role).
    */
   readonly viewAsRole = signal<string | null>(null);
@@ -33,8 +33,9 @@ export class AuthService {
   readonly effectiveRole = computed(() => {
     const u = this.user();
     if (!u) return null;
-    // Only super-admins may override
-    if (u.role === 'super_admin' && this.viewAsRole() !== null) {
+    // Admins and super-admins may preview as lower roles
+    const canPreview = u.role === 'super_admin' || u.role === 'admin';
+    if (canPreview && this.viewAsRole() !== null) {
       return this.viewAsRole();
     }
     return u.role;
@@ -46,9 +47,20 @@ export class AuthService {
     return u !== null && u.role === 'super_admin';
   });
 
+  /** True if the real (server) role is admin or higher — never affected by viewAs. */
+  readonly isRealAdmin = computed(() => {
+    const u = this.user();
+    return u !== null && (u.role === 'admin' || u.role === 'super_admin');
+  });
+
   readonly isAdmin = computed(() => {
     const role = this.effectiveRole();
     return role === 'admin' || role === 'super_admin';
+  });
+
+  readonly isModerator = computed(() => {
+    const role = this.effectiveRole();
+    return role === 'moderator' || role === 'admin' || role === 'super_admin';
   });
 
   readonly isSuperAdmin = computed(() => {

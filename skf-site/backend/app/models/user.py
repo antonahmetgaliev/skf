@@ -27,6 +27,7 @@ class Role(Base):
 
 # Pre-defined role names (used for seeding & comparisons)
 ROLE_DRIVER = "driver"
+ROLE_MODERATOR = "moderator"
 ROLE_ADMIN = "admin"
 ROLE_SUPER_ADMIN = "super_admin"
 ROLE_JUDGE = "racing_judge"

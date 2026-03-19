@@ -104,6 +104,12 @@ export class DotdWidgetComponent implements OnInit, OnDestroy {
     });
   }
 
+  deletePoll(pollId: string): void {
+    this.dotd.deletePoll(pollId).subscribe({
+      next: () => this.polls.update(list => list.filter(p => p.id !== pollId)),
+    });
+  }
+
   // ── admin create modal ────────────────────────────────────────────────────
 
   openCreateModal(event: Event): void {
@@ -114,7 +120,10 @@ export class DotdWidgetComponent implements OnInit, OnDestroy {
     this.selectedChampName = '';
     this.selectedRaceId = null;
     this.newRaceName = '';
-    this.newClosesAt = '';
+    // Default closes_at to now + 20 minutes, formatted for datetime-local input
+    const defaultClose = new Date(Date.now() + 20 * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    this.newClosesAt = `${defaultClose.getFullYear()}-${pad(defaultClose.getMonth() + 1)}-${pad(defaultClose.getDate())}T${pad(defaultClose.getHours())}:${pad(defaultClose.getMinutes())}`;
     this.selectedDriverIds.set(new Set());
     this.standings.set(null);
 

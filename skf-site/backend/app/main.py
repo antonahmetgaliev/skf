@@ -48,10 +48,10 @@ async def on_startup():
     # Seed the roles table with the three default roles
     from sqlalchemy import select
     from app.database import async_session
-    from app.models.user import Role, ROLE_DRIVER, ROLE_ADMIN, ROLE_SUPER_ADMIN, ROLE_JUDGE
+    from app.models.user import Role, ROLE_DRIVER, ROLE_MODERATOR, ROLE_ADMIN, ROLE_SUPER_ADMIN, ROLE_JUDGE
 
     async with async_session() as session:
-        for role_name in (ROLE_DRIVER, ROLE_ADMIN, ROLE_SUPER_ADMIN, ROLE_JUDGE):
+        for role_name in (ROLE_DRIVER, ROLE_MODERATOR, ROLE_ADMIN, ROLE_SUPER_ADMIN, ROLE_JUDGE):
             result = await session.execute(
                 select(Role).where(Role.name == role_name)
             )

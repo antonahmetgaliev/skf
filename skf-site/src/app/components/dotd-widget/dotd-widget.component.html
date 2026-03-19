@@ -1,4 +1,4 @@
-@if (polls().length > 0 || auth.isAdmin()) {
+@if (polls().length > 0 || auth.isModerator()) {
 <div class="dotd-bar" [class.dotd-bar--expanded]="expanded()" [class.dotd-bar--warn]="hasUnvotedOpenPoll()">
 
   <!-- ── toggle header ───────────────────────────────────────────────────── -->
@@ -17,7 +17,7 @@
       <span class="poll-count">{{ polls().length }} poll{{ polls().length !== 1 ? 's' : '' }}</span>
     }
 
-    @if (auth.isAdmin()) {
+    @if (auth.isModerator()) {
       <button class="btn-create" type="button" (click)="openCreateModal($event)">+ Create</button>
     }
 
@@ -49,9 +49,14 @@
               } @else {
                 <span class="badge badge--ended">ENDED</span>
               }
-              @if (auth.isAdmin() && poll.isOpen) {
+            @if (auth.isModerator() && poll.isOpen) {
                 <button class="btn-close-poll" type="button" (click)="closePoll(poll.id)">
                   Close
+                </button>
+              }
+              @if (auth.isModerator()) {
+                <button class="btn-delete-poll" type="button" (click)="deletePoll(poll.id)">
+                  Delete
                 </button>
               }
             </div>
@@ -132,7 +137,7 @@
   }
 
   <!-- ── admin create modal ──────────────────────────────────────────────── -->
-  @if (showCreate() && auth.isAdmin()) {
+  @if (showCreate() && auth.isModerator()) {
     <div class="modal-backdrop" (click)="closeCreateModal()">
       <div class="modal-box" (click)="$event.stopPropagation()">
         <h2 class="modal-title">Create DOTD Poll</h2>

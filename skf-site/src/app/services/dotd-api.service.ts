@@ -64,4 +64,8 @@ export class DotdApiService {
       { params: { candidate_id: candidateId } },
     );
   }
+
+  deletePoll(pollId: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/polls/${pollId}`);
+  }
 }
