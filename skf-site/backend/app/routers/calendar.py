@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 import uuid
 from datetime import datetime, timezone
 from calendar import monthrange
@@ -27,6 +29,8 @@ from app.schemas.calendar import (
     CustomRaceUpdate,
 )
 from app.services.simgrid import simgrid_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/calendar", tags=["Calendar"])
 
@@ -108,14 +112,31 @@ async def get_calendar_events(
     result = await db.execute(
         select(SimgridCache).where(SimgridCache.cache_key.like("standings_%"))
     )
-    standings_caches = {
+    standings_caches: dict[int, dict] = {
         _extract_champ_id(c.cache_key): c.data
         for c in result.scalars().all()
         if _extract_champ_id(c.cache_key) is not None
     }
 
+    # Fetch standings on-demand for championships without cached data.
+    # This populates the cache so subsequent requests are fast.
+    uncached_ids = [c.id for c in championships if c.id not in standings_caches]
+    if uncached_ids:
+        async def _fetch_one(cid: int) -> tuple[int, dict | None]:
+            try:
+                data = await simgrid_service.get_standings(cid)
+                return cid, data.model_dump()
+            except Exception:
+                logger.debug("Failed to fetch standings for championship %s", cid)
+                return cid, None
+
+        results = await asyncio.gather(*[_fetch_one(cid) for cid in uncached_ids])
+        for cid, data in results:
+            if data is not None:
+                standings_caches[cid] = data
+
     for champ in championships:
-        # Build race list from cached standings first (needed for classification)
+        # Build race list from standings data (cached or freshly fetched)
         races: list[CalendarRace] = []
         all_races_ended = False
         standings_data = standings_caches.get(champ.id)
