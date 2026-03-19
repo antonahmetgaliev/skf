@@ -10,6 +10,7 @@ import { IncidentsComponent } from './pages/incidents/incidents.component';
 import { ProfileComponent } from './pages/profile/profile.component';
 import { RaceResultsComponent } from './pages/race-results/race-results.component';
 import { SkfHistoryComponent } from './pages/skf-history/skf-history.component';
+import { CalendarComponent } from './pages/calendar/calendar.component';
 import { RegulationsComponent } from './pages/regulations/regulations.component';
 
 export const appRoutes: Routes = [
@@ -20,6 +21,7 @@ export const appRoutes: Routes = [
   { path: 'championship-standings', component: ChampionshipStandingsComponent },
   { path: 'skf-history', component: SkfHistoryComponent },
   { path: 'race-results', component: RaceResultsComponent },
+  { path: 'calendar', component: CalendarComponent },
   { path: 'regulations', component: RegulationsComponent },
   { path: 'profile', component: ProfileComponent },
   { path: 'drivers', component: DriversListComponent },

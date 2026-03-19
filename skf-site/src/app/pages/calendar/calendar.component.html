@@ -1,0 +1,213 @@
+<section class="calendar-page">
+  <header class="page-intro">
+    <p class="eyebrow">SKF Racing Hub</p>
+    <h1>Season Calendar</h1>
+    <p class="subtitle">All races, championships, and planned events at a glance.</p>
+  </header>
+
+  <div class="card calendar-card">
+    <!-- Header with navigation -->
+    <div class="calendar-header">
+      <button class="btn ghost small" type="button" (click)="navigateMonth(-1)">&larr; Prev</button>
+      <h2 class="month-label">{{ monthLabel() }}</h2>
+      <div class="header-actions">
+        <button class="btn ghost small" type="button" (click)="goToToday()">Today</button>
+        <button class="btn ghost small" type="button" (click)="navigateMonth(1)">Next &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="calendar-legend">
+      <span class="legend-item"><span class="legend-dot dot-past"></span> Past</span>
+      <span class="legend-item"><span class="legend-dot dot-ongoing"></span> Ongoing</span>
+      <span class="legend-item"><span class="legend-dot dot-upcoming"></span> Upcoming</span>
+      <span class="legend-item"><span class="legend-dot dot-future"></span> Future</span>
+    </div>
+
+    @if (loading()) {
+      <div class="inline-loading"><div class="inline-spinner"></div></div>
+    } @else if (errorMessage()) {
+      <p class="error">{{ errorMessage() }}</p>
+    } @else {
+      <!-- Calendar grid -->
+      <div class="calendar-grid">
+        @for (dayName of weekDays; track dayName) {
+          <div class="calendar-weekday">{{ dayName }}</div>
+        }
+
+        @for (week of calendarGrid(); track $index) {
+          @for (day of week; track $index) {
+            <div
+              class="calendar-cell"
+              [class.other-month]="!day.isCurrentMonth"
+              [class.today]="day.isToday"
+              [class.selected]="selectedDay() === day.dayNumber && day.isCurrentMonth"
+              [class.has-events]="day.events.length > 0 && day.isCurrentMonth"
+              (click)="day.isCurrentMonth ? selectDay(day.dayNumber) : null"
+            >
+              <span class="day-number">{{ day.dayNumber }}</span>
+              @if (day.events.length > 0 && day.isCurrentMonth) {
+                <div class="event-dots">
+                  @for (event of day.events.slice(0, 3); track event.id) {
+                    <span
+                      class="event-dot"
+                      [ngClass]="'dot-' + event.eventType"
+                      [title]="event.name"
+                    ></span>
+                  }
+                  @if (day.events.length > 3) {
+                    <span class="event-overflow">+{{ day.events.length - 3 }}</span>
+                  }
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Selected day detail panel -->
+  @if (selectedDay() !== null && selectedDayEvents().length > 0) {
+    <div class="card day-detail">
+      <h3>{{ selectedDayLabel() }}</h3>
+      @for (event of selectedDayEvents(); track event.id) {
+        <div class="event-card" [ngClass]="'event-card--' + event.eventType">
+          <div class="event-card-header">
+            <span class="event-type-badge" [ngClass]="'badge--' + event.eventType">
+              {{ getEventTypeLabel(event.eventType) }}
+            </span>
+            @if (event.game) {
+              <span class="event-game">{{ event.game }}</span>
+            }
+            <span class="event-source">{{ event.source }}</span>
+          </div>
+          <h4 class="event-name">{{ event.name }}</h4>
+          @if (event.carClass) {
+            <span class="event-car-class">{{ event.carClass }}</span>
+          }
+          @if (event.description) {
+            <p class="event-description">{{ event.description }}</p>
+          }
+          @if (event.races.length > 0) {
+            <div class="event-races">
+              @for (race of event.races; track $index) {
+                <span class="race-pill">
+                  @if (race.name) { {{ race.name }} }
+                  @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }
+                  @if (race.date) {
+                    <span class="race-date">{{ race.date | slice:0:10 }}</span>
+                  }
+                </span>
+              }
+            </div>
+          }
+          @if (event.simgridChampionshipId) {
+            <a routerLink="/championship-standings" class="event-link">View standings &rarr;</a>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Admin: add custom championship -->
+  @if (auth.isAdmin()) {
+    <div class="admin-actions">
+      <button class="btn accent" type="button" (click)="openCreateModal()">
+        + Add Custom Championship
+      </button>
+    </div>
+  }
+
+  <!-- Create modal -->
+  @if (showCreateModal()) {
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>New Custom Championship</h3>
+          <button class="btn ghost small" type="button" (click)="closeCreateModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <label class="form-label">
+            Name *
+            <input
+              class="form-input"
+              type="text"
+              [(ngModel)]="formName"
+              placeholder="e.g. SKF GT3 Championship S3"
+            />
+          </label>
+
+          <label class="form-label">
+            Game *
+            <input
+              class="form-input"
+              type="text"
+              [(ngModel)]="formGame"
+              placeholder="e.g. ACC, iRacing"
+            />
+          </label>
+
+          <label class="form-label">
+            Car Class
+            <input
+              class="form-input"
+              type="text"
+              [(ngModel)]="formCarClass"
+              placeholder="e.g. GT3, LMP2"
+            />
+          </label>
+
+          <label class="form-label">
+            Description
+            <textarea
+              class="form-input form-textarea"
+              [(ngModel)]="formDescription"
+              placeholder="Optional description..."
+              rows="3"
+            ></textarea>
+          </label>
+
+          <div class="races-section">
+            <div class="races-header">
+              <h4>Races</h4>
+              <button class="btn ghost small" type="button" (click)="addRaceRow()">+ Add Race</button>
+            </div>
+            @for (race of formRaces; track $index; let i = $index) {
+              <div class="race-row">
+                <input
+                  class="form-input race-input"
+                  type="date"
+                  [(ngModel)]="race.date"
+                  placeholder="Date"
+                />
+                <input
+                  class="form-input race-input"
+                  type="text"
+                  [(ngModel)]="race.track"
+                  placeholder="Track name"
+                />
+                @if (formRaces.length > 1) {
+                  <button class="btn ghost small btn-remove" type="button" (click)="removeRaceRow(i)">✕</button>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn ghost" type="button" (click)="closeCreateModal()">Cancel</button>
+          <button
+            class="btn accent"
+            type="button"
+            [disabled]="formSubmitting || !formName.trim() || !formGame.trim()"
+            (click)="submitCreate()"
+          >
+            {{ formSubmitting ? 'Creating...' : 'Create Championship' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</section>
