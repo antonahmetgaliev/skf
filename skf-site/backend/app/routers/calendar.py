@@ -115,14 +115,7 @@ async def get_calendar_events(
     }
 
     for champ in championships:
-        start = _parse_date(champ.start_date)
-        end = _parse_date(champ.end_date)
-        event_type = _classify_simgrid(
-            champ.start_date, champ.end_date,
-            champ.event_completed, champ.accepting_registrations,
-        )
-
-        # Build race list from cached standings
+        # Build race list from cached standings first (needed for classification)
         races: list[CalendarRace] = []
         standings_data = standings_caches.get(champ.id)
         if isinstance(standings_data, dict):
@@ -134,6 +127,24 @@ async def get_calendar_events(
                     name=r.get("display_name") or r.get("displayName"),
                 ))
 
+        # Derive effective start/end from race dates when championship dates are missing
+        effective_start = champ.start_date
+        effective_end = champ.end_date
+        race_dates = [_parse_date(r.date) for r in races if r.date]
+        race_dates = [d for d in race_dates if d is not None]
+        if race_dates:
+            if not effective_start:
+                effective_start = min(race_dates).isoformat()
+            if not effective_end:
+                effective_end = max(race_dates).isoformat()
+
+        start = _parse_date(effective_start)
+        end = _parse_date(effective_end)
+        event_type = _classify_simgrid(
+            effective_start, effective_end,
+            champ.event_completed, champ.accepting_registrations,
+        )
+
         # Check if championship or any of its races overlap with the month
         if not _overlaps_month(start, end, races, month_start, month_end):
             continue
@@ -142,8 +153,8 @@ async def get_calendar_events(
             id=str(champ.id),
             name=champ.name,
             game="",
-            start_date=champ.start_date,
-            end_date=champ.end_date,
+            start_date=effective_start,
+            end_date=effective_end,
             event_type=event_type,
             source="simgrid",
             simgrid_championship_id=champ.id,
