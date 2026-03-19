@@ -295,6 +295,19 @@
     border: 1px solid rgba(29, 127, 78, 0.25);
     margin-left: 0.4rem;
   }
+
+  &--bwp-pending {
+    background: rgba(220, 100, 30, 0.12);
+    color: #b84f18;
+    border: 1px solid rgba(220, 100, 30, 0.3);
+  }
+}
+
+.status-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
 }
 
 // ── Buttons ───────────────────────────────────────────────────────────────

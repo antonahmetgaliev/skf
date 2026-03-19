@@ -115,11 +115,20 @@
                       }
                     </td>
                     <td>
-                      @if (inc.status === 'resolved') {
-                        <span class="badge badge--resolved">Resolved</span>
-                      } @else {
-                        <span class="badge badge--pending">Open</span>
-                      }
+                      <div class="status-badges">
+                        @if (inc.status === 'resolved') {
+                          <span class="badge badge--resolved">Resolved</span>
+                        } @else {
+                          <span class="badge badge--pending">Open</span>
+                        }
+                        @if (inc.resolution?.bwpPoints) {
+                          @if (inc.resolution?.bwpApplied) {
+                            <span class="badge badge--applied">BWP Applied</span>
+                          } @else {
+                            <span class="badge badge--bwp-pending">BWP Pending</span>
+                          }
+                        }
+                      </div>
                     </td>
                     <td class="row-actions">
                       <button class="btn-link" type="button" (click)="openDetailModal(inc)">
