@@ -1,4 +1,5 @@
-<div class="dotd-bar" [class.dotd-bar--expanded]="expanded()">
+@if (polls().length > 0 || auth.isAdmin()) {
+<div class="dotd-bar" [class.dotd-bar--expanded]="expanded()" [class.dotd-bar--warn]="hasUnvotedOpenPoll()">
 
   <!-- ── toggle header ───────────────────────────────────────────────────── -->
   <div class="dotd-header" role="button" tabindex="0"
@@ -200,3 +201,4 @@
   }
 
 </div>
+}

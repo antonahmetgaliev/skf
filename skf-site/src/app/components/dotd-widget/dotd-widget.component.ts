@@ -38,6 +38,11 @@ export class DotdWidgetComponent implements OnInit, OnDestroy {
 
   readonly openPollCount = computed(() => this.polls().filter(p => p.isOpen).length);
 
+  /** True when there is at least one open poll the current viewer hasn't voted in. */
+  readonly hasUnvotedOpenPoll = computed(() =>
+    this.polls().some(p => p.isOpen && !p.hasVoted),
+  );
+
   // ── create-poll modal ─────────────────────────────────────────────────────
   readonly showCreate = signal(false);
   readonly championships = signal<ChampionshipListItem[]>([]);
@@ -123,14 +128,17 @@ export class DotdWidgetComponent implements OnInit, OnDestroy {
   }
 
   onChampionshipChange(): void {
-    if (!this.selectedChampId) return;
+    // ngModel may coerce the option value to a string — normalise to number.
+    const champId = +this.selectedChampId;
+    if (!champId) return;
+    this.selectedChampId = champId;
     this.standings.set(null);
     this.selectedDriverIds.set(new Set());
 
-    const champ = this.championships().find(c => c.id === this.selectedChampId);
+    const champ = this.championships().find(c => c.id === champId);
     this.selectedChampName = champ?.name ?? '';
 
-    this.simgrid.getChampionshipStandings(this.selectedChampId).subscribe({
+    this.simgrid.getChampionshipStandings(champId).subscribe({
       next: (data) => this.standings.set(data),
     });
   }
@@ -190,7 +198,7 @@ export class DotdWidgetComponent implements OnInit, OnDestroy {
     this.creating.set(true);
     this.dotd
       .createPoll({
-        championshipId: this.selectedChampId,
+        championshipId: +this.selectedChampId,
         championshipName: this.selectedChampName,
         raceId: this.selectedRaceId,
         raceName: this.newRaceName || 'Race',
@@ -203,7 +211,15 @@ export class DotdWidgetComponent implements OnInit, OnDestroy {
           this.showCreate.set(false);
         },
         error: (err) => {
-          const msg: string = err?.error?.detail ?? 'Failed to create poll.';
+          const detail = err?.error?.detail;
+          let msg: string;
+          if (Array.isArray(detail)) {
+            msg = detail.map((e: { msg: string }) => e.msg).join('; ');
+          } else if (typeof detail === 'string') {
+            msg = detail;
+          } else {
+            msg = 'Failed to create poll.';
+          }
           this.createError.set(msg);
         },
         complete: () => this.creating.set(false),
