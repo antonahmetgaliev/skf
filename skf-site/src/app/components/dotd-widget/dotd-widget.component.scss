@@ -1,0 +1,577 @@
+:host {
+  display: block;
+}
+
+// ── bar container ────────────────────────────────────────────────────────────
+
+.dotd-bar {
+  background: rgba(247, 242, 234, 0.96);
+  backdrop-filter: blur(8px);
+  border-bottom: 2px solid var(--gold);
+  box-shadow: 0 2px 12px rgba(20, 18, 15, 0.10);
+  overflow: visible;
+
+  &--expanded {
+    // nothing extra; body handles its own overflow
+  }
+}
+
+// ── toggle header ────────────────────────────────────────────────────────────
+
+.dotd-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px;
+  cursor: pointer;
+  user-select: none;
+  min-height: 44px;
+
+  &:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: -2px;
+  }
+}
+
+.dotd-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.dotd-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+// ── badges ───────────────────────────────────────────────────────────────────
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--success);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.poll-count {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.chevron {
+  margin-left: auto;
+  font-size: 1.2rem;
+  transform: rotate(90deg);
+  transition: transform 0.2s ease;
+  color: var(--muted);
+
+  &--up {
+    transform: rotate(-90deg);
+  }
+}
+
+// ── "Create" button in header ────────────────────────────────────────────────
+
+.btn-create {
+  margin-left: 4px;
+  padding: 3px 10px;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  line-height: 1.6;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(--gold-deep);
+  }
+}
+
+// ── expandable body ──────────────────────────────────────────────────────────
+
+.dotd-body {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 20px 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.no-polls {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0;
+  padding: 8px 0;
+}
+
+// ── poll card ────────────────────────────────────────────────────────────────
+
+.poll-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(20, 18, 15, 0.08);
+  padding: 14px 16px 12px;
+  min-width: 260px;
+  max-width: 340px;
+  flex: 1 1 280px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-deep));
+  }
+}
+
+.poll-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.poll-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.poll-champ {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.poll-race {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.poll-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 999px;
+
+  &--live {
+    background: rgba(29, 127, 78, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(29, 127, 78, 0.3);
+  }
+
+  &--ended {
+    background: rgba(110, 98, 86, 0.12);
+    color: var(--muted);
+    border: 1px solid rgba(110, 98, 86, 0.2);
+  }
+}
+
+.btn-close-poll {
+  padding: 2px 8px;
+  background: transparent;
+  border: 1px solid var(--danger);
+  border-radius: 999px;
+  color: var(--danger);
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: var(--danger);
+    color: #fff;
+  }
+}
+
+// ── disclaimer ───────────────────────────────────────────────────────────────
+
+.disclaimer {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0 0 8px;
+  padding: 5px 8px;
+  background: rgba(243, 180, 25, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid var(--gold);
+}
+
+// ── candidates ───────────────────────────────────────────────────────────────
+
+.candidates-list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.candidate-row {
+  display: grid;
+  grid-template-columns: 32px 1fr auto auto auto;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px;
+  border-radius: 8px;
+  transition: background 0.12s ease;
+
+  &:hover {
+    background: rgba(243, 180, 25, 0.07);
+  }
+
+  &--voted {
+    background: rgba(243, 180, 25, 0.12);
+  }
+}
+
+.candidate-pos {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.candidate-name {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vote-bar-wrap {
+  display: block;
+  width: 80px;
+  height: 6px;
+  background: rgba(110, 98, 86, 0.15);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.vote-bar-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold-deep));
+  border-radius: 999px;
+  transition: width 0.4s ease;
+  min-width: 0;
+}
+
+.vote-pct {
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.vote-raw {
+  color: var(--muted);
+}
+
+.btn-vote {
+  padding: 3px 10px;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, opacity 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--gold-deep);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.my-vote-mark {
+  color: var(--success);
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+// ── login prompt ─────────────────────────────────────────────────────────────
+
+.login-prompt {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+
+.btn-login-inline {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--gold-deep);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+// ── poll footer ───────────────────────────────────────────────────────────────
+
+.poll-footer {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin: 4px 0 0;
+  text-align: right;
+}
+
+// ── create modal ─────────────────────────────────────────────────────────────
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 16, 12, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-box {
+  background: var(--sand);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(18, 16, 12, 0.24);
+  padding: 28px 28px 24px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-deep));
+    border-radius: 20px 20px 0 0;
+  }
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0 0 20px;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 14px 0 5px;
+}
+
+.field-select,
+.field-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid var(--card-border);
+  border-radius: 8px;
+  background: #fff;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--ink);
+  appearance: auto;
+  transition: border-color 0.15s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
+}
+
+.loading-standings {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-style: italic;
+  margin: 10px 0;
+}
+
+// ── driver checklist ─────────────────────────────────────────────────────────
+
+.driver-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1.5px solid var(--card-border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 6px 0;
+}
+
+.driver-row {
+  padding: 0;
+}
+
+.driver-check-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  transition: background 0.1s ease;
+
+  &:hover {
+    background: rgba(243, 180, 25, 0.08);
+  }
+}
+
+.driver-checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--gold-deep);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.driver-pos {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 28px;
+}
+
+.driver-name {
+  color: var(--ink);
+}
+
+// ── create error ─────────────────────────────────────────────────────────────
+
+.create-error {
+  font-size: 0.82rem;
+  color: var(--danger);
+  margin: 10px 0 0;
+  padding: 6px 10px;
+  background: rgba(185, 71, 46, 0.08);
+  border-radius: 6px;
+  border-left: 3px solid var(--danger);
+}
+
+// ── modal action buttons ──────────────────────────────────────────────────────
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s ease, opacity 0.15s ease;
+
+  &.accent {
+    background: var(--gold);
+    color: var(--ink);
+
+    &:hover:not(:disabled) {
+      background: var(--gold-deep);
+    }
+
+    &:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+  }
+
+  &.ghost {
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1.5px solid var(--card-border);
+
+    &:hover {
+      background: rgba(18, 16, 12, 0.05);
+    }
+  }
+}

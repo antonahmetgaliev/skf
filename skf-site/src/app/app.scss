@@ -73,6 +73,12 @@
   border: 1px solid rgba(243, 180, 25, 0.35);
 }
 
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
 .site-header {
   display: flex;
   align-items: center;
@@ -83,9 +89,6 @@
   border-bottom: 1px solid var(--card-border);
   box-shadow: 0 12px 28px rgba(20, 18, 15, 0.08);
   backdrop-filter: blur(10px);
-  position: sticky;
-  top: 0;
-  z-index: 20;
 }
 
 .brand {
