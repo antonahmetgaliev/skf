@@ -55,6 +55,11 @@ export class AuthService {
     return this.effectiveRole() === 'super_admin';
   });
 
+  readonly isJudge = computed(() => {
+    const role = this.effectiveRole();
+    return role === 'racing_judge' || role === 'admin' || role === 'super_admin';
+  });
+
   /** Fetch the current session user. Call once at app startup. */
   loadUser(): void {
     this.http.get<AuthUser>('/api/auth/me').subscribe({

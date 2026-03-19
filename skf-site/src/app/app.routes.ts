@@ -6,6 +6,7 @@ import { DriverProfileComponent } from './pages/driver-profile/driver-profile.co
 import { DriversListComponent } from './pages/drivers-list/drivers-list.component';
 import { HomeVisitComponent } from './pages/home-visit/home-visit.component';
 import { ChampionshipStandingsComponent } from './pages/championship-standings/championship-standings.component';
+import { IncidentsComponent } from './pages/incidents/incidents.component';
 import { ProfileComponent } from './pages/profile/profile.component';
 import { RaceResultsComponent } from './pages/race-results/race-results.component';
 import { SkfHistoryComponent } from './pages/skf-history/skf-history.component';
@@ -23,6 +24,7 @@ export const appRoutes: Routes = [
   { path: 'profile', component: ProfileComponent },
   { path: 'drivers', component: DriversListComponent },
   { path: 'drivers/:id', component: DriverProfileComponent },
+  { path: 'incidents', component: IncidentsComponent },
   { path: 'admin/users', component: AdminUsersComponent, canActivate: [adminGuard] },
   { path: '**', redirectTo: '' }
 ];

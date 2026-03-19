@@ -1,0 +1,434 @@
+<div class="incidents-page">
+  <div class="page-header">
+    <h1 class="page-title">Incidents</h1>
+    @if (auth.isAdmin()) {
+      <button class="btn btn-primary" type="button" (click)="openNewWindowModal()">
+        + Open Window
+      </button>
+    }
+  </div>
+
+  <div class="incidents-layout">
+    <!-- Windows sidebar -->
+    <aside class="windows-sidebar">
+      <h2 class="sidebar-heading">Race Windows</h2>
+
+      @if (loadingWindows()) {
+        <div class="spinner-wrap"><span class="spinner"></span></div>
+      } @else if (windows().length === 0) {
+        <p class="empty-msg">No incident windows yet.</p>
+      } @else {
+        <ul class="window-list">
+          @for (w of windows(); track w.id) {
+            <li
+              class="window-item"
+              [class.window-item--active]="windowDetail()?.id === w.id"
+              [class.window-item--open]="w.isOpen"
+              (click)="selectWindow(w.id)"
+            >
+              <div class="window-item-name">{{ w.championshipName }}</div>
+              <div class="window-item-race">{{ w.raceName }}</div>
+              <div class="window-item-meta">
+                @if (w.isOpen) {
+                  <span class="badge badge--open">OPEN · {{ closesIn(w.closesAt) }}</span>
+                } @else {
+                  <span class="badge badge--closed">CLOSED</span>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </aside>
+
+    <!-- Window detail panel -->
+    <section class="window-detail">
+      @if (!windowDetail() && !loadingDetail()) {
+        <div class="empty-detail">
+          <p>Select a window to view its incidents.</p>
+        </div>
+      } @else if (loadingDetail()) {
+        <div class="spinner-wrap"><span class="spinner"></span></div>
+      } @else if (windowDetail(); as w) {
+        <div class="detail-header">
+          <div class="detail-title-block">
+            <h2 class="detail-title">{{ w.championshipName }}</h2>
+            <span class="detail-race">{{ w.raceName }}</span>
+          </div>
+          <div class="detail-meta">
+            @if (w.isOpen) {
+              <span class="badge badge--open">OPEN</span>
+              <span class="detail-closes">Closes {{ w.closesAt | date:'dd MMM yyyy HH:mm' }} UTC · {{ closesIn(w.closesAt) }} remaining</span>
+            } @else {
+              <span class="badge badge--closed">CLOSED</span>
+            }
+          </div>
+          @if (auth.isAdmin()) {
+            <div class="detail-actions">
+              @if (w.isOpen) {
+                <button class="btn btn-outline btn-sm" type="button" (click)="closeWindow(w.id)">
+                  Close Window
+                </button>
+              }
+              <button class="btn btn-danger btn-sm" type="button" (click)="deleteWindow(w.id)">
+                Delete
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="incidents-toolbar">
+          <span class="incident-count">{{ w.incidents.length }} incident{{ w.incidents.length !== 1 ? 's' : '' }}</span>
+          @if (w.isOpen && auth.isLoggedIn()) {
+            <button class="btn btn-primary btn-sm" type="button" (click)="openNewIncidentModal()">
+              + File Incident
+            </button>
+          }
+        </div>
+
+        @if (w.incidents.length === 0) {
+          <p class="empty-msg">No incidents filed yet.</p>
+        } @else {
+          <div class="table-wrap">
+            <table class="incidents-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Driver 1</th>
+                  <th>Driver 2</th>
+                  <th>Lap / Turn</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (inc of w.incidents; track inc.id; let i = $index) {
+                  <tr [class.row--resolved]="inc.status === 'resolved'">
+                    <td class="row-num">{{ i + 1 }}</td>
+                    <td>{{ inc.driver1Name }}</td>
+                    <td>{{ inc.driver2Name || '—' }}</td>
+                    <td class="lap-turn">
+                      @if (inc.lapNumber !== null || inc.turn) {
+                        {{ inc.lapNumber !== null ? 'L' + inc.lapNumber : '' }}{{ inc.lapNumber !== null && inc.turn ? ' / ' : '' }}{{ inc.turn || '' }}
+                      } @else {
+                        —
+                      }
+                    </td>
+                    <td>
+                      @if (inc.status === 'resolved') {
+                        <span class="badge badge--resolved">Resolved</span>
+                      } @else {
+                        <span class="badge badge--pending">Open</span>
+                      }
+                    </td>
+                    <td class="row-actions">
+                      <button class="btn-link" type="button" (click)="openDetailModal(inc)">
+                        View
+                      </button>
+                      @if (auth.isJudge()) {
+                        <button class="btn-link btn-link--judge" type="button" (click)="openResolveModal(inc)">
+                          {{ inc.status === 'resolved' ? 'Edit Verdict' : 'Resolve' }}
+                        </button>
+                      }
+                      @if (auth.isAdmin() && inc.resolution && inc.resolution.bwpPoints && !inc.resolution.bwpApplied) {
+                        <button class="btn-link btn-link--bwp" type="button" (click)="applyBwp(inc.id)">
+                          Mark BWP Applied
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+    </section>
+  </div>
+</div>
+
+<!-- ── New Window Modal ──────────────────────────────────────────────────── -->
+@if (showNewWindowModal()) {
+  <div class="modal-backdrop" (click)="showNewWindowModal.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h3 class="modal-title">Open Incident Window</h3>
+
+      <label class="form-label" for="nwChamp">Championship</label>
+      <select
+        id="nwChamp"
+        class="form-control"
+        [ngModel]="nwChampId ?? ''"
+        (ngModelChange)="onChampionshipChange($event)"
+      >
+        <option value="">— Select championship —</option>
+        @for (c of championships(); track c.id) {
+          <option [value]="c.id">{{ c.name }}</option>
+        }
+      </select>
+
+      <label class="form-label" for="nwRace">Race</label>
+      <select
+        id="nwRace"
+        class="form-control"
+        [disabled]="!nwChampId || loadingRaces()"
+        [ngModel]="nwRaceId ?? ''"
+        (ngModelChange)="onRaceChange($event)"
+      >
+        <option value="">{{ loadingRaces() ? 'Loading…' : '— Select race —' }}</option>
+        @for (r of availableRaces(); track r.id) {
+          <option [value]="r.id">{{ r.displayName }}</option>
+        }
+      </select>
+
+      <label class="form-label" for="nwInterval">Reporting Window (hours)</label>
+      <input
+        id="nwInterval"
+        class="form-control"
+        type="number"
+        min="1"
+        max="168"
+        [(ngModel)]="nwIntervalHours"
+      />
+
+      @if (nwError) {
+        <p class="form-error">{{ nwError }}</p>
+      }
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" type="button" (click)="showNewWindowModal.set(false)">
+          Cancel
+        </button>
+        <button
+          class="btn btn-primary"
+          type="button"
+          [disabled]="nwSubmitting"
+          (click)="submitNewWindow()"
+        >
+          {{ nwSubmitting ? 'Opening…' : 'Open Window' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── File Incident Modal ───────────────────────────────────────────────── -->
+@if (showNewIncidentModal()) {
+  <div class="modal-backdrop" (click)="showNewIncidentModal.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h3 class="modal-title">File Incident</h3>
+
+      <label class="form-label" for="niD1">Driver 1 (involved) *</label>
+      <input
+        id="niD1"
+        class="form-control"
+        type="text"
+        list="driver1-list"
+        [(ngModel)]="niDriver1Name"
+        (change)="onDriver1Change()"
+        placeholder="Driver name…"
+      />
+      <datalist id="driver1-list">
+        @for (d of bwpDrivers(); track d.id) {
+          <option [value]="d.name"></option>
+        }
+      </datalist>
+
+      <label class="form-label" for="niD2">Driver 2 (optional)</label>
+      <input
+        id="niD2"
+        class="form-control"
+        type="text"
+        list="driver2-list"
+        [(ngModel)]="niDriver2Name"
+        (change)="onDriver2Change()"
+        placeholder="Driver name…"
+      />
+      <datalist id="driver2-list">
+        @for (d of bwpDrivers(); track d.id) {
+          <option [value]="d.name"></option>
+        }
+      </datalist>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="niLap">Lap (optional)</label>
+          <input
+            id="niLap"
+            class="form-control"
+            type="number"
+            min="0"
+            [(ngModel)]="niLap"
+            placeholder="e.g. 3"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="niTurn">Turn (optional)</label>
+          <input
+            id="niTurn"
+            class="form-control"
+            type="text"
+            [(ngModel)]="niTurn"
+            placeholder="e.g. T1"
+          />
+        </div>
+      </div>
+
+      <label class="form-label" for="niDesc">Description *</label>
+      <textarea
+        id="niDesc"
+        class="form-control form-textarea"
+        rows="4"
+        [(ngModel)]="niDescription"
+        placeholder="Describe what happened…"
+      ></textarea>
+
+      @if (niError) {
+        <p class="form-error">{{ niError }}</p>
+      }
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" type="button" (click)="showNewIncidentModal.set(false)">
+          Cancel
+        </button>
+        <button
+          class="btn btn-primary"
+          type="button"
+          [disabled]="niSubmitting"
+          (click)="submitIncident()"
+        >
+          {{ niSubmitting ? 'Submitting…' : 'Submit Incident' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Resolve Modal ──────────────────────────────────────────────────────── -->
+@if (showResolveModal()) {
+  <div class="modal-backdrop" (click)="showResolveModal.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h3 class="modal-title">Incident Verdict</h3>
+
+      <label class="form-label" for="rvVerdict">Verdict *</label>
+      <textarea
+        id="rvVerdict"
+        class="form-control form-textarea"
+        rows="4"
+        [(ngModel)]="rvVerdict"
+        placeholder="Describe the decision…"
+      ></textarea>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="rvTime">Time Penalty (seconds)</label>
+          <input
+            id="rvTime"
+            class="form-control"
+            type="number"
+            min="0"
+            [(ngModel)]="rvTimePenalty"
+            placeholder="e.g. 30"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="rvBwp">BWP Points</label>
+          <input
+            id="rvBwp"
+            class="form-control"
+            type="number"
+            min="0"
+            [(ngModel)]="rvBwpPoints"
+            placeholder="e.g. 3"
+          />
+        </div>
+      </div>
+
+      @if (rvError) {
+        <p class="form-error">{{ rvError }}</p>
+      }
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" type="button" (click)="showResolveModal.set(false)">
+          Cancel
+        </button>
+        <button
+          class="btn btn-primary"
+          type="button"
+          [disabled]="rvSubmitting"
+          (click)="submitResolve()"
+        >
+          {{ rvSubmitting ? 'Saving…' : 'Save Verdict' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Incident Detail Modal ─────────────────────────────────────────────── -->
+@if (detailIncident(); as inc) {
+  <div class="modal-backdrop" (click)="detailIncident.set(null)">
+    <div class="modal modal--wide" (click)="$event.stopPropagation()">
+      <h3 class="modal-title">Incident Detail</h3>
+
+      <dl class="detail-list">
+        <dt>Driver 1</dt><dd>{{ inc.driver1Name }}</dd>
+        @if (inc.driver2Name) {
+          <dt>Driver 2</dt><dd>{{ inc.driver2Name }}</dd>
+        }
+        @if (inc.lapNumber !== null) {
+          <dt>Lap</dt><dd>{{ inc.lapNumber }}</dd>
+        }
+        @if (inc.turn) {
+          <dt>Turn</dt><dd>{{ inc.turn }}</dd>
+        }
+        <dt>Description</dt><dd class="desc-cell">{{ inc.description }}</dd>
+        <dt>Filed</dt><dd>{{ inc.createdAt | date:'dd MMM yyyy HH:mm' }}</dd>
+        <dt>Status</dt>
+        <dd>
+          @if (inc.status === 'resolved') {
+            <span class="badge badge--resolved">Resolved</span>
+          } @else {
+            <span class="badge badge--pending">Open</span>
+          }
+        </dd>
+      </dl>
+
+      @if (inc.resolution; as r) {
+        <div class="resolution-block">
+          <h4 class="resolution-heading">Resolution</h4>
+          <dl class="detail-list">
+            <dt>Verdict</dt><dd class="desc-cell">{{ r.verdict }}</dd>
+            @if (r.timePenaltySeconds !== null) {
+              <dt>Time Penalty</dt><dd>{{ formatPenalty(r.timePenaltySeconds) }}</dd>
+            }
+            @if (r.bwpPoints !== null) {
+              <dt>BWP Points</dt>
+              <dd>
+                {{ r.bwpPoints }}
+                @if (r.bwpApplied) {
+                  <span class="badge badge--applied">Applied</span>
+                } @else if (auth.isAdmin()) {
+                  <button class="btn-link btn-link--bwp" type="button" (click)="applyBwp(inc.id); detailIncident.set(null)">
+                    Mark Applied
+                  </button>
+                }
+              </dd>
+            }
+            <dt>Resolved</dt><dd>{{ r.resolvedAt | date:'dd MMM yyyy HH:mm' }}</dd>
+          </dl>
+        </div>
+      }
+
+      <div class="modal-footer">
+        @if (auth.isJudge()) {
+          <button class="btn btn-outline" type="button" (click)="openResolveModal(inc); detailIncident.set(null)">
+            {{ inc.resolution ? 'Edit Verdict' : 'Resolve' }}
+          </button>
+        }
+        <button class="btn btn-primary" type="button" (click)="detailIncident.set(null)">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+}

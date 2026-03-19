@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth, bwp, championships, profile, users
+from app.routers import auth, bwp, championships, incidents, profile, users
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,6 +25,7 @@ app.include_router(bwp.router, prefix="/api")
 app.include_router(championships.router, prefix="/api")
 app.include_router(profile.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
+app.include_router(incidents.router, prefix="/api")
 
 
 @app.get("/healthz")
@@ -46,10 +47,10 @@ async def on_startup():
     # Seed the roles table with the three default roles
     from sqlalchemy import select
     from app.database import async_session
-    from app.models.user import Role, ROLE_DRIVER, ROLE_ADMIN, ROLE_SUPER_ADMIN
+    from app.models.user import Role, ROLE_DRIVER, ROLE_ADMIN, ROLE_SUPER_ADMIN, ROLE_JUDGE
 
     async with async_session() as session:
-        for role_name in (ROLE_DRIVER, ROLE_ADMIN, ROLE_SUPER_ADMIN):
+        for role_name in (ROLE_DRIVER, ROLE_ADMIN, ROLE_SUPER_ADMIN, ROLE_JUDGE):
             result = await session.execute(
                 select(Role).where(Role.name == role_name)
             )

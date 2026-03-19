@@ -78,3 +78,4 @@ def require_role(*roles: str) -> Callable:
 
 
 require_admin = require_role("admin", "super_admin")
+require_judge = require_role("racing_judge", "admin", "super_admin")

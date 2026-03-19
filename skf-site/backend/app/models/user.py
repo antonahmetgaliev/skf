@@ -29,6 +29,7 @@ class Role(Base):
 ROLE_DRIVER = "driver"
 ROLE_ADMIN = "admin"
 ROLE_SUPER_ADMIN = "super_admin"
+ROLE_JUDGE = "racing_judge"
 
 
 class User(Base):

@@ -41,6 +41,7 @@ def _make_engine():
     """
     import app.models.user  # noqa: F401 – registers Role/User/Session on Base
     import app.models.simgrid_cache  # noqa: F401 – ensure table is registered
+    import app.models.incidents  # noqa: F401 – registers IncidentWindow/Incident/IncidentResolution
     from app.models.bwp import Base
 
     engine = create_async_engine(

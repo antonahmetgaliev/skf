@@ -85,8 +85,8 @@ export class AdminUsersComponent implements OnInit {
   /** Only super-admin can see the super_admin option in the role dropdown. */
   availableRoles(): string[] {
     if (this.auth.isSuperAdmin()) {
-      return ['driver', 'admin', 'super_admin'];
+      return ['driver', 'racing_judge', 'admin', 'super_admin'];
     }
-    return ['driver', 'admin'];
+    return ['driver', 'racing_judge', 'admin'];
   }
 }

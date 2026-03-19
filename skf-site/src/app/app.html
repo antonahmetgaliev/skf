@@ -36,6 +36,9 @@
       @if (auth.isAdmin()) {
         <a routerLink="/admin/users" routerLinkActive="active">User Management</a>
       }
+      @if (auth.isLoggedIn()) {
+        <a routerLink="/incidents" routerLinkActive="active">Incidents</a>
+      }
     </nav>
     <div class="auth-zone">
       @if (auth.isLoggedIn()) {
