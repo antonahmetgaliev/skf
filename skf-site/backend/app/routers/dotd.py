@@ -231,8 +231,9 @@ async def cast_vote(
         )
     )
     await db.commit()
-    # expire_all() forces SQLAlchemy to discard cached relationship data from
-    # the identity map (expire_on_commit=False means objects survive commit).
-    # Without this, the re-query below would return the stale `votes=[]` list.
-    db.expire_all()
+    # Expire only the poll so _get_poll_or_404 reloads its relationships
+    # fresh (votes list now includes the just-inserted row). Expiring only
+    # `poll` avoids touching current_user, which cannot be lazy-loaded in
+    # an async session.
+    db.expire(poll)
     return _build_poll_out(await _get_poll_or_404(poll_id, db), current_user)
