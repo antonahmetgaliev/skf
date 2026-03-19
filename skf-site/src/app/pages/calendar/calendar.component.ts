@@ -58,8 +58,16 @@ export class CalendarComponent {
     return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
   });
 
+  readonly scheduledEvents = computed(() =>
+    this.events().filter((e) => e.startDate || e.endDate || e.races.some((r) => r.date)),
+  );
+
+  readonly unscheduledEvents = computed(() =>
+    this.events().filter((e) => !e.startDate && !e.endDate && !e.races.some((r) => r.date)),
+  );
+
   readonly calendarGrid = computed<CalendarDay[][]>(() => {
-    return this.buildGrid(this.currentYear(), this.currentMonth(), this.events());
+    return this.buildGrid(this.currentYear(), this.currentMonth(), this.scheduledEvents());
   });
 
   readonly selectedDayEvents = computed<CalendarEvent[]>(() => {

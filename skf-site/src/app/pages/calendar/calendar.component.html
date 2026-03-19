@@ -110,6 +110,27 @@
     </div>
   }
 
+  <!-- Unscheduled events (no dates) -->
+  @if (unscheduledEvents().length > 0) {
+    <div class="card unscheduled-section">
+      <h3>Unscheduled</h3>
+      <p class="unscheduled-hint">Championships without confirmed dates</p>
+      <div class="unscheduled-list">
+        @for (event of unscheduledEvents(); track event.id) {
+          <div class="unscheduled-item" [ngClass]="'event-card--' + event.eventType">
+            <span class="event-type-badge" [ngClass]="'badge--' + event.eventType">
+              {{ getEventTypeLabel(event.eventType) }}
+            </span>
+            <span class="unscheduled-name">{{ event.name }}</span>
+            @if (event.simgridChampionshipId) {
+              <a routerLink="/championship-standings" class="event-link">View standings &rarr;</a>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
   <!-- Admin: add custom championship -->
   @if (auth.isAdmin()) {
     <div class="admin-actions">

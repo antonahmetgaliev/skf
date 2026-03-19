@@ -117,15 +117,20 @@ async def get_calendar_events(
     for champ in championships:
         # Build race list from cached standings first (needed for classification)
         races: list[CalendarRace] = []
+        all_races_ended = False
         standings_data = standings_caches.get(champ.id)
         if isinstance(standings_data, dict):
-            for r in standings_data.get("races", []):
+            raw_races = standings_data.get("races", [])
+            for r in raw_races:
                 race_date = r.get("starts_at") or r.get("startsAt")
                 races.append(CalendarRace(
                     date=race_date,
                     track=None,
                     name=r.get("display_name") or r.get("displayName"),
                 ))
+            # If all races in standings have ended, treat as completed
+            if raw_races and all(r.get("ended", False) for r in raw_races):
+                all_races_ended = True
 
         # Derive effective start/end from race dates when championship dates are missing
         effective_start = champ.start_date
@@ -140,13 +145,15 @@ async def get_calendar_events(
 
         start = _parse_date(effective_start)
         end = _parse_date(effective_end)
+        effectively_completed = champ.event_completed or all_races_ended
         event_type = _classify_simgrid(
             effective_start, effective_end,
-            champ.event_completed, champ.accepting_registrations,
+            effectively_completed, champ.accepting_registrations,
         )
 
-        # Check if championship or any of its races overlap with the month
-        if not _overlaps_month(start, end, races, month_start, month_end):
+        # Dateless championships are included (unscheduled) — skip month filter
+        has_any_date = start is not None or end is not None or any(r.date for r in races)
+        if has_any_date and not _overlaps_month(start, end, races, month_start, month_end):
             continue
 
         events.append(CalendarEvent(
