@@ -1,8 +1,8 @@
-<div class="incidents-page">
+<div class="page">
   <div class="page-header">
     <h1 class="page-title">Incidents</h1>
     @if (auth.isAdmin()) {
-      <button class="btn btn-primary" type="button" (click)="openNewWindowModal()">
+      <button class="btn accent" type="button" (click)="openNewWindowModal()">
         + Open Window
       </button>
     }
@@ -10,7 +10,7 @@
 
   <div class="incidents-layout">
     <!-- Windows sidebar -->
-    <aside class="windows-sidebar">
+    <aside class="card">
       <h2 class="sidebar-heading">Race Windows</h2>
 
       @if (loadingWindows()) {
@@ -42,7 +42,7 @@
     </aside>
 
     <!-- Window detail panel -->
-    <section class="window-detail">
+    <section class="card">
       @if (!windowDetail() && !loadingDetail()) {
         <div class="empty-detail">
           <p>Select a window to view its incidents.</p>
@@ -66,11 +66,11 @@
           @if (auth.isAdmin()) {
             <div class="detail-actions">
               @if (w.isOpen) {
-                <button class="btn btn-outline btn-sm" type="button" (click)="closeWindow(w.id)">
+                <button class="btn ghost small" type="button" (click)="closeWindow(w.id)">
                   Close Window
                 </button>
               }
-              <button class="btn btn-danger btn-sm" type="button" (click)="deleteWindow(w.id)">
+              <button class="btn danger small" type="button" (click)="deleteWindow(w.id)">
                 Delete
               </button>
             </div>
@@ -80,7 +80,7 @@
         <div class="incidents-toolbar">
           <span class="incident-count">{{ w.incidents.length }} incident{{ w.incidents.length !== 1 ? 's' : '' }}</span>
           @if (w.isOpen && auth.isLoggedIn()) {
-            <button class="btn btn-primary btn-sm" type="button" (click)="openNewIncidentModal()">
+            <button class="btn accent small" type="button" (click)="openNewIncidentModal()">
               + File Incident
             </button>
           }
@@ -150,7 +150,7 @@
 <!-- ── New Window Modal ──────────────────────────────────────────────────── -->
 @if (showNewWindowModal()) {
   <div class="modal-backdrop" (click)="showNewWindowModal.set(false)">
-    <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-panel" (click)="$event.stopPropagation()">
       <h3 class="modal-title">Open Incident Window</h3>
 
       <label class="form-label" for="nwChamp">Championship</label>
@@ -195,11 +195,11 @@
       }
 
       <div class="modal-footer">
-        <button class="btn btn-outline" type="button" (click)="showNewWindowModal.set(false)">
+        <button class="btn ghost" type="button" (click)="showNewWindowModal.set(false)">
           Cancel
         </button>
         <button
-          class="btn btn-primary"
+          class="btn accent"
           type="button"
           [disabled]="nwSubmitting"
           (click)="submitNewWindow()"
@@ -214,7 +214,7 @@
 <!-- ── File Incident Modal ───────────────────────────────────────────────── -->
 @if (showNewIncidentModal()) {
   <div class="modal-backdrop" (click)="showNewIncidentModal.set(false)">
-    <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-panel" (click)="$event.stopPropagation()">
       <h3 class="modal-title">File Incident</h3>
 
       <label class="form-label" for="niD1">Driver 1 (involved) *</label>
@@ -287,11 +287,11 @@
       }
 
       <div class="modal-footer">
-        <button class="btn btn-outline" type="button" (click)="showNewIncidentModal.set(false)">
+        <button class="btn ghost" type="button" (click)="showNewIncidentModal.set(false)">
           Cancel
         </button>
         <button
-          class="btn btn-primary"
+          class="btn accent"
           type="button"
           [disabled]="niSubmitting"
           (click)="submitIncident()"
@@ -306,8 +306,25 @@
 <!-- ── Resolve Modal ──────────────────────────────────────────────────────── -->
 @if (showResolveModal()) {
   <div class="modal-backdrop" (click)="showResolveModal.set(false)">
-    <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-panel modal-panel--wide" (click)="$event.stopPropagation()">
       <h3 class="modal-title">Incident Verdict</h3>
+
+      @if (rvIncident(); as inc) {
+        <div class="incident-context">
+          <p class="context-eyebrow">Incident context</p>
+          <dl class="detail-list">
+            <dt>Driver 1</dt><dd>{{ inc.driver1Name }}</dd>
+            @if (inc.driver2Name) {
+              <dt>Driver 2</dt><dd>{{ inc.driver2Name }}</dd>
+            }
+            @if (inc.lapNumber !== null || inc.turn) {
+              <dt>Lap / Turn</dt>
+              <dd>{{ inc.lapNumber !== null ? 'L' + inc.lapNumber : '' }}{{ (inc.lapNumber !== null && inc.turn) ? ' / ' : '' }}{{ inc.turn || '' }}</dd>
+            }
+            <dt>Description</dt><dd class="desc-cell">{{ inc.description }}</dd>
+          </dl>
+        </div>
+      }
 
       <label class="form-label" for="rvVerdict">Verdict *</label>
       <textarea
@@ -348,11 +365,11 @@
       }
 
       <div class="modal-footer">
-        <button class="btn btn-outline" type="button" (click)="showResolveModal.set(false)">
+        <button class="btn ghost" type="button" (click)="showResolveModal.set(false)">
           Cancel
         </button>
         <button
-          class="btn btn-primary"
+          class="btn accent"
           type="button"
           [disabled]="rvSubmitting"
           (click)="submitResolve()"
@@ -367,7 +384,7 @@
 <!-- ── Incident Detail Modal ─────────────────────────────────────────────── -->
 @if (detailIncident(); as inc) {
   <div class="modal-backdrop" (click)="detailIncident.set(null)">
-    <div class="modal modal--wide" (click)="$event.stopPropagation()">
+    <div class="modal-panel modal-panel--wide" (click)="$event.stopPropagation()">
       <h3 class="modal-title">Incident Detail</h3>
 
       <dl class="detail-list">
@@ -421,11 +438,11 @@
 
       <div class="modal-footer">
         @if (auth.isJudge()) {
-          <button class="btn btn-outline" type="button" (click)="openResolveModal(inc); detailIncident.set(null)">
+          <button class="btn ghost" type="button" (click)="openResolveModal(inc); detailIncident.set(null)">
             {{ inc.resolution ? 'Edit Verdict' : 'Resolve' }}
           </button>
         }
-        <button class="btn btn-primary" type="button" (click)="detailIncident.set(null)">
+        <button class="btn accent" type="button" (click)="detailIncident.set(null)">
           Close
         </button>
       </div>

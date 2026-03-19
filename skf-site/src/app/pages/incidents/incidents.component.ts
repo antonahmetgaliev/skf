@@ -43,6 +43,7 @@ export class IncidentsComponent implements OnInit {
   readonly showNewIncidentModal = signal(false);
   readonly showResolveModal = signal(false);
   readonly detailIncident = signal<Incident | null>(null);
+  readonly rvIncident = signal<Incident | null>(null);
 
   // ── New Window form fields ────────────────────────────────────────
   nwChampId: number | null = null;
@@ -94,8 +95,8 @@ export class IncidentsComponent implements OnInit {
     }
   }
 
-  async selectWindow(id: string): Promise<void> {
-    if (this.windowDetail()?.id === id) return;
+  async selectWindow(id: string, forceReload = false): Promise<void> {
+    if (this.windowDetail()?.id === id && !forceReload) return;
     this.loadingDetail.set(true);
     this.windowDetail.set(null);
     try {
@@ -186,7 +187,7 @@ export class IncidentsComponent implements OnInit {
     await this.loadWindows();
     const detail = this.windowDetail();
     if (detail?.id === windowId) {
-      await this.selectWindow(windowId);
+      await this.selectWindow(windowId, true);
     }
   }
 
@@ -253,7 +254,7 @@ export class IncidentsComponent implements OnInit {
         })
       );
       this.showNewIncidentModal.set(false);
-      await this.selectWindow(windowId);
+      await this.selectWindow(windowId, true);
     } catch {
       this.niError = 'Failed to file incident. Please try again.';
     } finally {
@@ -264,6 +265,7 @@ export class IncidentsComponent implements OnInit {
   // ── Resolve Incident ───────────────────────────────────────────────
 
   openResolveModal(incident: Incident): void {
+    this.rvIncident.set(incident);
     this.rvIncidentId = incident.id;
     this.rvVerdict = incident.resolution?.verdict ?? '';
     this.rvTimePenalty = incident.resolution?.timePenaltySeconds ?? null;
@@ -290,7 +292,7 @@ export class IncidentsComponent implements OnInit {
       );
       this.showResolveModal.set(false);
       const windowId = this.windowDetail()?.id;
-      if (windowId) await this.selectWindow(windowId);
+      if (windowId) await this.selectWindow(windowId, true);
     } catch {
       this.rvError = 'Failed to submit resolution. Please try again.';
     } finally {
@@ -303,7 +305,7 @@ export class IncidentsComponent implements OnInit {
   async applyBwp(incidentId: string): Promise<void> {
     await firstValueFrom(this.incidentsApi.applyBwp(incidentId));
     const windowId = this.windowDetail()?.id;
-    if (windowId) await this.selectWindow(windowId);
+    if (windowId) await this.selectWindow(windowId, true);
   }
 
   // ── Detail modal ───────────────────────────────────────────────────
