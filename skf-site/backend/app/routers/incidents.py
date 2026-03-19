@@ -218,3 +218,20 @@ async def apply_bwp(
     incident.resolution.bwp_applied = True
     await db.commit()
     return await _get_incident_or_404(incident_id, db)
+
+
+@router.patch("/incidents/{incident_id}/unapply-bwp", response_model=IncidentOut)
+async def unapply_bwp(
+    incident_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    incident = await _get_incident_or_404(incident_id, db)
+    if incident.resolution is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Incident has not been resolved yet.",
+        )
+    incident.resolution.bwp_applied = False
+    await db.commit()
+    return await _get_incident_or_404(incident_id, db)

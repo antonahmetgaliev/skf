@@ -293,7 +293,6 @@
     background: rgba(29, 127, 78, 0.1);
     color: var(--success);
     border: 1px solid rgba(29, 127, 78, 0.25);
-    margin-left: 0.4rem;
   }
 
   &--bwp-pending {
@@ -308,6 +307,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0.3rem;
+  line-height: 1;
 }
 
 // ── Buttons ───────────────────────────────────────────────────────────────
@@ -386,6 +386,10 @@
 
   &--bwp {
     color: var(--success);
+  }
+
+  &--danger {
+    color: var(--danger);
   }
 }
 

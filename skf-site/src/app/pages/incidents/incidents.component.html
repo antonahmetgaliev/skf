@@ -139,10 +139,16 @@
                           {{ inc.status === 'resolved' ? 'Edit Verdict' : 'Resolve' }}
                         </button>
                       }
-                      @if (auth.isAdmin() && inc.resolution && inc.resolution.bwpPoints && !inc.resolution.bwpApplied) {
-                        <button class="btn-link btn-link--bwp" type="button" (click)="applyBwp(inc.id)">
-                          Mark BWP Applied
-                        </button>
+                      @if (auth.isAdmin() && inc.resolution?.bwpPoints) {
+                        @if (!inc.resolution?.bwpApplied) {
+                          <button class="btn-link btn-link--bwp" type="button" (click)="applyBwp(inc.id)">
+                            Mark BWP Applied
+                          </button>
+                        } @else {
+                          <button class="btn-link btn-link--danger" type="button" (click)="unapplyBwp(inc.id)">
+                            Unapply BWP
+                          </button>
+                        }
                       }
                     </td>
                   </tr>
@@ -433,6 +439,11 @@
                 {{ r.bwpPoints }}
                 @if (r.bwpApplied) {
                   <span class="badge badge--applied">Applied</span>
+                  @if (auth.isAdmin()) {
+                    <button class="btn-link btn-link--danger" type="button" (click)="unapplyBwp(inc.id); detailIncident.set(null)">
+                      Unapply
+                    </button>
+                  }
                 } @else if (auth.isAdmin()) {
                   <button class="btn-link btn-link--bwp" type="button" (click)="applyBwp(inc.id); detailIncident.set(null)">
                     Mark Applied

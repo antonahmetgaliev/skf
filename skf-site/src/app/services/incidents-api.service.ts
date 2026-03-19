@@ -129,4 +129,11 @@ export class IncidentsApiService {
       {}
     );
   }
+
+  unapplyBwp(incidentId: string): Observable<Incident> {
+    return this.http.patch<Incident>(
+      `/api/incidents/${incidentId}/unapply-bwp`,
+      {}
+    );
+  }
 }

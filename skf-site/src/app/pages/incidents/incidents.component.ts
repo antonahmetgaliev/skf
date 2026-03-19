@@ -300,10 +300,17 @@ export class IncidentsComponent implements OnInit {
     }
   }
 
-  // ── Apply BWP ──────────────────────────────────────────────────────
+  // ── Apply / Unapply BWP ────────────────────────────────────────────
 
   async applyBwp(incidentId: string): Promise<void> {
     await firstValueFrom(this.incidentsApi.applyBwp(incidentId));
+    const windowId = this.windowDetail()?.id;
+    if (windowId) await this.selectWindow(windowId, true);
+  }
+
+  async unapplyBwp(incidentId: string): Promise<void> {
+    if (!confirm('Remove the BWP Applied mark from this incident?')) return;
+    await firstValueFrom(this.incidentsApi.unapplyBwp(incidentId));
     const windowId = this.windowDetail()?.id;
     if (windowId) await this.selectWindow(windowId, true);
   }
