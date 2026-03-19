@@ -91,7 +91,7 @@
           }
           @if (event.races.length > 0) {
             <div class="event-races">
-              @for (race of event.races; track $index) {
+              @for (race of getRacesForSelectedDay(event); track $index) {
                 <span class="race-pill">
                   @if (race.name) { {{ race.name }} }
                   @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }

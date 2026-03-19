@@ -126,6 +126,14 @@ export class CalendarComponent {
     return type.charAt(0).toUpperCase() + type.slice(1);
   }
 
+  getRacesForSelectedDay(event: CalendarEvent): CalendarEvent['races'] {
+    const day = this.selectedDay();
+    if (day === null) return event.races;
+    const dayStr = `${this.currentYear()}-${String(this.currentMonth()).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const filtered = event.races.filter((r) => r.date && r.date.slice(0, 10) === dayStr);
+    return filtered.length > 0 ? filtered : event.races;
+  }
+
   // ── Admin: create custom championship ──
 
   openCreateModal(): void {
