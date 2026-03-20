@@ -10,16 +10,12 @@
 // ── Page intro (same as standings) ──────────────────────────────────────────
 .page-intro {
   margin-bottom: 1.2rem;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  position: relative;
 
-  .eyebrow, .subtitle {
-    width: 100%;
-  }
-
-  h1 {
-    flex: 1;
+  > .btn {
+    position: absolute;
+    top: 0;
+    right: 0;
   }
 }
 
