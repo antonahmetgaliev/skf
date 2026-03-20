@@ -10,6 +10,17 @@
 // ── Page intro (same as standings) ──────────────────────────────────────────
 .page-intro {
   margin-bottom: 1.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+
+  .subtitle {
+    width: 100%;
+  }
+
+  > .btn {
+    margin-left: auto;
+  }
 }
 
 .eyebrow {
@@ -415,10 +426,6 @@ h1 {
 .unscheduled-name {
   flex: 1;
   font-weight: 500;
-}
-
-.admin-actions {
-  margin-top: 0.85rem;
 }
 
 // ── Modal ───────────────────────────────────────────────────────────────────
