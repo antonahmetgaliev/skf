@@ -52,7 +52,7 @@ def _classify_simgrid(
     event_completed: bool,
     accepting_registrations: bool,
 ) -> CalendarEventType:
-    """Classify a SimGrid championship using full datetime (not just date)."""
+    """Classify a SimGrid championship – uses full datetime for accuracy."""
     now = datetime.now(timezone.utc)
     start = _parse_date(start_date)
     end = _parse_date(end_date)
