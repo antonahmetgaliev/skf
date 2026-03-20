@@ -98,6 +98,33 @@ class SimgridService:
         await self._write_cache(cache_key, raw)
         return ChampionshipDetails(**raw)
 
+    async def get_races(self, championship_id: int, *, force: bool = False) -> list[dict]:
+        """Fetch ALL races for a championship (including future ones)."""
+        cache_key = f"races_{championship_id}"
+
+        if not force:
+            cached = await self._read_cache(cache_key)
+            if cached is not None:
+                return cached if isinstance(cached, list) else []
+
+        try:
+            resp = await self._client.get(
+                "/api/v1/races",
+                params={"championship_id": championship_id},
+            )
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 429:
+                stale = await self._read_stale_cache(cache_key)
+                if stale is not None:
+                    return stale if isinstance(stale, list) else []
+            raise
+
+        data = resp.json()
+        items = data if isinstance(data, list) else (data.get("races") if isinstance(data, dict) else [])
+        await self._write_cache(cache_key, items)
+        return items
+
     async def get_standings(self, championship_id: int, *, force: bool = False) -> ChampionshipStandingsData:
         cache_key = f"standings_{championship_id}"
 

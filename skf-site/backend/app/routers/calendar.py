@@ -15,7 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import require_admin
 from app.database import get_db
 from app.models.custom_championship import CustomChampionship, CustomRace
-from app.models.simgrid_cache import SimgridCache
 from app.models.user import User
 from app.schemas.calendar import (
     CalendarEvent,
@@ -108,50 +107,47 @@ async def get_calendar_events(
     except Exception:
         championships = []
 
-    # Load cached standings to get individual race dates
-    result = await db.execute(
-        select(SimgridCache).where(SimgridCache.cache_key.like("standings_%"))
+    # Fetch races for all championships via /api/v1/races endpoint (cached).
+    # This returns ALL races including future ones with dates and track info.
+    races_caches: dict[int, list[dict]] = {}
+
+    async def _fetch_races(cid: int) -> tuple[int, list[dict]]:
+        try:
+            return cid, await simgrid_service.get_races(cid)
+        except Exception:
+            logger.debug("Failed to fetch races for championship %s", cid)
+            return cid, []
+
+    fetch_results = await asyncio.gather(
+        *[_fetch_races(c.id) for c in championships]
     )
-    standings_caches: dict[int, dict] = {
-        _extract_champ_id(c.cache_key): c.data
-        for c in result.scalars().all()
-        if _extract_champ_id(c.cache_key) is not None
-    }
-
-    # Fetch standings on-demand for championships without cached data.
-    # This populates the cache so subsequent requests are fast.
-    uncached_ids = [c.id for c in championships if c.id not in standings_caches]
-    if uncached_ids:
-        async def _fetch_one(cid: int) -> tuple[int, dict | None]:
-            try:
-                data = await simgrid_service.get_standings(cid)
-                return cid, data.model_dump()
-            except Exception:
-                logger.debug("Failed to fetch standings for championship %s", cid)
-                return cid, None
-
-        results = await asyncio.gather(*[_fetch_one(cid) for cid in uncached_ids])
-        for cid, data in results:
-            if data is not None:
-                standings_caches[cid] = data
+    for cid, data in fetch_results:
+        races_caches[cid] = data
 
     for champ in championships:
-        # Build race list from standings data (cached or freshly fetched)
+        # Build race list from races endpoint data
         races: list[CalendarRace] = []
         all_races_ended = False
-        standings_data = standings_caches.get(champ.id)
-        if isinstance(standings_data, dict):
-            raw_races = standings_data.get("races", [])
-            for r in raw_races:
-                race_date = r.get("starts_at") or r.get("startsAt")
-                races.append(CalendarRace(
-                    date=race_date,
-                    track=None,
-                    name=r.get("display_name") or r.get("displayName"),
-                ))
-            # If all races in standings have ended, treat as completed
-            if raw_races and all(r.get("ended", False) for r in raw_races):
-                all_races_ended = True
+        raw_races = races_caches.get(champ.id, [])
+        for r in raw_races:
+            race_date = (
+                r.get("starts_at") or r.get("startsAt")
+                or r.get("start_date") or r.get("startDate")
+            )
+            track = r.get("track")
+            track_name = None
+            if isinstance(track, dict):
+                track_name = track.get("name")
+            elif isinstance(track, str):
+                track_name = track
+            races.append(CalendarRace(
+                date=race_date,
+                track=track_name,
+                name=r.get("display_name") or r.get("race_name") or r.get("displayName"),
+            ))
+        # If all races have ended, treat as completed
+        if raw_races and all(r.get("ended", False) for r in raw_races):
+            all_races_ended = True
 
         # Derive effective start/end from race dates when championship dates are missing
         effective_start = champ.start_date
@@ -228,13 +224,6 @@ async def get_calendar_events(
         ))
 
     return events
-
-
-def _extract_champ_id(cache_key: str) -> int | None:
-    try:
-        return int(cache_key.split("_", 1)[1])
-    except (ValueError, IndexError):
-        return None
 
 
 def _overlaps_month(
