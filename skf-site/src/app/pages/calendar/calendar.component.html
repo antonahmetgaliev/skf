@@ -95,7 +95,7 @@
                   @if (race.name) { {{ race.name }} }
                   @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }
                   @if (race.date) {
-                    <span class="race-date">{{ race.date | slice:0:10 }}</span>
+                    <span class="race-date">{{ formatRaceDate(race.date) }}</span>
                   }
                 </span>
               }

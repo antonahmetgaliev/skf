@@ -1,4 +1,4 @@
-import { NgClass, SlicePipe } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -28,7 +28,7 @@ const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 @Component({
   selector: 'app-calendar',
-  imports: [NgClass, SlicePipe, FormsModule, RouterLink],
+  imports: [NgClass, FormsModule, RouterLink],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
 })
@@ -124,6 +124,16 @@ export class CalendarComponent {
 
   getEventTypeLabel(type: CalendarEventType): string {
     return type.charAt(0).toUpperCase() + type.slice(1);
+  }
+
+  formatRaceDate(isoDate: string): string {
+    const d = new Date(isoDate);
+    if (isNaN(d.getTime())) return isoDate.slice(0, 10);
+    const date = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const hasTime = /T\d{2}:\d{2}/.test(isoDate) && !isoDate.includes('T00:00:00');
+    if (!hasTime) return date;
+    const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return `${date} ${time}`;
   }
 
   getRacesForSelectedDay(event: CalendarEvent): CalendarEvent['races'] {
