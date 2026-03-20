@@ -51,16 +51,16 @@
             >
               <span class="day-number">{{ day.dayNumber }}</span>
               @if (day.events.length > 0 && day.isCurrentMonth) {
-                <div class="event-dots">
-                  @for (event of day.events.slice(0, 3); track event.id) {
+                @if (day.events.length > 1) {
+                  <span class="event-count">{{ day.events.length }}</span>
+                }
+                <div class="event-bars">
+                  @for (event of day.events.slice(0, 4); track event.id) {
                     <span
-                      class="event-dot"
+                      class="event-bar"
                       [ngClass]="'dot-' + event.eventType"
                       [title]="event.name"
                     ></span>
-                  }
-                  @if (day.events.length > 3) {
-                    <span class="event-overflow">+{{ day.events.length - 3 }}</span>
                   }
                 </div>
               }
