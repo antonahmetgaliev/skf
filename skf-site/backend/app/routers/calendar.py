@@ -52,18 +52,18 @@ def _classify_simgrid(
     event_completed: bool,
     accepting_registrations: bool,
 ) -> CalendarEventType:
-    """Classify a SimGrid championship – mirrors frontend getStatusOrder logic."""
-    today = datetime.now(timezone.utc).date()
+    """Classify a SimGrid championship using full datetime (not just date)."""
+    now = datetime.now(timezone.utc)
     start = _parse_date(start_date)
     end = _parse_date(end_date)
 
-    if start and start.date() > today:
+    if start and start > now:
         return CalendarEventType.UPCOMING
     if event_completed:
         return CalendarEventType.PAST
-    if end and end.date() < today:
+    if end and end < now:
         return CalendarEventType.PAST
-    if start and start.date() <= today:
+    if start and start <= now:
         return CalendarEventType.ONGOING
     if accepting_registrations:
         return CalendarEventType.ONGOING
