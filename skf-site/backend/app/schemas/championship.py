@@ -54,6 +54,7 @@ class ChampionshipListItem(CamelModel):
 class ChampionshipDetails(CamelModel):
     id: int
     name: str
+    description: str | None = None
     start_date: str | None = None
     end_date: str | None = None
     capacity: int | None = None

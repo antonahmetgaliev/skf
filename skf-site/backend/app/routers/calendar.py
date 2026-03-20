@@ -124,26 +124,22 @@ async def get_calendar_events(
     for cid, data in fetch_results:
         races_caches[cid] = data
 
-    # For championships with no races from API, fetch detail to get embedded races
-    dateless_ids = [
-        c.id for c in championships
-        if not races_caches.get(c.id) and not c.start_date and not c.end_date
-    ]
+    # Fetch championship details (description, game_name, dates fallback)
     detail_caches: dict[int, dict] = {}
-    if dateless_ids:
-        async def _fetch_detail(cid: int) -> tuple[int, dict | None]:
-            try:
-                d = await simgrid_service.get_championship(cid)
-                return cid, d.model_dump()
-            except Exception:
-                return cid, None
 
-        detail_results = await asyncio.gather(
-            *[_fetch_detail(cid) for cid in dateless_ids]
-        )
-        for cid, data in detail_results:
-            if data is not None:
-                detail_caches[cid] = data
+    async def _fetch_detail(cid: int) -> tuple[int, dict | None]:
+        try:
+            d = await simgrid_service.get_championship(cid)
+            return cid, d.model_dump()
+        except Exception:
+            return cid, None
+
+    detail_results = await asyncio.gather(
+        *[_fetch_detail(c.id) for c in championships]
+    )
+    for cid, data in detail_results:
+        if data is not None:
+            detail_caches[cid] = data
 
     for champ in championships:
         # Build race list from races endpoint data
@@ -200,10 +196,12 @@ async def get_calendar_events(
         if has_any_date and not _overlaps_month(start, end, races, month_start, month_end):
             continue
 
+        detail = detail_caches.get(champ.id, {})
         events.append(CalendarEvent(
             id=str(champ.id),
             name=champ.name,
-            game="",
+            game=detail.get("gameName") or detail.get("game_name") or "",
+            description=detail.get("description"),
             start_date=effective_start,
             end_date=effective_end,
             event_type=event_type,
