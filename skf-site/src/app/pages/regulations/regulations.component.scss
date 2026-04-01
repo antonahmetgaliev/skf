@@ -1,94 +1,20 @@
 :host {
   display: block;
-}
-
-.page {
-  padding: clamp(1.5rem, 3vw, 3.5rem);
   position: relative;
   overflow: hidden;
 }
 
-.page > * {
+:host > * {
   position: relative;
   z-index: 1;
 }
 
-// ── Hero ─────────────────────────────────────────────────────────
-
-.hero {
-  margin-bottom: 2.5rem;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.brand-logo {
-  width: 92px;
-  height: 92px;
-  border-radius: 50%;
-  background: var(--sand-strong);
-  padding: 0.4rem;
-  box-shadow: 0 0 24px rgba(244, 196, 48, 0.2);
-  border: 1px solid rgba(244, 196, 48, 0.35);
-  object-fit: cover;
-}
-
-.brand-text {
-  max-width: 520px;
-}
-
-.eyebrow {
-  font-size: 0.75rem;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--gold);
-  margin: 0 0 0.35rem;
-}
-
-h1 {
-  margin: 0 0 0.5rem;
-  font-family: var(--font-display);
-  font-size: clamp(2.4rem, 3.2vw, 3.6rem);
-  letter-spacing: 0.04em;
-  color: var(--ink);
-  text-transform: uppercase;
-}
-
-.subtitle {
-  margin: 0;
-  font-size: 1rem;
-  color: var(--muted);
-}
 
 // ── Regulation Sections ──────────────────────────────────────────
 
 .reg-section {
   margin-bottom: 1.5rem;
-}
-
-.card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 24px;
   padding: clamp(1.25rem, 2.5vw, 2rem);
-  box-shadow: var(--card-shadow);
-  position: relative;
-  overflow: hidden;
-  animation: rise 0.6s ease both;
-}
-
-.card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 120px;
-  height: 6px;
-  background: linear-gradient(90deg, rgba(244, 196, 48, 0.7), transparent);
 }
 
 h2 {
@@ -188,18 +114,7 @@ h4 {
   }
 }
 
-// ── Animation ────────────────────────────────────────────────────
-
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+// ── Animation delays ─────────────────────────────────────────────
 
 @for $i from 1 through 12 {
   .reg-section:nth-child(#{$i + 1}) {
@@ -210,16 +125,6 @@ h4 {
 // ── Responsive ───────────────────────────────────────────────────
 
 @media (max-width: 600px) {
-  .brand {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .brand-logo {
-    width: 64px;
-    height: 64px;
-  }
-
   .rules {
     padding-left: 1.2rem;
   }
@@ -233,8 +138,3 @@ h4 {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .card {
-    animation: none;
-  }
-}

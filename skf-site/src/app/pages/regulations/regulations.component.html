@@ -1,19 +1,8 @@
-<div class="page">
-  <header class="hero">
-    <div class="brand">
-      <img class="brand-logo" src="skf-logo.png" alt="SKF Racing Hub logo" />
-      <div class="brand-text">
-        <p class="eyebrow">SKF Racing Hub</p>
-        <h1>Regulations</h1>
-        <p class="subtitle">
-          Official rulebook governing all SKF Racing Hub events, series, and leagues.
-        </p>
-      </div>
-    </div>
-  </header>
+<app-page>
+  <app-page-intro title="Regulations" subtitle="Official rulebook governing all SKF Racing Hub events, series, and leagues." />
 
   <!-- Section 1 -->
-  <section class="reg-section card" id="general">
+  <app-card [animated]="true" class="reg-section" id="general">
     <h2>General Regulations</h2>
     <ol class="rules">
       <li>These regulations apply to all official SKF Racing Hub events (single events, series, leagues) across all simulators.</li>
@@ -21,10 +10,10 @@
       <li>Participants are required to follow these regulations and the decisions of the administration/stewards.</li>
       <li>The organizer reserves the right to make changes to the regulations with prior notification.</li>
     </ol>
-  </section>
+  </app-card>
 
   <!-- Section 2 -->
-  <section class="reg-section card" id="registration">
+  <app-card [animated]="true" class="reg-section" id="registration">
     <h2>Participants and Registration</h2>
     <ol class="rules">
       <li>
@@ -40,10 +29,10 @@
       <li>If a driver cannot participate in a race, they must notify the administration at least 2 hours before the start through Discord.</li>
       <li>The administration reserves the right to deny participation to players in case of repeated rule violations, toxic behavior, or technical issues (high ping, unstable FPS, etc.).</li>
     </ol>
-  </section>
+  </app-card>
 
   <!-- Section 3 -->
-  <section class="reg-section card" id="requirements">
+  <app-card [animated]="true" class="reg-section" id="requirements">
     <h2>Requirements</h2>
 
     <h3>3.1. Software Requirements</h3>
@@ -66,19 +55,19 @@
       <li>Team names must comply with ethical standards and cannot include offensive or provocative content.</li>
       <li>Violations may result in removal from the event or a ban from future participation.</li>
     </ol>
-  </section>
+  </app-card>
 
   <!-- Section 4 -->
-  <section class="reg-section card" id="format">
+  <app-card [animated]="true" class="reg-section" id="format">
     <h2>Competition Format</h2>
     <ol class="rules">
       <li>Event format (time, session duration, number of races, track type, car classes) is published separately for each event.</li>
       <li>Race start procedures follow the regulations of the specific series.</li>
     </ol>
-  </section>
+  </app-card>
 
   <!-- Section 5 -->
-  <section class="reg-section card" id="on-track">
+  <app-card [animated]="true" class="reg-section" id="on-track">
     <h2>On-Track Behavior</h2>
 
     <h3>5.1. General Rules</h3>
@@ -183,10 +172,10 @@
       <li>Blocking pit lane entry/exit is prohibited.</li>
       <li>Entering/exiting pits must be done safely, respecting lane markings.</li>
     </ol>
-  </section>
+  </app-card>
 
   <!-- Section 6 -->
-  <section class="reg-section card" id="racing-conduct">
+  <app-card [animated]="true" class="reg-section" id="racing-conduct">
     <h2>On-Track Behavior &mdash; Racing Conduct</h2>
 
     <h3>6.1. General Principles</h3>
@@ -236,20 +225,20 @@
     <ol class="rules sub">
       <li>Any accident caused by unsafe rejoining will result in a penalty.</li>
     </ol>
-  </section>
+  </app-card>
 
   <!-- Section 7 -->
-  <section class="reg-section card" id="track-limits">
+  <app-card [animated]="true" class="reg-section" id="track-limits">
     <h2>Track Limits</h2>
     <ol class="rules">
       <li>Determined by the in-game penalty system.</li>
       <li>Exiting the pit lane only within track limits (all four wheels inside lines).</li>
       <li>Gaining an advantage or position by cutting the track is penalized regardless of automatic in-game penalties.</li>
     </ol>
-  </section>
+  </app-card>
 
   <!-- Section 8 -->
-  <section class="reg-section card" id="incident-system">
+  <app-card [animated]="true" class="reg-section" id="incident-system">
     <h2>Incident and Penalty System</h2>
     <ol class="rules">
       <li>All contacts, off-tracks, and pit lane violations are logged by the game and reviewed by stewards.</li>
@@ -272,10 +261,10 @@
       <li>Drivers may submit a protest regarding an incident through the official channel (Discord/form) within 24 hours after the finish.</li>
       <li>The stewards' decisions are final and cannot be appealed, except in cases explicitly provided for by these regulations.</li>
     </ol>
-  </section>
+  </app-card>
 
   <!-- Section 9 -->
-  <section class="reg-section card" id="penalties">
+  <app-card [animated]="true" class="reg-section" id="penalties">
     <h2>Incident Reviews and Penalties</h2>
 
     <h3>9.1. Incident Reviews</h3>
@@ -320,34 +309,34 @@
       <li>Using other channels or direct messages for appeals is prohibited and may result in rejection of the complaint or an additional penalty.</li>
       <li>Protests submitted after the deadline will not be considered.</li>
     </ol>
-  </section>
+  </app-card>
 
   <!-- Section 10 -->
-  <section class="reg-section card" id="communication">
+  <app-card [animated]="true" class="reg-section" id="communication">
     <h2>Communication and Discipline</h2>
     <ol class="rules">
       <li>Any offensive behavior, toxicity, or provocation in chat or voice channels is prohibited.</li>
       <li>Push-to-talk or a muted microphone is mandatory during sessions unless in an emergency.</li>
       <li>Administrators may remove participants for severe violations.</li>
     </ol>
-  </section>
+  </app-card>
 
   <!-- Section 11 -->
-  <section class="reg-section card" id="force-majeure">
+  <app-card [animated]="true" class="reg-section" id="force-majeure">
     <h2>Force Majeure</h2>
     <ol class="rules">
       <li>In case of server issues, the organizer may delay or restart the session.</li>
       <li>Drivers disconnected may rejoin unless prohibited by the format.</li>
       <li>If most participants disconnect, the session may be restarted or results taken from the incident moment.</li>
     </ol>
-  </section>
+  </app-card>
 
   <!-- Section 12 -->
-  <section class="reg-section card" id="final">
+  <app-card [animated]="true" class="reg-section" id="final">
     <h2>Final Provisions</h2>
     <ol class="rules">
       <li>Participation in events implies automatic agreement with these regulations.</li>
       <li>Any issues not covered by the regulations will be resolved at the discretion of the administration.</li>
     </ol>
-  </section>
-</div>
+  </app-card>
+</app-page>
