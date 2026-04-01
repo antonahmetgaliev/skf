@@ -1,12 +1,17 @@
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { BtnComponent } from '../../components/btn/btn.component';
+import { CardComponent } from '../../components/card/card.component';
+import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
+import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
+import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService, AuthUser } from '../../services/auth.service';
 
 @Component({
   selector: 'app-admin-users',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent],
   templateUrl: './admin-users.component.html',
   styleUrl: './admin-users.component.scss',
 })

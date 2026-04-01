@@ -1,14 +1,12 @@
-<div class="page">
-  <header class="page-header">
-    <h1>User Management</h1>
-    <p class="subtitle">Manage user roles, block/unblock accounts, and force logouts.</p>
-  </header>
+<app-page>
+  <app-page-intro title="User Management" subtitle="Manage user roles, block/unblock accounts, and force logouts." />
 
-  <div class="card">
+  <app-card [animated]="true">
     <div class="toolbar">
       <div class="filter-field">
-        <label for="userFilter">Filter</label>
+        <label class="form-label" for="userFilter">Filter</label>
         <input
+          class="form-control"
           id="userFilter"
           type="text"
           placeholder="Search by name or Discord ID"
@@ -21,7 +19,7 @@
     </div>
 
     @if (loading()) {
-      <div class="inline-loading"><div class="inline-spinner"></div></div>
+      <app-spinner />
     } @else if (filteredUsers().length === 0) {
       <p class="empty">No users found.</p>
     } @else {
@@ -42,8 +40,9 @@
 
             <div class="user-controls">
               <div class="control-group">
-                <label>Role</label>
+                <label class="form-label">Role</label>
                 <select
+                  class="form-control"
                   [ngModel]="user.role"
                   (ngModelChange)="changeRole(user, $event)"
                   [disabled]="!canEdit(user)"
@@ -56,20 +55,18 @@
 
               <div class="action-buttons">
                 @if (canEdit(user) && user.role !== 'super_admin') {
-                  <button
-                    class="btn small"
-                    [class.danger]="!user.blocked"
-                    [class.ghost]="user.blocked"
-                    type="button"
+                  <app-btn
+                    [variant]="user.blocked ? 'ghost' : 'danger'"
+                    size="sm"
                     (click)="toggleBlock(user)"
                   >
                     {{ user.blocked ? 'Unblock' : 'Block' }}
-                  </button>
+                  </app-btn>
                 }
                 @if (canEdit(user)) {
-                  <button class="btn ghost small" type="button" (click)="forceLogout(user)">
+                  <app-btn variant="ghost" size="sm" (click)="forceLogout(user)">
                     Force logout
-                  </button>
+                  </app-btn>
                 }
               </div>
             </div>
@@ -85,5 +82,5 @@
         }
       </div>
     }
-  </div>
-</div>
+  </app-card>
+</app-page>
