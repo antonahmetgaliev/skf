@@ -171,6 +171,21 @@ async def raw_championship_cache(db: AsyncSession = Depends(get_db)):
     return {"keys": list(items[0].keys()) if items else [], "sample": items[0] if items else {}}
 
 
+@router.get("/raw-detail-cache", include_in_schema=False)
+async def raw_detail_cache(db: AsyncSession = Depends(get_db)):
+    """Debug: return raw cached championship detail to inspect field names."""
+    result = await db.execute(
+        select(SimgridCache).where(SimgridCache.cache_key.like("championship_%"))
+    )
+    row = result.scalars().first()
+    if not row:
+        return {"error": "no cache entry found"}
+    data = row.data
+    if not data or not isinstance(data, dict):
+        return {"error": "empty cache"}
+    return {"keys": list(data.keys()), "sample_values": {k: type(v).__name__ for k, v in data.items()}}
+
+
 @router.get("/driver/{simgrid_driver_id}/results", response_model=list[DriverChampionshipResult])
 async def get_driver_championship_results(
     simgrid_driver_id: int,
