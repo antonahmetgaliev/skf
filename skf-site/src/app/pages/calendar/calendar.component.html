@@ -85,6 +85,9 @@
               <span class="event-game">{{ event.game }}</span>
             }
           </div>
+          @if (event.image) {
+            <img class="event-thumbnail" [src]="event.image" [alt]="event.name" />
+          }
           <h4 class="event-name">{{ event.name }}</h4>
           @if (event.carClass) {
             <span class="event-car-class">{{ event.carClass }}</span>

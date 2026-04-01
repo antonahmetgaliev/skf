@@ -95,6 +95,7 @@ class CalendarEvent(CamelModel):
     end_date: str | None = None
     event_type: CalendarEventType
     source: str  # "simgrid" or "custom"
+    image: str | None = None
     simgrid_championship_id: int | None = None
     custom_championship_id: str | None = None
     races: list[CalendarRace] = []

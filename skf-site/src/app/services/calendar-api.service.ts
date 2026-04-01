@@ -16,6 +16,7 @@ export interface CalendarEvent {
   game: string;
   carClass: string | null;
   description: string | null;
+  image: string | null;
   startDate: string | null;
   endDate: string | null;
   eventType: CalendarEventType;

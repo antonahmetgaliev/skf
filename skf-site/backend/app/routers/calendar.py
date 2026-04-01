@@ -202,6 +202,7 @@ async def get_calendar_events(
             name=champ.name,
             game=detail.get("gameName") or detail.get("game_name") or "",
             description=detail.get("description"),
+            image=detail.get("image"),
             start_date=effective_start,
             end_date=effective_end,
             event_type=event_type,

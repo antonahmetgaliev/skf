@@ -282,6 +282,14 @@ h1 {
   letter-spacing: 0.06em;
 }
 
+.event-thumbnail {
+  width: 100%;
+  max-height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 0.4rem;
+}
+
 .event-name {
   margin: 0 0 0.2rem;
   font-family: var(--font-display);
