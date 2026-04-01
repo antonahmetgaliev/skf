@@ -35,7 +35,7 @@ export class MediaComponent {
   private async loadVideos(): Promise<void> {
     this.loading.set(true);
     try {
-      const data = await firstValueFrom(this.mediaApi.getVideos(200));
+      const data = await firstValueFrom(this.mediaApi.getLiveStreams(50));
       this.videos.set(data);
     } catch {
       this.errorMessage.set('Failed to load videos.');

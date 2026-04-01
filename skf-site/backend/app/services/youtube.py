@@ -1,6 +1,6 @@
 """YouTube Data API service with database caching.
 
-Fetches videos and live streams from a YouTube channel and caches
+Fetches completed live streams from a YouTube channel and caches
 the results in the SimgridCache table to minimise API quota usage.
 """
 
@@ -30,68 +30,6 @@ class YouTubeService:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-
-    async def get_all_videos(self, *, force: bool = False) -> list[dict[str, Any]]:
-        """Return all uploads from the channel (via uploads playlist)."""
-        cache_key = "youtube_channel_videos"
-
-        if not force:
-            cached = await self._read_cache(cache_key)
-            if cached is not None:
-                return cached
-
-        # Derive uploads playlist ID from channel ID (UC… → UU…)
-        channel_id = settings.youtube_channel_id
-        uploads_playlist = "UU" + channel_id[2:]
-
-        videos: list[dict[str, Any]] = []
-        page_token: str | None = None
-
-        try:
-            for _ in range(10):  # safety limit: 10 pages × 50 = 500 videos
-                params: dict[str, Any] = {
-                    "part": "snippet",
-                    "playlistId": uploads_playlist,
-                    "maxResults": 50,
-                    "key": settings.youtube_api_key,
-                }
-                if page_token:
-                    params["pageToken"] = page_token
-
-                resp = await self._client.get("/playlistItems", params=params)
-                resp.raise_for_status()
-                data = resp.json()
-
-                for item in data.get("items", []):
-                    snippet = item.get("snippet", {})
-                    thumbnails = snippet.get("thumbnails", {})
-                    thumb = (
-                        thumbnails.get("maxres")
-                        or thumbnails.get("high")
-                        or thumbnails.get("medium")
-                        or thumbnails.get("default")
-                        or {}
-                    )
-                    videos.append({
-                        "video_id": snippet.get("resourceId", {}).get("videoId", ""),
-                        "title": snippet.get("title", ""),
-                        "description": snippet.get("description", ""),
-                        "published_at": snippet.get("publishedAt", ""),
-                        "thumbnail_url": thumb.get("url", ""),
-                    })
-
-                page_token = data.get("nextPageToken")
-                if not page_token:
-                    break
-        except Exception:
-            logger.warning("YouTube playlistItems fetch failed", exc_info=True)
-            stale = await self._read_stale_cache(cache_key)
-            if stale is not None:
-                return stale
-            return []
-
-        await self._write_cache(cache_key, videos)
-        return videos
 
     async def get_live_streams(
         self, *, limit: int = 10, force: bool = False,

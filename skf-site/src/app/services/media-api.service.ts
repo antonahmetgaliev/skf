@@ -15,12 +15,6 @@ export class MediaApiService {
   private readonly http = inject(HttpClient);
   private readonly base = '/api/youtube';
 
-  getVideos(limit = 50, offset = 0): Observable<YouTubeVideo[]> {
-    return this.http.get<YouTubeVideo[]>(`${this.base}/videos`, {
-      params: { limit: String(limit), offset: String(offset) },
-    });
-  }
-
   getLiveStreams(limit = 10): Observable<YouTubeVideo[]> {
     return this.http.get<YouTubeVideo[]>(`${this.base}/live-streams`, {
       params: { limit: String(limit) },
