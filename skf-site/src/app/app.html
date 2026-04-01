@@ -31,14 +31,10 @@
     </div>
     <nav class="site-nav" aria-label="Primary">
       <a routerLink="/home" routerLinkActive="active">Home</a>
-      <a routerLink="/bwp-license" routerLinkActive="active">BWP License</a>
-      <a routerLink="/drivers" routerLinkActive="active">Drivers</a>
       <a routerLink="/championships" routerLinkActive="active">Championships</a>
-      <!-- TODO: temporarily hidden
-      <a routerLink="/skf-history" routerLinkActive="active">SKF History</a>
-      <a routerLink="/race-results" routerLinkActive="active">Race Results</a>
-      -->
+      <a routerLink="/drivers" routerLinkActive="active">Drivers</a>
       <a routerLink="/calendar" routerLinkActive="active">Calendar</a>
+      <a routerLink="/bwp-license" routerLinkActive="active">BWP License</a>
       <a routerLink="/regulations" routerLinkActive="active">Regulations</a>
       @if (auth.isAdmin()) {
         <a routerLink="/admin/users" routerLinkActive="active">User Management</a>
