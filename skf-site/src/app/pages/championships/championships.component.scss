@@ -176,25 +176,21 @@ h2 {
   }
 }
 
-.championship-thumbnail {
-  width: 140px;
-  height: 140px;
-  border-radius: 14px;
+.championship-banner {
+  width: 100%;
+  max-height: 160px;
   object-fit: cover;
+  border-radius: 12px;
   border: 1px solid rgba(20, 18, 15, 0.12);
-  flex-shrink: 0;
+  margin-bottom: 0.85rem;
 }
 
 .details-header {
   display: flex;
+  justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
   margin-bottom: 0.85rem;
-
-  > div:first-of-type {
-    flex: 1;
-    min-width: 0;
-  }
 }
 
 .meta {
