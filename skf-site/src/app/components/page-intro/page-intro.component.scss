@@ -1,0 +1,38 @@
+:host {
+  display: block;
+  margin-bottom: 2rem;
+}
+
+.page-intro {
+  position: relative;
+
+  ::ng-deep > .btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+}
+
+.eyebrow {
+  margin: 0 0 0.15rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--gold-deep);
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3vw, 3rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--muted);
+}
