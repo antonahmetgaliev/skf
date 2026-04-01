@@ -1,6 +1,6 @@
-<div class="page">
+<app-page>
   @if (auth.user(); as user) {
-    <div class="profile-card card">
+    <app-card [animated]="true" class="profile-card">
       <div class="profile-header">
         @if (user.avatarUrl) {
           <img class="profile-avatar" [src]="user.avatarUrl" alt="Avatar" />
@@ -33,9 +33,9 @@
           <span class="detail-label">Name in SKF Racing Hub</span>
           <span class="detail-value guild-nickname-row">
             <span>{{ user.guildNickname || '—' }}</span>
-            <button class="btn ghost tiny" type="button" [disabled]="syncingNickname()" (click)="syncGuildNickname()">
+            <app-btn variant="ghost" size="xs" [disabled]="syncingNickname()" (click)="syncGuildNickname()">
               {{ syncingNickname() ? 'Syncing…' : 'Sync' }}
-            </button>
+            </app-btn>
           </span>
         </div>
       </div>
@@ -45,7 +45,7 @@
         <h2 class="section-title">Driver Profile</h2>
         @if (user.driverId) {
           @if (loadingDriver()) {
-            <div class="inline-loading"><div class="inline-spinner"></div></div>
+            <app-spinner />
           } @else if (linkedDriver(); as driver) {
 
             <!-- Photo + identity header -->
@@ -87,12 +87,12 @@
                   autofocus
                 />
                 <div class="photo-edit-actions">
-                  <button class="btn ghost tiny" type="button" [disabled]="savingPhoto()" (click)="savePhoto()">
+                  <app-btn variant="ghost" size="xs" [disabled]="savingPhoto()" (click)="savePhoto()">
                     {{ savingPhoto() ? 'Saving…' : 'Save' }}
-                  </button>
-                  <button class="btn ghost tiny" type="button" (click)="cancelEditPhoto()">Cancel</button>
+                  </app-btn>
+                  <app-btn variant="ghost" size="xs" (click)="cancelEditPhoto()">Cancel</app-btn>
                   @if (driver.photoUrl) {
-                    <button class="btn ghost tiny danger-ghost" type="button" [disabled]="savingPhoto()" (click)="editPhotoValue = ''; savePhoto()">Remove</button>
+                    <app-btn variant="ghost" size="xs" class="danger-ghost" [disabled]="savingPhoto()" (click)="editPhotoValue = ''; savePhoto()">Remove</app-btn>
                   }
                 </div>
               </div>
@@ -151,73 +151,63 @@
             }
 
             <div class="driver-actions">
-              <button class="btn ghost small danger-ghost" type="button" (click)="unlinkDriver()">Unlink</button>
+              <app-btn variant="ghost" size="sm" class="danger-ghost" (click)="unlinkDriver()">Unlink</app-btn>
             </div>
           }
         } @else {
           @if (loadingCandidates()) {
-            <div class="inline-loading"><div class="inline-spinner"></div></div>
+            <app-spinner />
           } @else {
             <div class="no-driver">
               <p class="hint">No driver profile linked to your account yet.</p>
-              <button class="btn accent small" type="button" (click)="fetchLinkCandidates()">Find my profile</button>
+              <app-btn variant="accent" size="sm" (click)="fetchLinkCandidates()">Find my profile</app-btn>
             </div>
           }
         }
       </div>
 
       <div class="profile-actions">
-        <button class="btn danger" type="button" (click)="logout()">Logout</button>
+        <app-btn variant="danger" (click)="logout()">Logout</app-btn>
       </div>
-    </div>
+    </app-card>
   } @else {
-    <div class="card">
+    <app-card [animated]="true">
       <p>You are not signed in.</p>
-      <button class="btn accent" type="button" (click)="auth.login()">Sign in with Discord</button>
-    </div>
+      <app-btn variant="accent" (click)="auth.login()">Sign in with Discord</app-btn>
+    </app-card>
   }
-</div>
+</app-page>
 
 <!-- Link Driver Modal -->
-@if (showLinkModal()) {
-  <div class="modal-backdrop" (click)="skipLink()">
-    <div class="modal-panel" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <div>
-          <h2 class="modal-title">Link your driver profile</h2>
-          <p class="hint">We found the following matches for <strong>{{ auth.user()?.guildNickname || auth.user()?.displayName }}</strong>. Select the correct one to link your account:</p>
+<app-modal title="Link your driver profile" width="md" [(open)]="showLinkModal">
+  <p class="hint">We found the following matches for <strong>{{ auth.user()?.guildNickname || auth.user()?.displayName }}</strong>. Select the correct one to link your account:</p>
+  <div class="candidates">
+    @for (candidate of linkCandidates(); track candidate.id) {
+      <div class="candidate">
+        <div class="candidate-info">
+          <span class="candidate-name">{{ candidate.name }}</span>
+          @if (candidate.simgridDisplayName && candidate.simgridDisplayName !== candidate.name) {
+            <span class="candidate-meta">SimGrid: {{ candidate.simgridDisplayName }}</span>
+          }
+          @if (candidate.countryCode) {
+            <span class="candidate-meta">{{ candidate.countryCode }}</span>
+          }
         </div>
+        <app-btn
+          variant="accent"
+          size="sm"
+          [disabled]="linking()"
+          (click)="confirmLink(candidate.id)"
+        >
+          {{ linking() ? 'Linking…' : 'Link' }}
+        </app-btn>
       </div>
-      <div class="candidates">
-        @for (candidate of linkCandidates(); track candidate.id) {
-          <div class="candidate">
-            <div class="candidate-info">
-              <span class="candidate-name">{{ candidate.name }}</span>
-              @if (candidate.simgridDisplayName && candidate.simgridDisplayName !== candidate.name) {
-                <span class="candidate-meta">SimGrid: {{ candidate.simgridDisplayName }}</span>
-              }
-              @if (candidate.countryCode) {
-                <span class="candidate-meta">{{ candidate.countryCode }}</span>
-              }
-            </div>
-            <button
-              class="btn accent small"
-              type="button"
-              [disabled]="linking()"
-              (click)="confirmLink(candidate.id)"
-            >
-              {{ linking() ? 'Linking…' : 'Link' }}
-            </button>
-          </div>
-        }
-      </div>
-      @if (linkError()) {
-        <p class="form-error">{{ linkError() }}</p>
-      }
-      <div class="modal-footer">
-        <button class="btn ghost" type="button" (click)="skipLink()">Skip for now</button>
-      </div>
-    </div>
+    }
   </div>
-}
-
+  @if (linkError()) {
+    <p class="form-error">{{ linkError() }}</p>
+  }
+  <div modal-footer>
+    <app-btn variant="ghost" (click)="skipLink()">Skip for now</app-btn>
+  </div>
+</app-modal>

@@ -2,9 +2,7 @@
   display: block;
 }
 
-.page {
-  min-height: 100vh;
-  padding: clamp(1.5rem, 3vw, 3.5rem);
+::host ::ng-deep app-page {
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -12,27 +10,6 @@
 
 .profile-card {
   width: min(680px, 100%);
-  animation: rise 0.6s ease both;
-}
-
-.card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 24px;
-  padding: 2rem;
-  box-shadow: var(--card-shadow);
-  position: relative;
-  overflow: hidden;
-}
-
-.card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 120px;
-  height: 6px;
-  background: linear-gradient(90deg, rgba(243, 180, 25, 0.7), transparent);
 }
 
 .profile-header {
@@ -157,44 +134,6 @@
   margin-top: 1.5rem;
   padding-top: 1rem;
   border-top: 1px solid rgba(20, 18, 15, 0.1);
-}
-
-.btn {
-  border: none;
-  border-radius: 999px;
-  padding: 0.7rem 1.4rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 10px 18px rgba(20, 18, 15, 0.12);
-}
-
-.btn.accent {
-  background: linear-gradient(135deg, var(--gold), var(--gold-deep));
-  color: #2b2214;
-}
-
-.btn.danger {
-  background: linear-gradient(135deg, rgba(185, 71, 46, 0.92), rgba(152, 49, 32, 0.96));
-  color: #fff;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 20px rgba(20, 18, 15, 0.18);
-}
-
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* ── Driver section (expanded inline) ── */
@@ -524,40 +463,7 @@
   font-style: italic;
 }
 
-/* ── Modal ── */
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: rgba(10, 14, 20, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  backdrop-filter: blur(4px);
-  animation: rise 0.2s ease;
-}
-
-.modal-panel {
-  background: var(--surface, #fff);
-  border: 1px solid var(--card-border);
-  border-radius: 20px;
-  padding: 1.75rem;
-  width: min(480px, 100%);
-  box-shadow: 0 32px 64px rgba(10, 14, 20, 0.25);
-  display: grid;
-  gap: 1rem;
-}
-
-.modal-title {
-  margin: 0 0 0.4rem;
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--ink);
-}
+/* ── Modal content ── */
 
 .candidates {
   display: grid;
@@ -593,53 +499,18 @@
   text-transform: uppercase;
 }
 
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 0.5rem;
-  border-top: 1px solid rgba(20, 18, 15, 0.08);
-}
-
-.form-error {
-  color: var(--danger);
-  font-size: 0.85rem;
-  margin: 0;
-}
-
 .hint {
   font-size: 0.85rem;
   color: var(--muted);
   margin: 0;
 }
 
-.btn.ghost {
-  background: transparent;
-  border: 1px solid rgba(20, 18, 15, 0.2);
-  color: var(--ink);
-  box-shadow: none;
-}
+.danger-ghost ::ng-deep .btn {
+  color: var(--danger);
+  border-color: rgba(185, 71, 46, 0.3);
 
-.btn.ghost:hover {
-  border-color: var(--gold);
-  background: rgba(243, 180, 25, 0.08);
-}
-
-.btn.small {
-  padding: 0.35rem 0.85rem;
-  font-size: 0.72rem;
-}
-
-.btn.tiny {
-  padding: 0.2rem 0.55rem;
-  font-size: 0.65rem;
-}
-
-.danger-ghost {
-  color: var(--danger) !important;
-  border-color: rgba(185, 71, 46, 0.3) !important;
-
-  &:hover {
-    background: rgba(185, 71, 46, 0.08) !important;
-    border-color: var(--danger) !important;
+  &:hover:not(:disabled) {
+    background: rgba(185, 71, 46, 0.08);
+    border-color: var(--danger);
   }
 }

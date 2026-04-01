@@ -1,12 +1,17 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { BtnComponent } from '../../components/btn/btn.component';
+import { CardComponent } from '../../components/card/card.component';
+import { ModalComponent } from '../../components/modal/modal.component';
+import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
+import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { AuthService } from '../../services/auth.service';
 import { DriverChampionshipResult, DriverPublic, LinkCandidate, ProfileApiService } from '../../services/profile-api.service';
 
 @Component({
   selector: 'app-profile',
-  imports: [DatePipe, DecimalPipe, FormsModule],
+  imports: [DatePipe, DecimalPipe, FormsModule, BtnComponent, CardComponent, ModalComponent, PageLayoutComponent, SpinnerComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
 })
