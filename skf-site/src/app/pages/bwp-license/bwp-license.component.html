@@ -1,28 +1,17 @@
-﻿<div class="page">
-  <header class="hero">
-    <div class="brand">
-      <img class="brand-logo" src="skf-logo.png" alt="SKF Racing Hub logo" />
-      <div class="brand-text">
-        <p class="eyebrow">SKF Racing Hub</p>
-        <h1>Driver License Control</h1>
-        <p class="subtitle">
-          Track BWP points, keep dates for the 3-month expiry, and manage
-          penalty rules in one place.
-        </p>
-      </div>
-    </div>
-  </header>
+<app-page class="bwp-page">
+  <app-page-intro title="Driver License Control" subtitle="Track BWP points, keep dates for the 3-month expiry, and manage penalty rules in one place." />
 
   <section class="content-grid">
     @if (auth.isAdmin()) {
     <div class="stack">
-      <div class="card delay-1">
+      <app-card [animated]="true" class="delay-1">
         <h2>Add driver</h2>
         <form class="form" (ngSubmit)="addDriver()">
-          <label for="newDriverSelect">Driver</label>
+          <label class="form-label" for="newDriverSelect">Driver</label>
           <select
             id="newDriverSelect"
             name="newDriverSelect"
+            class="form-control"
             [ngModel]="newDriverSelection()"
             (ngModelChange)="newDriverSelection.set($event)"
             required
@@ -37,6 +26,7 @@
             <input
               id="newDriverName"
               name="newDriverName"
+              class="form-control"
               type="text"
               placeholder="Andrea Muscarella"
               [(ngModel)]="newDriverNameOverride"
@@ -44,22 +34,22 @@
               required
             />
           }
-          <button class="btn accent" type="submit">
+          <app-btn variant="accent" type="submit">
             {{ newDriverSelection() === '__new__' ? 'Create driver' : 'Select driver' }}
-          </button>
+          </app-btn>
         </form>
         @if (driverError) {
           <p class="form-error">{{ driverError }}</p>
         }
-      </div>
+      </app-card>
 
-      <div class="card delay-2">
+      <app-card [animated]="true" class="delay-2">
         <h2>Add BWP point</h2>
         <form class="form" (ngSubmit)="addPoint()">
           <div class="driver-search-group">
-            <label for="driverSelect">Driver</label>
+            <label class="form-label" for="driverSelect">Driver</label>
             <input
-              class="driver-search-input"
+              class="form-control driver-search-input"
               type="text"
               placeholder="Search driver…"
               [ngModel]="pointDriverFilter()"
@@ -69,6 +59,7 @@
             <select
               id="driverSelect"
               name="driverSelect"
+              class="form-control"
               [(ngModel)]="selectedDriverId"
               [disabled]="drivers().length === 0"
               required
@@ -82,10 +73,11 @@
 
           <div class="form-grid">
             <div>
-              <label for="pointValue">BWP points</label>
+              <label class="form-label" for="pointValue">BWP points</label>
               <input
                 id="pointValue"
                 name="pointValue"
+                class="form-control"
                 type="number"
                 min="1"
                 step="1"
@@ -94,10 +86,11 @@
               />
             </div>
             <div>
-              <label for="pointDate">Issued date</label>
+              <label class="form-label" for="pointDate">Issued date</label>
               <input
                 id="pointDate"
                 name="pointDate"
+                class="form-control"
                 type="date"
                 [(ngModel)]="pointDate"
                 required
@@ -105,21 +98,21 @@
             </div>
           </div>
           <p class="hint">Expiry is calculated automatically (+3 months).</p>
-          <button class="btn accent" type="submit" [disabled]="drivers().length === 0">
+          <app-btn variant="accent" type="submit" [disabled]="drivers().length === 0">
             Add point
-          </button>
+          </app-btn>
         </form>
         @if (pointError) {
           <p class="form-error">{{ pointError }}</p>
         }
-      </div>
+      </app-card>
 
-      <div class="card delay-3">
+      <app-card [animated]="true" class="delay-3">
         <h2>BWP penalty rules</h2>
         <p class="hint">Set thresholds and the penalty applied at or above each total.</p>
         <div class="rules-summary">
           @if (sortedPenaltyRules().length === 0) {
-            <p class="empty small">No penalty rules configured.</p>
+            <app-empty>No penalty rules configured.</app-empty>
           } @else {
             <div class="rules-summary-header" aria-hidden="true">
               <span>Threshold</span>
@@ -134,19 +127,20 @@
           }
         </div>
         <div class="rules-actions">
-          <button
-            class="btn accent small"
+          <app-btn
+            variant="accent"
+            size="sm"
             type="button"
             (click)="rulesModalOpen.set(true)"
           >
             Manage rules
-          </button>
+          </app-btn>
         </div>
-      </div>
+      </app-card>
     </div>
     }
 
-    <div class="card delay-4 drivers">
+    <app-card [animated]="true" class="delay-4 drivers">
       <div class="card-header">
         <div class="card-title">
           <h2>Active penalties</h2>
@@ -155,10 +149,11 @@
       </div>
       <div class="driver-toolbar">
         <div class="filter-field">
-          <label for="driverFilter">Filter name</label>
+          <label class="form-label" for="driverFilter">Filter name</label>
           <input
             id="driverFilter"
             name="driverFilter"
+            class="form-control"
             type="text"
             placeholder="Search drivers"
             [ngModel]="nameFilter()"
@@ -167,10 +162,11 @@
           />
         </div>
         <div class="sort-field">
-          <label for="driverSort">Order by</label>
+          <label class="form-label" for="driverSort">Order by</label>
           <select
             id="driverSort"
             name="driverSort"
+            class="form-control"
             [ngModel]="sortMode()"
             (ngModelChange)="sortMode.set($event)"
           >
@@ -183,9 +179,9 @@
       </div>
       <div class="driver-list">
         @if (drivers().length === 0) {
-          <p class="empty">Add a driver to start tracking BWP points.</p>
+          <app-empty>Add a driver to start tracking BWP points.</app-empty>
         } @else if (displayDrivers().length === 0) {
-          <p class="empty">No drivers match the current filter.</p>
+          <app-empty>No drivers match the current filter.</app-empty>
         } @else {
           @for (driver of displayDrivers(); track driver.id) {
             <article class="driver">
@@ -208,28 +204,31 @@
                     }
                   </div>
                   <div class="driver-buttons">
-                    <button
-                      class="btn ghost small"
+                    <app-btn
+                      variant="ghost"
+                      size="sm"
                       type="button"
                       (click)="toggleDriverCollapse(driver.id)"
                     >
                       {{ isDriverCollapsed(driver.id) ? 'Expand' : 'Collapse' }}
-                    </button>
-                    <button
-                      class="btn ghost small"
+                    </app-btn>
+                    <app-btn
+                      variant="ghost"
+                      size="sm"
                       type="button"
                       (click)="toggleExpiredVisibility(driver.id)"
                     >
                       {{ isExpiredHidden(driver.id) ? 'Show expired' : 'Hide expired' }}
-                    </button>
+                    </app-btn>
                     @if (auth.isAdmin()) {
-                    <button
-                      class="btn danger small"
+                    <app-btn
+                      variant="danger"
+                      size="sm"
                       type="button"
                       (click)="deleteDriver(driver.id)"
                     >
                       Delete driver
-                    </button>
+                    </app-btn>
                     }
                   </div>
                 </div>
@@ -299,13 +298,13 @@
               @if (!isDriverCollapsed(driver.id)) {
                 <div class="points">
                   @if (getVisiblePoints(driver).length === 0) {
-                    <p class="empty small">
+                    <app-empty>
                       @if (driver.points.length === 0) {
                         No points recorded yet.
                       } @else {
                         No visible points.
                       }
-                    </p>
+                    </app-empty>
                   } @else {
                     @for (point of getVisiblePoints(driver); track point.id) {
                       <div class="point" [class.expired]="isExpired(point)">
@@ -339,67 +338,55 @@
           }
         }
       </div>
-    </div>
+    </app-card>
   </section>
-</div>
+</app-page>
 
-@if (rulesModalOpen()) {
-  <div class="modal-backdrop" (click)="rulesModalOpen.set(false)">
-    <div class="modal-panel" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <div>
-          <h2 class="modal-title">Manage BWP penalty rules</h2>
-          <p class="hint">Set thresholds and the penalty applied at or above each total.</p>
+<app-modal title="Manage BWP penalty rules" width="xl" [(open)]="rulesModalOpen">
+  <p class="hint">Set thresholds and the penalty applied at or above each total.</p>
+  <div class="rules">
+    @if (sortedPenaltyRules().length === 0) {
+      <app-empty>No penalty rules configured.</app-empty>
+    } @else {
+      <div class="rules-header" aria-hidden="true">
+        <span>Threshold (BWP)</span>
+        <span>Penalty</span>
+        <span class="rules-action">Action</span>
+      </div>
+      @for (rule of sortedPenaltyRules(); track rule.id) {
+        <div class="rule-row">
+          <input
+            id="modal-rule-{{ rule.id }}"
+            name="modal-rule-{{ rule.id }}"
+            class="form-control rule-input"
+            type="number"
+            min="1"
+            step="1"
+            aria-label="Threshold (BWP)"
+            [ngModel]="rule.threshold"
+            (ngModelChange)="updatePenaltyRule(rule.id, { threshold: $event })"
+          />
+          <input
+            id="modal-rule-label-{{ rule.id }}"
+            name="modal-rule-label-{{ rule.id }}"
+            class="form-control rule-input"
+            type="text"
+            aria-label="Penalty"
+            placeholder="Penalty description"
+            [ngModel]="rule.label"
+            (ngModelChange)="updatePenaltyRule(rule.id, { label: $event })"
+          />
+          <app-btn variant="ghost" size="sm" type="button" (click)="deletePenaltyRule(rule.id)">
+            Remove
+          </app-btn>
         </div>
-        <button class="btn ghost small" type="button" (click)="rulesModalOpen.set(false)">
-          Close
-        </button>
-      </div>
-      <div class="rules">
-        @if (sortedPenaltyRules().length === 0) {
-          <p class="empty small">No penalty rules configured.</p>
-        } @else {
-          <div class="rules-header" aria-hidden="true">
-            <span>Threshold (BWP)</span>
-            <span>Penalty</span>
-            <span class="rules-action">Action</span>
-          </div>
-          @for (rule of sortedPenaltyRules(); track rule.id) {
-            <div class="rule-row">
-              <input
-                id="modal-rule-{{ rule.id }}"
-                name="modal-rule-{{ rule.id }}"
-                class="rule-input"
-                type="number"
-                min="1"
-                step="1"
-                aria-label="Threshold (BWP)"
-                [ngModel]="rule.threshold"
-                (ngModelChange)="updatePenaltyRule(rule.id, { threshold: $event })"
-              />
-              <input
-                id="modal-rule-label-{{ rule.id }}"
-                name="modal-rule-label-{{ rule.id }}"
-                class="rule-input"
-                type="text"
-                aria-label="Penalty"
-                placeholder="Penalty description"
-                [ngModel]="rule.label"
-                (ngModelChange)="updatePenaltyRule(rule.id, { label: $event })"
-              />
-              <button class="btn ghost small" type="button" (click)="deletePenaltyRule(rule.id)">
-                Remove
-              </button>
-            </div>
-          }
-        }
-      </div>
-      <div class="modal-actions">
-        <button class="btn accent small" type="button" (click)="addPenaltyRule()">Add rule</button>
-        <button class="btn ghost small" type="button" (click)="rulesModalOpen.set(false)">
-          Done
-        </button>
-      </div>
-    </div>
+      }
+    }
   </div>
-}
+  <div modal-footer>
+    <app-btn variant="accent" size="sm" type="button" (click)="addPenaltyRule()">Add rule</app-btn>
+    <app-btn variant="ghost" size="sm" type="button" (click)="rulesModalOpen.set(false)">
+      Done
+    </app-btn>
+  </div>
+</app-modal>
