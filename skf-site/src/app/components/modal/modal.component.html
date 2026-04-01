@@ -1,0 +1,16 @@
+@if (open()) {
+  <div class="modal-backdrop" (click)="close()">
+    <div
+      class="modal-panel modal-panel--{{ width() }}"
+      role="dialog"
+      aria-modal="true"
+      (click)="$event.stopPropagation()"
+    >
+      <h3 class="modal-title">{{ title() }}</h3>
+      <ng-content />
+      <div class="modal-footer">
+        <ng-content select="[modal-footer]" />
+      </div>
+    </div>
+  </div>
+}
