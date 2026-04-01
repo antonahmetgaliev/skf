@@ -1,6 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CardComponent } from '../../components/card/card.component';
+import { EmptyComponent } from '../../components/empty/empty.component';
+import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
+import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
+import { SpinnerComponent } from '../../components/spinner/spinner.component';
+import { BtnComponent } from '../../components/btn/btn.component';
+import { ModalComponent } from '../../components/modal/modal.component';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { BwpApiService, Driver } from '../../services/bwp-api.service';
@@ -18,7 +25,7 @@ import {
 
 @Component({
   selector: 'app-incidents',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, CardComponent, EmptyComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent],
   templateUrl: './incidents.component.html',
   styleUrl: './incidents.component.scss',
 })
@@ -42,6 +49,7 @@ export class IncidentsComponent implements OnInit {
   readonly showNewWindowModal = signal(false);
   readonly showNewIncidentModal = signal(false);
   readonly showResolveModal = signal(false);
+  readonly showDetailModal = signal(false);
   readonly detailIncident = signal<Incident | null>(null);
   readonly rvIncident = signal<Incident | null>(null);
 
@@ -319,6 +327,7 @@ export class IncidentsComponent implements OnInit {
 
   openDetailModal(incident: Incident): void {
     this.detailIncident.set(incident);
+    this.showDetailModal.set(true);
   }
 
   // ── Helpers ───────────────────────────────────────────────────────
