@@ -1,11 +1,11 @@
-<div class="page">
+<app-page>
   @if (error()) {
-    <div class="card error-card">
+    <app-card [animated]="true" class="error-card">
       <p>{{ error() }}</p>
-      <a class="btn ghost" routerLink="/bwp-license">Back to BWP License</a>
-    </div>
+      <app-btn variant="ghost" routerLink="/bwp-license">Back to BWP License</app-btn>
+    </app-card>
   } @else if (driver(); as d) {
-    <div class="driver-page-card card">
+    <app-card [animated]="true" class="driver-page-card">
 
       <div class="driver-header">
         <div class="driver-identity">
@@ -44,7 +44,7 @@
       </div>
 
       @if (d.points.length === 0) {
-        <p class="empty">No BWP points recorded for this driver.</p>
+        <app-empty>No BWP points recorded for this driver.</app-empty>
       } @else {
         <div class="points-section">
           <h2>BWP History</h2>
@@ -97,11 +97,11 @@
         </div>
       }
 
-    </div>
+    </app-card>
   } @else {
     <!-- loading state handled by global overlay -->
-    <div class="card loading-card">
+    <app-card [animated]="true" class="loading-card">
       <p class="loading-row">Loading driver profile…</p>
-    </div>
+    </app-card>
   }
-</div>
+</app-page>
