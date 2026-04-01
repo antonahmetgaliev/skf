@@ -1,5 +1,11 @@
 import { NgClass } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { BtnComponent } from '../../components/btn/btn.component';
+import { CardComponent } from '../../components/card/card.component';
+import { ModalComponent } from '../../components/modal/modal.component';
+import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
+import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
+import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -28,7 +34,7 @@ const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 @Component({
   selector: 'app-calendar',
-  imports: [NgClass, FormsModule, RouterLink],
+  imports: [NgClass, FormsModule, RouterLink, BtnComponent, CardComponent, ModalComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
 })
@@ -45,7 +51,7 @@ export class CalendarComponent {
   readonly errorMessage = signal('');
 
   // Admin modal
-  readonly showCreateModal = signal(false);
+  readonly createModalOpen = signal(false);
   formName = '';
   formGame = '';
   formCarClass = '';
@@ -152,11 +158,11 @@ export class CalendarComponent {
     this.formCarClass = '';
     this.formDescription = '';
     this.formRaces = [{ date: '', track: '' }];
-    this.showCreateModal.set(true);
+    this.createModalOpen.set(true);
   }
 
   closeCreateModal(): void {
-    this.showCreateModal.set(false);
+    this.createModalOpen.set(false);
   }
 
   addRaceRow(): void {
@@ -188,7 +194,7 @@ export class CalendarComponent {
 
     try {
       await firstValueFrom(this.calendarApi.createCustomChampionship(payload));
-      this.showCreateModal.set(false);
+      this.createModalOpen.set(false);
       this.loadEvents();
     } catch {
       this.errorMessage.set('Failed to create championship.');

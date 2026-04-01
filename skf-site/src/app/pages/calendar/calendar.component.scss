@@ -2,55 +2,6 @@
   display: block;
 }
 
-.calendar-page {
-  min-height: 100vh;
-  padding: clamp(1.25rem, 2.5vw, 3rem);
-}
-
-// ── Page intro (same as standings) ──────────────────────────────────────────
-.page-intro {
-  margin-bottom: 1.2rem;
-  position: relative;
-
-  > .btn {
-    position: absolute;
-    top: 0;
-    right: 0;
-  }
-}
-
-.eyebrow {
-  margin: 0 0 0.15rem;
-  font-size: 0.68rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--gold-deep);
-}
-
-h1 {
-  margin: 0 0 0.25rem;
-  font-family: var(--font-display);
-  font-size: clamp(1.45rem, 2.3vw, 2.35rem);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  line-height: 1.05;
-}
-
-.subtitle {
-  margin: 0;
-  color: var(--muted);
-}
-
-// ── Card ────────────────────────────────────────────────────────────────────
-.card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 18px;
-  box-shadow: var(--card-shadow);
-  padding: 1rem;
-}
-
 // ── Calendar header ─────────────────────────────────────────────────────────
 .calendar-header {
   display: flex;
@@ -352,51 +303,6 @@ h1 {
   }
 }
 
-// ── Buttons ─────────────────────────────────────────────────────────────────
-.btn {
-  border: none;
-  border-radius: 999px;
-  padding: 0.65rem 1.4rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 0.8rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-  box-shadow: 0 8px 16px rgba(20, 18, 15, 0.12);
-
-  &.accent {
-    background: linear-gradient(135deg, var(--gold), var(--gold-deep));
-    color: #2b2214;
-  }
-
-  &.ghost {
-    background: transparent;
-    border: 1px solid rgba(20, 18, 15, 0.2);
-    color: var(--ink);
-    box-shadow: none;
-  }
-
-  &.small {
-    padding: 0.35rem 0.85rem;
-    font-size: 0.67rem;
-    letter-spacing: 0.1em;
-    box-shadow: 0 4px 10px rgba(20, 18, 15, 0.1);
-  }
-
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 22px rgba(20, 18, 15, 0.18);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
-    box-shadow: none;
-  }
-}
-
 // ── Unscheduled section ─────────────────────────────────────────────────────
 .unscheduled-section {
   margin-top: 0.85rem;
@@ -438,90 +344,7 @@ h1 {
   font-weight: 500;
 }
 
-// ── Modal ───────────────────────────────────────────────────────────────────
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(18, 16, 12, 0.45);
-  backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  z-index: 1000;
-}
-
-.modal {
-  width: min(560px, 100%);
-  max-height: 90vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  h3 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-  }
-}
-
-.modal-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding-top: 0.5rem;
-  border-top: 1px dashed rgba(20, 18, 15, 0.1);
-}
-
-// ── Forms ───────────────────────────────────────────────────────────────────
-.form-label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  margin-bottom: 0.15rem;
-}
-
-.form-input {
-  width: 100%;
-  padding: 0.6rem 0.85rem;
-  border-radius: 14px;
-  border: 1px solid rgba(38, 33, 27, 0.15);
-  background: #fff;
-  color: var(--ink);
-  font-size: 0.85rem;
-  font-family: inherit;
-  margin-top: 0.2rem;
-  transition: border-color 0.2s ease;
-
-  &:focus {
-    outline: none;
-    border-color: var(--gold);
-  }
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 3rem;
-}
-
+// ── Races form section ──────────────────────────────────────────────────────
 .races-section {
   margin-top: 0.25rem;
 }
@@ -554,40 +377,12 @@ h1 {
 
 .btn-remove {
   flex-shrink: 0;
-  padding: 0.3rem 0.6rem;
 }
 
-// ── Loading / Error ─────────────────────────────────────────────────────────
-.inline-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem 1rem;
-}
-
-.inline-spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid rgba(18, 16, 12, 0.1);
-  border-top-color: var(--gold);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
+// ── Error ───────────────────────────────────────────────────────────────────
 .error {
   color: var(--danger);
   font-weight: 600;
-  font-size: 0.85rem;
-}
-
-.empty {
-  color: var(--muted);
   font-size: 0.85rem;
 }
 

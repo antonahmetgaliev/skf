@@ -1,22 +1,20 @@
-<section class="calendar-page">
-  <header class="page-intro">
-    <p class="eyebrow">SKF Racing Hub</p>
-    <h1>Season Calendar</h1>
+<app-page>
+  <app-page-intro title="Season Calendar">
     @if (auth.isAdmin()) {
-      <button class="btn accent small" type="button" (click)="openCreateModal()">
+      <app-btn variant="accent" size="sm" (click)="openCreateModal()">
         + Add Custom Championship
-      </button>
+      </app-btn>
     }
-  </header>
+  </app-page-intro>
 
-  <div class="card calendar-card">
+  <app-card class="calendar-card">
     <!-- Header with navigation -->
     <div class="calendar-header">
-      <button class="btn ghost small" type="button" (click)="navigateMonth(-1)">&larr; Prev</button>
+      <app-btn variant="ghost" size="sm" (click)="navigateMonth(-1)">&larr; Prev</app-btn>
       <h2 class="month-label">{{ monthLabel() }}</h2>
       <div class="header-actions">
-        <button class="btn ghost small" type="button" (click)="goToToday()">Today</button>
-        <button class="btn ghost small" type="button" (click)="navigateMonth(1)">Next &rarr;</button>
+        <app-btn variant="ghost" size="sm" (click)="goToToday()">Today</app-btn>
+        <app-btn variant="ghost" size="sm" (click)="navigateMonth(1)">Next &rarr;</app-btn>
       </div>
     </div>
 
@@ -29,7 +27,7 @@
     </div>
 
     @if (loading()) {
-      <div class="inline-loading"><div class="inline-spinner"></div></div>
+      <app-spinner />
     } @else if (errorMessage()) {
       <p class="error">{{ errorMessage() }}</p>
     } @else {
@@ -69,11 +67,11 @@
         }
       </div>
     }
-  </div>
+  </app-card>
 
   <!-- Selected day detail panel -->
   @if (selectedDay() !== null && selectedDayEvents().length > 0) {
-    <div class="card day-detail">
+    <app-card class="day-detail">
       <h3>{{ selectedDayLabel() }}</h3>
       @for (event of selectedDayEvents(); track event.id) {
         <div class="event-card" [ngClass]="'event-card--' + event.eventType">
@@ -113,12 +111,12 @@
           }
         </div>
       }
-    </div>
+    </app-card>
   }
 
   <!-- Unscheduled events (no dates) -->
   @if (unscheduledEvents().length > 0) {
-    <div class="card unscheduled-section">
+    <app-card class="unscheduled-section">
       <h3>Unscheduled</h3>
       <p class="unscheduled-hint">Championships without confirmed dates</p>
       <div class="unscheduled-list">
@@ -134,98 +132,86 @@
           </div>
         }
       </div>
-    </div>
+    </app-card>
   }
 
   <!-- Create modal -->
-  @if (showCreateModal()) {
-    <div class="modal-backdrop" (click)="closeCreateModal()">
-      <div class="modal card" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h3>New Custom Championship</h3>
-          <button class="btn ghost small" type="button" (click)="closeCreateModal()">✕</button>
-        </div>
+  <app-modal title="New Custom Championship" width="md" [(open)]="createModalOpen">
+    <label class="form-label">
+      Name *
+      <input
+        class="form-control"
+        type="text"
+        [(ngModel)]="formName"
+        placeholder="e.g. SKF GT3 Championship S3"
+      />
+    </label>
 
-        <div class="modal-body">
-          <label class="form-label">
-            Name *
-            <input
-              class="form-input"
-              type="text"
-              [(ngModel)]="formName"
-              placeholder="e.g. SKF GT3 Championship S3"
-            />
-          </label>
+    <label class="form-label">
+      Game *
+      <input
+        class="form-control"
+        type="text"
+        [(ngModel)]="formGame"
+        placeholder="e.g. ACC, iRacing"
+      />
+    </label>
 
-          <label class="form-label">
-            Game *
-            <input
-              class="form-input"
-              type="text"
-              [(ngModel)]="formGame"
-              placeholder="e.g. ACC, iRacing"
-            />
-          </label>
+    <label class="form-label">
+      Car Class
+      <input
+        class="form-control"
+        type="text"
+        [(ngModel)]="formCarClass"
+        placeholder="e.g. GT3, LMP2"
+      />
+    </label>
 
-          <label class="form-label">
-            Car Class
-            <input
-              class="form-input"
-              type="text"
-              [(ngModel)]="formCarClass"
-              placeholder="e.g. GT3, LMP2"
-            />
-          </label>
+    <label class="form-label">
+      Description
+      <textarea
+        class="form-control form-textarea"
+        [(ngModel)]="formDescription"
+        placeholder="Optional description..."
+        rows="3"
+      ></textarea>
+    </label>
 
-          <label class="form-label">
-            Description
-            <textarea
-              class="form-input form-textarea"
-              [(ngModel)]="formDescription"
-              placeholder="Optional description..."
-              rows="3"
-            ></textarea>
-          </label>
-
-          <div class="races-section">
-            <div class="races-header">
-              <h4>Races</h4>
-              <button class="btn ghost small" type="button" (click)="addRaceRow()">+ Add Race</button>
-            </div>
-            @for (race of formRaces; track $index; let i = $index) {
-              <div class="race-row">
-                <input
-                  class="form-input race-input"
-                  type="date"
-                  [(ngModel)]="race.date"
-                  placeholder="Date"
-                />
-                <input
-                  class="form-input race-input"
-                  type="text"
-                  [(ngModel)]="race.track"
-                  placeholder="Track name"
-                />
-                @if (formRaces.length > 1) {
-                  <button class="btn ghost small btn-remove" type="button" (click)="removeRaceRow(i)">✕</button>
-                }
-              </div>
-            }
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button class="btn ghost" type="button" (click)="closeCreateModal()">Cancel</button>
-          <button
-            class="btn accent"
-            type="button"
-            [disabled]="formSubmitting || !formName.trim() || !formGame.trim()"
-            (click)="submitCreate()"
-          >
-            {{ formSubmitting ? 'Creating...' : 'Create Championship' }}
-          </button>
-        </div>
+    <div class="races-section">
+      <div class="races-header">
+        <h4>Races</h4>
+        <app-btn variant="ghost" size="sm" (click)="addRaceRow()">+ Add Race</app-btn>
       </div>
+      @for (race of formRaces; track $index; let i = $index) {
+        <div class="race-row">
+          <input
+            class="form-control race-input"
+            type="date"
+            [(ngModel)]="race.date"
+            placeholder="Date"
+          />
+          <input
+            class="form-control race-input"
+            type="text"
+            [(ngModel)]="race.track"
+            placeholder="Track name"
+          />
+          @if (formRaces.length > 1) {
+            <app-btn variant="ghost" size="sm" class="btn-remove" (click)="removeRaceRow(i)">&#10005;</app-btn>
+          }
+        </div>
+      }
     </div>
-  }
-</section>
+
+    <div modal-footer>
+      <app-btn variant="ghost" (click)="closeCreateModal()">Cancel</app-btn>
+      <app-btn
+        variant="accent"
+        [disabled]="formSubmitting || !formName.trim() || !formGame.trim()"
+        (click)="submitCreate()"
+      >
+        {{ formSubmitting ? 'Creating...' : 'Create Championship' }}
+      </app-btn>
+    </div>
+  </app-modal>
+</app-page>
