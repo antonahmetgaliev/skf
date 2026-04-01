@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgClass } from '@angular/common';
+import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -12,6 +13,11 @@ import {
   StandingRace
 } from '../../services/simgrid-api.service';
 import { BwpApiService } from '../../services/bwp-api.service';
+import { BtnComponent } from '../../components/btn/btn.component';
+import { CardComponent } from '../../components/card/card.component';
+import { EmptyComponent } from '../../components/empty/empty.component';
+import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
+import { SpinnerComponent } from '../../components/spinner/spinner.component';
 
 interface CachedStandingsData {
   details: ChampionshipDetails;
@@ -22,7 +28,7 @@ interface CachedStandingsData {
 
 @Component({
   selector: 'app-championships',
-  imports: [RouterLink, NgClass],
+  imports: [RouterLink, NgClass, PageIntroComponent, BtnComponent, CardComponent, EmptyComponent, PageLayoutComponent, SpinnerComponent],
   templateUrl: './championships.component.html',
   styleUrl: './championships.component.scss'
 })

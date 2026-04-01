@@ -1,22 +1,20 @@
-<section class="standings-page">
-  <header class="page-intro">
-    <p class="eyebrow">SKF Racing Hub</p>
-    <h1>Championships</h1>
-  </header>
+<app-page>
+  <app-page-intro title="Championships" />
 
   <div class="layout">
-    <aside class="card side-panel">
+    <aside>
+    <app-card class="side-panel">
       <div class="panel-header">
         <h2>Championships</h2>
-        <button class="btn ghost small" type="button" (click)="loadChampionships()">
+        <app-btn variant="ghost" size="sm" (click)="loadChampionships()">
           Reload
-        </button>
+        </app-btn>
       </div>
 
       @if (loadingChampionships()) {
-        <div class="inline-loading"><div class="inline-spinner"></div></div>
+        <app-spinner />
       } @else if (championships().length === 0) {
-        <p class="empty">No championships returned from API.</p>
+        <app-empty>No championships returned from API.</app-empty>
       } @else {
         <div class="championship-list">
           @for (item of championships(); track item.id) {
@@ -38,11 +36,13 @@
           }
         </div>
       }
+    </app-card>
     </aside>
 
-    <section class="card details-panel">
+    <section>
+    <app-card class="details-panel">
       @if (loadingStandings()) {
-        <div class="inline-loading"><div class="inline-spinner"></div></div>
+        <app-spinner />
       } @else if (errorMessage()) {
         <p class="error">{{ errorMessage() }}</p>
       } @else if (selectedChampionship(); as championship) {
@@ -67,18 +67,18 @@
             }
           </div>
           <div class="details-actions">
-            <button class="btn ghost small" type="button" (click)="openGiveawayModal()">
+            <app-btn variant="ghost" size="sm" (click)="openGiveawayModal()">
               Giveaway
-            </button>
-            <button class="btn ghost small" type="button" (click)="openStandingsExportPreview()">
+            </app-btn>
+            <app-btn variant="ghost" size="sm" (click)="openStandingsExportPreview()">
               Export 16:9
-            </button>
-            <button class="btn ghost small" type="button" [disabled]="refreshingCache()" (click)="refreshCache()">
+            </app-btn>
+            <app-btn variant="ghost" size="sm" [disabled]="refreshingCache()" (click)="refreshCache()">
               {{ refreshingCache() ? 'Refreshing...' : 'Refresh Cache' }}
-            </button>
-            <button class="btn accent small" type="button" (click)="refreshSelectedChampionship()">
+            </app-btn>
+            <app-btn variant="accent" size="sm" (click)="refreshSelectedChampionship()">
               Refresh
-            </button>
+            </app-btn>
           </div>
         </div>
 
@@ -193,9 +193,9 @@
         <!-- Races tab -->
         @if (activeTab() === 'races') {
           @if (loadingRaces()) {
-            <div class="inline-loading"><div class="inline-spinner"></div></div>
+            <app-spinner />
           } @else if (allRaces().length === 0) {
-            <p class="empty">No race schedule available for this championship.</p>
+            <app-empty>No race schedule available for this championship.</app-empty>
           } @else {
             <div class="races-list">
               @for (race of allRaces(); track race.id; let raceIndex = $index) {
@@ -262,11 +262,12 @@
           }
         }
       } @else {
-        <p class="empty">Select a championship to view details.</p>
+        <app-empty>Select a championship to view details.</app-empty>
       }
+    </app-card>
     </section>
   </div>
-</section>
+</app-page>
 
   @if (giveawayOpen()) {
     <div class="export-backdrop" (click)="closeGiveawayModal()">
@@ -284,9 +285,9 @@
                 (input)="onGiveawayMinRacesChange($event)"
               />
             </label>
-            <button class="btn ghost small" type="button" (click)="closeGiveawayModal()">
+            <app-btn variant="ghost" size="sm" (click)="closeGiveawayModal()">
               Close
-            </button>
+            </app-btn>
           </div>
         </header>
 
@@ -299,18 +300,18 @@
           }
 
           <div class="giveaway-random-row">
-            <button
-              class="btn accent small"
-              type="button"
+            <app-btn
+              variant="accent"
+              size="sm"
               [disabled]="giveawayDrivers().length === 0"
               (click)="pickRandomDriver()"
             >
               Get Random
-            </button>
+            </app-btn>
           </div>
 
           @if (giveawayDrivers().length === 0) {
-            <p class="empty">No drivers match the minimum race requirement.</p>
+            <app-empty>No drivers match the minimum race requirement.</app-empty>
           } @else {
             <p class="giveaway-count">{{ giveawayDrivers().length }} driver(s) eligible</p>
             <div class="giveaway-list">
@@ -334,12 +335,12 @@
         <header class="export-modal-header">
           <h3>Standings Poster Preview (16:9)</h3>
           <div class="export-modal-actions">
-            <button class="btn ghost small" type="button" (click)="closeStandingsExportPreview()">
+            <app-btn variant="ghost" size="sm" (click)="closeStandingsExportPreview()">
               Close
-            </button>
-            <button class="btn accent small" type="button" [disabled]="exportRendering()" (click)="downloadStandingsExportJpg()">
+            </app-btn>
+            <app-btn variant="accent" size="sm" [disabled]="exportRendering()" (click)="downloadStandingsExportJpg()">
               Download JPG
-            </button>
+            </app-btn>
           </div>
         </header>
 
