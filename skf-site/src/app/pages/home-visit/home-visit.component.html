@@ -1,4 +1,4 @@
-<section class="home-page">
+<app-page>
 
   <!-- ───── HERO ───── -->
   <div class="hero">
@@ -9,8 +9,8 @@
       championships, and a shared passion for motorsport.
     </p>
     <div class="hero-actions">
-      <a routerLink="/championships" class="btn btn--primary">View Standings</a>
-      <a routerLink="/race-results" class="btn btn--outline">Latest Results</a>
+      <app-btn variant="primary" routerLink="/championships">View Standings</app-btn>
+      <app-btn variant="outline" routerLink="/race-results">Latest Results</app-btn>
     </div>
   </div>
 
@@ -32,22 +32,22 @@
         </p>
       </div>
       <div class="stat-grid">
-        <div class="card stat-card">
+        <app-card class="stat-card">
           <strong>50+</strong>
           <span>Active Drivers</span>
-        </div>
-        <div class="card stat-card">
+        </app-card>
+        <app-card class="stat-card">
           <strong>12</strong>
           <span>Race Weekends / Season</span>
-        </div>
-        <div class="card stat-card">
+        </app-card>
+        <app-card class="stat-card">
           <strong>3</strong>
           <span>Championship Tiers</span>
-        </div>
-        <div class="card stat-card">
+        </app-card>
+        <app-card class="stat-card">
           <strong>GT3</strong>
           <span>Primary Class</span>
-        </div>
+        </app-card>
       </div>
     </div>
   </div>
@@ -57,71 +57,74 @@
     <p class="eyebrow center">What We Offer</p>
     <h2 class="section-title">Built for Serious Sim Racers</h2>
     <div class="feature-grid">
-      <div class="card feature-card">
+      <app-card [animated]="true" class="feature-card">
         <div class="feature-icon">🏁</div>
         <h3>Organised Championships</h3>
         <p>
           Multi-round seasons with full points, standings, and end-of-season awards.
           Every race matters.
         </p>
-      </div>
-      <div class="card feature-card">
+      </app-card>
+      <app-card [animated]="true" class="feature-card">
         <div class="feature-icon">📜</div>
         <h3>BWP Licence System</h3>
         <p>
           Our own licence system tracks your safety rating and race craft across
           every event — earn your stripes on track.
         </p>
-      </div>
-      <div class="card feature-card">
+      </app-card>
+      <app-card [animated]="true" class="feature-card">
         <div class="feature-icon">⚖️</div>
         <h3>Fair Stewarding</h3>
         <p>
           Incidents are reviewed after every race by our stewards panel. Clean racing
           is protected — always.
         </p>
-      </div>
-      <div class="card feature-card">
+      </app-card>
+      <app-card [animated]="true" class="feature-card">
         <div class="feature-icon">🎙️</div>
         <h3>Community & Events</h3>
         <p>
           Active Discord server, weekly practice lobbies, special endurance events,
           and community game nights.
         </p>
-      </div>
-      <div class="card feature-card">
+      </app-card>
+      <app-card [animated]="true" class="feature-card">
         <div class="feature-icon">📊</div>
         <h3>Live Standings & Stats</h3>
         <p>
           Real-time championship tables, driver profiles, and race-by-race result
           breakdowns — all on this site.
         </p>
-      </div>
-      <div class="card feature-card">
+      </app-card>
+      <app-card [animated]="true" class="feature-card">
         <div class="feature-icon">🏎️</div>
         <h3>GT3 Focused</h3>
         <p>
           We race the cars we love. The BMW M4 GT3, the Porsche 992, the Ferrari 296 —
           pick your weapon.
         </p>
-      </div>
+      </app-card>
     </div>
   </div>
 
+  <!-- ───── RECENT BROADCASTS ───── -->
+  <app-recent-broadcasts></app-recent-broadcasts>
+
   <!-- ───── CALL TO ACTION ───── -->
   <div class="cta">
-    <div class="card cta-card">
+    <app-card class="cta-card">
       <h2>Ready to Race?</h2>
       <p>
         Join our next season, check the championship standings, or browse past results.
         The grid is waiting.
       </p>
       <div class="cta-actions">
-        <a routerLink="/championships" class="btn btn--primary">Championship</a>
-        <a routerLink="/bwp-license" class="btn btn--outline">BWP Licence</a>
-        <a routerLink="/skf-history" class="btn btn--outline">Our History</a>
+        <app-btn variant="primary" routerLink="/championships">Championship</app-btn>
+        <app-btn variant="outline" routerLink="/bwp-license">BWP Licence</app-btn>
+        <app-btn variant="outline" routerLink="/skf-history">Our History</app-btn>
       </div>
-    </div>
+    </app-card>
   </div>
 
   <!-- ───── FOOTER ───── -->
@@ -129,4 +132,4 @@
     <span>© 2026 SKF Racing Hub</span>
     <span>Sim Racing Community</span>
   </footer>
-</section>
+</app-page>
