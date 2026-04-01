@@ -47,6 +47,9 @@
         <p class="error">{{ errorMessage() }}</p>
       } @else if (selectedChampionship(); as championship) {
         <div class="details-header">
+          @if (championship.image) {
+            <img class="championship-thumbnail" [src]="championship.image" [alt]="championship.name" />
+          }
           <div>
             <h2>{{ championship.name }}</h2>
             <p class="meta">

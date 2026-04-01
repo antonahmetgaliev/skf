@@ -14,6 +14,7 @@ export interface ChampionshipListItem {
 export interface ChampionshipDetails {
   id: number;
   name: string;
+  image: string | null;
   startDate: string | null;
   endDate: string | null;
   capacity: number | null;
