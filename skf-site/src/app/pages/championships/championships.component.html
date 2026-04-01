@@ -46,11 +46,11 @@
       } @else if (errorMessage()) {
         <p class="error">{{ errorMessage() }}</p>
       } @else if (selectedChampionship(); as championship) {
-        @if (championship.image) {
-          <img class="championship-banner" [src]="championship.image" [alt]="championship.name" />
-        }
         <div class="details-header">
-          <div>
+          @if (championship.image) {
+            <img class="championship-banner" [src]="championship.image" [alt]="championship.name" />
+          }
+          <div class="details-info">
             <h2>{{ championship.name }}</h2>
             <p class="meta">
               {{ championship.hostName }} - {{ championship.gameName }} -

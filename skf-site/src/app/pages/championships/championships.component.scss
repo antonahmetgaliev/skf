@@ -177,13 +177,17 @@ h2 {
 }
 
 .championship-banner {
-  width: 100%;
-  max-width: 300px;
+  width: 300px;
   aspect-ratio: 16 / 9;
   object-fit: cover;
   border-radius: 12px;
   border: 1px solid rgba(20, 18, 15, 0.12);
-  margin-bottom: 0.85rem;
+  flex-shrink: 0;
+}
+
+.details-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .details-header {
