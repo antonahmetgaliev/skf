@@ -1,0 +1,43 @@
+<app-page>
+  <app-page-intro title="Media" subtitle="Streams and videos from our YouTube channel." />
+
+  @if (loading()) {
+    <p class="status-msg">Loading videos...</p>
+  }
+
+  @if (errorMessage()) {
+    <p class="status-msg error">{{ errorMessage() }}</p>
+  }
+
+  @if (!loading() && videos().length > 0) {
+    <div class="video-grid">
+      @for (video of videos(); track video.videoId) {
+        <a
+          class="video-card-link"
+          [href]="'https://www.youtube.com/watch?v=' + video.videoId"
+          target="_blank"
+          rel="noopener"
+        >
+          <app-card class="video-card">
+            @if (video.thumbnailUrl) {
+              <img
+                class="video-thumb"
+                [src]="video.thumbnailUrl"
+                [alt]="video.title"
+                loading="lazy"
+              />
+            }
+            <div class="video-info">
+              <h3 class="video-title">{{ video.title }}</h3>
+              <span class="video-date">{{ formatDate(video.publishedAt) }}</span>
+            </div>
+          </app-card>
+        </a>
+      }
+    </div>
+  }
+
+  @if (!loading() && !errorMessage() && videos().length === 0) {
+    <p class="status-msg">No videos found.</p>
+  }
+</app-page>

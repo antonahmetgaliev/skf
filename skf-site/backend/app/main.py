@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth, bwp, calendar, championships, dotd, incidents, profile, users
+from app.routers import auth, bwp, calendar, championships, dotd, incidents, profile, users, youtube
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -28,6 +28,7 @@ app.include_router(users.router, prefix="/api")
 app.include_router(incidents.router, prefix="/api")
 app.include_router(dotd.router, prefix="/api")
 app.include_router(calendar.router, prefix="/api")
+app.include_router(youtube.router, prefix="/api")
 
 
 @app.get("/healthz")

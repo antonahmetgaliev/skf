@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:4200"
     port: int = 8000
 
+    # YouTube Data API
+    youtube_api_key: str
+    youtube_channel_id: str
+
     # Discord OAuth2
     discord_client_id: str = ""
     discord_client_secret: str = ""
