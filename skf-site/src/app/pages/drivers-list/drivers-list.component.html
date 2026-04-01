@@ -1,9 +1,5 @@
-<section class="page">
-  <header class="page-intro">
-    <p class="eyebrow">SKF Racing Hub</p>
-    <h1>Drivers</h1>
-    <p class="subtitle">All registered drivers in the SKF system.</p>
-  </header>
+<app-page>
+  <app-page-intro title="Drivers" subtitle="All registered drivers in the SKF system." />
 
   <div class="toolbar">
     <input
@@ -18,9 +14,9 @@
   </div>
 
   @if (loading()) {
-    <div class="inline-loading"><div class="inline-spinner"></div></div>
+    <app-spinner />
   } @else if (filtered().length === 0) {
-    <p class="empty">No drivers found.</p>
+    <app-empty>No drivers found.</app-empty>
   } @else {
     <div class="drivers-grid">
       @for (driver of filtered(); track driver.id) {
@@ -39,4 +35,4 @@
       }
     </div>
   }
-</section>
+</app-page>

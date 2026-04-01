@@ -2,39 +2,9 @@
   display: block;
 }
 
-.page {
-  min-height: 100vh;
-  padding: clamp(1.5rem, 3vw, 3.5rem);
+app-page {
   max-width: 900px;
   margin: 0 auto;
-}
-
-.page-intro {
-  margin-bottom: 2rem;
-}
-
-.eyebrow {
-  margin: 0 0 0.4rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--gold-deep);
-}
-
-h1 {
-  margin: 0 0 0.5rem;
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 3rem);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink);
-}
-
-.subtitle {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.95rem;
 }
 
 /* ── Toolbar ── */
@@ -143,9 +113,3 @@ h1 {
   color: var(--danger, #b9472e);
 }
 
-.empty {
-  color: var(--muted);
-  font-size: 0.9rem;
-  text-align: center;
-  padding: 3rem 0;
-}
