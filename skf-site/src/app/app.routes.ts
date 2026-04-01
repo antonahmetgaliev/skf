@@ -11,23 +11,25 @@ import { ProfileComponent } from './pages/profile/profile.component';
 import { RaceResultsComponent } from './pages/race-results/race-results.component';
 import { SkfHistoryComponent } from './pages/skf-history/skf-history.component';
 import { CalendarComponent } from './pages/calendar/calendar.component';
+import { MediaComponent } from './pages/media/media.component';
 import { RegulationsComponent } from './pages/regulations/regulations.component';
 
 export const appRoutes: Routes = [
-  { path: '', component: HomeVisitComponent },
-  { path: 'home', component: HomeVisitComponent },
-  { path: 'bwp-license', component: BwpLicenseComponent },
+  { path: '', component: HomeVisitComponent, title: 'Home | SKF Racing Hub' },
+  { path: 'home', component: HomeVisitComponent, title: 'Home | SKF Racing Hub' },
+  { path: 'bwp-license', component: BwpLicenseComponent, title: 'BWP License | SKF Racing Hub' },
   { path: 'standings', pathMatch: 'full', redirectTo: 'championships' },
   { path: 'championship-standings', pathMatch: 'full', redirectTo: 'championships' },
-  { path: 'championships', component: ChampionshipsComponent },
-  { path: 'skf-history', component: SkfHistoryComponent },
-  { path: 'race-results', component: RaceResultsComponent },
-  { path: 'calendar', component: CalendarComponent },
-  { path: 'regulations', component: RegulationsComponent },
-  { path: 'profile', component: ProfileComponent },
-  { path: 'drivers', component: DriversListComponent },
-  { path: 'drivers/:id', component: DriverProfileComponent },
-  { path: 'incidents', component: IncidentsComponent },
-  { path: 'admin/users', component: AdminUsersComponent, canActivate: [adminGuard] },
+  { path: 'championships', component: ChampionshipsComponent, title: 'Championships | SKF Racing Hub' },
+  { path: 'skf-history', component: SkfHistoryComponent, title: 'SKF History | SKF Racing Hub' },
+  { path: 'race-results', component: RaceResultsComponent, title: 'Race Results | SKF Racing Hub' },
+  { path: 'calendar', component: CalendarComponent, title: 'Calendar | SKF Racing Hub' },
+  { path: 'regulations', component: RegulationsComponent, title: 'Regulations | SKF Racing Hub' },
+  { path: 'media', component: MediaComponent, title: 'Media | SKF Racing Hub' },
+  { path: 'profile', component: ProfileComponent, title: 'Profile | SKF Racing Hub' },
+  { path: 'drivers', component: DriversListComponent, title: 'Drivers | SKF Racing Hub' },
+  { path: 'drivers/:id', component: DriverProfileComponent, title: 'Driver Profile | SKF Racing Hub' },
+  { path: 'incidents', component: IncidentsComponent, title: 'Incidents | SKF Racing Hub' },
+  { path: 'admin/users', component: AdminUsersComponent, canActivate: [adminGuard], title: 'Admin Users | SKF Racing Hub' },
   { path: '**', redirectTo: '' }
 ];
