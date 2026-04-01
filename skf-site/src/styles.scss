@@ -16,6 +16,7 @@
   --card-bg: rgba(255, 255, 255, 0.86);
   --card-border: rgba(18, 16, 12, 0.12);
   --card-shadow: 0 18px 40px rgba(20, 18, 15, 0.12);
+  --separator: rgba(20, 18, 15, 0.1);
 }
 
 * {
@@ -49,24 +50,70 @@ pre {
   margin: 0;
 }
 
-/* ── Inline loading spinner (used by individual data areas) ── */
+/* ── Forms ── */
 
-.inline-loading {
+.form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 0.3rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid rgba(38, 33, 27, 0.15);
+  background: #fff;
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: rgba(243, 180, 25, 0.9);
+  box-shadow: 0 0 0 3px rgba(243, 180, 25, 0.25);
+}
+
+.form-control:disabled,
+.form-control[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.form-control::placeholder {
+  color: rgba(58, 51, 40, 0.55);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 4rem;
+  line-height: 1.5;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.form-group {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem 1rem;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.inline-spinner {
-  width: 32px;
-  height: 32px;
-  border: 2.5px solid rgba(243, 180, 25, 0.25);
-  border-top-color: #f3b419;
-  border-radius: 50%;
-  animation: inline-spin 0.7s linear infinite;
+.form-error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--danger);
+  font-weight: 600;
 }
 
-@keyframes inline-spin {
-  to { transform: rotate(360deg); }
-}
