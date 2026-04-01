@@ -60,6 +60,15 @@ export interface ChampionshipStandingsData {
   stale: boolean;
 }
 
+export interface ChampionshipRace {
+  id: number;
+  displayName: string;
+  startsAt: string | null;
+  track: string | null;
+  resultsAvailable: boolean;
+  ended: boolean;
+}
+
 export interface PodiumEntry {
   simgridDriverId: number | null;
   displayName: string;
@@ -90,6 +99,12 @@ export class SimgridApiService {
   getChampionshipStandings(championshipId: number): Observable<ChampionshipStandingsData> {
     return this.http.get<ChampionshipStandingsData>(
       `${this.apiBase}/${championshipId}/standings`
+    );
+  }
+
+  getChampionshipRaces(championshipId: number): Observable<ChampionshipRace[]> {
+    return this.http.get<ChampionshipRace[]>(
+      `${this.apiBase}/${championshipId}/races`
     );
   }
 

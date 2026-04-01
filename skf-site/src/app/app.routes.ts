@@ -5,7 +5,7 @@ import { BwpLicenseComponent } from './pages/bwp-license/bwp-license.component';
 import { DriverProfileComponent } from './pages/driver-profile/driver-profile.component';
 import { DriversListComponent } from './pages/drivers-list/drivers-list.component';
 import { HomeVisitComponent } from './pages/home-visit/home-visit.component';
-import { ChampionshipStandingsComponent } from './pages/championship-standings/championship-standings.component';
+import { ChampionshipsComponent } from './pages/championships/championships.component';
 import { IncidentsComponent } from './pages/incidents/incidents.component';
 import { ProfileComponent } from './pages/profile/profile.component';
 import { RaceResultsComponent } from './pages/race-results/race-results.component';
@@ -17,8 +17,9 @@ export const appRoutes: Routes = [
   { path: '', component: HomeVisitComponent },
   { path: 'home', component: HomeVisitComponent },
   { path: 'bwp-license', component: BwpLicenseComponent },
-  { path: 'standings', pathMatch: 'full', redirectTo: 'championship-standings' },
-  { path: 'championship-standings', component: ChampionshipStandingsComponent },
+  { path: 'standings', pathMatch: 'full', redirectTo: 'championships' },
+  { path: 'championship-standings', pathMatch: 'full', redirectTo: 'championships' },
+  { path: 'championships', component: ChampionshipsComponent },
   { path: 'skf-history', component: SkfHistoryComponent },
   { path: 'race-results', component: RaceResultsComponent },
   { path: 'calendar', component: CalendarComponent },

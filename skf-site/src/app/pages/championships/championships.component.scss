@@ -298,6 +298,156 @@ tbody tr:hover {
 }
 
 // ------------------------------------------------------------------
+// Main tabs (Standings / Races)
+// ------------------------------------------------------------------
+
+.main-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0.85rem;
+  border-bottom: 2px solid rgba(20, 18, 15, 0.12);
+}
+
+.main-tab {
+  border: none;
+  background: none;
+  padding: 0.55rem 1.1rem;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    color: var(--ink);
+  }
+
+  &.active {
+    color: var(--gold-deep);
+    border-bottom-color: var(--gold-deep);
+  }
+}
+
+// ------------------------------------------------------------------
+// Races tab
+// ------------------------------------------------------------------
+
+.races-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.race-card {
+  border: 1px solid rgba(20, 18, 15, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.7);
+  overflow: hidden;
+}
+
+.race-card.race-completed {
+  border-color: rgba(20, 18, 15, 0.18);
+}
+
+.race-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0.8rem;
+  gap: 0.8rem;
+
+  &.clickable {
+    cursor: pointer;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: rgba(243, 180, 25, 0.06);
+    }
+  }
+}
+
+.race-card-info {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.race-round {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--gold-deep);
+  min-width: 2.2rem;
+}
+
+.race-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.race-card-name {
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: var(--ink);
+}
+
+.race-card-date {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.race-card-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.race-status-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+
+.race-status--completed {
+  background: rgba(90, 185, 90, 0.15);
+  color: #3a8a3a;
+}
+
+.race-status--upcoming {
+  background: rgba(100, 180, 255, 0.15);
+  color: #4a9fd4;
+}
+
+.race-expand-icon {
+  font-size: 0.72rem;
+  color: var(--muted);
+  transition: transform 0.2s ease;
+
+  &.expanded {
+    transform: rotate(180deg);
+  }
+}
+
+.race-results-panel {
+  border-top: 1px solid rgba(20, 18, 15, 0.1);
+  padding: 0.6rem 0.8rem;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.race-results-table {
+  min-width: auto;
+}
+
+// ------------------------------------------------------------------
 // Multiclass: filter tabs
 // ------------------------------------------------------------------
 

@@ -106,7 +106,7 @@
             </div>
           }
           @if (event.simgridChampionshipId) {
-            <a routerLink="/championship-standings" class="event-link">View standings &rarr;</a>
+            <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>
           }
         </div>
       }
@@ -126,7 +126,7 @@
             </span>
             <span class="unscheduled-name">{{ event.name }}</span>
             @if (event.simgridChampionshipId) {
-              <a routerLink="/championship-standings" class="event-link">View standings &rarr;</a>
+              <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>
             }
           </div>
         }

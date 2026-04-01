@@ -1,0 +1,351 @@
+<section class="standings-page">
+  <header class="page-intro">
+    <p class="eyebrow">SKF Racing Hub</p>
+    <h1>Championships</h1>
+  </header>
+
+  <div class="layout">
+    <aside class="card side-panel">
+      <div class="panel-header">
+        <h2>Championships</h2>
+        <button class="btn ghost small" type="button" (click)="loadChampionships()">
+          Reload
+        </button>
+      </div>
+
+      @if (loadingChampionships()) {
+        <div class="inline-loading"><div class="inline-spinner"></div></div>
+      } @else if (championships().length === 0) {
+        <p class="empty">No championships returned from API.</p>
+      } @else {
+        <div class="championship-list">
+          @for (item of championships(); track item.id) {
+            <button
+              class="championship-button"
+              type="button"
+              [class.active]="selectedChampionshipId() === item.id"
+              [ngClass]="getChampionshipStatusClass(item)"
+              (click)="selectChampionship(item.id)"
+            >
+              <span class="championship-name">{{ item.name }}</span>
+              <span class="championship-footer">
+                <span class="championship-id">#{{ item.id }}</span>
+                @if (getChampionshipStatusLabel(item); as label) {
+                  <span class="championship-status-tag">{{ label }}</span>
+                }
+              </span>
+            </button>
+          }
+        </div>
+      }
+    </aside>
+
+    <section class="card details-panel">
+      @if (loadingStandings()) {
+        <div class="inline-loading"><div class="inline-spinner"></div></div>
+      } @else if (errorMessage()) {
+        <p class="error">{{ errorMessage() }}</p>
+      } @else if (selectedChampionship(); as championship) {
+        <div class="details-header">
+          <div>
+            <h2>{{ championship.name }}</h2>
+            <p class="meta">
+              {{ championship.hostName }} - {{ championship.gameName }} -
+              {{ championship.spotsTaken ?? 0 }}/{{ championship.capacity ?? 0 }} entries
+            </p>
+            <p class="meta">
+              Start date: {{ formatDate(championship.startDate) }}
+              @if (championship.endDate) {
+                - End date: {{ formatDate(championship.endDate) }}
+              }
+            </p>
+            @if (lastUpdated(); as updated) {
+              <p class="meta">Last refresh: {{ updated.toLocaleString() }}</p>
+            }
+          </div>
+          <div class="details-actions">
+            <button class="btn ghost small" type="button" (click)="openGiveawayModal()">
+              Giveaway
+            </button>
+            <button class="btn ghost small" type="button" (click)="openStandingsExportPreview()">
+              Export 16:9
+            </button>
+            <button class="btn ghost small" type="button" [disabled]="refreshingCache()" (click)="refreshCache()">
+              {{ refreshingCache() ? 'Refreshing...' : 'Refresh Cache' }}
+            </button>
+            <button class="btn accent small" type="button" (click)="refreshSelectedChampionship()">
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        @if (infoMessage()) {
+          <p class="notice">{{ infoMessage() }}</p>
+        }
+
+        @if (staleWarning()) {
+          <div class="stale-warning">
+            SimGrid is rate-limiting requests — showing cached data that may not be current. Try refreshing in a few minutes.
+          </div>
+        }
+
+        <!-- Main tabs -->
+        <div class="main-tabs">
+          <button
+            class="main-tab"
+            type="button"
+            [class.active]="activeTab() === 'standings'"
+            (click)="setActiveTab('standings')"
+          >Standings</button>
+          <button
+            class="main-tab"
+            type="button"
+            [class.active]="activeTab() === 'races'"
+            (click)="setActiveTab('races')"
+          >Races</button>
+        </div>
+
+        <!-- Standings tab -->
+        @if (activeTab() === 'standings') {
+          @if (isMulticlass()) {
+            <div class="class-tabs">
+              <button
+                class="class-tab"
+                type="button"
+                [class.active]="selectedClass() === null"
+                (click)="selectedClass.set(null)"
+              >All</button>
+              @for (cls of carClasses(); track cls) {
+                <button
+                  type="button"
+                  [ngClass]="getClassTabClasses(cls)"
+                  (click)="selectedClass.set(cls)"
+                >{{ cls }}</button>
+              }
+            </div>
+          }
+
+          <h3 class="section-title">
+            @if (isMulticlass() && selectedClass(); as cls) {
+              {{ cls }} class standings
+            } @else {
+              Overall standings
+            }
+          </h3>
+          <div class="table-wrap">
+            <table class="standings-table">
+              <thead>
+                <tr>
+                  <th>Pos</th>
+                  <th>Driver</th>
+                  <th>Country</th>
+                  @if (isMulticlass()) {
+                    <th>Class</th>
+                  }
+                  <th>Car</th>
+                  <th>Score</th>
+                  @for (race of races(); track race.id; let raceIndex = $index) {
+                    <th [attr.title]="getRaceTitle(race, raceIndex)">{{ getRaceLabel(raceIndex) }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @if (visibleStandings().length === 0) {
+                  <tr>
+                    <td class="empty-row" [attr.colspan]="getOverallColspan()">
+                      No standings available for this championship yet.
+                    </td>
+                  </tr>
+                } @else {
+                  @for (entry of visibleStandings(); track entry.id; let i = $index) {
+                    <tr [ngClass]="isMulticlass() ? 'class-strip-' + getClassIndex(entry.carClass) : ''">
+                      <td>{{ getPosition(entry, i) }}</td>
+                      <td class="driver-cell">
+                        @if (driverUuidBySimgridId().get(entry.id); as uuid) {
+                          <a [routerLink]="['/drivers', uuid]" class="driver-link">{{ entry.displayName }}</a>
+                        } @else {
+                          {{ entry.displayName }}
+                        }
+                        @if (entry.dsq) {
+                          <span class="dsq-badge">DSQ</span>
+                        }
+                      </td>
+                      <td>{{ entry.countryCode || '-' }}</td>
+                      @if (isMulticlass()) {
+                        <td><span class="class-badge" [ngClass]="'class-color-' + getClassIndex(entry.carClass)">{{ entry.carClass || '-' }}</span></td>
+                      }
+                      <td>{{ entry.car || '-' }}</td>
+                      <td>{{ formatNumber(entry.score) }}</td>
+                      @for (race of races(); track race.id; let raceIndex = $index) {
+                        <td class="race-position">{{ formatRacePosition(entry, race, raceIndex) }}</td>
+                      }
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        <!-- Races tab -->
+        @if (activeTab() === 'races') {
+          @if (loadingRaces()) {
+            <div class="inline-loading"><div class="inline-spinner"></div></div>
+          } @else if (allRaces().length === 0) {
+            <p class="empty">No race schedule available for this championship.</p>
+          } @else {
+            <div class="races-list">
+              @for (race of allRaces(); track race.id; let raceIndex = $index) {
+                <div class="race-card" [class.race-completed]="getRaceStatus(race) === 'completed'">
+                  <div class="race-card-header" (click)="hasRaceResults(race) ? toggleRaceExpansion(raceIndex) : null"
+                       [class.clickable]="hasRaceResults(race)">
+                    <div class="race-card-info">
+                      <span class="race-round">R{{ raceIndex + 1 }}</span>
+                      <div class="race-card-details">
+                        <span class="race-card-name">{{ race.displayName }}</span>
+                        <span class="race-card-date">
+                          {{ formatRaceDate(race.startsAt) }}
+                          @if (race.track) {
+                            — {{ race.track }}
+                          }
+                        </span>
+                      </div>
+                    </div>
+                    <div class="race-card-status">
+                      @if (getRaceStatus(race) === 'completed') {
+                        <span class="race-status-badge race-status--completed">Completed</span>
+                        @if (hasRaceResults(race)) {
+                          <span class="race-expand-icon" [class.expanded]="expandedRaceIndex() === raceIndex">&#9662;</span>
+                        }
+                      } @else {
+                        <span class="race-status-badge race-status--upcoming">Upcoming</span>
+                      }
+                    </div>
+                  </div>
+
+                  @if (expandedRaceIndex() === raceIndex && hasRaceResults(race)) {
+                    <div class="race-results-panel">
+                      <div class="table-wrap">
+                        <table class="standings-table race-results-table">
+                          <thead>
+                            <tr>
+                              <th>Pos</th>
+                              <th>Driver</th>
+                              <th>Car</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (result of getRaceResultsForRace(race, raceIndex); track result.displayName; let i = $index) {
+                              <tr>
+                                <td>{{ result.dns ? 'DNS' : (result.position ?? '-') }}</td>
+                                <td class="driver-cell">
+                                  @if (result.driverUuid) {
+                                    <a [routerLink]="['/drivers', result.driverUuid]" class="driver-link">{{ result.displayName }}</a>
+                                  } @else {
+                                    {{ result.displayName }}
+                                  }
+                                </td>
+                                <td>{{ result.car || '-' }}</td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        }
+      } @else {
+        <p class="empty">Select a championship to view details.</p>
+      }
+    </section>
+  </div>
+</section>
+
+  @if (giveawayOpen()) {
+    <div class="export-backdrop" (click)="closeGiveawayModal()">
+      <section class="giveaway-modal" (click)="$event.stopPropagation()">
+        <header class="export-modal-header">
+          <h3>Giveaway — Eligible Drivers</h3>
+          <div class="export-modal-actions">
+            <label class="giveaway-input-label">
+              Min races
+              <input
+                class="giveaway-input"
+                type="number"
+                min="1"
+                [value]="giveawayMinRaces()"
+                (input)="onGiveawayMinRacesChange($event)"
+              />
+            </label>
+            <button class="btn ghost small" type="button" (click)="closeGiveawayModal()">
+              Close
+            </button>
+          </div>
+        </header>
+
+        <div class="giveaway-body">
+          @if (giveawayWinner(); as winner) {
+            <div class="giveaway-winner">
+              <span class="giveaway-winner-label">Winner</span>
+              <span class="giveaway-winner-name">{{ winner }}</span>
+            </div>
+          }
+
+          <div class="giveaway-random-row">
+            <button
+              class="btn accent small"
+              type="button"
+              [disabled]="giveawayDrivers().length === 0"
+              (click)="pickRandomDriver()"
+            >
+              Get Random
+            </button>
+          </div>
+
+          @if (giveawayDrivers().length === 0) {
+            <p class="empty">No drivers match the minimum race requirement.</p>
+          } @else {
+            <p class="giveaway-count">{{ giveawayDrivers().length }} driver(s) eligible</p>
+            <div class="giveaway-list">
+              @for (driver of giveawayDrivers(); track driver.id; let i = $index) {
+                <div class="giveaway-driver">
+                  <span class="giveaway-rank">{{ i + 1 }}</span>
+                  <span class="giveaway-name">{{ driver.displayName }}</span>
+                  <span class="giveaway-races">{{ driver.racesCount }} race(s)</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+  }
+
+  @if (exportPreviewOpen()) {
+    <div class="export-backdrop" (click)="closeStandingsExportPreview()">
+      <section class="export-modal" (click)="$event.stopPropagation()">
+        <header class="export-modal-header">
+          <h3>Standings Poster Preview (16:9)</h3>
+          <div class="export-modal-actions">
+            <button class="btn ghost small" type="button" (click)="closeStandingsExportPreview()">
+              Close
+            </button>
+            <button class="btn accent small" type="button" [disabled]="exportRendering()" (click)="downloadStandingsExportJpg()">
+              Download JPG
+            </button>
+          </div>
+        </header>
+
+        <div class="export-preview-frame">
+          <canvas #standingsExportCanvas width="1920" height="1080"></canvas>
+          @if (exportRendering()) {
+            <p class="export-rendering">Rendering preview...</p>
+          }
+        </div>
+      </section>
+    </div>
+  }

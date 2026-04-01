@@ -14,6 +14,7 @@ from app.schemas.championship import (
     ChampionshipDetails,
     ChampionshipListItem,
     ChampionshipPodium,
+    ChampionshipRace,
     ChampionshipStandingsData,
     DriverChampionshipResult,
     PodiumEntry,
@@ -219,6 +220,16 @@ async def get_driver_championship_results(
         key=lambda r: (r.position is None, r.position or 999, -r.championship_id)
     )
     return driver_results
+
+
+@router.get("/{championship_id}/races", response_model=list[ChampionshipRace])
+async def get_races(championship_id: int, force: bool = Query(False)):
+    """Return all races for a championship (including future ones)."""
+    try:
+        raw = await simgrid_service.get_races(championship_id, force=force)
+        return [ChampionshipRace(**r) for r in raw]
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
 
 
 @router.get("/{championship_id}", response_model=ChampionshipDetails)

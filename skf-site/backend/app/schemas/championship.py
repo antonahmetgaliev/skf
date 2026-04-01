@@ -95,6 +95,38 @@ class StandingRace(CamelModel):
     ended: bool = False
 
 
+class ChampionshipRace(CamelModel):
+    id: int = 0
+    display_name: str = ""
+    starts_at: str | None = None
+    track: str | None = None
+    results_available: bool = False
+    ended: bool = False
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalise_race_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        # display_name aliases
+        if not data.get("display_name") and not data.get("displayName"):
+            for alt in ("race_name", "raceName", "name"):
+                if data.get(alt):
+                    data["display_name"] = data[alt]
+                    break
+        # starts_at aliases
+        if not data.get("starts_at") and not data.get("startsAt"):
+            for alt in ("start_date", "startDate", "start_at", "startAt"):
+                if data.get(alt):
+                    data["starts_at"] = data[alt]
+                    break
+        # track: can be dict with "name" key or a plain string
+        track_raw = data.get("track")
+        if isinstance(track_raw, dict):
+            data["track"] = track_raw.get("name")
+        return data
+
+
 class ChampionshipStandingsData(CamelModel):
     entries: list[StandingEntry] = []
     races: list[StandingRace] = []

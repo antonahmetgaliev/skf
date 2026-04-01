@@ -1,11 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgClass } from '@angular/common';
 import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
   ChampionshipDetails,
   ChampionshipListItem,
+  ChampionshipRace,
   SimgridApiService,
   StandingEntry,
   StandingRace
@@ -20,14 +21,16 @@ interface CachedStandingsData {
 }
 
 @Component({
-  selector: 'app-championship-standings',
+  selector: 'app-championships',
   imports: [RouterLink, NgClass],
-  templateUrl: './championship-standings.component.html',
-  styleUrl: './championship-standings.component.scss'
+  templateUrl: './championships.component.html',
+  styleUrl: './championships.component.scss'
 })
-export class ChampionshipStandingsComponent {
+export class ChampionshipsComponent {
   private readonly api = inject(SimgridApiService);
   private readonly bwpApi = inject(BwpApiService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly cacheTtlMs = 60000;
   private readonly standingsCache = new Map<number, CachedStandingsData>();
   private standingsLoadToken = 0;
@@ -62,6 +65,10 @@ export class ChampionshipStandingsComponent {
   readonly staleWarning = signal(false);
   readonly lastUpdated = signal<Date | null>(null);
   readonly driverUuidBySimgridId = signal<Map<number, string>>(new Map());
+  readonly activeTab = signal<'standings' | 'races'>('standings');
+  readonly expandedRaceIndex = signal<number | null>(null);
+  readonly allRaces = signal<ChampionshipRace[]>([]);
+  readonly loadingRaces = signal(false);
 
   readonly carClasses = computed(() => {
     const classes = [...new Set(this.standings().map(e => e.carClass).filter(c => c.length > 0))];
@@ -76,6 +83,12 @@ export class ChampionshipStandingsComponent {
   });
 
   constructor() {
+    this.route.queryParams.subscribe((params) => {
+      const id = Number(params['id']);
+      if (Number.isFinite(id) && id > 0) {
+        this.selectChampionship(id);
+      }
+    });
     void this.loadChampionships();
     this.bwpApi.getDrivers().subscribe({
       next: (drivers) => {
@@ -153,6 +166,11 @@ export class ChampionshipStandingsComponent {
 
       this.selectedChampionshipId.set(selectedId);
       this.selectedClass.set(null);
+      void this.router.navigate([], {
+        queryParams: { id: selectedId },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
       await this.loadStandings(selectedId);
     } catch (error) {
       if (token !== this.championshipsLoadToken) {
@@ -175,8 +193,69 @@ export class ChampionshipStandingsComponent {
       return;
     }
     this.selectedClass.set(null);
+    this.activeTab.set('standings');
+    this.expandedRaceIndex.set(null);
     this.selectedChampionshipId.set(championshipId);
+    void this.router.navigate([], {
+      queryParams: { id: championshipId },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
     void this.loadStandings(championshipId);
+  }
+
+  setActiveTab(tab: 'standings' | 'races'): void {
+    this.activeTab.set(tab);
+    this.expandedRaceIndex.set(null);
+  }
+
+  toggleRaceExpansion(raceIndex: number): void {
+    this.expandedRaceIndex.set(
+      this.expandedRaceIndex() === raceIndex ? null : raceIndex
+    );
+  }
+
+  getRaceResultsForRace(race: ChampionshipRace, raceIndex: number): { position: number | null; displayName: string; car: string; carClass: string; dns: boolean; driverUuid: string | null }[] {
+    // Find the matching StandingRace by ID to extract per-driver results
+    const standingRace = this.races().find((r) => r.id === race.id);
+    const standingRaceIndex = standingRace ? this.races().indexOf(standingRace) : raceIndex;
+
+    if (!standingRace) return [];
+
+    return this.standings()
+      .map((entry) => {
+        const result = this.getRaceResult(entry, standingRace, standingRaceIndex);
+        return {
+          position: result?.position ?? null,
+          displayName: entry.displayName,
+          car: entry.car,
+          carClass: entry.carClass,
+          dns: result?.dns ?? false,
+          driverUuid: this.driverUuidBySimgridId().get(entry.id) ?? null,
+        };
+      })
+      .filter((r) => r.position !== null || r.dns)
+      .sort((a, b) => {
+        if (a.position === null && b.position === null) return 0;
+        if (a.position === null) return 1;
+        if (b.position === null) return -1;
+        return a.position - b.position;
+      });
+  }
+
+  formatRaceDate(value: string | null): string {
+    if (!value) return 'TBD';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return this.dateFormatter.format(parsed);
+  }
+
+  getRaceStatus(race: ChampionshipRace): 'completed' | 'upcoming' {
+    return race.ended || race.resultsAvailable ? 'completed' : 'upcoming';
+  }
+
+  hasRaceResults(race: ChampionshipRace): boolean {
+    return this.races().some((r) => r.id === race.id);
   }
 
   refreshSelectedChampionship(): void {
@@ -1035,6 +1114,7 @@ export class ChampionshipStandingsComponent {
       this.standings.set(cached.entries);
       this.races.set(cached.races);
       this.lastUpdated.set(cached.fetchedAt);
+      void this.loadAllRaces(championshipId);
       return;
     }
 
@@ -1062,6 +1142,9 @@ export class ChampionshipStandingsComponent {
       this.races.set(standingsData.races);
       this.staleWarning.set(standingsData.stale ?? false);
       this.lastUpdated.set(fetchedAt);
+
+      // Fetch full race list (including future races) in background
+      void this.loadAllRaces(championshipId);
       this.standingsCache.set(championshipId, {
         details,
         entries: standingsData.entries,
@@ -1097,6 +1180,22 @@ export class ChampionshipStandingsComponent {
       if (token === this.standingsLoadToken) {
         this.loadingStandings.set(false);
       }
+    }
+  }
+
+  private async loadAllRaces(championshipId: number): Promise<void> {
+    this.loadingRaces.set(true);
+    try {
+      const races = await firstValueFrom(this.api.getChampionshipRaces(championshipId));
+      if (this.selectedChampionshipId() === championshipId) {
+        this.allRaces.set(races);
+      }
+    } catch {
+      if (this.selectedChampionshipId() === championshipId) {
+        this.allRaces.set([]);
+      }
+    } finally {
+      this.loadingRaces.set(false);
     }
   }
 
