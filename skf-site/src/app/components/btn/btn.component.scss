@@ -1,0 +1,86 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.65rem 1.4rem;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 8px 16px rgba(20, 18, 15, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  user-select: none;
+
+  &:hover:not(.btn--disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 22px rgba(20, 18, 15, 0.18);
+  }
+
+  &.btn--disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    box-shadow: none;
+    pointer-events: none;
+  }
+}
+
+// ── Variants ──
+
+:host(.btn--accent) {
+  background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+  color: #2b2214;
+}
+
+:host(.btn--primary) {
+  background: linear-gradient(135deg, var(--ink), #2a2722);
+  color: #fff;
+}
+
+:host(.btn--danger) {
+  background: linear-gradient(135deg, rgba(185, 71, 46, 0.92), rgba(152, 49, 32, 0.96));
+  color: #fff;
+}
+
+:host(.btn--ghost) {
+  background: transparent;
+  border: 1px solid rgba(20, 18, 15, 0.2);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+:host(.btn--outline) {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--card-border);
+  box-shadow: none;
+}
+
+// ── Sizes ──
+
+:host(.btn--sm) {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  box-shadow: 0 4px 10px rgba(20, 18, 15, 0.1);
+}
+
+:host(.btn--xs) {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  box-shadow: none;
+}
+
+// ── Reduced motion ──
+
+@media (prefers-reduced-motion: reduce) {
+  :host {
+    transition: none;
+  }
+}
