@@ -21,7 +21,7 @@
 }
 
 // Auto-style projected form controls
-::ng-deep {
+:host ::ng-deep {
   input,
   select,
   textarea {
