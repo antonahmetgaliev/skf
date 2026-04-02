@@ -11,6 +11,7 @@ import { AuthService } from '../../services/auth.service';
 import { AlertComponent } from '../alert/alert.component';
 import { BadgeComponent } from '../badge/badge.component';
 import { BtnComponent } from '../btn/btn.component';
+import { FormFieldComponent } from '../form-field/form-field.component';
 import {
   DotdApiService,
   DotdCandidateIn,
@@ -25,7 +26,7 @@ import {
 @Component({
   selector: 'app-dotd-widget',
   standalone: true,
-  imports: [FormsModule, AlertComponent, BadgeComponent, BtnComponent],
+  imports: [FormsModule, AlertComponent, BadgeComponent, BtnComponent, FormFieldComponent],
   templateUrl: './dotd-widget.component.html',
   styleUrl: './dotd-widget.component.scss',
 })

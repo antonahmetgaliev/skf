@@ -143,30 +143,30 @@
         <h2 class="modal-title">Create DOTD Poll</h2>
 
         <!-- championship select -->
-        <label class="field-label" for="champ-select">Championship</label>
-        <select id="champ-select" class="field-select"
-                [(ngModel)]="selectedChampId"
-                (ngModelChange)="onChampionshipChange()">
-          <option [value]="0" disabled>Select championship…</option>
-          @for (c of championships(); track c.id) {
-            <option [value]="c.id">{{ c.name }}</option>
-          }
-        </select>
+        <app-form-field label="Championship" fieldId="champ-select">
+          <select id="champ-select"                  [(ngModel)]="selectedChampId"
+                  (ngModelChange)="onChampionshipChange()">
+            <option [value]="0" disabled>Select championship…</option>
+            @for (c of championships(); track c.id) {
+              <option [value]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </app-form-field>
 
         <!-- race select (shown once standings loaded) -->
         @if (standings() !== null) {
-          <label class="field-label" for="race-select">Race (optional)</label>
-          <select id="race-select" class="field-select"
-                  [(ngModel)]="selectedRaceId"
-                  (ngModelChange)="onRaceChange()">
-            <option [value]="null">No specific race</option>
-            @for (r of standings()!.races; track r.id) {
-              <option [value]="r.id">{{ r.displayName }}</option>
-            }
-          </select>
+          <app-form-field label="Race (optional)" fieldId="race-select">
+            <select id="race-select"                    [(ngModel)]="selectedRaceId"
+                    (ngModelChange)="onRaceChange()">
+              <option [value]="null">No specific race</option>
+              @for (r of standings()!.races; track r.id) {
+                <option [value]="r.id">{{ r.displayName }}</option>
+              }
+            </select>
+          </app-form-field>
 
           <!-- driver checklist -->
-          <p class="field-label">Drivers (select ≥ 2)</p>
+          <app-form-field label="Drivers (select ≥ 2)" />
           <ul class="driver-list" role="list">
             @for (entry of standings()!.entries; track entry.id) {
               <li class="driver-row">
@@ -185,9 +185,9 @@
         }
 
         <!-- closes at -->
-        <label class="field-label" for="closes-at">Closes at</label>
-        <input id="closes-at" type="datetime-local" class="field-input"
-               [(ngModel)]="newClosesAt" />
+        <app-form-field label="Closes at" fieldId="closes-at">
+          <input id="closes-at" type="datetime-local"                 [(ngModel)]="newClosesAt" />
+        </app-form-field>
 
         @if (createError() !== null) {
           <app-alert variant="error">{{ createError() }}</app-alert>

@@ -7,21 +7,21 @@
       <app-card [animated]="true" class="delay-1">
         <h2>Add driver</h2>
         <form class="form" (ngSubmit)="addDriver()">
-          <label class="form-label" for="newDriverSelect">Driver</label>
-          <select
-            id="newDriverSelect"
-            name="newDriverSelect"
-            class="form-control"
-            [ngModel]="newDriverSelection()"
-            (ngModelChange)="newDriverSelection.set($event)"
-            required
-          >
-            <option value="__none__" disabled>Select a driver…</option>
-            @for (driver of sortedDrivers(); track driver.id) {
-              <option [value]="driver.id">{{ driver.name }}</option>
-            }
-            <option value="__new__">── Add new driver ──</option>
-          </select>
+          <app-form-field label="Driver" fieldId="newDriverSelect">
+            <select
+              id="newDriverSelect"
+              name="newDriverSelect"
+              [ngModel]="newDriverSelection()"
+              (ngModelChange)="newDriverSelection.set($event)"
+              required
+            >
+              <option value="__none__" disabled>Select a driver…</option>
+              @for (driver of sortedDrivers(); track driver.id) {
+                <option [value]="driver.id">{{ driver.name }}</option>
+              }
+              <option value="__new__">── Add new driver ──</option>
+            </select>
+          </app-form-field>
           @if (newDriverSelection() === '__new__') {
             <input
               id="newDriverName"
@@ -39,7 +39,7 @@
           </app-btn>
         </form>
         @if (driverError) {
-          <p class="form-error">{{ driverError }}</p>
+          <app-form-field [error]="driverError" />
         }
       </app-card>
 
@@ -47,55 +47,51 @@
         <h2>Add BWP point</h2>
         <form class="form" (ngSubmit)="addPoint()">
           <div class="driver-search-group">
-            <label class="form-label" for="driverSelect">Driver</label>
-            <input
-              class="form-control driver-search-input"
-              type="text"
-              placeholder="Search driver…"
-              [ngModel]="pointDriverFilter()"
-              (ngModelChange)="pointDriverFilter.set($event)"
-              autocomplete="off"
-            />
-            <select
-              id="driverSelect"
-              name="driverSelect"
-              class="form-control"
-              [(ngModel)]="selectedDriverId"
-              [disabled]="drivers().length === 0"
-              required
-            >
-              <option value="" disabled>Select a driver</option>
-              @for (driver of filteredSelectDrivers(); track driver.id) {
-                <option [value]="driver.id">{{ driver.name }}</option>
-              }
-            </select>
+            <app-form-field label="Driver" fieldId="driverSelect">
+              <input
+                class="driver-search-input"
+                type="text"
+                placeholder="Search driver…"
+                [ngModel]="pointDriverFilter()"
+                (ngModelChange)="pointDriverFilter.set($event)"
+                autocomplete="off"
+              />
+              <select
+                id="driverSelect"
+                name="driverSelect"
+                [(ngModel)]="selectedDriverId"
+                [disabled]="drivers().length === 0"
+                required
+              >
+                <option value="" disabled>Select a driver</option>
+                @for (driver of filteredSelectDrivers(); track driver.id) {
+                  <option [value]="driver.id">{{ driver.name }}</option>
+                }
+              </select>
+            </app-form-field>
           </div>
 
           <div class="form-grid">
-            <div>
-              <label class="form-label" for="pointValue">BWP points</label>
+            <app-form-field label="BWP points" fieldId="pointValue">
               <input
                 id="pointValue"
                 name="pointValue"
-                class="form-control"
                 type="number"
                 min="1"
                 step="1"
                 [(ngModel)]="pointValue"
                 required
               />
-            </div>
-            <div>
-              <label class="form-label" for="pointDate">Issued date</label>
+            </app-form-field>
+            <app-form-field label="Issued date" fieldId="pointDate">
               <input
                 id="pointDate"
                 name="pointDate"
-                class="form-control"
                 type="date"
                 [(ngModel)]="pointDate"
                 required
               />
-            </div>
+            </app-form-field>
           </div>
           <p class="hint">Expiry is calculated automatically (+3 months).</p>
           <app-btn variant="accent" type="submit" [disabled]="drivers().length === 0">
@@ -103,7 +99,7 @@
           </app-btn>
         </form>
         @if (pointError) {
-          <p class="form-error">{{ pointError }}</p>
+          <app-form-field [error]="pointError" />
         }
       </app-card>
 
@@ -149,32 +145,32 @@
       </div>
       <div class="driver-toolbar">
         <div class="filter-field">
-          <label class="form-label" for="driverFilter">Filter name</label>
-          <input
-            id="driverFilter"
-            name="driverFilter"
-            class="form-control"
-            type="text"
-            placeholder="Search drivers"
-            [ngModel]="nameFilter()"
-            (ngModelChange)="nameFilter.set($event)"
-            autocomplete="off"
-          />
+          <app-form-field label="Filter name" fieldId="driverFilter">
+            <input
+              id="driverFilter"
+              name="driverFilter"
+              type="text"
+              placeholder="Search drivers"
+              [ngModel]="nameFilter()"
+              (ngModelChange)="nameFilter.set($event)"
+              autocomplete="off"
+            />
+          </app-form-field>
         </div>
         <div class="sort-field">
-          <label class="form-label" for="driverSort">Order by</label>
-          <select
-            id="driverSort"
-            name="driverSort"
-            class="form-control"
-            [ngModel]="sortMode()"
-            (ngModelChange)="sortMode.set($event)"
-          >
-            <option value="bwp-desc">BWP (high to low)</option>
-            <option value="bwp-asc">BWP (low to high)</option>
-            <option value="name-asc">Name (A-Z)</option>
-            <option value="name-desc">Name (Z-A)</option>
-          </select>
+          <app-form-field label="Order by" fieldId="driverSort">
+            <select
+              id="driverSort"
+              name="driverSort"
+              [ngModel]="sortMode()"
+              (ngModelChange)="sortMode.set($event)"
+            >
+              <option value="bwp-desc">BWP (high to low)</option>
+              <option value="bwp-asc">BWP (low to high)</option>
+              <option value="name-asc">Name (A-Z)</option>
+              <option value="name-desc">Name (Z-A)</option>
+            </select>
+          </app-form-field>
         </div>
       </div>
       <div class="driver-list">

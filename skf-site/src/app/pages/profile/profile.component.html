@@ -205,7 +205,7 @@
     }
   </div>
   @if (linkError()) {
-    <p class="form-error">{{ linkError() }}</p>
+    <app-form-field [error]="linkError()" />
   }
   <div modal-footer>
     <app-btn variant="ghost" (click)="skipLink()">Skip for now</app-btn>

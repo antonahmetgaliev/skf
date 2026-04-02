@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { BadgeComponent } from '../../components/badge/badge.component';
 import { CardComponent } from '../../components/card/card.component';
 import { DetailListComponent } from '../../components/detail-list/detail-list.component';
+import { FormFieldComponent } from '../../components/form-field/form-field.component';
 import { EmptyComponent } from '../../components/empty/empty.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
@@ -27,7 +28,7 @@ import {
 
 @Component({
   selector: 'app-incidents',
-  imports: [FormsModule, DatePipe, BadgeComponent, CardComponent, DetailListComponent, EmptyComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent],
+  imports: [FormsModule, DatePipe, BadgeComponent, CardComponent, DetailListComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent],
   templateUrl: './incidents.component.html',
   styleUrl: './incidents.component.scss',
 })

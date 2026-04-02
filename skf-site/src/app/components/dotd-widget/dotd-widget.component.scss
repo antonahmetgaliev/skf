@@ -342,34 +342,7 @@
   margin: 0 0 20px;
 }
 
-.field-label {
-  display: block;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin: 14px 0 5px;
-}
 
-.field-select,
-.field-input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1.5px solid var(--card-border);
-  border-radius: 8px;
-  background: #fff;
-  font-family: var(--font-body);
-  font-size: 0.9rem;
-  color: var(--ink);
-  appearance: auto;
-  transition: border-color 0.15s ease;
-
-  &:focus {
-    outline: none;
-    border-color: var(--gold);
-  }
-}
 
 .loading-standings {
   font-size: 0.85rem;

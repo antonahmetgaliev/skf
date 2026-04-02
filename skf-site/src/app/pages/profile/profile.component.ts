@@ -3,6 +3,7 @@ import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BadgeComponent } from '../../components/badge/badge.component';
 import { BtnComponent } from '../../components/btn/btn.component';
+import { FormFieldComponent } from '../../components/form-field/form-field.component';
 import { CardComponent } from '../../components/card/card.component';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
@@ -12,7 +13,7 @@ import { DriverChampionshipResult, DriverPublic, LinkCandidate, ProfileApiServic
 
 @Component({
   selector: 'app-profile',
-  imports: [DatePipe, DecimalPipe, FormsModule, BadgeComponent, BtnComponent, CardComponent, ModalComponent, PageLayoutComponent, SpinnerComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, BadgeComponent, BtnComponent, CardComponent, FormFieldComponent, ModalComponent, PageLayoutComponent, SpinnerComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
 })

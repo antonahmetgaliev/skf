@@ -1,0 +1,78 @@
+:host {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.form-field__label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 0.3rem;
+}
+
+.form-field__error {
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+// Auto-style projected form controls
+::ng-deep {
+  input,
+  select,
+  textarea {
+    width: 100%;
+    height: 2.75rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 14px;
+    border: 1px solid rgba(38, 33, 27, 0.15);
+    background: #fff;
+    color: var(--ink);
+    font-size: 0.875rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: rgba(243, 180, 25, 0.9);
+      box-shadow: 0 0 0 3px rgba(243, 180, 25, 0.25);
+    }
+
+    &:disabled,
+    &[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    &::placeholder {
+      color: rgba(58, 51, 40, 0.55);
+    }
+  }
+
+  textarea {
+    height: auto;
+    resize: vertical;
+    min-height: 4rem;
+    line-height: 1.5;
+  }
+
+  // Checkbox inputs should not get full-width styling
+  input[type='checkbox'],
+  input[type='radio'] {
+    width: auto;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+
+    &:focus {
+      box-shadow: none;
+    }
+  }
+}

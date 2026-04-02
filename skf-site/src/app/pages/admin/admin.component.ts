@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { BtnComponent } from '../../components/btn/btn.component';
+import { FormFieldComponent } from '../../components/form-field/form-field.component';
 import { CardComponent } from '../../components/card/card.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
@@ -12,7 +13,7 @@ import { AuthService, AuthUser } from '../../services/auth.service';
 
 @Component({
   selector: 'app-admin',
-  imports: [FormsModule, DatePipe, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
+  imports: [FormsModule, DatePipe, BtnComponent, CardComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',
 })

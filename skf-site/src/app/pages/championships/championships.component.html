@@ -394,45 +394,37 @@
 
   <!-- Create custom championship modal -->
   <app-modal title="New Custom Championship" width="md" [(open)]="createModalOpen">
-    <label class="form-label">
-      Name *
+    <app-form-field label="Name *">
       <input
-        class="form-control"
         type="text"
         [(ngModel)]="formName"
         placeholder="e.g. SKF GT3 Championship S3"
       />
-    </label>
+    </app-form-field>
 
-    <label class="form-label">
-      Game *
+    <app-form-field label="Game *">
       <input
-        class="form-control"
         type="text"
         [(ngModel)]="formGame"
         placeholder="e.g. ACC, iRacing"
       />
-    </label>
+    </app-form-field>
 
-    <label class="form-label">
-      Car Class
+    <app-form-field label="Car Class">
       <input
-        class="form-control"
         type="text"
         [(ngModel)]="formCarClass"
         placeholder="e.g. GT3, LMP2"
       />
-    </label>
+    </app-form-field>
 
-    <label class="form-label">
-      Description
+    <app-form-field label="Description">
       <textarea
-        class="form-control form-textarea"
         [(ngModel)]="formDescription"
         placeholder="Optional description..."
         rows="3"
       ></textarea>
-    </label>
+    </app-form-field>
 
     <div class="races-section">
       <div class="races-header">

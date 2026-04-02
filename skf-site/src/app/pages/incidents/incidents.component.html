@@ -167,46 +167,42 @@
 
 <!-- ── New Window Modal ──────────────────────────────────────────────────── -->
 <app-modal title="Open Incident Window" width="md" [(open)]="showNewWindowModal">
-  <label class="form-label" for="nwChamp">Championship</label>
-  <select
-    id="nwChamp"
-    class="form-control"
-    [ngModel]="nwChampId ?? ''"
-    (ngModelChange)="onChampionshipChange($event)"
-  >
-    <option value="">— Select championship —</option>
-    @for (c of championships(); track c.id) {
-      <option [value]="c.id">{{ c.name }}</option>
-    }
-  </select>
+  <app-form-field label="Championship" fieldId="nwChamp">
+    <select
+      id="nwChamp"
+      [ngModel]="nwChampId ?? ''"
+      (ngModelChange)="onChampionshipChange($event)"
+    >
+      <option value="">— Select championship —</option>
+      @for (c of championships(); track c.id) {
+        <option [value]="c.id">{{ c.name }}</option>
+      }
+    </select>
+  </app-form-field>
 
-  <label class="form-label" for="nwRace">Race</label>
-  <select
-    id="nwRace"
-    class="form-control"
-    [disabled]="!nwChampId || loadingRaces()"
-    [ngModel]="nwRaceId ?? ''"
-    (ngModelChange)="onRaceChange($event)"
-  >
-    <option value="">{{ loadingRaces() ? 'Loading…' : '— Select race —' }}</option>
-    @for (r of availableRaces(); track r.id) {
-      <option [value]="r.id">{{ r.displayName }}</option>
-    }
-  </select>
+  <app-form-field label="Race" fieldId="nwRace">
+    <select
+      id="nwRace"
+      [disabled]="!nwChampId || loadingRaces()"
+      [ngModel]="nwRaceId ?? ''"
+      (ngModelChange)="onRaceChange($event)"
+    >
+      <option value="">{{ loadingRaces() ? 'Loading…' : '— Select race —' }}</option>
+      @for (r of availableRaces(); track r.id) {
+        <option [value]="r.id">{{ r.displayName }}</option>
+      }
+    </select>
+  </app-form-field>
 
-  <label class="form-label" for="nwInterval">Reporting Window (hours)</label>
-  <input
-    id="nwInterval"
-    class="form-control"
-    type="number"
-    min="1"
-    max="168"
-    [(ngModel)]="nwIntervalHours"
-  />
-
-  @if (nwError) {
-    <p class="form-error">{{ nwError }}</p>
-  }
+  <app-form-field label="Reporting Window (hours)" fieldId="nwInterval" [error]="nwError">
+    <input
+      id="nwInterval"
+      type="number"
+      min="1"
+      max="168"
+      [(ngModel)]="nwIntervalHours"
+    />
+  </app-form-field>
 
   <div modal-footer>
     <app-btn variant="ghost" (click)="showNewWindowModal.set(false)">
@@ -224,74 +220,66 @@
 
 <!-- ── File Incident Modal ───────────────────────────────────────────────── -->
 <app-modal title="File Incident" width="md" [(open)]="showNewIncidentModal">
-  <label class="form-label" for="niD1">Driver 1 (involved) *</label>
-  <input
-    id="niD1"
-    class="form-control"
-    type="text"
-    list="driver1-list"
-    [(ngModel)]="niDriver1Name"
-    (change)="onDriver1Change()"
-    placeholder="Driver name…"
-  />
-  <datalist id="driver1-list">
-    @for (d of bwpDrivers(); track d.id) {
-      <option [value]="d.name"></option>
-    }
-  </datalist>
+  <app-form-field label="Driver 1 (involved) *" fieldId="niD1">
+    <input
+      id="niD1"
+      type="text"
+      list="driver1-list"
+      [(ngModel)]="niDriver1Name"
+      (change)="onDriver1Change()"
+      placeholder="Driver name…"
+    />
+    <datalist id="driver1-list">
+      @for (d of bwpDrivers(); track d.id) {
+        <option [value]="d.name"></option>
+      }
+    </datalist>
+  </app-form-field>
 
-  <label class="form-label" for="niD2">Driver 2 (optional)</label>
-  <input
-    id="niD2"
-    class="form-control"
-    type="text"
-    list="driver2-list"
-    [(ngModel)]="niDriver2Name"
-    (change)="onDriver2Change()"
-    placeholder="Driver name…"
-  />
-  <datalist id="driver2-list">
-    @for (d of bwpDrivers(); track d.id) {
-      <option [value]="d.name"></option>
-    }
-  </datalist>
+  <app-form-field label="Driver 2 (optional)" fieldId="niD2">
+    <input
+      id="niD2"
+      type="text"
+      list="driver2-list"
+      [(ngModel)]="niDriver2Name"
+      (change)="onDriver2Change()"
+      placeholder="Driver name…"
+    />
+    <datalist id="driver2-list">
+      @for (d of bwpDrivers(); track d.id) {
+        <option [value]="d.name"></option>
+      }
+    </datalist>
+  </app-form-field>
 
   <div class="form-row">
-    <div class="form-group">
-      <label class="form-label" for="niLap">Lap (optional)</label>
+    <app-form-field label="Lap (optional)" fieldId="niLap">
       <input
         id="niLap"
-        class="form-control"
-        type="number"
+          type="number"
         min="0"
         [(ngModel)]="niLap"
         placeholder="e.g. 3"
       />
-    </div>
-    <div class="form-group">
-      <label class="form-label" for="niTurn">Turn (optional)</label>
+    </app-form-field>
+    <app-form-field label="Turn (optional)" fieldId="niTurn">
       <input
         id="niTurn"
-        class="form-control"
-        type="text"
+          type="text"
         [(ngModel)]="niTurn"
         placeholder="e.g. T1"
       />
-    </div>
+    </app-form-field>
   </div>
 
-  <label class="form-label" for="niDesc">Description *</label>
-  <textarea
-    id="niDesc"
-    class="form-control form-textarea"
-    rows="4"
-    [(ngModel)]="niDescription"
-    placeholder="Describe what happened…"
-  ></textarea>
-
-  @if (niError) {
-    <p class="form-error">{{ niError }}</p>
-  }
+  <app-form-field label="Description *" fieldId="niDesc" [error]="niError">
+    <textarea
+      id="niDesc"
+      rows="4"
+      [(ngModel)]="niDescription"
+      placeholder="Describe what happened…"
+    ></textarea>
+  </app-form-field>
 
   <div modal-footer>
     <app-btn variant="ghost" (click)="showNewIncidentModal.set(false)">
@@ -326,43 +314,35 @@
     </div>
   }
 
-  <label class="form-label" for="rvVerdict">Verdict *</label>
-  <textarea
-    id="rvVerdict"
-    class="form-control form-textarea"
-    rows="4"
-    [(ngModel)]="rvVerdict"
-    placeholder="Describe the decision…"
-  ></textarea>
+  <app-form-field label="Verdict *" fieldId="rvVerdict">
+    <textarea
+      id="rvVerdict"
+      rows="4"
+      [(ngModel)]="rvVerdict"
+      placeholder="Describe the decision…"
+    ></textarea>
+  </app-form-field>
 
   <div class="form-row">
-    <div class="form-group">
-      <label class="form-label" for="rvTime">Time Penalty (seconds)</label>
+    <app-form-field label="Time Penalty (seconds)" fieldId="rvTime">
       <input
         id="rvTime"
-        class="form-control"
-        type="number"
+          type="number"
         min="0"
         [(ngModel)]="rvTimePenalty"
         placeholder="e.g. 30"
       />
-    </div>
-    <div class="form-group">
-      <label class="form-label" for="rvBwp">BWP Points</label>
+    </app-form-field>
+    <app-form-field label="BWP Points" fieldId="rvBwp" [error]="rvError">
       <input
         id="rvBwp"
-        class="form-control"
-        type="number"
+          type="number"
         min="0"
         [(ngModel)]="rvBwpPoints"
         placeholder="e.g. 3"
       />
-    </div>
+    </app-form-field>
   </div>
-
-  @if (rvError) {
-    <p class="form-error">{{ rvError }}</p>
-  }
 
   <div modal-footer>
     <app-btn variant="ghost" (click)="showResolveModal.set(false)">

@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CardComponent } from '../../components/card/card.component';
 import { EmptyComponent } from '../../components/empty/empty.component';
+import { FormFieldComponent } from '../../components/form-field/form-field.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { BtnComponent } from '../../components/btn/btn.component';
@@ -19,7 +20,7 @@ type SortMode = 'bwp-desc' | 'bwp-asc' | 'name-asc' | 'name-desc';
 
 @Component({
   selector: 'app-bwp-license',
-  imports: [FormsModule, RouterLink, CardComponent, EmptyComponent, PageIntroComponent, PageLayoutComponent, BtnComponent, ModalComponent],
+  imports: [FormsModule, RouterLink, CardComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, BtnComponent, ModalComponent],
   templateUrl: './bwp-license.component.html',
   styleUrl: './bwp-license.component.scss'
 })

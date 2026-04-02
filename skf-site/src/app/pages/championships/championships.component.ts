@@ -24,6 +24,7 @@ import { BwpApiService } from '../../services/bwp-api.service';
 import { AlertComponent } from '../../components/alert/alert.component';
 import { BadgeComponent } from '../../components/badge/badge.component';
 import { BtnComponent } from '../../components/btn/btn.component';
+import { FormFieldComponent } from '../../components/form-field/form-field.component';
 import { CardComponent } from '../../components/card/card.component';
 import { EmptyComponent } from '../../components/empty/empty.component';
 import { ModalComponent } from '../../components/modal/modal.component';
@@ -53,7 +54,7 @@ interface CachedStandingsData {
 
 @Component({
   selector: 'app-championships',
-  imports: [RouterLink, NgClass, FormsModule, AlertComponent, BadgeComponent, PageIntroComponent, BtnComponent, CardComponent, EmptyComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
+  imports: [RouterLink, NgClass, FormsModule, AlertComponent, BadgeComponent, FormFieldComponent, PageIntroComponent, BtnComponent, CardComponent, EmptyComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
   templateUrl: './championships.component.html',
   styleUrl: './championships.component.scss'
 })

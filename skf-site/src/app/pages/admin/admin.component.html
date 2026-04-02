@@ -11,16 +11,16 @@
     <app-card [animated]="true">
       <div class="toolbar">
         <div class="filter-field">
-          <label class="form-label" for="userFilter">Filter</label>
-          <input
-            class="form-control"
-            id="userFilter"
-            type="text"
-            placeholder="Search by name or Discord ID"
-            [ngModel]="filter()"
-            (ngModelChange)="filter.set($event)"
-            autocomplete="off"
-          />
+          <app-form-field label="Filter" fieldId="userFilter">
+            <input
+              id="userFilter"
+              type="text"
+              placeholder="Search by name or Discord ID"
+              [ngModel]="filter()"
+              (ngModelChange)="filter.set($event)"
+              autocomplete="off"
+            />
+          </app-form-field>
         </div>
         <span class="meta">{{ filteredUsers().length }} user(s)</span>
       </div>
@@ -47,17 +47,17 @@
 
               <div class="user-controls">
                 <div class="control-group">
-                  <label class="form-label">Role</label>
-                  <select
-                    class="form-control"
-                    [ngModel]="user.role"
-                    (ngModelChange)="changeRole(user, $event)"
-                    [disabled]="!canEdit(user)"
-                  >
-                    @for (role of availableRoles(); track role) {
-                      <option [value]="role">{{ role.replace('_', ' ') }}</option>
-                    }
-                  </select>
+                  <app-form-field label="Role">
+                    <select
+                              [ngModel]="user.role"
+                      (ngModelChange)="changeRole(user, $event)"
+                      [disabled]="!canEdit(user)"
+                    >
+                      @for (role of availableRoles(); track role) {
+                        <option [value]="role">{{ role.replace('_', ' ') }}</option>
+                      }
+                    </select>
+                  </app-form-field>
                 </div>
 
                 <div class="action-buttons">
