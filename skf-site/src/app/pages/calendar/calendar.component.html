@@ -14,10 +14,22 @@
 
     <!-- Legend -->
     <div class="calendar-legend">
-      <span class="legend-item"><span class="legend-dot dot-past"></span> Past</span>
-      <span class="legend-item"><span class="legend-dot dot-ongoing"></span> Ongoing</span>
-      <span class="legend-item"><span class="legend-dot dot-upcoming"></span> Upcoming</span>
-      <span class="legend-item"><span class="legend-dot dot-future"></span> Future</span>
+      <span class="legend-item">
+        <span class="legend-dot dot-past"></span>
+        <span class="legend-text">Past <span class="legend-hint">Finished</span></span>
+      </span>
+      <span class="legend-item">
+        <span class="legend-dot dot-ongoing"></span>
+        <span class="legend-text">Ongoing <span class="legend-hint">In progress</span></span>
+      </span>
+      <span class="legend-item">
+        <span class="legend-dot dot-upcoming"></span>
+        <span class="legend-text">Upcoming <span class="legend-hint">Registration open</span></span>
+      </span>
+      <span class="legend-item">
+        <span class="legend-dot dot-future"></span>
+        <span class="legend-text">Future <span class="legend-hint">Stay tuned</span></span>
+      </span>
     </div>
 
     @if (loading()) {
@@ -108,25 +120,5 @@
     </app-card>
   }
 
-  <!-- Unscheduled events (no dates) -->
-  @if (unscheduledEvents().length > 0) {
-    <app-card class="unscheduled-section">
-      <h3>Unscheduled</h3>
-      <p class="unscheduled-hint">Championships without confirmed dates</p>
-      <div class="unscheduled-list">
-        @for (event of unscheduledEvents(); track event.id) {
-          <div class="unscheduled-item" [ngClass]="'event-card--' + event.eventType">
-            <app-badge [variant]="event.eventType">
-              {{ getEventTypeLabel(event.eventType) }}
-            </app-badge>
-            <span class="unscheduled-name">{{ event.name }}</span>
-            @if (event.simgridChampionshipId) {
-              <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>
-            }
-          </div>
-        }
-      </div>
-    </app-card>
-  }
 
 </app-page>

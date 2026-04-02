@@ -41,8 +41,20 @@
 
 .legend-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.3rem;
+}
+
+.legend-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.legend-hint {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.6rem;
 }
 
 .legend-dot {
