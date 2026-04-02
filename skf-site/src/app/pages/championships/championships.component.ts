@@ -16,6 +16,7 @@ import {
 import {
   CalendarApiService,
   CustomChampionshipCreate,
+  CustomChampionshipOut,
   CustomRaceCreate,
 } from '../../services/calendar-api.service';
 import { AuthService } from '../../services/auth.service';
@@ -30,6 +31,14 @@ import { SpinnerComponent } from '../../components/spinner/spinner.component';
 interface RaceFormRow {
   date: string;
   track: string;
+}
+
+interface ChampionshipEntry {
+  key: string; // unique: 'sg-123' or 'custom-uuid'
+  source: 'simgrid' | 'custom';
+  name: string;
+  simgridItem?: ChampionshipListItem;
+  customItem?: CustomChampionshipOut;
 }
 
 interface CachedStandingsData {
@@ -67,9 +76,10 @@ export class ChampionshipsComponent {
   @ViewChild('standingsExportCanvas')
   private standingsExportCanvas?: ElementRef<HTMLCanvasElement>;
 
-  readonly championships = signal<ChampionshipListItem[]>([]);
-  readonly selectedChampionshipId = signal<number | null>(null);
+  readonly championships = signal<ChampionshipEntry[]>([]);
+  readonly selectedChampionshipKey = signal<string | null>(null);
   readonly selectedChampionship = signal<ChampionshipDetails | null>(null);
+  readonly selectedCustomChampionship = signal<CustomChampionshipOut | null>(null);
   readonly standings = signal<StandingEntry[]>([]);
   readonly races = signal<StandingRace[]>([]);
   readonly loadingChampionships = signal(false);
@@ -90,6 +100,12 @@ export class ChampionshipsComponent {
   readonly expandedRaceIndex = signal<number | null>(null);
   readonly allRaces = signal<ChampionshipRace[]>([]);
   readonly loadingRaces = signal(false);
+  readonly deletingCustom = signal(false);
+
+  readonly isCustomSelected = computed(() => {
+    const key = this.selectedChampionshipKey();
+    return key !== null && key.startsWith('custom-');
+  });
 
   // Admin: create custom championship
   readonly createModalOpen = signal(false);
@@ -155,6 +171,7 @@ export class ChampionshipsComponent {
     try {
       await firstValueFrom(this.calendarApi.createCustomChampionship(payload));
       this.createModalOpen.set(false);
+      void this.loadChampionships();
     } catch {
       this.errorMessage.set('Failed to create championship.');
     } finally {
@@ -162,11 +179,33 @@ export class ChampionshipsComponent {
     }
   }
 
+  async deleteCustomChampionship(): Promise<void> {
+    const custom = this.selectedCustomChampionship();
+    if (!custom || this.deletingCustom()) return;
+    this.deletingCustom.set(true);
+    try {
+      await firstValueFrom(this.calendarApi.deleteCustomChampionship(custom.id));
+      this.selectedCustomChampionship.set(null);
+      this.selectedChampionshipKey.set(null);
+      void this.loadChampionships();
+    } catch {
+      this.errorMessage.set('Failed to delete championship.');
+    } finally {
+      this.deletingCustom.set(false);
+    }
+  }
+
   constructor() {
     this.route.queryParams.subscribe((params) => {
-      const id = Number(params['id']);
-      if (Number.isFinite(id) && id > 0) {
-        this.selectChampionship(id);
+      const id = params['id'];
+      if (id) {
+        // Could be numeric (simgrid) or uuid (custom)
+        const num = Number(id);
+        if (Number.isFinite(num) && num > 0) {
+          this.selectChampionship(`sg-${num}`);
+        } else {
+          this.selectChampionship(`custom-${id}`);
+        }
       }
     });
     void this.loadChampionships();
@@ -181,32 +220,30 @@ export class ChampionshipsComponent {
     });
   }
 
-  private getStatusOrder(item: ChampionshipListItem): number {
+  private getStatusOrder(entry: ChampionshipEntry): number {
+    if (entry.source === 'custom') return -1; // custom always on top
+    const item = entry.simgridItem!;
     const today = new Date().toISOString().slice(0, 10);
-    // Future start date always wins — can't be anything other than upcoming
     if (item.startDate && item.startDate.slice(0, 10) > today) return 1;
-    // Confirmed finished via standings races data
     if (item.eventCompleted) return 3;
-    // Confirmed finished: has an end date and it's in the past
     if (item.endDate && item.endDate.slice(0, 10) < today) return 3;
-    // Started (startDate exists and is today or in the past) → active
     if (item.startDate && item.startDate.slice(0, 10) <= today) return 0;
-    // Registration window is open even without reliable dates → active
     if (item.acceptingRegistrations) return 0;
-    // No date information at all – neutral
     return 2;
   }
 
-  getChampionshipStatusClass(item: ChampionshipListItem): string {
-    const order = this.getStatusOrder(item);
+  getChampionshipStatusClass(entry: ChampionshipEntry): string {
+    if (entry.source === 'custom') return 'championship--custom';
+    const order = this.getStatusOrder(entry);
     if (order === 0) return 'championship--active';
     if (order === 1) return 'championship--future';
     if (order === 3) return 'championship--finished';
     return '';
   }
 
-  getChampionshipStatusLabel(item: ChampionshipListItem): string | null {
-    const order = this.getStatusOrder(item);
+  getChampionshipStatusLabel(entry: ChampionshipEntry): string | null {
+    if (entry.source === 'custom') return this.auth.isAdmin() ? 'Custom' : null;
+    const order = this.getStatusOrder(entry);
     if (order === 0) return 'Active';
     if (order === 1) return 'Upcoming';
     if (order === 3) return 'Finished';
@@ -220,45 +257,57 @@ export class ChampionshipsComponent {
     this.infoMessage.set('');
 
     try {
-      const list = await firstValueFrom(this.api.getChampionships());
-      if (token !== this.championshipsLoadToken) {
-        return;
-      }
+      const [simgridList, customList] = await Promise.all([
+        firstValueFrom(this.api.getChampionships()),
+        this.auth.isAdmin()
+          ? firstValueFrom(this.calendarApi.getCustomChampionships())
+          : Promise.resolve([] as CustomChampionshipOut[]),
+      ]);
+      if (token !== this.championshipsLoadToken) return;
 
-      const sorted = [...list].sort(
-        (a, b) => this.getStatusOrder(a) - this.getStatusOrder(b) || b.id - a.id
+      const entries: ChampionshipEntry[] = [
+        ...customList.map((c) => ({
+          key: `custom-${c.id}`,
+          source: 'custom' as const,
+          name: c.name,
+          customItem: c,
+        })),
+        ...simgridList.map((s) => ({
+          key: `sg-${s.id}`,
+          source: 'simgrid' as const,
+          name: s.name,
+          simgridItem: s,
+        })),
+      ];
+
+      const sorted = entries.sort(
+        (a, b) => this.getStatusOrder(a) - this.getStatusOrder(b)
+          || a.name.localeCompare(b.name)
       );
       this.championships.set(sorted);
 
       if (sorted.length === 0) {
-        this.selectedChampionshipId.set(null);
+        this.selectedChampionshipKey.set(null);
         this.selectedChampionship.set(null);
+        this.selectedCustomChampionship.set(null);
         this.standings.set([]);
         this.races.set([]);
         return;
       }
 
-      const currentSelectedId = this.selectedChampionshipId();
-      const selectedId =
-        currentSelectedId !== null && sorted.some((item) => item.id === currentSelectedId)
-          ? currentSelectedId
-          : sorted[0].id;
+      const currentKey = this.selectedChampionshipKey();
+      const selectedKey =
+        currentKey !== null && sorted.some((e) => e.key === currentKey)
+          ? currentKey
+          : sorted[0].key;
 
-      this.selectedChampionshipId.set(selectedId);
-      this.selectedClass.set(null);
-      void this.router.navigate([], {
-        queryParams: { id: selectedId },
-        queryParamsHandling: 'merge',
-        replaceUrl: true,
-      });
-      await this.loadStandings(selectedId);
+      await this.selectAndLoad(selectedKey, true);
     } catch (error) {
-      if (token !== this.championshipsLoadToken) {
-        return;
-      }
+      if (token !== this.championshipsLoadToken) return;
       this.errorMessage.set(this.toErrorMessage(error));
       this.championships.set([]);
       this.selectedChampionship.set(null);
+      this.selectedCustomChampionship.set(null);
       this.standings.set([]);
       this.races.set([]);
     } finally {
@@ -268,20 +317,55 @@ export class ChampionshipsComponent {
     }
   }
 
-  selectChampionship(championshipId: number): void {
-    if (this.selectedChampionshipId() === championshipId && this.standings().length > 0) {
-      return;
-    }
+  selectChampionship(key: string): void {
+    if (this.selectedChampionshipKey() === key) return;
+    void this.selectAndLoad(key, false);
+  }
+
+  private async selectAndLoad(key: string, replaceUrl: boolean): Promise<void> {
+    this.selectedChampionshipKey.set(key);
     this.selectedClass.set(null);
-    this.activeTab.set('standings');
     this.expandedRaceIndex.set(null);
-    this.selectedChampionshipId.set(championshipId);
-    void this.router.navigate([], {
-      queryParams: { id: championshipId },
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
-    void this.loadStandings(championshipId);
+    this.errorMessage.set('');
+
+    const entry = this.championships().find((e) => e.key === key);
+
+    if (entry?.source === 'custom' && entry.customItem) {
+      // Show custom championship details directly
+      const c = entry.customItem;
+      this.selectedChampionship.set(null);
+      this.selectedCustomChampionship.set(c);
+      this.standings.set([]);
+      this.races.set([]);
+      this.activeTab.set('races');
+      this.allRaces.set(
+        c.races.map((r, i) => ({
+          id: i,
+          displayName: r.track ?? `Race ${i + 1}`,
+          startsAt: r.date,
+          track: r.track,
+          resultsAvailable: false,
+          ended: false,
+        })),
+      );
+      this.lastUpdated.set(null);
+      this.staleWarning.set(false);
+      void this.router.navigate([], {
+        queryParams: { id: c.id },
+        queryParamsHandling: 'merge',
+        replaceUrl,
+      });
+    } else if (entry?.source === 'simgrid' && entry.simgridItem) {
+      this.selectedCustomChampionship.set(null);
+      this.activeTab.set('standings');
+      const simgridId = entry.simgridItem.id;
+      void this.router.navigate([], {
+        queryParams: { id: simgridId },
+        queryParamsHandling: 'merge',
+        replaceUrl,
+      });
+      await this.loadStandings(simgridId);
+    }
   }
 
   setActiveTab(tab: 'standings' | 'races'): void {
@@ -339,18 +423,17 @@ export class ChampionshipsComponent {
   }
 
   refreshSelectedChampionship(): void {
-    const championshipId = this.selectedChampionshipId();
-    if (championshipId === null) {
-      return;
-    }
-    void this.loadStandings(championshipId, true);
+    const id = this.getSelectedSimgridId();
+    if (id === null) return;
+    void this.loadStandings(id, true);
   }
 
   async refreshCache(): Promise<void> {
-    const championshipId = this.selectedChampionshipId();
-    if (championshipId === null || this.refreshingCache()) {
+    const id = this.getSelectedSimgridId();
+    if (id === null || this.refreshingCache()) {
       return;
     }
+    const championshipId = id;
     this.refreshingCache.set(true);
     this.infoMessage.set('');
     this.errorMessage.set('');
@@ -1183,6 +1266,12 @@ export class ChampionshipsComponent {
       .slice(0, 80);
   }
 
+  private getSelectedSimgridId(): number | null {
+    const key = this.selectedChampionshipKey();
+    if (!key || !key.startsWith('sg-')) return null;
+    return Number(key.slice(3));
+  }
+
   private async loadStandings(championshipId: number, force = false): Promise<void> {
     const token = ++this.standingsLoadToken;
     const cached = this.standingsCache.get(championshipId);
@@ -1267,11 +1356,11 @@ export class ChampionshipsComponent {
     this.loadingRaces.set(true);
     try {
       const races = await firstValueFrom(this.api.getChampionshipRaces(championshipId));
-      if (this.selectedChampionshipId() === championshipId) {
+      if (this.getSelectedSimgridId() === championshipId) {
         this.allRaces.set(races);
       }
     } catch {
-      if (this.selectedChampionshipId() === championshipId) {
+      if (this.getSelectedSimgridId() === championshipId) {
         this.allRaces.set([]);
       }
     } finally {

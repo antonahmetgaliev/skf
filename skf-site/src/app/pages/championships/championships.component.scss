@@ -84,6 +84,16 @@ h2 {
   }
 }
 
+.championship-button.championship--custom {
+  border-color: rgba(168, 130, 50, 0.45);
+  border-style: dashed;
+
+  .championship-status-tag {
+    background: rgba(168, 130, 50, 0.15);
+    color: #a88232;
+  }
+}
+
 .championship-button.championship--finished {
   opacity: 0.45;
 

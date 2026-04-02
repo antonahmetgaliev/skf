@@ -23,18 +23,20 @@
         <app-empty>No championships returned from API.</app-empty>
       } @else {
         <div class="championship-list">
-          @for (item of championships(); track item.id) {
+          @for (entry of championships(); track entry.key) {
             <button
               class="championship-button"
               type="button"
-              [class.active]="selectedChampionshipId() === item.id"
-              [ngClass]="getChampionshipStatusClass(item)"
-              (click)="selectChampionship(item.id)"
+              [class.active]="selectedChampionshipKey() === entry.key"
+              [ngClass]="getChampionshipStatusClass(entry)"
+              (click)="selectChampionship(entry.key)"
             >
-              <span class="championship-name">{{ item.name }}</span>
+              <span class="championship-name">{{ entry.name }}</span>
               <span class="championship-footer">
-                <span class="championship-id">#{{ item.id }}</span>
-                @if (getChampionshipStatusLabel(item); as label) {
+                @if (entry.source === 'simgrid' && entry.simgridItem) {
+                  <span class="championship-id">#{{ entry.simgridItem.id }}</span>
+                }
+                @if (getChampionshipStatusLabel(entry); as label) {
                   <span class="championship-status-tag">{{ label }}</span>
                 }
               </span>
@@ -51,6 +53,54 @@
         <app-spinner />
       } @else if (errorMessage()) {
         <p class="error">{{ errorMessage() }}</p>
+      } @else if (selectedCustomChampionship(); as custom) {
+        <!-- Custom championship details -->
+        <div class="details-header">
+          <div class="details-info">
+            <h2>{{ custom.name }}</h2>
+            <p class="meta">{{ custom.game }}
+              @if (custom.carClass) {
+                — {{ custom.carClass }}
+              }
+            </p>
+            @if (custom.description) {
+              <p class="meta">{{ custom.description }}</p>
+            }
+          </div>
+          @if (auth.isAdmin()) {
+            <div class="details-actions">
+              <app-btn variant="danger" size="sm" [disabled]="deletingCustom()" (click)="deleteCustomChampionship()">
+                {{ deletingCustom() ? 'Deleting...' : 'Delete' }}
+              </app-btn>
+            </div>
+          }
+        </div>
+
+        @if (allRaces().length === 0) {
+          <app-empty>No races scheduled for this championship.</app-empty>
+        } @else {
+          <h3 class="section-title">Race Schedule</h3>
+          <div class="races-list">
+            @for (race of allRaces(); track race.id; let raceIndex = $index) {
+              <div class="race-card">
+                <div class="race-card-header">
+                  <div class="race-card-info">
+                    <span class="race-round">R{{ raceIndex + 1 }}</span>
+                    <div class="race-card-details">
+                      <span class="race-card-name">{{ race.displayName }}</span>
+                      <span class="race-card-date">
+                        {{ formatRaceDate(race.startsAt) }}
+                        @if (race.track) {
+                          — {{ race.track }}
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
       } @else if (selectedChampionship(); as championship) {
         <div class="details-header">
           @if (championship.image) {
