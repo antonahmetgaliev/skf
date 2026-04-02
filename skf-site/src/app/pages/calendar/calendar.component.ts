@@ -2,20 +2,15 @@ import { NgClass } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
-import { ModalComponent } from '../../components/modal/modal.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
-import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { AuthService } from '../../services/auth.service';
 import {
   CalendarApiService,
   CalendarEvent,
   CalendarEventType,
-  CustomChampionshipCreate,
-  CustomRaceCreate,
 } from '../../services/calendar-api.service';
 
 interface CalendarDay {
@@ -25,21 +20,15 @@ interface CalendarDay {
   events: CalendarEvent[];
 }
 
-interface RaceFormRow {
-  date: string;
-  track: string;
-}
-
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 @Component({
   selector: 'app-calendar',
-  imports: [NgClass, FormsModule, RouterLink, BtnComponent, CardComponent, ModalComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent],
+  imports: [NgClass, RouterLink, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
 })
 export class CalendarComponent {
-  readonly auth = inject(AuthService);
   private readonly calendarApi = inject(CalendarApiService);
 
   readonly weekDays = WEEK_DAYS;
@@ -49,15 +38,6 @@ export class CalendarComponent {
   readonly loading = signal(false);
   readonly selectedDay = signal<number | null>(null);
   readonly errorMessage = signal('');
-
-  // Admin modal
-  readonly createModalOpen = signal(false);
-  formName = '';
-  formGame = '';
-  formCarClass = '';
-  formDescription = '';
-  formRaces: RaceFormRow[] = [{ date: '', track: '' }];
-  formSubmitting = false;
 
   readonly monthLabel = computed(() => {
     const d = new Date(this.currentYear(), this.currentMonth() - 1, 1);
@@ -148,59 +128,6 @@ export class CalendarComponent {
     const dayStr = `${this.currentYear()}-${String(this.currentMonth()).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const filtered = event.races.filter((r) => r.date && r.date.slice(0, 10) === dayStr);
     return filtered.length > 0 ? filtered : event.races;
-  }
-
-  // ── Admin: create custom championship ──
-
-  openCreateModal(): void {
-    this.formName = '';
-    this.formGame = '';
-    this.formCarClass = '';
-    this.formDescription = '';
-    this.formRaces = [{ date: '', track: '' }];
-    this.createModalOpen.set(true);
-  }
-
-  closeCreateModal(): void {
-    this.createModalOpen.set(false);
-  }
-
-  addRaceRow(): void {
-    this.formRaces.push({ date: '', track: '' });
-  }
-
-  removeRaceRow(index: number): void {
-    this.formRaces.splice(index, 1);
-  }
-
-  async submitCreate(): Promise<void> {
-    if (!this.formName.trim() || !this.formGame.trim()) return;
-    this.formSubmitting = true;
-
-    const races: CustomRaceCreate[] = this.formRaces
-      .filter((r) => r.date || r.track)
-      .map((r) => ({
-        date: r.date ? new Date(r.date).toISOString() : null,
-        track: r.track || null,
-      }));
-
-    const payload: CustomChampionshipCreate = {
-      name: this.formName.trim(),
-      game: this.formGame.trim(),
-      carClass: this.formCarClass.trim() || null,
-      description: this.formDescription.trim() || null,
-      races,
-    };
-
-    try {
-      await firstValueFrom(this.calendarApi.createCustomChampionship(payload));
-      this.createModalOpen.set(false);
-      this.loadEvents();
-    } catch {
-      this.errorMessage.set('Failed to create championship.');
-    } finally {
-      this.formSubmitting = false;
-    }
   }
 
   // ── Private ──

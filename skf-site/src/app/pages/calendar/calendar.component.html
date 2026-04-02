@@ -1,11 +1,5 @@
 <app-page>
-  <app-page-intro title="Season Calendar">
-    @if (auth.isAdmin()) {
-      <app-btn variant="accent" size="sm" (click)="openCreateModal()">
-        + Add Custom Championship
-      </app-btn>
-    }
-  </app-page-intro>
+  <app-page-intro title="Season Calendar" />
 
   <app-card class="calendar-card">
     <!-- Header with navigation -->
@@ -135,83 +129,4 @@
     </app-card>
   }
 
-  <!-- Create modal -->
-  <app-modal title="New Custom Championship" width="md" [(open)]="createModalOpen">
-    <label class="form-label">
-      Name *
-      <input
-        class="form-control"
-        type="text"
-        [(ngModel)]="formName"
-        placeholder="e.g. SKF GT3 Championship S3"
-      />
-    </label>
-
-    <label class="form-label">
-      Game *
-      <input
-        class="form-control"
-        type="text"
-        [(ngModel)]="formGame"
-        placeholder="e.g. ACC, iRacing"
-      />
-    </label>
-
-    <label class="form-label">
-      Car Class
-      <input
-        class="form-control"
-        type="text"
-        [(ngModel)]="formCarClass"
-        placeholder="e.g. GT3, LMP2"
-      />
-    </label>
-
-    <label class="form-label">
-      Description
-      <textarea
-        class="form-control form-textarea"
-        [(ngModel)]="formDescription"
-        placeholder="Optional description..."
-        rows="3"
-      ></textarea>
-    </label>
-
-    <div class="races-section">
-      <div class="races-header">
-        <h4>Races</h4>
-        <app-btn variant="ghost" size="sm" (click)="addRaceRow()">+ Add Race</app-btn>
-      </div>
-      @for (race of formRaces; track $index; let i = $index) {
-        <div class="race-row">
-          <input
-            class="form-control race-input"
-            type="date"
-            [(ngModel)]="race.date"
-            placeholder="Date"
-          />
-          <input
-            class="form-control race-input"
-            type="text"
-            [(ngModel)]="race.track"
-            placeholder="Track name"
-          />
-          @if (formRaces.length > 1) {
-            <app-btn variant="ghost" size="sm" class="btn-remove" (click)="removeRaceRow(i)">&#10005;</app-btn>
-          }
-        </div>
-      }
-    </div>
-
-    <div modal-footer>
-      <app-btn variant="ghost" (click)="closeCreateModal()">Cancel</app-btn>
-      <app-btn
-        variant="accent"
-        [disabled]="formSubmitting || !formName.trim() || !formGame.trim()"
-        (click)="submitCreate()"
-      >
-        {{ formSubmitting ? 'Creating...' : 'Create Championship' }}
-      </app-btn>
-    </div>
-  </app-modal>
 </app-page>

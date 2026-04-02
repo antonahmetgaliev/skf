@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgClass } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -12,12 +13,24 @@ import {
   StandingEntry,
   StandingRace
 } from '../../services/simgrid-api.service';
+import {
+  CalendarApiService,
+  CustomChampionshipCreate,
+  CustomRaceCreate,
+} from '../../services/calendar-api.service';
+import { AuthService } from '../../services/auth.service';
 import { BwpApiService } from '../../services/bwp-api.service';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
 import { EmptyComponent } from '../../components/empty/empty.component';
+import { ModalComponent } from '../../components/modal/modal.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
+
+interface RaceFormRow {
+  date: string;
+  track: string;
+}
 
 interface CachedStandingsData {
   details: ChampionshipDetails;
@@ -28,12 +41,14 @@ interface CachedStandingsData {
 
 @Component({
   selector: 'app-championships',
-  imports: [RouterLink, NgClass, PageIntroComponent, BtnComponent, CardComponent, EmptyComponent, PageLayoutComponent, SpinnerComponent],
+  imports: [RouterLink, NgClass, FormsModule, PageIntroComponent, BtnComponent, CardComponent, EmptyComponent, ModalComponent, PageLayoutComponent, SpinnerComponent],
   templateUrl: './championships.component.html',
   styleUrl: './championships.component.scss'
 })
 export class ChampionshipsComponent {
+  readonly auth = inject(AuthService);
   private readonly api = inject(SimgridApiService);
+  private readonly calendarApi = inject(CalendarApiService);
   private readonly bwpApi = inject(BwpApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -76,6 +91,15 @@ export class ChampionshipsComponent {
   readonly allRaces = signal<ChampionshipRace[]>([]);
   readonly loadingRaces = signal(false);
 
+  // Admin: create custom championship
+  readonly createModalOpen = signal(false);
+  formName = '';
+  formGame = '';
+  formCarClass = '';
+  formDescription = '';
+  formRaces: RaceFormRow[] = [{ date: '', track: '' }];
+  formSubmitting = false;
+
   readonly carClasses = computed(() => {
     const classes = [...new Set(this.standings().map(e => e.carClass).filter(c => c.length > 0))];
     return classes.sort();
@@ -87,6 +111,56 @@ export class ChampionshipsComponent {
     if (!this.isMulticlass() || cls === null) return this.standings();
     return this.standings().filter(e => e.carClass === cls);
   });
+
+  openCreateModal(): void {
+    this.formName = '';
+    this.formGame = '';
+    this.formCarClass = '';
+    this.formDescription = '';
+    this.formRaces = [{ date: '', track: '' }];
+    this.createModalOpen.set(true);
+  }
+
+  closeCreateModal(): void {
+    this.createModalOpen.set(false);
+  }
+
+  addRaceRow(): void {
+    this.formRaces.push({ date: '', track: '' });
+  }
+
+  removeRaceRow(index: number): void {
+    this.formRaces.splice(index, 1);
+  }
+
+  async submitCreate(): Promise<void> {
+    if (!this.formName.trim() || !this.formGame.trim()) return;
+    this.formSubmitting = true;
+
+    const races: CustomRaceCreate[] = this.formRaces
+      .filter((r) => r.date || r.track)
+      .map((r) => ({
+        date: r.date ? new Date(r.date).toISOString() : null,
+        track: r.track || null,
+      }));
+
+    const payload: CustomChampionshipCreate = {
+      name: this.formName.trim(),
+      game: this.formGame.trim(),
+      carClass: this.formCarClass.trim() || null,
+      description: this.formDescription.trim() || null,
+      races,
+    };
+
+    try {
+      await firstValueFrom(this.calendarApi.createCustomChampionship(payload));
+      this.createModalOpen.set(false);
+    } catch {
+      this.errorMessage.set('Failed to create championship.');
+    } finally {
+      this.formSubmitting = false;
+    }
+  }
 
   constructor() {
     this.route.queryParams.subscribe((params) => {
