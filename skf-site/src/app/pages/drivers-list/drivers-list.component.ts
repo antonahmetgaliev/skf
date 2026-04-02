@@ -37,11 +37,4 @@ export class DriversListComponent {
       error: () => this.loading.set(false),
     });
   }
-
-  getActiveBwp(driver: Driver): number {
-    const today = new Date().toISOString().slice(0, 10);
-    return driver.points
-      .filter((p) => p.expiresOn >= today)
-      .reduce((sum, p) => sum + p.points, 0);
-  }
 }
