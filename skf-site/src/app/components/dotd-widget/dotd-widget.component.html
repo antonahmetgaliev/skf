@@ -18,7 +18,7 @@
     }
 
     @if (auth.isModerator()) {
-      <button class="btn-create" type="button" (click)="openCreateModal($event)">+ Create</button>
+      <app-btn variant="accent" size="xs" (click)="openCreateModal($event)">+ Create</app-btn>
     }
 
     <span class="chevron" [class.chevron--up]="expanded()" aria-hidden="true">›</span>
@@ -50,14 +50,14 @@
                 <span class="badge badge--ended">ENDED</span>
               }
             @if (auth.isModerator() && poll.isOpen) {
-                <button class="btn-close-poll" type="button" (click)="closePoll(poll.id)">
+                <app-btn variant="danger" size="xs" (click)="closePoll(poll.id)">
                   Close
-                </button>
+                </app-btn>
               }
               @if (auth.isModerator()) {
-                <button class="btn-delete-poll" type="button" (click)="deletePoll(poll.id)">
+                <app-btn variant="ghost" size="xs" (click)="deletePoll(poll.id)">
                   Delete
-                </button>
+                </app-btn>
               }
             </div>
           </div>
@@ -100,11 +100,11 @@
 
                 <!-- vote button -->
                 @if (poll.isOpen && auth.isLoggedIn() && !poll.hasVoted) {
-                  <button class="btn-vote" type="button"
+                  <app-btn variant="accent" size="xs"
                           [disabled]="votingPollId() === poll.id"
                           (click)="vote(poll.id, candidate.id)">
                     Vote
-                  </button>
+                  </app-btn>
                 }
 
                 <!-- my vote checkmark -->
@@ -194,12 +194,12 @@
         }
 
         <div class="modal-actions">
-          <button class="btn ghost" type="button" (click)="closeCreateModal()">Cancel</button>
-          <button class="btn accent" type="button"
+          <app-btn variant="ghost" (click)="closeCreateModal()">Cancel</app-btn>
+          <app-btn variant="accent"
                   [disabled]="creating()"
                   (click)="submitCreate()">
             {{ creating() ? 'Creating…' : 'Create Poll' }}
-          </button>
+          </app-btn>
         </div>
       </div>
     </div>
