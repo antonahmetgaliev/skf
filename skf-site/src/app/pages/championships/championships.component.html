@@ -12,9 +12,6 @@
     <app-card class="side-panel">
       <div class="panel-header">
         <h2>Championships</h2>
-        <app-btn variant="ghost" size="sm" (click)="loadChampionships()">
-          Reload
-        </app-btn>
       </div>
 
       @if (loadingChampionships()) {
@@ -128,12 +125,6 @@
             </app-btn>
             <app-btn variant="ghost" size="sm" (click)="openStandingsExportPreview()">
               Export 16:9
-            </app-btn>
-            <app-btn variant="ghost" size="sm" [disabled]="refreshingCache()" (click)="refreshCache()">
-              {{ refreshingCache() ? 'Refreshing...' : 'Refresh Cache' }}
-            </app-btn>
-            <app-btn variant="accent" size="sm" (click)="refreshSelectedChampionship()">
-              Refresh
             </app-btn>
           </div>
         </div>

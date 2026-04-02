@@ -109,12 +109,6 @@ export class SimgridApiService {
     );
   }
 
-  refreshCache(championshipId: number): Observable<{ status: string }> {
-    return this.http.post<{ status: string }>(
-      `${this.apiBase}/${championshipId}/refresh-cache`, {}
-    );
-  }
-
   getChampionshipsPodium(): Observable<ChampionshipPodium[]> {
     return this.http.get<ChampionshipPodium[]>(`${this.apiBase}/podium`);
   }

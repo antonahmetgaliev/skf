@@ -38,7 +38,7 @@
       <a routerLink="/regulations" routerLinkActive="active">Regulations</a>
       <a routerLink="/media" routerLinkActive="active">Media</a>
       @if (auth.isAdmin()) {
-        <a routerLink="/admin/users" routerLinkActive="active">User Management</a>
+        <a routerLink="/admin" routerLinkActive="active">Admin</a>
       }
       @if (auth.isLoggedIn()) {
         <a routerLink="/incidents" routerLinkActive="active">Incidents</a>

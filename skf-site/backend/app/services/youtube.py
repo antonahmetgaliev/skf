@@ -143,4 +143,20 @@ class YouTubeService:
             logger.warning("DB cache write failed for key=%s", key, exc_info=True)
 
 
+    async def invalidate_cache(self) -> None:
+        """Delete all YouTube cache entries."""
+        from sqlalchemy import delete
+
+        try:
+            async with async_session() as session:
+                await session.execute(
+                    delete(SimgridCache).where(
+                        SimgridCache.cache_key.like("youtube_%")
+                    )
+                )
+                await session.commit()
+        except Exception:
+            logger.warning("YouTube cache invalidation failed", exc_info=True)
+
+
 youtube_service = YouTubeService()

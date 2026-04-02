@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { adminGuard } from './guards/admin.guard';
-import { AdminUsersComponent } from './pages/admin-users/admin-users.component';
+import { AdminComponent } from './pages/admin/admin.component';
 import { BwpLicenseComponent } from './pages/bwp-license/bwp-license.component';
 import { DriverProfileComponent } from './pages/driver-profile/driver-profile.component';
 import { DriversListComponent } from './pages/drivers-list/drivers-list.component';
@@ -30,6 +30,7 @@ export const appRoutes: Routes = [
   { path: 'drivers', component: DriversListComponent, title: 'Drivers | SKF Racing Hub' },
   { path: 'drivers/:id', component: DriverProfileComponent, title: 'Driver Profile | SKF Racing Hub' },
   { path: 'incidents', component: IncidentsComponent, title: 'Incidents | SKF Racing Hub' },
-  { path: 'admin/users', component: AdminUsersComponent, canActivate: [adminGuard], title: 'Admin Users | SKF Racing Hub' },
+  { path: 'admin/users', pathMatch: 'full', redirectTo: 'admin' },
+  { path: 'admin', component: AdminComponent, canActivate: [adminGuard], title: 'Admin | SKF Racing Hub' },
   { path: '**', redirectTo: '' }
 ];

@@ -90,7 +90,6 @@ export class ChampionshipsComponent {
   readonly giveawayMinRaces = signal(1);
   readonly giveawayDrivers = signal<{ id: number; displayName: string; racesCount: number }[]>([]);
   readonly giveawayWinner = signal<string | null>(null);
-  readonly refreshingCache = signal(false);
   readonly errorMessage = signal('');
   readonly infoMessage = signal('');
   readonly staleWarning = signal(false);
@@ -422,32 +421,6 @@ export class ChampionshipsComponent {
     return this.races().some((r) => r.id === race.id);
   }
 
-  refreshSelectedChampionship(): void {
-    const id = this.getSelectedSimgridId();
-    if (id === null) return;
-    void this.loadStandings(id, true);
-  }
-
-  async refreshCache(): Promise<void> {
-    const id = this.getSelectedSimgridId();
-    if (id === null || this.refreshingCache()) {
-      return;
-    }
-    const championshipId = id;
-    this.refreshingCache.set(true);
-    this.infoMessage.set('');
-    this.errorMessage.set('');
-    try {
-      await firstValueFrom(this.api.refreshCache(championshipId));
-      // Re-load standings with force to pick up the fresh data
-      await this.loadStandings(championshipId, true);
-      this.infoMessage.set('Cache refreshed successfully from SimGrid.');
-    } catch (error) {
-      this.errorMessage.set('Failed to refresh cache from SimGrid.');
-    } finally {
-      this.refreshingCache.set(false);
-    }
-  }
 
   openStandingsExportPreview(): void {
     if (this.loadingStandings() || !this.selectedChampionship() || this.standings().length === 0) {

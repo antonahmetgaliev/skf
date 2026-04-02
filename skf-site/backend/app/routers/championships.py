@@ -271,15 +271,3 @@ async def get_standings(
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc))
 
-
-@router.post("/{championship_id}/refresh-cache")
-async def refresh_cache(championship_id: int, background_tasks: BackgroundTasks):
-    """Force re-fetch all data for a championship from SimGrid."""
-    try:
-        await simgrid_service.invalidate_cache(championship_id)
-        details = await simgrid_service.get_championship(championship_id, force=True)
-        standings = await simgrid_service.get_standings(championship_id, force=True)
-        background_tasks.add_task(sync_drivers_from_standings, standings.entries)
-        return {"status": "ok", "championship": details.name, "entries": len(standings.entries)}
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=str(exc))

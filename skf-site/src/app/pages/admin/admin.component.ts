@@ -10,22 +10,31 @@ import { FormsModule } from '@angular/forms';
 import { AuthService, AuthUser } from '../../services/auth.service';
 
 @Component({
-  selector: 'app-admin-users',
+  selector: 'app-admin',
   imports: [FormsModule, DatePipe, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent],
-  templateUrl: './admin-users.component.html',
-  styleUrl: './admin-users.component.scss',
+  templateUrl: './admin.component.html',
+  styleUrl: './admin.component.scss',
 })
-export class AdminUsersComponent implements OnInit {
+export class AdminComponent implements OnInit {
   readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
 
+  readonly activeTab = signal<'users' | 'site'>('users');
   readonly users = signal<AuthUser[]>([]);
   readonly filter = signal('');
   readonly loading = signal(false);
+  readonly clearingCache = signal(false);
+  readonly cacheMessage = signal('');
 
   ngOnInit(): void {
     this.loadUsers();
   }
+
+  setActiveTab(tab: 'users' | 'site'): void {
+    this.activeTab.set(tab);
+  }
+
+  // -- Users --
 
   loadUsers(): void {
     this.loading.set(true);
@@ -79,7 +88,6 @@ export class AdminUsersComponent implements OnInit {
     });
   }
 
-  /** Prevent admins from editing super_admins in the UI. */
   canEdit(target: AuthUser): boolean {
     const me = this.auth.user();
     if (!me) return false;
@@ -87,11 +95,28 @@ export class AdminUsersComponent implements OnInit {
     return true;
   }
 
-  /** Only super-admin can see the super_admin option in the role dropdown. */
   availableRoles(): string[] {
     if (this.auth.isSuperAdmin()) {
       return ['driver', 'racing_judge', 'admin', 'super_admin'];
     }
     return ['driver', 'racing_judge', 'admin'];
+  }
+
+  // -- Site --
+
+  clearCache(): void {
+    if (this.clearingCache()) return;
+    this.clearingCache.set(true);
+    this.cacheMessage.set('');
+    this.http.post('/api/admin/clear-cache', {}).subscribe({
+      next: () => {
+        this.cacheMessage.set('Cache cleared successfully.');
+        this.clearingCache.set(false);
+      },
+      error: () => {
+        this.cacheMessage.set('Failed to clear cache.');
+        this.clearingCache.set(false);
+      },
+    });
   }
 }
