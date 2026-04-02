@@ -14,6 +14,7 @@ import {
   CalendarEvent,
   CalendarEventType,
 } from '../../services/calendar-api.service';
+import { toLocalDateStr } from '../../utils/date';
 
 interface CalendarDay {
   dayNumber: number;
@@ -128,7 +129,7 @@ export class CalendarComponent {
     const day = this.selectedDay();
     if (day === null) return event.races;
     const dayStr = `${this.currentYear()}-${String(this.currentMonth()).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const filtered = event.races.filter((r) => r.date && r.date.slice(0, 10) === dayStr);
+    const filtered = event.races.filter((r) => r.date && toLocalDateStr(r.date) === dayStr);
     return filtered.length > 0 ? filtered : event.races;
   }
 
@@ -215,15 +216,15 @@ export class CalendarComponent {
 
     // Check individual races
     for (const race of event.races) {
-      if (race.date && race.date.slice(0, 10) === dayStr) {
+      if (race.date && toLocalDateStr(race.date) === dayStr) {
         return true;
       }
     }
 
     // For SimGrid championships without race-level dates, check start/end range
     if (event.races.length === 0 || event.races.every((r) => !r.date)) {
-      if (event.startDate && event.startDate.slice(0, 10) === dayStr) return true;
-      if (event.endDate && event.endDate.slice(0, 10) === dayStr) return true;
+      if (event.startDate && toLocalDateStr(event.startDate) === dayStr) return true;
+      if (event.endDate && toLocalDateStr(event.endDate) === dayStr) return true;
     }
 
     return false;

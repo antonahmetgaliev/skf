@@ -1,0 +1,60 @@
+<section class="week-calendar">
+  <p class="eyebrow center">This Week</p>
+  <h2 class="section-title">Race Schedule</h2>
+
+  @if (loading()) {
+    <div class="loader"><app-spinner /></div>
+  } @else {
+
+    <!-- ── Featured race tile ── -->
+    @if (featured(); as feat) {
+      <app-card class="featured-tile" [animated]="true">
+        <span class="featured-label">{{ feat.label }}</span>
+        <h3 class="featured-name">{{ feat.race.championshipName }}</h3>
+        @if (feat.race.track) {
+          <p class="featured-track">{{ feat.race.track }}</p>
+        }
+        <p class="featured-date">
+          {{ formatDate(feat.date) }}
+          @if (feat.race.time) {
+            <span class="featured-time">{{ feat.race.time }}</span>
+          }
+        </p>
+      </app-card>
+    }
+
+    <!-- ── Week strip ── -->
+    <div class="week-strip">
+      @for (day of weekDays(); track day.dayNumber) {
+        <div
+          class="day-cell"
+          [ngClass]="{
+            'is-today': day.isToday,
+            'has-race': day.races.length > 0
+          }"
+        >
+          <span class="day-name">{{ day.dayName }}</span>
+          <span class="day-number">{{ day.dayNumber }}</span>
+          @if (day.races.length > 0) {
+            @for (race of day.races; track race.championshipName) {
+              <div class="race-pill">
+                <span class="race-champ">{{ race.championshipName }}</span>
+                @if (race.track) {
+                  <span class="race-track">{{ race.track }}</span>
+                }
+              </div>
+            }
+          }
+        </div>
+      }
+    </div>
+
+    @if (!hasAnyRaces()) {
+      <p class="empty-hint">No races scheduled this week.</p>
+    }
+
+    <div class="calendar-link">
+      <app-btn variant="outline" routerLink="/calendar">View Full Calendar</app-btn>
+    </div>
+  }
+</section>
