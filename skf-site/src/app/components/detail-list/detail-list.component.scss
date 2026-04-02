@@ -1,0 +1,26 @@
+:host {
+  display: block;
+}
+
+.detail-list {
+  display: grid;
+  grid-template-columns: var(--dl-label-width, 100px) 1fr;
+  gap: 0.4rem 0.75rem;
+  margin: 0;
+  font-size: 0.875rem;
+
+  ::ng-deep dt {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    align-self: start;
+    padding-top: 0.15rem;
+  }
+
+  ::ng-deep dd {
+    margin: 0;
+    color: var(--ink);
+  }
+}

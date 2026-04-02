@@ -199,31 +199,6 @@
   margin-bottom: 0.35rem;
 }
 
-.event-type-badge {
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-
-  &.badge--past {
-    background: rgba(110, 98, 86, 0.15);
-    color: var(--muted);
-  }
-  &.badge--ongoing {
-    background: rgba(243, 180, 25, 0.2);
-    color: var(--gold-deep);
-  }
-  &.badge--upcoming {
-    background: rgba(74, 159, 212, 0.15);
-    color: #4a9fd4;
-  }
-  &.badge--future {
-    background: rgba(29, 127, 78, 0.15);
-    color: var(--success);
-  }
-}
 
 .event-game,
 .event-source {
@@ -344,12 +319,6 @@
   font-weight: 500;
 }
 
-// ── Error ───────────────────────────────────────────────────────────────────
-.error {
-  color: var(--danger);
-  font-weight: 600;
-  font-size: 0.85rem;
-}
 
 // ── Responsive ──────────────────────────────────────────────────────────────
 @media (max-width: 768px) {

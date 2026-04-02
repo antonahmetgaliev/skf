@@ -5,13 +5,14 @@ import { CardComponent } from '../../components/card/card.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
+import { TabsComponent } from '../../components/tabs/tabs.component';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService, AuthUser } from '../../services/auth.service';
 
 @Component({
   selector: 'app-admin',
-  imports: [FormsModule, DatePipe, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent],
+  imports: [FormsModule, DatePipe, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',
 })

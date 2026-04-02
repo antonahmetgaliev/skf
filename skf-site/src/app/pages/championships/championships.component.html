@@ -49,7 +49,7 @@
       @if (loadingStandings()) {
         <app-spinner />
       } @else if (errorMessage()) {
-        <p class="error">{{ errorMessage() }}</p>
+        <app-alert variant="error">{{ errorMessage() }}</app-alert>
       } @else if (selectedCustomChampionship(); as custom) {
         <!-- Custom championship details -->
         <div class="details-header">
@@ -130,30 +130,21 @@
         </div>
 
         @if (infoMessage()) {
-          <p class="notice">{{ infoMessage() }}</p>
+          <app-alert variant="info">{{ infoMessage() }}</app-alert>
         }
 
         @if (staleWarning()) {
-          <div class="stale-warning">
+          <app-alert variant="error">
             SimGrid is rate-limiting requests — showing cached data that may not be current. Try refreshing in a few minutes.
-          </div>
+          </app-alert>
         }
 
         <!-- Main tabs -->
-        <div class="main-tabs">
-          <button
-            class="main-tab"
-            type="button"
-            [class.active]="activeTab() === 'standings'"
-            (click)="setActiveTab('standings')"
-          >Standings</button>
-          <button
-            class="main-tab"
-            type="button"
-            [class.active]="activeTab() === 'races'"
-            (click)="setActiveTab('races')"
-          >Races</button>
-        </div>
+        <app-tabs
+          [tabs]="[{key: 'standings', label: 'Standings'}, {key: 'races', label: 'Races'}]"
+          [activeTab]="activeTab()"
+          (tabChange)="setActiveTab($any($event))"
+        />
 
         <!-- Standings tab -->
         @if (activeTab() === 'standings') {
@@ -263,12 +254,12 @@
                     </div>
                     <div class="race-card-status">
                       @if (getRaceStatus(race) === 'completed') {
-                        <span class="race-status-badge race-status--completed">Completed</span>
+                        <app-badge variant="completed">Completed</app-badge>
                         @if (hasRaceResults(race)) {
                           <span class="race-expand-icon" [class.expanded]="expandedRaceIndex() === raceIndex">&#9662;</span>
                         }
                       } @else {
-                        <span class="race-status-badge race-status--upcoming">Upcoming</span>
+                        <app-badge variant="upcoming">Upcoming</app-badge>
                       }
                     </div>
                   </div>

@@ -1,0 +1,54 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+// Green family: live, open, resolved, applied, future, completed
+:host(.badge--live),
+:host(.badge--open),
+:host(.badge--resolved),
+:host(.badge--applied),
+:host(.badge--future),
+:host(.badge--completed) {
+  background: rgba(29, 127, 78, 0.12);
+  color: var(--success);
+  border: 1px solid rgba(29, 127, 78, 0.3);
+}
+
+// Gray family: ended, closed, past
+:host(.badge--ended),
+:host(.badge--closed),
+:host(.badge--past) {
+  background: rgba(110, 98, 86, 0.1);
+  color: var(--muted);
+  border: 1px solid rgba(110, 98, 86, 0.2);
+}
+
+// Gold family: pending, ongoing
+:host(.badge--pending),
+:host(.badge--ongoing) {
+  background: rgba(243, 180, 25, 0.18);
+  color: var(--gold-deep);
+  border: 1px solid rgba(243, 180, 25, 0.35);
+}
+
+// Orange: bwp-pending
+:host(.badge--bwp-pending) {
+  background: rgba(220, 100, 30, 0.12);
+  color: #b84f18;
+  border: 1px solid rgba(220, 100, 30, 0.3);
+}
+
+// Blue: upcoming
+:host(.badge--upcoming) {
+  background: rgba(74, 159, 212, 0.15);
+  color: #4a9fd4;
+  border: 1px solid rgba(74, 159, 212, 0.3);
+}

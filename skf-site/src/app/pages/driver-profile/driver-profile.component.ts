@@ -1,6 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { BadgeComponent } from '../../components/badge/badge.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
 import { EmptyComponent } from '../../components/empty/empty.component';
@@ -9,7 +10,7 @@ import { DriverChampionshipResult, DriverPublic, ProfileApiService } from '../..
 
 @Component({
   selector: 'app-driver-profile',
-  imports: [DatePipe, DecimalPipe, RouterLink, BtnComponent, CardComponent, EmptyComponent, PageLayoutComponent],
+  imports: [DatePipe, DecimalPipe, RouterLink, BadgeComponent, BtnComponent, CardComponent, EmptyComponent, PageLayoutComponent],
   templateUrl: './driver-profile.component.html',
   styleUrl: './driver-profile.component.scss',
 })

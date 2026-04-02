@@ -21,12 +21,15 @@ import {
 } from '../../services/calendar-api.service';
 import { AuthService } from '../../services/auth.service';
 import { BwpApiService } from '../../services/bwp-api.service';
+import { AlertComponent } from '../../components/alert/alert.component';
+import { BadgeComponent } from '../../components/badge/badge.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
 import { EmptyComponent } from '../../components/empty/empty.component';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
+import { TabsComponent } from '../../components/tabs/tabs.component';
 
 interface RaceFormRow {
   date: string;
@@ -50,7 +53,7 @@ interface CachedStandingsData {
 
 @Component({
   selector: 'app-championships',
-  imports: [RouterLink, NgClass, FormsModule, PageIntroComponent, BtnComponent, CardComponent, EmptyComponent, ModalComponent, PageLayoutComponent, SpinnerComponent],
+  imports: [RouterLink, NgClass, FormsModule, AlertComponent, BadgeComponent, PageIntroComponent, BtnComponent, CardComponent, EmptyComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
   templateUrl: './championships.component.html',
   styleUrl: './championships.component.scss'
 })

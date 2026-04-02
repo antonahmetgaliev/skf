@@ -1,22 +1,11 @@
 <app-page>
   <app-page-intro title="Admin" subtitle="Manage users and site settings." />
 
-  <div class="admin-tabs">
-    <button
-      class="admin-tab"
-      [class.active]="activeTab() === 'users'"
-      (click)="setActiveTab('users')"
-    >
-      Users
-    </button>
-    <button
-      class="admin-tab"
-      [class.active]="activeTab() === 'site'"
-      (click)="setActiveTab('site')"
-    >
-      Site
-    </button>
-  </div>
+  <app-tabs
+    [tabs]="[{key: 'users', label: 'Users'}, {key: 'site', label: 'Site'}]"
+    [activeTab]="activeTab()"
+    (tabChange)="setActiveTab($any($event))"
+  />
 
   @if (activeTab() === 'users') {
     <app-card [animated]="true">

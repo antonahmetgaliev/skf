@@ -1,5 +1,7 @@
 import { NgClass } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { AlertComponent } from '../../components/alert/alert.component';
+import { BadgeComponent } from '../../components/badge/badge.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
@@ -24,7 +26,7 @@ const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 @Component({
   selector: 'app-calendar',
-  imports: [NgClass, RouterLink, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent],
+  imports: [NgClass, RouterLink, AlertComponent, BadgeComponent, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
 })

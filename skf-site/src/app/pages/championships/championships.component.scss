@@ -250,67 +250,6 @@ tbody tr:hover {
   padding: 1rem;
 }
 
-.error {
-  margin: 0;
-  color: var(--danger);
-}
-
-.notice {
-  margin: 0 0 0.75rem;
-  color: #8a5a00;
-  background: rgba(243, 180, 25, 0.2);
-  border: 1px solid rgba(243, 180, 25, 0.45);
-  border-radius: 10px;
-  padding: 0.55rem 0.7rem;
-  font-size: 0.84rem;
-}
-
-.stale-warning {
-  margin: 0 0 0.75rem;
-  padding: 0.6rem 0.9rem;
-  border-radius: 8px;
-  background: rgba(185, 71, 46, 0.1);
-  border: 1px solid rgba(185, 71, 46, 0.25);
-  color: var(--danger);
-  font-size: 0.82rem;
-  font-weight: 500;
-}
-
-// ------------------------------------------------------------------
-// Main tabs (Standings / Races)
-// ------------------------------------------------------------------
-
-.main-tabs {
-  display: flex;
-  gap: 0;
-  margin-bottom: 0.85rem;
-  border-bottom: 2px solid rgba(20, 18, 15, 0.12);
-}
-
-.main-tab {
-  border: none;
-  background: none;
-  padding: 0.55rem 1.1rem;
-  font-family: var(--font-display);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  transition: color 0.15s ease, border-color 0.15s ease;
-
-  &:hover {
-    color: var(--ink);
-  }
-
-  &.active {
-    color: var(--gold-deep);
-    border-bottom-color: var(--gold-deep);
-  }
-}
 
 // ------------------------------------------------------------------
 // Races tab
@@ -387,24 +326,6 @@ tbody tr:hover {
   gap: 0.4rem;
 }
 
-.race-status-badge {
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-}
-
-.race-status--completed {
-  background: rgba(90, 185, 90, 0.15);
-  color: #3a8a3a;
-}
-
-.race-status--upcoming {
-  background: rgba(100, 180, 255, 0.15);
-  color: #4a9fd4;
-}
 
 .race-expand-icon {
   font-size: 0.72rem;

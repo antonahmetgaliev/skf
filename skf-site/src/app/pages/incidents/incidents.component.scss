@@ -209,53 +209,6 @@
   align-items: center;
 }
 
-// ── Badges ────────────────────────────────────────────────────────────────
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.2em 0.6em;
-  border-radius: 999px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-
-  &--open {
-    background: rgba(29, 127, 78, 0.12);
-    color: var(--success);
-    border: 1px solid rgba(29, 127, 78, 0.3);
-  }
-
-  &--closed {
-    background: rgba(110, 98, 86, 0.1);
-    color: var(--muted);
-    border: 1px solid rgba(110, 98, 86, 0.2);
-  }
-
-  &--pending {
-    background: rgba(243, 180, 25, 0.18);
-    color: var(--gold-deep);
-    border: 1px solid rgba(243, 180, 25, 0.35);
-  }
-
-  &--resolved {
-    background: rgba(29, 127, 78, 0.1);
-    color: var(--success);
-    border: 1px solid rgba(29, 127, 78, 0.25);
-  }
-
-  &--applied {
-    background: rgba(29, 127, 78, 0.1);
-    color: var(--success);
-    border: 1px solid rgba(29, 127, 78, 0.25);
-  }
-
-  &--bwp-pending {
-    background: rgba(220, 100, 30, 0.12);
-    color: #b84f18;
-    border: 1px solid rgba(220, 100, 30, 0.3);
-  }
-}
 
 .status-badges {
   display: flex;
@@ -312,29 +265,6 @@
   color: var(--muted);
 }
 
-// ── Detail list (used in detail and resolve modals) ────────────────────────
-.detail-list {
-  display: grid;
-  grid-template-columns: 100px 1fr;
-  gap: 0.4rem 0.75rem;
-  margin: 0;
-  font-size: 0.875rem;
-
-  dt {
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    align-self: start;
-    padding-top: 0.15rem;
-  }
-
-  dd {
-    margin: 0;
-    color: var(--ink);
-  }
-}
 
 .desc-cell {
   white-space: pre-wrap;

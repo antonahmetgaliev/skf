@@ -23,7 +23,7 @@
     @if (loading()) {
       <app-spinner />
     } @else if (errorMessage()) {
-      <p class="error">{{ errorMessage() }}</p>
+      <app-alert variant="error">{{ errorMessage() }}</app-alert>
     } @else {
       <!-- Calendar grid -->
       <div class="calendar-grid">
@@ -70,9 +70,9 @@
       @for (event of selectedDayEvents(); track event.id) {
         <div class="event-card" [ngClass]="'event-card--' + event.eventType">
           <div class="event-card-header">
-            <span class="event-type-badge" [ngClass]="'badge--' + event.eventType">
+            <app-badge [variant]="event.eventType">
               {{ getEventTypeLabel(event.eventType) }}
-            </span>
+            </app-badge>
             @if (event.game) {
               <span class="event-game">{{ event.game }}</span>
             }
@@ -116,9 +116,9 @@
       <div class="unscheduled-list">
         @for (event of unscheduledEvents(); track event.id) {
           <div class="unscheduled-item" [ngClass]="'event-card--' + event.eventType">
-            <span class="event-type-badge" [ngClass]="'badge--' + event.eventType">
+            <app-badge [variant]="event.eventType">
               {{ getEventTypeLabel(event.eventType) }}
-            </span>
+            </app-badge>
             <span class="unscheduled-name">{{ event.name }}</span>
             @if (event.simgridChampionshipId) {
               <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>

@@ -30,9 +30,9 @@
               <div class="window-item-race">{{ w.raceName }}</div>
               <div class="window-item-meta">
                 @if (w.isOpen) {
-                  <span class="badge badge--open">OPEN · {{ closesIn(w.closesAt) }}</span>
+                  <app-badge variant="open">OPEN · {{ closesIn(w.closesAt) }}</app-badge>
                 } @else {
-                  <span class="badge badge--closed">CLOSED</span>
+                  <app-badge variant="closed">CLOSED</app-badge>
                 }
               </div>
             </li>
@@ -59,10 +59,10 @@
           </div>
           <div class="detail-meta">
             @if (w.isOpen) {
-              <span class="badge badge--open">OPEN</span>
+              <app-badge variant="open">OPEN</app-badge>
               <span class="detail-closes">Closes {{ w.closesAt | date:'dd MMM yyyy HH:mm' }} UTC · {{ closesIn(w.closesAt) }} remaining</span>
             } @else {
-              <span class="badge badge--closed">CLOSED</span>
+              <app-badge variant="closed">CLOSED</app-badge>
             }
           </div>
           @if (auth.isAdmin()) {
@@ -119,15 +119,15 @@
                     <td>
                       <div class="status-badges">
                         @if (inc.status === 'resolved') {
-                          <span class="badge badge--resolved">Resolved</span>
+                          <app-badge variant="resolved">Resolved</app-badge>
                         } @else {
-                          <span class="badge badge--pending">Open</span>
+                          <app-badge variant="pending">Open</app-badge>
                         }
                         @if (inc.resolution?.bwpPoints) {
                           @if (inc.resolution?.bwpApplied) {
-                            <span class="badge badge--applied">BWP Applied</span>
+                            <app-badge variant="applied">BWP Applied</app-badge>
                           } @else {
-                            <span class="badge badge--bwp-pending">BWP Pending</span>
+                            <app-badge variant="bwp-pending">BWP Pending</app-badge>
                           }
                         }
                       </div>
@@ -312,7 +312,7 @@
   @if (rvIncident(); as inc) {
     <div class="incident-context">
       <p class="context-eyebrow">Incident context</p>
-      <dl class="detail-list">
+      <app-detail-list>
         <dt>Driver 1</dt><dd>{{ inc.driver1Name }}</dd>
         @if (inc.driver2Name) {
           <dt>Driver 2</dt><dd>{{ inc.driver2Name }}</dd>
@@ -322,7 +322,7 @@
           <dd>{{ inc.lapNumber !== null ? 'L' + inc.lapNumber : '' }}{{ (inc.lapNumber !== null && inc.turn) ? ' / ' : '' }}{{ inc.turn || '' }}</dd>
         }
         <dt>Description</dt><dd class="desc-cell">{{ inc.description }}</dd>
-      </dl>
+      </app-detail-list>
     </div>
   }
 
@@ -381,7 +381,7 @@
 <!-- ── Incident Detail Modal ─────────────────────────────────────────────── -->
 <app-modal title="Incident Detail" width="lg" [(open)]="showDetailModal">
   @if (detailIncident(); as inc) {
-    <dl class="detail-list">
+    <app-detail-list>
       <dt>Driver 1</dt><dd>{{ inc.driver1Name }}</dd>
       @if (inc.driver2Name) {
         <dt>Driver 2</dt><dd>{{ inc.driver2Name }}</dd>
@@ -397,17 +397,17 @@
       <dt>Status</dt>
       <dd>
         @if (inc.status === 'resolved') {
-          <span class="badge badge--resolved">Resolved</span>
+          <app-badge variant="resolved">Resolved</app-badge>
         } @else {
-          <span class="badge badge--pending">Open</span>
+          <app-badge variant="pending">Open</app-badge>
         }
       </dd>
-    </dl>
+    </app-detail-list>
 
     @if (inc.resolution; as r) {
       <div class="resolution-block">
         <h4 class="resolution-heading">Resolution</h4>
-        <dl class="detail-list">
+        <app-detail-list>
           <dt>Verdict</dt><dd class="desc-cell">{{ r.verdict }}</dd>
           @if (r.timePenaltySeconds !== null) {
             <dt>Time Penalty</dt><dd>{{ formatPenalty(r.timePenaltySeconds) }}</dd>
@@ -417,7 +417,7 @@
             <dd>
               {{ r.bwpPoints }}
               @if (r.bwpApplied) {
-                <span class="badge badge--applied">Applied</span>
+                <app-badge variant="applied">Applied</app-badge>
                 @if (auth.isAdmin()) {
                   <button class="btn-link btn-link--danger" type="button" (click)="unapplyBwp(inc.id); showDetailModal.set(false)">
                     Unapply
@@ -431,7 +431,7 @@
             </dd>
           }
           <dt>Resolved</dt><dd>{{ r.resolvedAt | date:'dd MMM yyyy HH:mm' }}</dd>
-        </dl>
+        </app-detail-list>
       </div>
     }
   }

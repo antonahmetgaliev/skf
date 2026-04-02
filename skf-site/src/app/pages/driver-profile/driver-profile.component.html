@@ -60,9 +60,9 @@
                 <span class="point-value">{{ point.points }} BWP</span>
                 <span>{{ point.issuedOn | date:'dd MMM yyyy' }}</span>
                 <span>{{ point.expiresOn | date:'dd MMM yyyy' }}</span>
-                <span class="status-tag" [class.status-expired]="isExpired(point.expiresOn)">
+                <app-badge [variant]="isExpired(point.expiresOn) ? 'closed' : 'open'">
                   {{ isExpired(point.expiresOn) ? 'Expired' : 'Active' }}
-                </span>
+                </app-badge>
               </div>
             }
           </div>

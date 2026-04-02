@@ -1,0 +1,27 @@
+:host {
+  display: block;
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 10px;
+  font-size: 0.84rem;
+  font-weight: 500;
+}
+
+:host(.alert--info),
+:host(.alert--warning) {
+  color: #8a5a00;
+  background: rgba(243, 180, 25, 0.2);
+  border: 1px solid rgba(243, 180, 25, 0.45);
+}
+
+:host(.alert--error) {
+  background: rgba(185, 71, 46, 0.1);
+  border: 1px solid rgba(185, 71, 46, 0.25);
+  color: var(--danger);
+}
+
+:host(.alert--success) {
+  background: rgba(29, 127, 78, 0.1);
+  border: 1px solid rgba(29, 127, 78, 0.25);
+  color: var(--success);
+}

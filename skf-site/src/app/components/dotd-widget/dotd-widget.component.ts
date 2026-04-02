@@ -8,6 +8,8 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { AlertComponent } from '../alert/alert.component';
+import { BadgeComponent } from '../badge/badge.component';
 import { BtnComponent } from '../btn/btn.component';
 import {
   DotdApiService,
@@ -23,7 +25,7 @@ import {
 @Component({
   selector: 'app-dotd-widget',
   standalone: true,
-  imports: [FormsModule, BtnComponent],
+  imports: [FormsModule, AlertComponent, BadgeComponent, BtnComponent],
   templateUrl: './dotd-widget.component.html',
   styleUrl: './dotd-widget.component.scss',
 })

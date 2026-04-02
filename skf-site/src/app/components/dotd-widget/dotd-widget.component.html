@@ -45,9 +45,9 @@
             </div>
             <div class="poll-badges">
               @if (poll.isOpen) {
-                <span class="badge badge--live">LIVE</span>
+                <app-badge variant="live">LIVE</app-badge>
               } @else {
-                <span class="badge badge--ended">ENDED</span>
+                <app-badge variant="ended">ENDED</app-badge>
               }
             @if (auth.isModerator() && poll.isOpen) {
                 <app-btn variant="danger" size="xs" (click)="closePoll(poll.id)">
@@ -64,9 +64,9 @@
 
           <!-- vote-once warning -->
           @if (poll.isOpen && auth.isLoggedIn() && !poll.hasVoted) {
-            <p class="disclaimer">
-              ⚠ You can only vote once — choose carefully!
-            </p>
+            <app-alert variant="warning">
+              You can only vote once — choose carefully!
+            </app-alert>
           }
 
           <!-- candidates -->
@@ -190,7 +190,7 @@
                [(ngModel)]="newClosesAt" />
 
         @if (createError() !== null) {
-          <p class="create-error">{{ createError() }}</p>
+          <app-alert variant="error">{{ createError() }}</app-alert>
         }
 
         <div class="modal-actions">
