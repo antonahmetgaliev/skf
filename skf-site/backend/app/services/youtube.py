@@ -35,8 +35,33 @@ class YouTubeService:
         self, *, limit: int = 10, force: bool = False,
     ) -> list[dict[str, Any]]:
         """Return recent completed live streams from the channel."""
-        cache_key = "youtube_live_streams"
+        return await self._fetch_by_event_type(
+            event_type="completed",
+            cache_key="youtube_live_streams",
+            limit=limit,
+            force=force,
+        )
 
+    async def get_upcoming_streams(
+        self, *, limit: int = 10, force: bool = False,
+    ) -> list[dict[str, Any]]:
+        """Return upcoming/scheduled live streams from the channel."""
+        return await self._fetch_by_event_type(
+            event_type="upcoming",
+            cache_key="youtube_upcoming_streams",
+            limit=limit,
+            force=force,
+        )
+
+    async def _fetch_by_event_type(
+        self,
+        *,
+        event_type: str,
+        cache_key: str,
+        limit: int = 10,
+        force: bool = False,
+    ) -> list[dict[str, Any]]:
+        """Fetch YouTube search results by eventType with caching."""
         if not force:
             cached = await self._read_cache(cache_key)
             if cached is not None:
@@ -49,7 +74,7 @@ class YouTubeService:
                     "part": "snippet",
                     "channelId": settings.youtube_channel_id,
                     "type": "video",
-                    "eventType": "completed",
+                    "eventType": event_type,
                     "order": "date",
                     "maxResults": limit,
                     "key": settings.youtube_api_key,
@@ -58,7 +83,7 @@ class YouTubeService:
             resp.raise_for_status()
             data = resp.json()
         except Exception:
-            logger.warning("YouTube search (live streams) fetch failed", exc_info=True)
+            logger.warning("YouTube search (%s) fetch failed", event_type, exc_info=True)
             stale = await self._read_stale_cache(cache_key)
             if stale is not None:
                 return stale[:limit]

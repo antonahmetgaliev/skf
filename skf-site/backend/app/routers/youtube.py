@@ -16,3 +16,11 @@ async def get_live_streams(
 ):
     """Return recent completed live streams."""
     return await youtube_service.get_live_streams(limit=limit)
+
+
+@router.get("/upcoming-streams", response_model=list[YouTubeVideo])
+async def get_upcoming_streams(
+    limit: int = Query(10, ge=1, le=50),
+):
+    """Return upcoming/scheduled live streams."""
+    return await youtube_service.get_upcoming_streams(limit=limit)
