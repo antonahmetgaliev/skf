@@ -20,4 +20,10 @@ export class MediaApiService {
       params: { limit: String(limit) },
     });
   }
+
+  getUpcomingStreams(limit = 10): Observable<YouTubeVideo[]> {
+    return this.http.get<YouTubeVideo[]>(`${this.base}/upcoming-streams`, {
+      params: { limit: String(limit) },
+    });
+  }
 }
