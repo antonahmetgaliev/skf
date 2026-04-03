@@ -29,10 +29,10 @@
 }
 
 .window-item {
-  border: 1px solid rgba(20, 18, 15, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
   padding: 0.6rem 0.75rem;
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(40, 36, 30, 0.75);
   cursor: pointer;
   transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 
@@ -90,7 +90,7 @@
   flex-wrap: wrap;
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px dashed rgba(20, 18, 15, 0.1);
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
 }
 
 .detail-title-block {
@@ -137,7 +137,7 @@
   justify-content: space-between;
   margin-bottom: 0.85rem;
   padding-bottom: 0.6rem;
-  border-bottom: 1px dashed rgba(20, 18, 15, 0.1);
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
 }
 
 .incident-count {
@@ -161,7 +161,7 @@
   th {
     text-align: left;
     padding: 0.5rem 0.75rem;
-    border-bottom: 2px solid rgba(20, 18, 15, 0.12);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.12);
     color: var(--muted);
     font-weight: 700;
     font-size: 0.68rem;
@@ -171,7 +171,7 @@
 
   td {
     padding: 0.65rem 0.75rem;
-    border-bottom: 1px dashed rgba(20, 18, 15, 0.1);
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
     color: var(--ink);
     vertical-align: middle;
   }
@@ -250,10 +250,10 @@
 
 // ── Incident context (shown in resolve modal) ─────────────────────────────
 .incident-context {
-  border: 1px solid rgba(20, 18, 15, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 0.85rem 1rem;
-  background: rgba(20, 18, 15, 0.03);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .context-eyebrow {

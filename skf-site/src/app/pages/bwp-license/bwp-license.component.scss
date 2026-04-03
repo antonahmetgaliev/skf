@@ -95,7 +95,7 @@
   gap: 0.75rem;
   align-items: center;
   padding: 0.4rem 0.4rem 0.55rem;
-  border-bottom: 1px dashed rgba(24, 20, 15, 0.12);
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
 }
 
 .rule-threshold {
@@ -136,8 +136,8 @@
   align-items: center;
   padding: 0.6rem 0.75rem;
   border-radius: 12px;
-  border: 1px solid rgba(24, 20, 15, 0.12);
-  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(40, 36, 30, 0.9);
 }
 
 .rule-input {
@@ -175,10 +175,10 @@
 }
 
 .driver {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(40, 36, 30, 0.92);
   border-radius: 12px;
   padding: 0.75rem 0.9rem;
-  border: 1px solid rgba(24, 20, 15, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .driver-header {
@@ -241,7 +241,7 @@
 .pill {
   padding: 0.25rem 0.75rem;
   border-radius: 999px;
-  background: rgba(20, 18, 15, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -263,10 +263,10 @@
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  background: rgba(249, 246, 239, 0.95);
+  background: rgba(40, 36, 30, 0.6);
   border-radius: 12px;
   padding: 0.6rem 0.8rem;
-  border: 1px solid rgba(20, 18, 15, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .point.expired {
@@ -358,7 +358,7 @@
   position: relative;
   height: 10px;
   border-radius: 999px;
-  background: rgba(20, 18, 15, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   overflow: visible;
 }
 
@@ -386,7 +386,7 @@
   width: 3px;
   height: 18px;
   border-radius: 2px;
-  background: rgba(20, 18, 15, 0.25);
+  background: rgba(255, 255, 255, 0.25);
   transition: background 0.2s ease;
 }
 

@@ -17,18 +17,18 @@
 :host(.badge--applied),
 :host(.badge--future),
 :host(.badge--completed) {
-  background: rgba(29, 127, 78, 0.12);
+  background: rgba(46, 174, 100, 0.15);
   color: var(--success);
-  border: 1px solid rgba(29, 127, 78, 0.3);
+  border: 1px solid rgba(46, 174, 100, 0.35);
 }
 
 // Gray family: ended, closed, past
 :host(.badge--ended),
 :host(.badge--closed),
 :host(.badge--past) {
-  background: rgba(110, 98, 86, 0.1);
+  background: rgba(138, 128, 120, 0.12);
   color: var(--muted);
-  border: 1px solid rgba(110, 98, 86, 0.2);
+  border: 1px solid rgba(138, 128, 120, 0.25);
 }
 
 // Gold family: pending, ongoing
@@ -41,9 +41,9 @@
 
 // Orange: bwp-pending
 :host(.badge--bwp-pending) {
-  background: rgba(220, 100, 30, 0.12);
-  color: #b84f18;
-  border: 1px solid rgba(220, 100, 30, 0.3);
+  background: rgba(220, 100, 30, 0.15);
+  color: #d4662a;
+  border: 1px solid rgba(220, 100, 30, 0.35);
 }
 
 // Blue: upcoming

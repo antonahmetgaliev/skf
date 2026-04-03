@@ -29,8 +29,8 @@
     height: 2.75rem;
     padding: 0.65rem 0.85rem;
     border-radius: 14px;
-    border: 1px solid rgba(38, 33, 27, 0.15);
-    background: #fff;
+    border: 1px solid var(--border-subtle);
+    background: var(--surface);
     color: var(--ink);
     font-size: 0.875rem;
     font-family: inherit;
@@ -47,11 +47,11 @@
     &[disabled] {
       opacity: 0.5;
       cursor: not-allowed;
-      background: rgba(0, 0, 0, 0.03);
+      background: rgba(255, 255, 255, 0.03);
     }
 
     &::placeholder {
-      color: rgba(58, 51, 40, 0.55);
+      color: var(--muted);
     }
   }
 

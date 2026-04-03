@@ -13,13 +13,13 @@
   text-decoration: none;
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 8px 16px rgba(20, 18, 15, 0.12);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
   transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
   user-select: none;
 
   &:hover:not(.btn--disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 12px 22px rgba(20, 18, 15, 0.18);
+    box-shadow: 0 12px 22px rgba(0, 0, 0, 0.35);
   }
 
   &.btn--disabled {
@@ -34,11 +34,11 @@
 
 :host(.btn--accent) {
   background: linear-gradient(135deg, var(--gold), var(--gold-deep));
-  color: #2b2214;
+  color: var(--text-on-gold);
 }
 
 :host(.btn--primary) {
-  background: linear-gradient(135deg, var(--ink), #2a2722);
+  background: linear-gradient(135deg, var(--bg-dark), #2a2722);
   color: #fff;
 }
 
@@ -49,7 +49,7 @@
 
 :host(.btn--ghost) {
   background: transparent;
-  border: 1px solid rgba(20, 18, 15, 0.2);
+  border: 1px solid var(--border-strong);
   color: var(--ink);
   box-shadow: none;
 }
@@ -67,7 +67,7 @@
   padding: 0.35rem 0.85rem;
   font-size: 0.68rem;
   letter-spacing: 0.1em;
-  box-shadow: 0 4px 10px rgba(20, 18, 15, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 :host(.btn--xs) {

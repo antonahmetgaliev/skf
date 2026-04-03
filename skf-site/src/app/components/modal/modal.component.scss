@@ -1,7 +1,7 @@
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(18, 16, 12, 0.45);
+  background: var(--overlay);
   backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
@@ -17,7 +17,7 @@
   border: 1px solid var(--card-border);
   border-radius: 24px;
   padding: 1.75rem;
-  box-shadow: 0 32px 64px rgba(10, 14, 20, 0.25);
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   gap: 0.85rem;

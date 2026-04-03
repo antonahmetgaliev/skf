@@ -9,7 +9,7 @@
 
 :host(.alert--info),
 :host(.alert--warning) {
-  color: #8a5a00;
+  color: var(--gold);
   background: rgba(243, 180, 25, 0.2);
   border: 1px solid rgba(243, 180, 25, 0.45);
 }

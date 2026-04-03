@@ -45,10 +45,10 @@ h2 {
 }
 
 .championship-button {
-  border: 1px solid rgba(20, 18, 15, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
   padding: 0.6rem 0.7rem;
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(40, 36, 30, 0.75);
   cursor: pointer;
   text-align: left;
   display: grid;
@@ -127,7 +127,7 @@ h2 {
   text-transform: uppercase;
   padding: 0.1rem 0.4rem;
   border-radius: 999px;
-  background: rgba(20, 18, 15, 0.07);
+  background: rgba(255, 255, 255, 0.07);
   color: var(--muted);
 
   .championship--active & {
@@ -141,7 +141,7 @@ h2 {
   }
 
   .championship--finished & {
-    background: rgba(20, 18, 15, 0.05);
+    background: rgba(255, 255, 255, 0.05);
     color: var(--muted);
   }
 }
@@ -151,7 +151,7 @@ h2 {
   aspect-ratio: 16 / 9;
   object-fit: cover;
   border-radius: 12px;
-  border: 1px solid rgba(20, 18, 15, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   flex-shrink: 0;
 }
 
@@ -175,10 +175,10 @@ h2 {
 }
 
 .table-wrap {
-  border: 1px solid rgba(20, 18, 15, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
   overflow: auto;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(40, 36, 30, 0.8);
 }
 
 .standings-table {
@@ -191,7 +191,7 @@ th,
 td {
   padding: 0.55rem 0.65rem;
   text-align: left;
-  border-bottom: 1px solid rgba(20, 18, 15, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   font-size: 0.84rem;
 }
 
@@ -261,14 +261,14 @@ tbody tr:hover {
 }
 
 .race-card {
-  border: 1px solid rgba(20, 18, 15, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(40, 36, 30, 0.7);
   overflow: hidden;
 }
 
 .race-card.race-completed {
-  border-color: rgba(20, 18, 15, 0.18);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .race-card-header {
@@ -338,9 +338,9 @@ tbody tr:hover {
 }
 
 .race-results-panel {
-  border-top: 1px solid rgba(20, 18, 15, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding: 0.6rem 0.8rem;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(40, 36, 30, 0.5);
 }
 
 .race-results-table {
@@ -359,10 +359,10 @@ tbody tr:hover {
 }
 
 .class-tab {
-  border: 1px solid rgba(20, 18, 15, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 999px;
   padding: 0.3rem 0.75rem;
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(40, 36, 30, 0.75);
   cursor: pointer;
   font-size: 0.72rem;
   font-weight: 700;
@@ -373,8 +373,8 @@ tbody tr:hover {
 
   &.active {
     color: var(--ink);
-    background: rgba(20, 18, 15, 0.09);
-    border-color: rgba(20, 18, 15, 0.3);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
   }
 
   // When a class-color-N variant is active, use its colour variables
@@ -397,7 +397,7 @@ tbody tr:hover {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-radius: 4px;
-  border: 1px solid var(--class-color, rgba(20, 18, 15, 0.2));
+  border: 1px solid var(--class-color, rgba(255, 255, 255, 0.2));
   color: var(--class-color, var(--ink-soft));
   background: var(--class-bg, transparent);
 }
@@ -495,7 +495,7 @@ $class-palette: #f3b419, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
   aspect-ratio: 16 / 9;
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid rgba(20, 18, 15, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   background: #0a0d14;
 }
 
@@ -533,12 +533,12 @@ $class-palette: #f3b419, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
 .giveaway-input {
   width: 4rem;
   padding: 0.3rem 0.45rem;
-  border: 1px solid rgba(20, 18, 15, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   font-size: 0.82rem;
   font-weight: 600;
   text-align: center;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--surface);
   color: var(--ink);
   outline: none;
   transition: border-color 0.2s;
@@ -604,9 +604,9 @@ $class-palette: #f3b419, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.65rem;
-  border: 1px solid rgba(20, 18, 15, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(40, 36, 30, 0.7);
   transition: background 0.15s;
 }
 
