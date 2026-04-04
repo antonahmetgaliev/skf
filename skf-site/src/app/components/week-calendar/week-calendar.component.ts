@@ -118,11 +118,14 @@ export class WeekCalendarComponent {
       const todayCompleted = completed.filter(
         (s) => toLocalDateStr(s.publishedAt) === todayStr,
       );
+      const todayUpcoming = upcoming.filter(
+        (s) => toLocalDateStr(s.publishedAt) === todayStr,
+      );
 
       // Deduplicate by videoId (upcoming → completed transition)
       const seen = new Set<string>();
       const merged: YouTubeVideo[] = [];
-      for (const s of [...upcoming, ...todayCompleted]) {
+      for (const s of [...todayUpcoming, ...todayCompleted]) {
         if (!seen.has(s.videoId)) {
           seen.add(s.videoId);
           merged.push(s);
