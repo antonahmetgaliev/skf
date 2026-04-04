@@ -119,14 +119,16 @@
               <p class="meta">Last refresh: {{ updated.toLocaleString() }}</p>
             }
           </div>
-          <div class="details-actions">
-            <app-btn variant="ghost" size="sm" (click)="openGiveawayModal()">
-              Giveaway
-            </app-btn>
-            <app-btn variant="ghost" size="sm" (click)="openStandingsExportPreview()">
-              Export 16:9
-            </app-btn>
-          </div>
+          @if (auth.isAdmin()) {
+            <div class="details-actions">
+              <app-btn variant="ghost" size="sm" (click)="openGiveawayModal()">
+                Giveaway
+              </app-btn>
+              <app-btn variant="ghost" size="sm" (click)="openStandingsExportPreview()">
+                Export 16:9
+              </app-btn>
+            </div>
+          }
         </div>
 
         @if (infoMessage()) {
