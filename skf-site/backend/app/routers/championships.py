@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from sqlalchemy import select
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import require_admin
 from app.database import get_db
+from app.models.active_championship import ActiveChampionship
 from app.models.simgrid_cache import SimgridCache
+from app.models.user import User
 from app.schemas.championship import (
     ChampionshipDetails,
     ChampionshipListItem,
@@ -25,6 +26,44 @@ from app.services.simgrid import simgrid_service
 router = APIRouter(prefix="/championships", tags=["Championships"])
 
 
+# ------------------------------------------------------------------
+# Active championships management (admin only)
+# ------------------------------------------------------------------
+
+@router.get("/active", response_model=list[int])
+async def list_active(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(ActiveChampionship.simgrid_id))
+    return list(result.scalars().all())
+
+
+@router.put("/active/{simgrid_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def add_active(
+    simgrid_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    existing = await db.get(ActiveChampionship, simgrid_id)
+    if not existing:
+        db.add(ActiveChampionship(simgrid_id=simgrid_id))
+        await db.commit()
+
+
+@router.delete("/active/{simgrid_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_active(
+    simgrid_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    await db.execute(
+        delete(ActiveChampionship).where(ActiveChampionship.simgrid_id == simgrid_id)
+    )
+    await db.commit()
+
+
+# ------------------------------------------------------------------
+# Championship list
+# ------------------------------------------------------------------
+
 @router.get("", response_model=list[ChampionshipListItem])
 async def list_championships(force: bool = Query(False), db: AsyncSession = Depends(get_db)):
     try:
@@ -32,54 +71,13 @@ async def list_championships(force: bool = Query(False), db: AsyncSession = Depe
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc))
 
-    champ_map = {item.id: item for item in items}
-
-    # Derive event_completed from cached standings.
-    # Primary signal: championship end_date is in the past (most reliable).
-    # Fallback for championships with no end_date: all races ended AND the
-    # latest race is older than 90 days (prevents false positives on in-progress
-    # seasons whose future rounds aren't cached yet).
-    result = await db.execute(
-        select(SimgridCache).where(SimgridCache.cache_key.like("standings_%"))
-    )
-    caches = result.scalars().all()
-    today_str = datetime.now(timezone.utc).date().isoformat()
-    cutoff = datetime.now(timezone.utc) - timedelta(days=90)
-
-    completed_ids: set[int] = set()
-    for cache in caches:
-        try:
-            champ_id = int(cache.cache_key.split("_", 1)[1])
-        except (ValueError, IndexError):
-            continue
-        data = cache.data
-        if not isinstance(data, dict):
-            continue
-        races = data.get("races", [])
-        if not races or not all(r.get("ended", False) for r in races):
-            continue
-        champ = champ_map.get(champ_id)
-        end_date = champ.end_date if champ else None
-        if end_date and end_date[:10] < today_str:
-            # Authoritative: championship has a past end date
-            completed_ids.add(champ_id)
-            continue
-        # Fallback: no end_date — require last race to be >90 days old
-        latest: datetime | None = None
-        for r in races:
-            dt_str = r.get("starts_at") or r.get("startsAt")
-            if dt_str:
-                try:
-                    dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
-                    if latest is None or dt > latest:
-                        latest = dt
-                except ValueError:
-                    pass
-        if latest is not None and latest <= cutoff:
-            completed_ids.add(champ_id)
+    # Championships in the active list are active; all others are finished.
+    result = await db.execute(select(ActiveChampionship.simgrid_id))
+    active_ids = set(result.scalars().all())
 
     return [
-        item.model_copy(update={"event_completed": True}) if item.id in completed_ids else item
+        item if item.id in active_ids
+        else item.model_copy(update={"event_completed": True})
         for item in items
     ]
 
@@ -91,8 +89,10 @@ async def get_champions_podium(db: AsyncSession = Depends(get_db)):
         select(SimgridCache).where(SimgridCache.cache_key.like("standings_%"))
     )
     caches = result.scalars().all()
-    today_str = datetime.now(timezone.utc).date().isoformat()
-    cutoff = datetime.now(timezone.utc) - timedelta(days=90)
+
+    # Only non-active championships are considered finished
+    active_result = await db.execute(select(ActiveChampionship.simgrid_id))
+    active_ids = set(active_result.scalars().all())
 
     try:
         championships = await simgrid_service.get_championships()
@@ -106,30 +106,11 @@ async def get_champions_podium(db: AsyncSession = Depends(get_db)):
             champ_id = int(cache.cache_key.split("_", 1)[1])
         except (ValueError, IndexError):
             continue
+        if champ_id in active_ids:
+            continue
         data = cache.data
         if not isinstance(data, dict):
             continue
-        races = data.get("races", [])
-        if not races or not all(r.get("ended", False) for r in races):
-            continue
-        champ = champ_map.get(champ_id)
-        end_date = champ.end_date if champ else None
-        if end_date and end_date[:10] < today_str:
-            pass  # authoritative finished signal — include
-        else:
-            # Fallback: require latest race >90 days old
-            latest: datetime | None = None
-            for r in races:
-                dt_str = r.get("starts_at") or r.get("startsAt")
-                if dt_str:
-                    try:
-                        dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
-                        if latest is None or dt > latest:
-                            latest = dt
-                    except ValueError:
-                        pass
-            if latest is None or latest > cutoff:
-                continue
         entries = data.get("entries", [])
         top3 = [
             e for e in entries

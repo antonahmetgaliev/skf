@@ -104,6 +104,7 @@ export class ChampionshipsComponent {
   readonly allRaces = signal<ChampionshipRace[]>([]);
   readonly loadingRaces = signal(false);
   readonly deletingCustom = signal(false);
+  readonly activeChampionshipIds = signal<Set<number>>(new Set());
 
   readonly isCustomSelected = computed(() => {
     const key = this.selectedChampionshipKey();
@@ -198,6 +199,28 @@ export class ChampionshipsComponent {
     }
   }
 
+  async toggleActive(simgridId: number): Promise<void> {
+    const ids = this.activeChampionshipIds();
+    try {
+      if (ids.has(simgridId)) {
+        await firstValueFrom(this.api.removeActiveChampionship(simgridId));
+        const next = new Set(ids);
+        next.delete(simgridId);
+        this.activeChampionshipIds.set(next);
+      } else {
+        await firstValueFrom(this.api.addActiveChampionship(simgridId));
+        this.activeChampionshipIds.set(new Set([...ids, simgridId]));
+      }
+      void this.loadChampionships();
+    } catch {
+      this.errorMessage.set('Failed to update active status.');
+    }
+  }
+
+  isChampionshipActive(simgridId: number): boolean {
+    return this.activeChampionshipIds().has(simgridId);
+  }
+
   constructor() {
     this.route.queryParams.subscribe((params) => {
       const id = params['id'];
@@ -260,13 +283,15 @@ export class ChampionshipsComponent {
     this.infoMessage.set('');
 
     try {
-      const [simgridList, customList] = await Promise.all([
+      const [simgridList, customList, activeIds] = await Promise.all([
         firstValueFrom(this.api.getChampionships()),
         this.auth.isAdmin()
           ? firstValueFrom(this.calendarApi.getCustomChampionships())
           : Promise.resolve([] as CustomChampionshipOut[]),
+        firstValueFrom(this.api.getActiveChampionships()),
       ]);
       if (token !== this.championshipsLoadToken) return;
+      this.activeChampionshipIds.set(new Set(activeIds));
 
       const entries: ChampionshipEntry[] = [
         ...customList.map((c) => ({

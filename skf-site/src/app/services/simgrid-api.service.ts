@@ -112,6 +112,18 @@ export class SimgridApiService {
   getChampionshipsPodium(): Observable<ChampionshipPodium[]> {
     return this.http.get<ChampionshipPodium[]>(`${this.apiBase}/podium`);
   }
+
+  getActiveChampionships(): Observable<number[]> {
+    return this.http.get<number[]>(`${this.apiBase}/active`);
+  }
+
+  addActiveChampionship(simgridId: number): Observable<void> {
+    return this.http.put<void>(`${this.apiBase}/active/${simgridId}`, null);
+  }
+
+  removeActiveChampionship(simgridId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiBase}/active/${simgridId}`);
+  }
 }
 
 

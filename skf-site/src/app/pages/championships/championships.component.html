@@ -121,6 +121,15 @@
           </div>
           @if (auth.isAdmin()) {
             <div class="details-actions">
+              @if (championship.id; as champId) {
+                <app-btn
+                  [variant]="isChampionshipActive(champId) ? 'danger' : 'accent'"
+                  size="sm"
+                  (click)="toggleActive(champId)"
+                >
+                  {{ isChampionshipActive(champId) ? 'Mark Finished' : 'Mark Active' }}
+                </app-btn>
+              }
               <app-btn variant="ghost" size="sm" (click)="openGiveawayModal()">
                 Giveaway
               </app-btn>

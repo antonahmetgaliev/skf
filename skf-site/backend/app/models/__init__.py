@@ -4,6 +4,7 @@ from app.models.user import Role, User, Session, ROLE_DRIVER, ROLE_ADMIN, ROLE_S
 from app.models.incidents import IncidentWindow, Incident, IncidentResolution
 from app.models.dotd import DotdPoll, DotdCandidate, DotdVote
 from app.models.custom_championship import CustomChampionship, CustomRace
+from app.models.active_championship import ActiveChampionship
 
 __all__ = [
     "Driver", "BwpPoint", "PenaltyRule", "PenaltyClearance", "SimgridCache",
@@ -12,4 +13,5 @@ __all__ = [
     "IncidentWindow", "Incident", "IncidentResolution",
     "DotdPoll", "DotdCandidate", "DotdVote",
     "CustomChampionship", "CustomRace",
+    "ActiveChampionship",
 ]
