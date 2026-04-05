@@ -176,11 +176,29 @@ class SimgridService:
                                 extra_entries = self._extract_entries_from_class_html(
                                     cls_resp.text, data.races, class_name
                                 )
-                                existing_ids = {e.id for e in data.entries}
-                                new_entries = [e for e in extra_entries if e.id not in existing_ids]
-                                if new_entries:
+                                # Build lookup of existing entries by normalized name
+                                existing_by_name: dict[str, int] = {}
+                                for idx, e in enumerate(data.entries):
+                                    existing_by_name.setdefault(self._normalize_name(e.display_name), idx)
+
+                                updated_entries = list(data.entries)
+                                new_entries: list[StandingEntry] = []
+                                for extra in extra_entries:
+                                    norm = self._normalize_name(extra.display_name)
+                                    if norm in existing_by_name:
+                                        # Enrich existing entry with class info
+                                        ei = existing_by_name[norm]
+                                        existing = updated_entries[ei]
+                                        if not existing.car_class and extra.car_class:
+                                            updated_entries[ei] = existing.model_copy(
+                                                update={"car_class": extra.car_class}
+                                            )
+                                    elif extra.id not in {e.id for e in updated_entries}:
+                                        new_entries.append(extra)
+
+                                if new_entries or updated_entries is not data.entries:
                                     data = ChampionshipStandingsData(
-                                        entries=data.entries + new_entries,
+                                        entries=updated_entries + new_entries,
                                         races=data.races,
                                         stale=data.stale,
                                     )

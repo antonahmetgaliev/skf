@@ -167,6 +167,34 @@ async def raw_detail_cache(db: AsyncSession = Depends(get_db)):
     return {"keys": list(data.keys()), "sample_values": {k: type(v).__name__ for k, v in data.items()}}
 
 
+@router.get("/raw-standings-cache/{championship_id}", include_in_schema=False)
+async def raw_standings_cache(championship_id: int, db: AsyncSession = Depends(get_db)):
+    """Debug: return the cached standings data (post-parsing)."""
+    result = await db.execute(
+        select(SimgridCache).where(
+            SimgridCache.cache_key == f"standings_{championship_id}"
+        )
+    )
+    row = result.scalars().first()
+    if not row:
+        return {"error": "no cache entry found"}
+    return row.data
+
+
+@router.get("/raw-standings-api/{championship_id}", include_in_schema=False)
+async def raw_standings_api(championship_id: int):
+    """Debug: return the raw SimGrid standings API response (unparsed)."""
+    import httpx
+    from app.config import settings
+    headers = {}
+    if settings.simgrid_api_key:
+        headers["Authorization"] = f"Bearer {settings.simgrid_api_key}"
+    async with httpx.AsyncClient(base_url=settings.simgrid_base_url, headers=headers, timeout=30.0) as client:
+        resp = await client.get(f"/api/v1/championships/{championship_id}/standings")
+        resp.raise_for_status()
+        return resp.json()
+
+
 @router.get("/driver/{simgrid_driver_id}/results", response_model=list[DriverChampionshipResult])
 async def get_driver_championship_results(
     simgrid_driver_id: int,
