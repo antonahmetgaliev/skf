@@ -145,7 +145,7 @@ async def client(engine):
 async def auth_client(engine, test_user):
     """Authenticated AsyncClient that injects ``test_user`` as current user."""
     import app.database as db_module
-    from app.auth import get_current_user
+    from app.auth import get_current_user, get_current_user_optional
     from app.database import get_db
     from app.main import app
 
@@ -159,9 +159,11 @@ async def auth_client(engine, test_user):
 
     app.dependency_overrides[get_db] = _override_db
     app.dependency_overrides[get_current_user] = lambda: test_user
+    app.dependency_overrides[get_current_user_optional] = lambda: test_user
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
     app.dependency_overrides.pop(get_db, None)
     app.dependency_overrides.pop(get_current_user, None)
+    app.dependency_overrides.pop(get_current_user_optional, None)
     db_module.async_session = original

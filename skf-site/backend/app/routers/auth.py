@@ -13,7 +13,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import SESSION_COOKIE, get_current_user
+from app.auth import SESSION_COOKIE, get_current_user, get_current_user_optional
 from app.config import settings
 from app.database import get_db
 from app.models.user import Role, Session, User, ROLE_DRIVER, ROLE_SUPER_ADMIN
@@ -194,12 +194,14 @@ async def discord_callback(
     return redirect
 
 
-@router.get("/me", response_model=UserOut)
+@router.get("/me", response_model=UserOut, responses={204: {"description": "Not authenticated"}})
 async def get_me(
-    user: User = Depends(get_current_user),
+    user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    """Return the currently authenticated user."""
+    """Return the currently authenticated user, or 204 if not logged in."""
+    if user is None:
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
     from app.models.bwp import Driver
 
     result = await db.execute(select(Driver).where(Driver.user_id == user.id))

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -74,8 +74,10 @@ export class AuthService {
 
   /** Fetch the current session user. Call once at app startup. */
   loadUser(): void {
-    this.http.get<AuthUser>('/api/auth/me').subscribe({
-      next: (user) => this.user.set(user),
+    this.http.get<AuthUser>('/api/auth/me', { observe: 'response' }).subscribe({
+      next: (res: HttpResponse<AuthUser>) => {
+        this.user.set(res.status === 204 ? null : res.body);
+      },
       error: () => this.user.set(null),
     });
   }

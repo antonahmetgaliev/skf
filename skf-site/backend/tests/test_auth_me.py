@@ -51,7 +51,7 @@ async def test_me_returns_correct_user_fields(auth_client: AsyncClient, test_use
     assert data["blocked"] is False
 
 
-async def test_me_requires_authentication(client: AsyncClient):
-    """Unauthenticated /me request returns 401."""
+async def test_me_returns_204_when_unauthenticated(client: AsyncClient):
+    """Unauthenticated /me request returns 204 with no body."""
     resp = await client.get("/api/auth/me")
-    assert resp.status_code == 401
+    assert resp.status_code == 204
