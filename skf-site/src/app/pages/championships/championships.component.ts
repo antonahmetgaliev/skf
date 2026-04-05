@@ -257,15 +257,6 @@ export class ChampionshipsComponent {
       }
     });
     void this.loadChampionships();
-    this.bwpApi.getDrivers().subscribe({
-      next: (drivers) => {
-        const m = new Map<number, string>();
-        for (const d of drivers) {
-          if (d.simgridDriverId != null) m.set(d.simgridDriverId, d.id);
-        }
-        this.driverUuidBySimgridId.set(m);
-      },
-    });
   }
 
   private getStatusOrder(entry: ChampionshipEntry): number {
@@ -408,6 +399,7 @@ export class ChampionshipsComponent {
     } else if (entry?.source === 'simgrid' && entry.simgridItem) {
       this.selectedCustomChampionship.set(null);
       this.participants.set([]);
+      this.allRaces.set([]);
       const isUpcoming = this.getStatusOrder(entry) === 1;
       this.activeTab.set(isUpcoming ? 'races' : 'standings');
       const simgridId = entry.simgridItem.id;
@@ -416,18 +408,25 @@ export class ChampionshipsComponent {
         queryParamsHandling: 'merge',
         replaceUrl,
       });
-      await this.loadStandings(simgridId);
+      if (isUpcoming) {
+        await this.loadChampionshipDetails(simgridId);
+        void this.loadAllRaces(simgridId);
+      } else {
+        await this.loadStandings(simgridId);
+      }
     }
   }
 
   setActiveTab(tab: 'standings' | 'races' | 'participants'): void {
     this.activeTab.set(tab);
     this.expandedRaceIndex.set(null);
-    if (tab === 'participants') {
-      const simgridId = this.getSelectedSimgridId();
-      if (simgridId !== null && this.participants().length === 0) {
-        void this.loadParticipants(simgridId);
-      }
+    const simgridId = this.getSelectedSimgridId();
+    if (simgridId === null) return;
+    if (tab === 'races' && this.allRaces().length === 0) {
+      void this.loadAllRaces(simgridId);
+    }
+    if (tab === 'participants' && this.participants().length === 0) {
+      void this.loadParticipants(simgridId);
     }
   }
 
@@ -1315,7 +1314,6 @@ export class ChampionshipsComponent {
       this.standings.set(cached.entries);
       this.races.set(cached.races);
       this.lastUpdated.set(cached.fetchedAt);
-      void this.loadAllRaces(championshipId);
       return;
     }
 
@@ -1343,9 +1341,8 @@ export class ChampionshipsComponent {
       this.races.set(standingsData.races);
       this.staleWarning.set(standingsData.stale ?? false);
       this.lastUpdated.set(fetchedAt);
+      this.ensureDriverMapLoaded();
 
-      // Fetch full race list (including future races) in background
-      void this.loadAllRaces(championshipId);
       this.standingsCache.set(championshipId, {
         details,
         entries: standingsData.entries,
@@ -1384,6 +1381,26 @@ export class ChampionshipsComponent {
     }
   }
 
+  private async loadChampionshipDetails(championshipId: number): Promise<void> {
+    this.loadingStandings.set(true);
+    this.errorMessage.set('');
+    try {
+      const details = await firstValueFrom(this.api.getChampionshipById(championshipId));
+      if (this.getSelectedSimgridId() === championshipId) {
+        this.selectedChampionship.set(details);
+        this.standings.set([]);
+        this.races.set([]);
+      }
+    } catch (error) {
+      if (this.getSelectedSimgridId() === championshipId) {
+        this.errorMessage.set(this.toErrorMessage(error));
+        this.selectedChampionship.set(null);
+      }
+    } finally {
+      this.loadingStandings.set(false);
+    }
+  }
+
   private async loadParticipants(championshipId: number): Promise<void> {
     this.loadingParticipants.set(true);
     try {
@@ -1398,6 +1415,22 @@ export class ChampionshipsComponent {
     } finally {
       this.loadingParticipants.set(false);
     }
+  }
+
+  private driverMapLoaded = false;
+
+  private ensureDriverMapLoaded(): void {
+    if (this.driverMapLoaded) return;
+    this.driverMapLoaded = true;
+    this.bwpApi.getDrivers().subscribe({
+      next: (drivers) => {
+        const m = new Map<number, string>();
+        for (const d of drivers) {
+          if (d.simgridDriverId != null) m.set(d.simgridDriverId, d.id);
+        }
+        this.driverUuidBySimgridId.set(m);
+      },
+    });
   }
 
   private async loadAllRaces(championshipId: number): Promise<void> {
