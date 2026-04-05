@@ -263,11 +263,12 @@ export class ChampionshipsComponent {
     if (entry.source === 'custom') return -1; // custom always on top
     const item = entry.simgridItem!;
     const today = new Date().toISOString().slice(0, 10);
-    if (item.startDate && item.startDate.slice(0, 10) > today) return 1;
-    if (item.eventCompleted) return 3;
-    if (item.endDate && item.endDate.slice(0, 10) < today) return 3;
-    if (item.startDate && item.startDate.slice(0, 10) <= today) return 0;
-    if (item.acceptingRegistrations) return 0;
+    if (item.startDate && item.startDate.slice(0, 10) > today) return 1; // upcoming
+    if (item.eventCompleted) return 3; // finished
+    if (item.endDate && item.endDate.slice(0, 10) < today) return 3; // finished
+    if (item.startDate && item.startDate.slice(0, 10) <= today) return 0; // active
+    // No start date: if accepting registrations, treat as upcoming (not yet started)
+    if (item.acceptingRegistrations) return 1;
     return 2;
   }
 
