@@ -40,6 +40,10 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+
+  &.champs-only {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 /* ── Panels ── */
@@ -261,7 +265,6 @@
 .champ-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem;
   padding: 0.65rem 0.75rem;
   border-radius: 12px;
@@ -276,11 +279,20 @@
   }
 }
 
+.champ-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
 .champ-info {
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
   min-width: 0;
+  flex: 1;
 }
 
 .champ-name {
@@ -297,6 +309,38 @@
   color: var(--muted);
 }
 
+/* ── Progress bar ── */
+.champ-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--separator);
+  border-radius: 2px;
+  overflow: hidden;
+  max-width: 80px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.progress-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 .champ-status {
   display: flex;
   flex-direction: column;
@@ -309,6 +353,81 @@
   font-size: 0.68rem;
   color: var(--muted);
   white-space: nowrap;
+}
+
+/* ── Next race panel (empty week state) ── */
+.next-race-panel {
+  border-color: var(--gold-deep);
+  background: linear-gradient(
+    135deg,
+    rgba(243, 180, 25, 0.06) 0%,
+    var(--card-bg) 100%
+  );
+}
+
+.next-race-card {
+  display: flex;
+  gap: 1rem;
+  text-decoration: none;
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(243, 180, 25, 0.25);
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    border-color: rgba(243, 180, 25, 0.5);
+    background: var(--surface-hover);
+  }
+}
+
+.next-race-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.next-race-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.next-race-countdown {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.next-race-name {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.next-race-track {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.next-race-date {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gold-deep);
+  margin: 0;
 }
 
 /* ── Shared ── */
@@ -330,5 +449,4 @@
   .schedule-grid {
     grid-template-columns: 1fr;
   }
-
 }

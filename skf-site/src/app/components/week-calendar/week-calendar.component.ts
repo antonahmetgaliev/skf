@@ -32,7 +32,18 @@ interface ChampionshipSummary {
   nextRaceDate: string | null;
   nextRaceTrack: string | null;
   totalRaces: number;
+  completedRaces: number;
   simgridChampionshipId: number | null;
+  customChampionshipId: string | null;
+}
+
+interface NextRaceInfo {
+  championshipName: string;
+  track: string | null;
+  date: Date;
+  image: string | null;
+  simgridChampionshipId: number | null;
+  customChampionshipId: string | null;
 }
 
 @Component({
@@ -50,9 +61,14 @@ export class WeekCalendarComponent {
   readonly weekRaces = signal<WeekRace[]>([]);
   readonly championships = signal<ChampionshipSummary[]>([]);
   readonly todayBroadcasts = signal<YouTubeVideo[]>([]);
+  readonly nextRace = signal<NextRaceInfo | null>(null);
 
   readonly hasTodayContent = computed(() =>
     this.todayRaces().length > 0 || this.todayBroadcasts().length > 0,
+  );
+
+  readonly hasWeekContent = computed(() =>
+    this.hasTodayContent() || this.weekRaces().length > 0,
   );
 
   constructor() {
@@ -100,6 +116,11 @@ export class WeekCalendarComponent {
       // Build championship summaries
       const champs = this.buildChampionshipSummaries(events, todayStr);
       this.championships.set(champs);
+
+      // Find the next upcoming race across all championships (for empty-week state)
+      if (restOfWeek.length === 0 && today.length === 0) {
+        this.nextRace.set(this.findNextRace(events, todayStr));
+      }
     } finally {
       this.loading.set(false);
     }
@@ -212,13 +233,17 @@ export class WeekCalendarComponent {
     for (const ev of events) {
       if (ev.eventType !== 'ongoing' && ev.eventType !== 'upcoming') continue;
 
-      // Find next upcoming race
+      // Find next upcoming race and count completed
       let nextRaceDate: string | null = null;
       let nextRaceTrack: string | null = null;
+      let completedRaces = 0;
 
       for (const race of ev.races) {
         if (!race.date) continue;
         const raceDay = toLocalDateStr(race.date);
+        if (raceDay < todayStr) {
+          completedRaces++;
+        }
         if (raceDay >= todayStr) {
           if (!nextRaceDate || race.date < nextRaceDate) {
             nextRaceDate = race.date;
@@ -237,7 +262,9 @@ export class WeekCalendarComponent {
         nextRaceDate,
         nextRaceTrack,
         totalRaces: ev.races.length,
+        completedRaces,
         simgridChampionshipId: ev.simgridChampionshipId,
+        customChampionshipId: ev.customChampionshipId,
       });
     }
 
@@ -258,6 +285,43 @@ export class WeekCalendarComponent {
   formatChampDate(iso: string): string {
     const d = new Date(iso);
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  }
+
+  champQueryParams(champ: ChampionshipSummary): Record<string, string> {
+    return { id: String(champ.simgridChampionshipId ?? champ.customChampionshipId ?? '') };
+  }
+
+  daysUntil(date: Date): number {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const target = new Date(date);
+    target.setHours(0, 0, 0, 0);
+    return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  private findNextRace(events: CalendarEvent[], todayStr: string): NextRaceInfo | null {
+    let best: NextRaceInfo | null = null;
+    for (const ev of events) {
+      if (ev.eventType !== 'ongoing' && ev.eventType !== 'upcoming') continue;
+      for (const race of ev.races) {
+        if (!race.date) continue;
+        const raceDay = toLocalDateStr(race.date);
+        if (raceDay > todayStr) {
+          const d = new Date(race.date);
+          if (!best || d < best.date) {
+            best = {
+              championshipName: ev.name,
+              track: race.track,
+              date: d,
+              image: ev.image,
+              simgridChampionshipId: ev.simgridChampionshipId,
+              customChampionshipId: ev.customChampionshipId,
+            };
+          }
+        }
+      }
+    }
+    return best;
   }
 
   private toDateStr(date: Date): string {

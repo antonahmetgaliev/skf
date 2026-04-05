@@ -5,7 +5,7 @@
   @if (loading()) {
     <div class="loader"><app-spinner /></div>
   } @else {
-    <div class="schedule-grid">
+    <div class="schedule-grid" [class.champs-only]="!hasWeekContent()">
 
       <!-- ── Today's races + broadcasts ── -->
       @if (hasTodayContent()) {
@@ -57,36 +57,38 @@
       }
 
       <!-- ── This week's races ── -->
-      <div class="schedule-panel week-panel">
-        <div class="panel-label">This Week</div>
+      @if (hasWeekContent()) {
+        <div class="schedule-panel week-panel">
+          <div class="panel-label">This Week</div>
 
-        @if (weekRaces().length > 0) {
-          <div class="week-races">
-            @for (race of weekRaces(); track race.championshipName + race.date) {
-              <div class="week-race-row">
-                <div class="week-race-date">
-                  <span class="week-race-day">{{ formatDate(race.date) }}</span>
-                  @if (race.time) {
-                    <span class="week-race-time">{{ race.time }}</span>
-                  }
+          @if (weekRaces().length > 0) {
+            <div class="week-races">
+              @for (race of weekRaces(); track race.championshipName + race.date) {
+                <div class="week-race-row">
+                  <div class="week-race-date">
+                    <span class="week-race-day">{{ formatDate(race.date) }}</span>
+                    @if (race.time) {
+                      <span class="week-race-time">{{ race.time }}</span>
+                    }
+                  </div>
+                  <div class="week-race-info">
+                    <span class="week-race-champ">{{ race.championshipName }}</span>
+                    @if (race.track) {
+                      <span class="week-race-track">{{ race.track }}</span>
+                    }
+                  </div>
                 </div>
-                <div class="week-race-info">
-                  <span class="week-race-champ">{{ race.championshipName }}</span>
-                  @if (race.track) {
-                    <span class="week-race-track">{{ race.track }}</span>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-        } @else {
-          <p class="empty-hint">No more races this week</p>
-        }
-      </div>
+              }
+            </div>
+          } @else {
+            <p class="empty-hint">No more races this week</p>
+          }
+        </div>
+      }
 
       <!-- ── Championships ── -->
       @if (championships().length > 0) {
-        <div class="schedule-panel champs-panel">
+        <div class="schedule-panel champs-panel" [class.champs-full]="!hasWeekContent()">
           <div class="panel-label">Championships</div>
 
           <div class="champs-list">
@@ -94,7 +96,16 @@
               <a
                 class="champ-row"
                 routerLink="/championships"
+                [queryParams]="champQueryParams(champ)"
               >
+                @if (champ.image) {
+                  <img
+                    class="champ-image"
+                    [src]="champ.image"
+                    [alt]="champ.name"
+                    loading="lazy"
+                  />
+                }
                 <div class="champ-info">
                   <span class="champ-name">{{ champ.name }}</span>
                   <span class="champ-meta">
@@ -103,6 +114,17 @@
                       · {{ champ.carClass }}
                     }
                   </span>
+                  @if (champ.eventType === 'ongoing' && champ.totalRaces > 0) {
+                    <div class="champ-progress">
+                      <div class="progress-bar">
+                        <div
+                          class="progress-fill"
+                          [style.width.%]="(champ.completedRaces / champ.totalRaces) * 100"
+                        ></div>
+                      </div>
+                      <span class="progress-label">Round {{ champ.completedRaces + 1 }}/{{ champ.totalRaces }}</span>
+                    </div>
+                  }
                 </div>
                 <div class="champ-status">
                   <app-badge [variant]="champ.eventType">{{ champ.eventType }}</app-badge>
@@ -115,6 +137,40 @@
               </a>
             }
           </div>
+        </div>
+      }
+
+      <!-- ── Next race card (shown when no races this week) ── -->
+      @if (!hasWeekContent() && nextRace(); as next) {
+        <div class="schedule-panel next-race-panel">
+          <div class="panel-label">Up Next</div>
+          <a
+            class="next-race-card"
+            routerLink="/calendar"
+          >
+            @if (next.image) {
+              <img
+                class="next-race-image"
+                [src]="next.image"
+                [alt]="next.championshipName"
+                loading="lazy"
+              />
+            }
+            <div class="next-race-body">
+              <span class="next-race-countdown">
+                @if (daysUntil(next.date) === 1) {
+                  Tomorrow
+                } @else {
+                  In {{ daysUntil(next.date) }} days
+                }
+              </span>
+              <h3 class="next-race-name">{{ next.championshipName }}</h3>
+              @if (next.track) {
+                <p class="next-race-track">{{ next.track }}</p>
+              }
+              <p class="next-race-date">{{ formatDate(next.date) }}</p>
+            </div>
+          </a>
         </div>
       }
 
