@@ -53,18 +53,11 @@ class SimgridService:
             if cached is not None:
                 return [ChampionshipListItem(**item) for item in cached]
 
-        try:
-            resp = await self._client.get(
-                "/api/v1/championships",
-                params={"limit": limit, "offset": 0},
-            )
-            resp.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            if exc.response.status_code == 429:
-                stale = await self._read_stale_cache(cache_key)
-                if stale is not None:
-                    return [ChampionshipListItem(**item) for item in stale]
-            raise
+        resp = await self._client.get(
+            "/api/v1/championships",
+            params={"limit": limit, "offset": 0},
+        )
+        resp.raise_for_status()
         items = resp.json()
         await self._write_cache(cache_key, items)
         return [ChampionshipListItem(**item) for item in items]
@@ -77,15 +70,8 @@ class SimgridService:
             if cached is not None:
                 return ChampionshipDetails(**cached)
 
-        try:
-            resp = await self._client.get(f"/api/v1/championships/{championship_id}")
-            resp.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            if exc.response.status_code == 429:
-                stale = await self._read_stale_cache(cache_key)
-                if stale is not None:
-                    return ChampionshipDetails(**stale)
-            raise
+        resp = await self._client.get(f"/api/v1/championships/{championship_id}")
+        resp.raise_for_status()
         raw = resp.json()
         await self._write_cache(cache_key, raw)
         return ChampionshipDetails(**raw)
@@ -99,18 +85,11 @@ class SimgridService:
             if cached is not None:
                 return cached if isinstance(cached, list) else []
 
-        try:
-            resp = await self._client.get(
-                "/api/v1/races",
-                params={"championship_id": championship_id},
-            )
-            resp.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            if exc.response.status_code == 429:
-                stale = await self._read_stale_cache(cache_key)
-                if stale is not None:
-                    return stale if isinstance(stale, list) else []
-            raise
+        resp = await self._client.get(
+            "/api/v1/races",
+            params={"championship_id": championship_id},
+        )
+        resp.raise_for_status()
 
         data = resp.json()
         items = data if isinstance(data, list) else (data.get("races") if isinstance(data, dict) else [])
@@ -125,17 +104,10 @@ class SimgridService:
             if cached is not None:
                 return ChampionshipStandingsData(**cached)
 
-        try:
-            resp = await self._client.get(
-                f"/api/v1/championships/{championship_id}/standings"
-            )
-            resp.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            if exc.response.status_code == 429:
-                stale = await self._read_stale_cache(cache_key)
-                if stale is not None:
-                    return ChampionshipStandingsData(**stale).model_copy(update={"stale": True})
-            raise
+        resp = await self._client.get(
+            f"/api/v1/championships/{championship_id}/standings"
+        )
+        resp.raise_for_status()
 
         payload = resp.json()
         data = self._parse_standings(payload)
@@ -331,22 +303,6 @@ class SimgridService:
                 return row.data  # type: ignore[return-value]
         except Exception:
             logger.warning("DB cache read failed for key=%s", key, exc_info=True)
-            return None
-
-    async def _read_stale_cache(self, key: str) -> dict | list | None:
-        """Return cached JSON data ignoring TTL (used as fallback on 429)."""
-        try:
-            async with async_session() as session:
-                row = (
-                    await session.execute(
-                        select(SimgridCache).where(SimgridCache.cache_key == key)
-                    )
-                ).scalar_one_or_none()
-                if row is None:
-                    return None
-                return row.data  # type: ignore[return-value]
-        except Exception:
-            logger.warning("DB stale cache read failed for key=%s", key, exc_info=True)
             return None
 
     async def _write_cache(self, key: str, data: Any) -> None:
