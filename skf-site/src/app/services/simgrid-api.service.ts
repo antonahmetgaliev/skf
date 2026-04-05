@@ -82,6 +82,13 @@ export interface ChampionshipPodium {
   podium: PodiumEntry[];
 }
 
+export interface ParticipatingUser {
+  userId: number;
+  username: string;
+  steam64Id: string | null;
+  discordUid: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SimgridApiService {
   private readonly http = inject(HttpClient);
@@ -123,6 +130,12 @@ export class SimgridApiService {
 
   removeActiveChampionship(simgridId: number): Observable<void> {
     return this.http.delete<void>(`${this.apiBase}/active/${simgridId}`);
+  }
+
+  getChampionshipParticipants(championshipId: number): Observable<ParticipatingUser[]> {
+    return this.http.get<ParticipatingUser[]>(
+      `${this.apiBase}/${championshipId}/participants`
+    );
   }
 }
 

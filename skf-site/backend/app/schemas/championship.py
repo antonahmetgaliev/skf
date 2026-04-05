@@ -155,3 +155,10 @@ class ChampionshipPodium(CamelModel):
     championship_id: int
     championship_name: str
     podium: list[PodiumEntry] = []
+
+
+class ParticipatingUser(CamelModel):
+    user_id: int
+    username: str
+    steam64_id: str | None = None
+    discord_uid: str | None = None

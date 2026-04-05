@@ -9,6 +9,7 @@ import {
   ChampionshipDetails,
   ChampionshipListItem,
   ChampionshipRace,
+  ParticipatingUser,
   SimgridApiService,
   StandingEntry,
   StandingRace
@@ -99,16 +100,37 @@ export class ChampionshipsComponent {
   readonly staleWarning = signal(false);
   readonly lastUpdated = signal<Date | null>(null);
   readonly driverUuidBySimgridId = signal<Map<number, string>>(new Map());
-  readonly activeTab = signal<'standings' | 'races'>('standings');
+  readonly activeTab = signal<'standings' | 'races' | 'participants'>('standings');
   readonly expandedRaceIndex = signal<number | null>(null);
   readonly allRaces = signal<ChampionshipRace[]>([]);
   readonly loadingRaces = signal(false);
   readonly deletingCustom = signal(false);
   readonly activeChampionshipIds = signal<Set<number>>(new Set());
+  readonly participants = signal<ParticipatingUser[]>([]);
+  readonly loadingParticipants = signal(false);
 
   readonly isCustomSelected = computed(() => {
     const key = this.selectedChampionshipKey();
     return key !== null && key.startsWith('custom-');
+  });
+
+  readonly isUpcomingChampionship = computed(() => {
+    const entry = this.championships().find(e => e.key === this.selectedChampionshipKey());
+    if (!entry || entry.source !== 'simgrid' || !entry.simgridItem) return false;
+    return this.getStatusOrder(entry) === 1;
+  });
+
+  readonly availableTabs = computed(() => {
+    if (this.isUpcomingChampionship()) {
+      return [
+        { key: 'races', label: 'Races' },
+        { key: 'participants', label: 'Participants' },
+      ];
+    }
+    return [
+      { key: 'standings', label: 'Standings' },
+      { key: 'races', label: 'Races' },
+    ];
   });
 
   // Admin: create custom championship
@@ -385,7 +407,9 @@ export class ChampionshipsComponent {
       });
     } else if (entry?.source === 'simgrid' && entry.simgridItem) {
       this.selectedCustomChampionship.set(null);
-      this.activeTab.set('standings');
+      this.participants.set([]);
+      const isUpcoming = this.getStatusOrder(entry) === 1;
+      this.activeTab.set(isUpcoming ? 'races' : 'standings');
       const simgridId = entry.simgridItem.id;
       void this.router.navigate([], {
         queryParams: { id: simgridId },
@@ -396,9 +420,15 @@ export class ChampionshipsComponent {
     }
   }
 
-  setActiveTab(tab: 'standings' | 'races'): void {
+  setActiveTab(tab: 'standings' | 'races' | 'participants'): void {
     this.activeTab.set(tab);
     this.expandedRaceIndex.set(null);
+    if (tab === 'participants') {
+      const simgridId = this.getSelectedSimgridId();
+      if (simgridId !== null && this.participants().length === 0) {
+        void this.loadParticipants(simgridId);
+      }
+    }
   }
 
   toggleRaceExpansion(raceIndex: number): void {
@@ -1351,6 +1381,22 @@ export class ChampionshipsComponent {
       if (token === this.standingsLoadToken) {
         this.loadingStandings.set(false);
       }
+    }
+  }
+
+  private async loadParticipants(championshipId: number): Promise<void> {
+    this.loadingParticipants.set(true);
+    try {
+      const users = await firstValueFrom(this.api.getChampionshipParticipants(championshipId));
+      if (this.getSelectedSimgridId() === championshipId) {
+        this.participants.set(users);
+      }
+    } catch {
+      if (this.getSelectedSimgridId() === championshipId) {
+        this.participants.set([]);
+      }
+    } finally {
+      this.loadingParticipants.set(false);
     }
   }
 

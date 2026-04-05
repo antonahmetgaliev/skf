@@ -20,8 +20,10 @@ from app.models.simgrid_cache import SimgridCache
 from app.schemas.championship import (
     ChampionshipDetails,
     ChampionshipListItem,
+    ChampionshipRace,
     ChampionshipStandingsData,
     DriverRaceResult,
+    ParticipatingUser,
     StandingEntry,
     StandingRace,
 )
@@ -45,62 +47,64 @@ class SimgridService:
     # Public API
     # ------------------------------------------------------------------
 
-    async def get_championships(self, limit: int = 200, *, force: bool = False) -> list[ChampionshipListItem]:
-        cache_key = f"championships_list_{limit}"
-
+    async def get_championships(
+        self, limit: int = 200, *, force: bool = False
+    ) -> list[ChampionshipListItem]:
+        key = f"championships_list_{limit}"
         if not force:
-            cached = await self._read_cache(cache_key)
+            cached = await self._read_cache(key)
             if cached is not None:
                 return [ChampionshipListItem(**item) for item in cached]
 
         resp = await self._client.get(
-            "/api/v1/championships",
-            params={"limit": limit, "offset": 0},
+            "/api/v1/championships", params={"limit": limit, "offset": 0}
         )
         resp.raise_for_status()
         items = resp.json()
-        await self._write_cache(cache_key, items)
+        await self._write_cache(key, items)
         return [ChampionshipListItem(**item) for item in items]
 
-    async def get_championship(self, championship_id: int, *, force: bool = False) -> ChampionshipDetails:
-        cache_key = f"championship_{championship_id}"
-
+    async def get_championship(
+        self, championship_id: int, *, force: bool = False
+    ) -> ChampionshipDetails:
+        key = f"championship_{championship_id}"
         if not force:
-            cached = await self._read_cache(cache_key)
+            cached = await self._read_cache(key)
             if cached is not None:
                 return ChampionshipDetails(**cached)
 
-        resp = await self._client.get(f"/api/v1/championships/{championship_id}")
+        resp = await self._client.get(
+            f"/api/v1/championships/{championship_id}"
+        )
         resp.raise_for_status()
         raw = resp.json()
-        await self._write_cache(cache_key, raw)
+        await self._write_cache(key, raw)
         return ChampionshipDetails(**raw)
 
-    async def get_races(self, championship_id: int, *, force: bool = False) -> list[dict]:
-        """Fetch ALL races for a championship (including future ones)."""
-        cache_key = f"races_{championship_id}"
-
+    async def get_races(
+        self, championship_id: int, *, force: bool = False
+    ) -> list[dict]:
+        key = f"races_{championship_id}"
         if not force:
-            cached = await self._read_cache(cache_key)
+            cached = await self._read_cache(key)
             if cached is not None:
                 return cached if isinstance(cached, list) else []
 
         resp = await self._client.get(
-            "/api/v1/races",
-            params={"championship_id": championship_id},
+            "/api/v1/races", params={"championship_id": championship_id}
         )
         resp.raise_for_status()
-
         data = resp.json()
-        items = data if isinstance(data, list) else (data.get("races") if isinstance(data, dict) else [])
-        await self._write_cache(cache_key, items)
+        items = data if isinstance(data, list) else []
+        await self._write_cache(key, items)
         return items
 
-    async def get_standings(self, championship_id: int, *, force: bool = False) -> ChampionshipStandingsData:
-        cache_key = f"standings_{championship_id}"
-
+    async def get_standings(
+        self, championship_id: int, *, force: bool = False
+    ) -> ChampionshipStandingsData:
+        key = f"standings_{championship_id}"
         if not force:
-            cached = await self._read_cache(cache_key)
+            cached = await self._read_cache(key)
             if cached is not None:
                 return ChampionshipStandingsData(**cached)
 
@@ -108,15 +112,30 @@ class SimgridService:
             f"/api/v1/championships/{championship_id}/standings"
         )
         resp.raise_for_status()
-
-        payload = resp.json()
-        data = self._parse_standings(payload)
-
-        await self._write_cache(cache_key, data.model_dump())
+        data = self._parse_standings(resp.json())
+        await self._write_cache(key, data.model_dump())
         return data
 
+    async def get_participating_users(
+        self, championship_id: int, *, force: bool = False
+    ) -> list[ParticipatingUser]:
+        key = f"participants_{championship_id}"
+        if not force:
+            cached = await self._read_cache(key)
+            if cached is not None:
+                return [ParticipatingUser(**u) for u in cached]
+
+        resp = await self._client.get(
+            f"/api/v1/championships/{championship_id}/participating_users"
+        )
+        resp.raise_for_status()
+        raw = resp.json()
+        items = raw if isinstance(raw, list) else []
+        await self._write_cache(key, items)
+        return [ParticipatingUser(**u) for u in items]
+
     # ------------------------------------------------------------------
-    # Standings parsing (ported from Angular SimgridApiService)
+    # Standings parsing
     # ------------------------------------------------------------------
 
     def _parse_standings(self, payload: Any) -> ChampionshipStandingsData:
@@ -124,7 +143,11 @@ class SimgridService:
             return ChampionshipStandingsData()
 
         races = self._parse_races(payload[1] if len(payload) > 1 else None)
-        entries_raw = payload[0] if len(payload) > 0 and isinstance(payload[0], list) else []
+        entries_raw = (
+            payload[0]
+            if len(payload) > 0 and isinstance(payload[0], list)
+            else []
+        )
         entries = sorted(
             [self._parse_entry(e, races) for e in entries_raw],
             key=lambda e: (
@@ -144,47 +167,54 @@ class SimgridService:
                 continue
             result.append(
                 StandingRace(
-                    id=self._to_int(item.get("id")),
-                    display_name=self._to_text(
-                        item.get("display_name") or item.get("race_name"), "Race"
+                    id=int(item.get("id", 0)),
+                    display_name=(
+                        item.get("display_name")
+                        or item.get("race_name")
+                        or "Race"
                     ),
-                    starts_at=self._to_nullable_text(item.get("starts_at")),
+                    starts_at=item.get("starts_at"),
                     results_available=bool(item.get("results_available")),
                     ended=bool(item.get("ended")),
                 )
             )
         return result
 
-    def _parse_entry(self, raw: dict[str, Any], races: list[StandingRace]) -> StandingEntry:
-        partial = (
-            raw.get("partial_standings")
-            if isinstance(raw.get("partial_standings"), list)
-            and len(raw.get("partial_standings", []))
-            else raw.get("overall_partial_standings")
-        )
+    def _parse_entry(
+        self, raw: dict[str, Any], races: list[StandingRace]
+    ) -> StandingEntry:
+        partial = raw.get("partial_standings")
+        if not isinstance(partial, list) or not partial:
+            partial = raw.get("overall_partial_standings")
+
         participant = raw.get("participant") or {}
-        # "class" is the most common field name in SimGrid responses
         champ_class = raw.get("championship_car_class") or {}
-        car_class = self._to_text(
+        car_class = (
             raw.get("class")
-            or raw.get("class_name")
-            or raw.get("car_class_name")
             or raw.get("car_class")
-            or raw.get("category_name")
             or raw.get("category")
-            or (champ_class.get("display_name") if isinstance(champ_class, dict) else None),
-            "",
+            or (
+                champ_class.get("display_name")
+                if isinstance(champ_class, dict)
+                else None
+            )
+            or ""
         )
+
+        points = self._num(raw.get("championship_points"), 0.0)
+        penalties = self._num(raw.get("championship_penalties"), 0.0)
+        score = self._num(raw.get("championship_score"), 0.0)
+
         return StandingEntry(
-            id=self._to_int(raw.get("user_id") or raw.get("id")),
-            position=self._to_nullable_int(raw.get("position_cache")),
-            display_name=self._to_text(raw.get("display_name"), "Unknown driver"),
-            country_code=self._to_text(participant.get("country_code"), ""),
-            car=self._to_text(raw.get("car"), ""),
+            id=int(raw.get("user_id") or raw.get("id") or 0),
+            position=self._opt_int(raw.get("position_cache")),
+            display_name=raw.get("display_name") or "Unknown driver",
+            country_code=participant.get("country_code") or "",
+            car=raw.get("car") or "",
             car_class=car_class,
-            points=self._to_float(raw.get("championship_points")),
-            penalties=self._to_float(raw.get("championship_penalties")),
-            score=self._to_float(raw.get("championship_score")),
+            points=points,
+            penalties=penalties,
+            score=score,
             race_results=self._parse_race_results(partial, races),
         )
 
@@ -195,102 +225,79 @@ class SimgridService:
             return []
         results: list[DriverRaceResult] = []
         for idx, item in enumerate(value):
+            race_id = races[idx].id if idx < len(races) else None
+
             if isinstance(item, (int, float)):
                 results.append(
                     DriverRaceResult(
-                        race_id=races[idx].id if idx < len(races) else None,
+                        race_id=race_id,
                         race_index=idx,
-                        points=None,
                         position=int(item) if item == item else None,
                     )
                 )
                 continue
+
             if not isinstance(item, dict):
                 results.append(
-                    DriverRaceResult(race_id=None, race_index=idx, points=None, position=None)
+                    DriverRaceResult(race_id=race_id, race_index=idx)
                 )
                 continue
-            pts = (
-                item.get("points")
-                or item.get("championship_points")
-                or item.get("score")
-                or item.get("championship_score")
-            )
-            race_id_candidate = (
-                item.get("race_id") or item.get("raceId") or item.get("id")
-            )
-            if race_id_candidate is None and idx < len(races):
-                race_id_candidate = races[idx].id
-            pos = item.get("position") or item.get("position_cache") or item.get("rank")
+
+            pts = item.get("points") or item.get("championship_points")
+            pos = item.get("position") or item.get("position_cache")
+            rid = item.get("race_id") or item.get("id")
+            if rid is None:
+                rid = race_id
+
             results.append(
                 DriverRaceResult(
-                    race_id=self._to_nullable_int(race_id_candidate),
+                    race_id=self._opt_int(rid),
                     race_index=idx,
-                    points=self._to_nullable_float(pts),
-                    position=self._to_nullable_int(pos),
+                    points=self._opt_num(pts),
+                    position=self._opt_int(pos),
                 )
             )
         return results
 
     # ------------------------------------------------------------------
-    # Helpers
+    # Tiny conversion helpers
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _to_int(value: Any) -> int:
+    def _opt_int(value: Any) -> int | None:
         try:
-            v = int(value)
-            return v
-        except (TypeError, ValueError):
-            return 0
-
-    @staticmethod
-    def _to_nullable_int(value: Any) -> int | None:
-        try:
-            v = int(value)
-            return v
+            return int(value)
         except (TypeError, ValueError):
             return None
 
     @staticmethod
-    def _to_float(value: Any) -> float:
+    def _num(value: Any, default: float) -> float:
         try:
             v = float(value)
-            return v if v == v else 0.0  # NaN check
+            return v if v == v else default
         except (TypeError, ValueError):
-            return 0.0
+            return default
 
     @staticmethod
-    def _to_nullable_float(value: Any) -> float | None:
+    def _opt_num(value: Any) -> float | None:
         try:
             v = float(value)
             return v if v == v else None
         except (TypeError, ValueError):
             return None
 
-    @staticmethod
-    def _to_text(value: Any, fallback: str) -> str:
-        if isinstance(value, str) and value.strip():
-            return value
-        return fallback
-
-    @staticmethod
-    def _to_nullable_text(value: Any) -> str | None:
-        if isinstance(value, str) and value.strip():
-            return value
-        return None
-
     # ------------------------------------------------------------------
-    # Database cache helpers
+    # Database cache
     # ------------------------------------------------------------------
 
     async def _read_cache(self, key: str) -> dict | list | None:
-        """Return cached JSON data if present and not expired, else None."""
         try:
             async with async_session() as session:
                 row = (
                     await session.execute(
-                        select(SimgridCache).where(SimgridCache.cache_key == key)
+                        select(SimgridCache).where(
+                            SimgridCache.cache_key == key
+                        )
                     )
                 ).scalar_one_or_none()
                 if row is None:
@@ -300,18 +307,19 @@ class SimgridService:
                 )
                 if age > _CACHE_TTL:
                     return None
-                return row.data  # type: ignore[return-value]
+                return row.data
         except Exception:
-            logger.warning("DB cache read failed for key=%s", key, exc_info=True)
+            logger.warning("Cache read failed for key=%s", key, exc_info=True)
             return None
 
     async def _write_cache(self, key: str, data: Any) -> None:
-        """Upsert a JSON blob into the cache table."""
         try:
             async with async_session() as session:
                 existing = (
                     await session.execute(
-                        select(SimgridCache).where(SimgridCache.cache_key == key)
+                        select(SimgridCache).where(
+                            SimgridCache.cache_key == key
+                        )
                     )
                 ).scalar_one_or_none()
                 now = datetime.now(timezone.utc)
@@ -319,29 +327,38 @@ class SimgridService:
                     existing.data = data
                     existing.fetched_at = now
                 else:
-                    session.add(SimgridCache(cache_key=key, data=data, fetched_at=now))
+                    session.add(
+                        SimgridCache(
+                            cache_key=key, data=data, fetched_at=now
+                        )
+                    )
                 await session.commit()
         except Exception:
-            logger.warning("DB cache write failed for key=%s", key, exc_info=True)
+            logger.warning("Cache write failed for key=%s", key, exc_info=True)
 
-    async def invalidate_cache(self, championship_id: int | None = None) -> None:
-        """Delete cached entries. If championship_id given, only that one."""
+    async def invalidate_cache(
+        self, championship_id: int | None = None
+    ) -> None:
         try:
             async with async_session() as session:
                 if championship_id is not None:
                     await session.execute(
                         delete(SimgridCache).where(
-                            SimgridCache.cache_key.in_([
-                                f"championship_{championship_id}",
-                                f"standings_{championship_id}",
-                            ])
+                            SimgridCache.cache_key.in_(
+                                [
+                                    f"championship_{championship_id}",
+                                    f"standings_{championship_id}",
+                                    f"races_{championship_id}",
+                                    f"participants_{championship_id}",
+                                ]
+                            )
                         )
                     )
                 else:
                     await session.execute(delete(SimgridCache))
                 await session.commit()
         except Exception:
-            logger.warning("DB cache invalidation failed", exc_info=True)
+            logger.warning("Cache invalidation failed", exc_info=True)
 
 
 simgrid_service = SimgridService()
