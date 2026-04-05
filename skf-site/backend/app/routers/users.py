@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_admin, require_role
 from app.database import get_db
-from app.models.user import Role, Session, User, ROLE_SUPER_ADMIN
+from app.models.user import Role, Session, User, ROLE_ADMIN, ROLE_SUPER_ADMIN
 from app.schemas.auth import UserOut, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -75,6 +75,12 @@ async def update_user(
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only a super-admin can grant or revoke the super-admin role.",
+            )
+        # Admins cannot change the role of other admins or themselves
+        if target.role.name == ROLE_ADMIN and admin.role.name != ROLE_SUPER_ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only a super-admin can change an admin's role.",
             )
         target.role_id = new_role.id
 

@@ -94,6 +94,7 @@ export class AdminComponent implements OnInit {
     const me = this.auth.user();
     if (!me) return false;
     if (target.role === 'super_admin' && me.role !== 'super_admin') return false;
+    if (target.role === 'admin' && me.role !== 'super_admin') return false;
     return true;
   }
 
