@@ -1,0 +1,59 @@
+@if (open()) {
+  <div class="giveaway-backdrop" (click)="close()">
+    <section class="giveaway-modal" (click)="$event.stopPropagation()">
+      <header class="giveaway-header">
+        <h3>Giveaway — Eligible Drivers</h3>
+        <div class="giveaway-actions">
+          <label class="giveaway-input-label">
+            Min races
+            <input
+              class="giveaway-input"
+              type="number"
+              min="1"
+              [value]="minRaces()"
+              (input)="onMinRacesChange($event)"
+            />
+          </label>
+          <app-btn variant="ghost" size="sm" (click)="close()">
+            Close
+          </app-btn>
+        </div>
+      </header>
+
+      <div class="giveaway-body">
+        @if (winner(); as w) {
+          <div class="giveaway-winner">
+            <span class="giveaway-winner-label">Winner</span>
+            <span class="giveaway-winner-name">{{ w }}</span>
+          </div>
+        }
+
+        <div class="giveaway-random-row">
+          <app-btn
+            variant="accent"
+            size="sm"
+            [disabled]="drivers().length === 0"
+            (click)="pickRandom()"
+          >
+            Get Random
+          </app-btn>
+        </div>
+
+        @if (drivers().length === 0) {
+          <app-empty>No drivers match the minimum race requirement.</app-empty>
+        } @else {
+          <p class="giveaway-count">{{ drivers().length }} driver(s) eligible</p>
+          <div class="giveaway-list">
+            @for (driver of drivers(); track driver.id; let i = $index) {
+              <div class="giveaway-driver">
+                <span class="giveaway-rank">{{ i + 1 }}</span>
+                <span class="giveaway-name">{{ driver.displayName }}</span>
+                <span class="giveaway-races">{{ driver.racesCount }} race(s)</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </section>
+  </div>
+}

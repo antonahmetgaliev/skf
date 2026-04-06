@@ -1,0 +1,135 @@
+.giveaway-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  padding: 1rem;
+}
+
+.giveaway-modal {
+  background: var(--ink);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 540px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.giveaway-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+
+  h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+}
+
+.giveaway-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.giveaway-input-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.giveaway-input {
+  width: 3rem;
+  padding: 0.2rem 0.3rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: inherit;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.giveaway-body {
+  padding: 1rem 1.2rem;
+  overflow-y: auto;
+}
+
+.giveaway-winner {
+  text-align: center;
+  margin-bottom: 0.8rem;
+  padding: 0.7rem;
+  border-radius: 12px;
+  background: rgba(245, 190, 45, 0.08);
+  border: 1px solid rgba(245, 190, 45, 0.25);
+}
+
+.giveaway-winner-label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 0.2rem;
+}
+
+.giveaway-winner-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.giveaway-random-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.6rem;
+}
+
+.giveaway-count {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+}
+
+.giveaway-list {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.giveaway-driver {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+  font-size: 0.85rem;
+}
+
+.giveaway-rank {
+  width: 1.8rem;
+  text-align: right;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.giveaway-name {
+  flex: 1;
+}
+
+.giveaway-races {
+  color: var(--muted);
+  font-size: 0.78rem;
+}

@@ -1,7 +1,7 @@
 <app-page>
   <app-page-intro title="Championships">
     @if (auth.isAdmin()) {
-      <app-btn variant="accent" size="sm" (click)="openCreateModal()">
+      <app-btn variant="accent" size="sm" (click)="createModalOpen.set(true)">
         + Add Custom Championship
       </app-btn>
     }
@@ -25,7 +25,7 @@
               class="championship-button"
               type="button"
               [class.active]="selectedChampionshipKey() === entry.key"
-              [ngClass]="getChampionshipStatusClass(entry)"
+              [ngClass]="cs.getStatusClass(entry)"
               (click)="selectChampionship(entry.key)"
             >
               <span class="championship-name">{{ entry.name }}</span>
@@ -33,7 +33,7 @@
                 @if (entry.source === 'simgrid' && entry.simgridItem) {
                   <span class="championship-id">#{{ entry.simgridItem.id }}</span>
                 }
-                @if (getChampionshipStatusLabel(entry); as label) {
+                @if (cs.getStatusLabel(entry, auth.isAdmin()); as label) {
                   <span class="championship-status-tag">{{ label }}</span>
                 }
               </span>
@@ -130,7 +130,7 @@
                   {{ isChampionshipActive(champId) ? 'Mark Finished' : 'Mark Active' }}
                 </app-btn>
               }
-              <app-btn variant="ghost" size="sm" (click)="openGiveawayModal()">
+              <app-btn variant="ghost" size="sm" (click)="giveawayOpen.set(true)">
                 Giveaway
               </app-btn>
               <app-btn variant="ghost" size="sm" (click)="openStandingsExportPreview()">
@@ -203,7 +203,7 @@
                     <tr [ngClass]="isMulticlass() ? 'class-strip-' + getClassIndex(entry.carClass) : ''">
                       <td>{{ getPosition(entry, i) }}</td>
                       <td class="driver-cell">
-                        @if (driverUuidBySimgridId().get(entry.id); as uuid) {
+                        @if (cs.driverUuidBySimgridId().get(entry.id); as uuid) {
                           <a [routerLink]="['/drivers', uuid]" class="driver-link">{{ entry.displayName }}</a>
                         } @else {
                           {{ entry.displayName }}
@@ -322,7 +322,7 @@
                     <tr>
                       <td>{{ i + 1 }}</td>
                       <td class="driver-cell">
-                        @if (driverUuidBySimgridId().get(entry.id); as uuid) {
+                        @if (cs.driverUuidBySimgridId().get(entry.id); as uuid) {
                           <a [routerLink]="['/drivers', uuid]" class="driver-link">{{ entry.displayName }}</a>
                         } @else {
                           {{ entry.displayName }}
@@ -345,159 +345,15 @@
   </div>
 </app-page>
 
-  @if (giveawayOpen()) {
-    <div class="export-backdrop" (click)="closeGiveawayModal()">
-      <section class="giveaway-modal" (click)="$event.stopPropagation()">
-        <header class="export-modal-header">
-          <h3>Giveaway — Eligible Drivers</h3>
-          <div class="export-modal-actions">
-            <label class="giveaway-input-label">
-              Min races
-              <input
-                class="giveaway-input"
-                type="number"
-                min="1"
-                [value]="giveawayMinRaces()"
-                (input)="onGiveawayMinRacesChange($event)"
-              />
-            </label>
-            <app-btn variant="ghost" size="sm" (click)="closeGiveawayModal()">
-              Close
-            </app-btn>
-          </div>
-        </header>
+<app-giveaway-modal [standings]="standings()" [(open)]="giveawayOpen" />
 
-        <div class="giveaway-body">
-          @if (giveawayWinner(); as winner) {
-            <div class="giveaway-winner">
-              <span class="giveaway-winner-label">Winner</span>
-              <span class="giveaway-winner-name">{{ winner }}</span>
-            </div>
-          }
+@if (selectedChampionship(); as champ) {
+  <app-standings-export
+    [championship]="champ"
+    [standings]="standings()"
+    [races]="races()"
+    [(open)]="exportPreviewOpen"
+  />
+}
 
-          <div class="giveaway-random-row">
-            <app-btn
-              variant="accent"
-              size="sm"
-              [disabled]="giveawayDrivers().length === 0"
-              (click)="pickRandomDriver()"
-            >
-              Get Random
-            </app-btn>
-          </div>
-
-          @if (giveawayDrivers().length === 0) {
-            <app-empty>No drivers match the minimum race requirement.</app-empty>
-          } @else {
-            <p class="giveaway-count">{{ giveawayDrivers().length }} driver(s) eligible</p>
-            <div class="giveaway-list">
-              @for (driver of giveawayDrivers(); track driver.id; let i = $index) {
-                <div class="giveaway-driver">
-                  <span class="giveaway-rank">{{ i + 1 }}</span>
-                  <span class="giveaway-name">{{ driver.displayName }}</span>
-                  <span class="giveaway-races">{{ driver.racesCount }} race(s)</span>
-                </div>
-              }
-            </div>
-          }
-        </div>
-      </section>
-    </div>
-  }
-
-  @if (exportPreviewOpen()) {
-    <div class="export-backdrop" (click)="closeStandingsExportPreview()">
-      <section class="export-modal" (click)="$event.stopPropagation()">
-        <header class="export-modal-header">
-          <h3>Standings Poster Preview (16:9)</h3>
-          <div class="export-modal-actions">
-            <app-btn variant="ghost" size="sm" (click)="closeStandingsExportPreview()">
-              Close
-            </app-btn>
-            <app-btn variant="accent" size="sm" [disabled]="exportRendering()" (click)="downloadStandingsExportJpg()">
-              Download JPG
-            </app-btn>
-          </div>
-        </header>
-
-        <div class="export-preview-frame">
-          <canvas #standingsExportCanvas width="1920" height="1080"></canvas>
-          @if (exportRendering()) {
-            <p class="export-rendering">Rendering preview...</p>
-          }
-        </div>
-      </section>
-    </div>
-  }
-
-  <!-- Create custom championship modal -->
-  <app-modal title="New Custom Championship" width="md" [(open)]="createModalOpen">
-    <app-form-field label="Name *">
-      <input
-        type="text"
-        [(ngModel)]="formName"
-        placeholder="e.g. SKF GT3 Championship S3"
-      />
-    </app-form-field>
-
-    <app-form-field label="Game *">
-      <input
-        type="text"
-        [(ngModel)]="formGame"
-        placeholder="e.g. ACC, iRacing"
-      />
-    </app-form-field>
-
-    <app-form-field label="Car Class">
-      <input
-        type="text"
-        [(ngModel)]="formCarClass"
-        placeholder="e.g. GT3, LMP2"
-      />
-    </app-form-field>
-
-    <app-form-field label="Description">
-      <textarea
-        [(ngModel)]="formDescription"
-        placeholder="Optional description..."
-        rows="3"
-      ></textarea>
-    </app-form-field>
-
-    <div class="races-section">
-      <div class="races-header">
-        <h4>Races</h4>
-        <app-btn variant="ghost" size="sm" (click)="addRaceRow()">+ Add Race</app-btn>
-      </div>
-      @for (race of formRaces; track $index; let i = $index) {
-        <div class="race-row">
-          <input
-            class="form-control race-input"
-            type="date"
-            [(ngModel)]="race.date"
-            placeholder="Date"
-          />
-          <input
-            class="form-control race-input"
-            type="text"
-            [(ngModel)]="race.track"
-            placeholder="Track name"
-          />
-          @if (formRaces.length > 1) {
-            <app-btn variant="ghost" size="sm" class="btn-remove" (click)="removeRaceRow(i)">&#10005;</app-btn>
-          }
-        </div>
-      }
-    </div>
-
-    <div modal-footer>
-      <app-btn variant="ghost" (click)="closeCreateModal()">Cancel</app-btn>
-      <app-btn
-        variant="accent"
-        [disabled]="formSubmitting || !formName.trim() || !formGame.trim()"
-        (click)="submitCreate()"
-      >
-        {{ formSubmitting ? 'Creating...' : 'Create Championship' }}
-      </app-btn>
-    </div>
-  </app-modal>
+<app-custom-championship-form [(open)]="createModalOpen" (created)="loadChampionships()" />

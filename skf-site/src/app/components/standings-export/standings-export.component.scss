@@ -1,0 +1,63 @@
+.export-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  padding: 1rem;
+}
+
+.export-modal {
+  background: var(--ink);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 960px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.export-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+
+  h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+}
+
+.export-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.export-preview-frame {
+  padding: 1rem;
+  overflow: auto;
+
+  canvas {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+  }
+}
+
+.export-rendering {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0;
+}

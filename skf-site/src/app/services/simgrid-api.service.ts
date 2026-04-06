@@ -84,44 +84,44 @@ export interface ChampionshipPodium {
 @Injectable({ providedIn: 'root' })
 export class SimgridApiService {
   private readonly http = inject(HttpClient);
-  private readonly apiBase = '/api/championships';
+  private readonly base = '/api/championships';
 
   getChampionships(limit = 200): Observable<ChampionshipListItem[]> {
-    return this.http.get<ChampionshipListItem[]>(this.apiBase, {
+    return this.http.get<ChampionshipListItem[]>(this.base, {
       params: { limit: String(limit) }
     });
   }
 
   getChampionshipById(championshipId: number): Observable<ChampionshipDetails> {
-    return this.http.get<ChampionshipDetails>(`${this.apiBase}/${championshipId}`);
+    return this.http.get<ChampionshipDetails>(`${this.base}/${championshipId}`);
   }
 
   getChampionshipStandings(championshipId: number): Observable<ChampionshipStandingsData> {
     return this.http.get<ChampionshipStandingsData>(
-      `${this.apiBase}/${championshipId}/standings`
+      `${this.base}/${championshipId}/standings`
     );
   }
 
   getChampionshipRaces(championshipId: number): Observable<ChampionshipRace[]> {
     return this.http.get<ChampionshipRace[]>(
-      `${this.apiBase}/${championshipId}/races`
+      `${this.base}/${championshipId}/races`
     );
   }
 
   getChampionshipsPodium(): Observable<ChampionshipPodium[]> {
-    return this.http.get<ChampionshipPodium[]>(`${this.apiBase}/podium`);
+    return this.http.get<ChampionshipPodium[]>(`${this.base}/podium`);
   }
 
   getActiveChampionships(): Observable<number[]> {
-    return this.http.get<number[]>(`${this.apiBase}/active`);
+    return this.http.get<number[]>(`${this.base}/active`);
   }
 
   addActiveChampionship(simgridId: number): Observable<void> {
-    return this.http.put<void>(`${this.apiBase}/active/${simgridId}`, null);
+    return this.http.put<void>(`${this.base}/active/${simgridId}`, null);
   }
 
   removeActiveChampionship(simgridId: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiBase}/active/${simgridId}`);
+    return this.http.delete<void>(`${this.base}/active/${simgridId}`);
   }
 
 }

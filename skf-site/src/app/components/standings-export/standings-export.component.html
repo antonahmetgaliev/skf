@@ -1,0 +1,24 @@
+@if (open()) {
+  <div class="export-backdrop" (click)="close()">
+    <section class="export-modal" (click)="$event.stopPropagation()">
+      <header class="export-header">
+        <h3>Standings Poster Preview (16:9)</h3>
+        <div class="export-actions">
+          <app-btn variant="ghost" size="sm" (click)="close()">
+            Close
+          </app-btn>
+          <app-btn variant="accent" size="sm" [disabled]="rendering()" (click)="download()">
+            Download JPG
+          </app-btn>
+        </div>
+      </header>
+
+      <div class="export-preview-frame">
+        <canvas #exportCanvas width="1920" height="1080"></canvas>
+        @if (rendering()) {
+          <p class="export-rendering">Rendering preview...</p>
+        }
+      </div>
+    </section>
+  </div>
+}
