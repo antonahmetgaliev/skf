@@ -34,44 +34,69 @@ body {
   margin: 0;
   font-family: var(--font-body);
   color: var(--ink);
-  background: var(--sand);
+  background: var(--bg-dark);
   min-height: 100vh;
+  overflow-x: hidden;
 
-  // Gold ambient glow (shared by both variants)
+  // Animated grid pattern
   &::before {
     content: '';
     position: fixed;
     inset: 0;
     z-index: -2;
-    background:
-      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(245, 191, 36, 0.10) 0%, transparent 65%),
-      radial-gradient(ellipse 40% 35% at 85% 15%, rgba(224, 156, 18, 0.06) 0%, transparent 55%);
     pointer-events: none;
+    background-image:
+      linear-gradient(rgba(245, 191, 36, 0.06) 1.5px, transparent 1.5px),
+      linear-gradient(90deg, rgba(245, 191, 36, 0.06) 1.5px, transparent 1.5px);
+    background-size: 80px 80px;
+    animation: bg-grid-drift 25s linear infinite;
   }
 
-  // BG texture — carbon fiber (default)
+  // Radial gold glow accents
   &::after {
     content: '';
     position: fixed;
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background-image:
-      repeating-linear-gradient(
-        45deg,
-        rgba(255, 255, 255, 0.025) 0px,
-        rgba(255, 255, 255, 0.025) 1px,
-        transparent 1px,
-        transparent 5px
-      ),
-      repeating-linear-gradient(
-        -45deg,
-        rgba(255, 255, 255, 0.025) 0px,
-        rgba(255, 255, 255, 0.025) 1px,
-        transparent 1px,
-        transparent 5px
-      );
+    background:
+      radial-gradient(circle at 20% 50%, rgba(245, 191, 36, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 50%, rgba(245, 191, 36, 0.03) 0%, transparent 50%);
   }
+}
+
+@keyframes bg-grid-drift {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(80px); }
+}
+
+// Geometric speed lines
+.bg-speed-lines {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.bg-speed-line {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  animation: speed-line-move 4s ease-in-out infinite;
+  opacity: 0.12;
+
+  &:nth-child(1) { top: 15%; width: 400px; animation-delay: 0s; }
+  &:nth-child(2) { top: 35%; width: 500px; animation-delay: 1s; }
+  &:nth-child(3) { top: 65%; width: 450px; animation-delay: 2s; }
+  &:nth-child(4) { top: 85%; width: 350px; animation-delay: 3s; }
+}
+
+@keyframes speed-line-move {
+  0%   { transform: translateX(-100%); opacity: 0; }
+  20%  { opacity: 0.12; }
+  50%  { opacity: 0.18; }
+  100% { transform: translateX(100vw); opacity: 0; }
 }
 
 
