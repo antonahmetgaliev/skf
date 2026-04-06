@@ -1,7 +1,10 @@
 # SimGrid API v1 Reference
 
 **Base URL:** `https://www.thesimgrid.com/api/v1`
+**Alt hosts (from community code):** `api.thesimgrid.com`, `gridos-api.thesimgrid.com`
 **Auth:** Bearer token via `Authorization: Bearer {token}`
+
+> Community sources: JanuarySnow/RRR-Bot (Python), geofffranks/rookies-bot (Go), oNiD-Community-Racing/onid-assistant (Kotlin), arelstone/simgrid-utils (TS)
 
 ---
 
@@ -88,7 +91,26 @@ Response:
 ### Retrieve a championship
 `GET /championships/:id`
 
-Response: full championship detail object (includes description, image, capacity, spots_taken, host_name, game_name, url)
+Response: full championship detail object
+```json
+{
+  "id": 710,
+  "name": "Championship Name",
+  "url": "https://www.thesimgrid.com/championships/710",
+  "description": "...",
+  "image": "https://...",
+  "start_date": "2024-01-01",
+  "capacity": 48,
+  "spots_taken": 32,
+  "host_name": "SimGrid",
+  "game_name": "Assetto Corsa Competizione",
+  "accepting_registrations": true,
+  "event_completed": false,
+  "teams_enabled": true,
+  "entry_fee_required": false,
+  "entry_fee_cents": 0
+}
+```
 
 ### List all participating users
 `GET /championships/:id/participating_users`
@@ -98,12 +120,15 @@ Response:
 [{
   "user_id": 117,
   "username": "killianrm",
+  "first_name": "John",
+  "last_name": "Doe",
   "steam64_id": "12341",
   "discord_uid": "12341",
   "psn_id": "12341",
   "xbox_id": "12341",
   "epic_id": "12341",
-  "epic_username": "12341"
+  "epic_username": "12341",
+  "car_number": 42
 }]
 ```
 
@@ -114,15 +139,21 @@ Params:
 - `format` (required): "json", "ini", or "csv"
 - `championship_car_class_ids[]` (optional): filter by car class
 
-Response (json format):
+Response (json format) — ACC-style entry data:
 ```json
 {
   "entries": [
-    {"drivers": [{"playerID": "S76561198172339129"}], "isServerAdmin": 1}
+    {
+      "drivers": [{"playerID": "S76561198172339129", "firstName": "John", "lastName": "Doe"}],
+      "raceNumber": 42,
+      "isServerAdmin": 1
+    }
   ],
   "forceEntryList": 1
 }
 ```
+
+Note: `playerID` is Steam ID prefixed with "S". Response may be `{"entries": [...]}` or bare array.
 
 ### List all championship_car_classes
 `GET /championships/:id/championship_car_classes`
@@ -383,6 +414,25 @@ Response:
 
 ### Retrieve a user
 `GET /users/:id`
+`GET /users/:id?attribute=discord` — lookup by Discord ID instead of SimGrid user ID
+
+Response:
+```json
+{
+  "user_id": 117,
+  "username": "killianrm",
+  "preferred_name": "Killian",
+  "steam64_id": "76561198172339129",
+  "discord_uid": "123456789",
+  "teams": [{"id": 1, "name": "Team Name"}],
+  "total_races_started": 42,
+  "total_wins": 5,
+  "total_podiums": 12,
+  "simgrid_pro_active": true,
+  "boosted_hosts": [],
+  "grid_ratings": [{"game_id": 1, "rating": 1500}]
+}
+```
 
 ### List a user's races
 `GET /users/:user_id/races?filter=&limit=&exclude_dsq=`
@@ -415,3 +465,12 @@ Params:
 - `status` (required): "inactive" or "in_game"
 - `track_id` (optional): used when setting status as "in_game"
 - `car_id` (optional): used when setting status as "in_game"
+
+---
+
+## Admin/Web URLs (not REST API)
+
+These use the web interface, not the `/api/v1` prefix:
+
+- `GET /admin/championships/:id/registrations.{json|csv}` — Export registrations
+- `GET /admin/championships/:id/team_registrations.{json|csv}` — Export team registrations
