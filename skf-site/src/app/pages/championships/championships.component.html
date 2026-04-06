@@ -118,6 +118,9 @@
             @if (lastUpdated(); as updated) {
               <p class="meta">Last refresh: {{ updated.toLocaleString() }}</p>
             }
+            @if (isStaleData()) {
+              <app-alert variant="warning">Showing cached data — SimGrid API is temporarily unavailable.</app-alert>
+            }
           </div>
           @if (auth.isAdmin()) {
             <div class="details-actions">

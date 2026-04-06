@@ -103,7 +103,8 @@ async def get_calendar_events(
 
     # ── SimGrid championships ──
     try:
-        championships = await simgrid_service.get_championships()
+        champ_result = await simgrid_service.get_championships()
+        championships = champ_result.data
     except Exception:
         championships = []
 
@@ -113,7 +114,8 @@ async def get_calendar_events(
 
     async def _fetch_races(cid: int) -> tuple[int, list[dict]]:
         try:
-            return cid, await simgrid_service.get_races(cid)
+            result = await simgrid_service.get_races(cid)
+            return cid, result.data
         except Exception:
             logger.debug("Failed to fetch races for championship %s", cid)
             return cid, []
@@ -129,8 +131,8 @@ async def get_calendar_events(
 
     async def _fetch_detail(cid: int) -> tuple[int, dict | None]:
         try:
-            d = await simgrid_service.get_championship(cid)
-            return cid, d.model_dump()
+            result = await simgrid_service.get_championship(cid)
+            return cid, result.data.model_dump()
         except Exception:
             return cid, None
 

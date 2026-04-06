@@ -15,6 +15,7 @@ import {
 } from '../../services/calendar-api.service';
 import { AuthService } from '../../services/auth.service';
 import { ChampionshipEntry, ChampionshipService } from '../../services/championship.service';
+import { DataFreshnessService } from '../../services/data-freshness.service';
 import { formatDate, formatNumber } from '../../utils/format';
 import { AlertComponent } from '../../components/alert/alert.component';
 import { BadgeComponent } from '../../components/badge/badge.component';
@@ -53,6 +54,7 @@ import { TabsComponent } from '../../components/tabs/tabs.component';
 export class ChampionshipsComponent {
   readonly auth = inject(AuthService);
   readonly cs = inject(ChampionshipService);
+  readonly freshness = inject(DataFreshnessService);
   private readonly api = inject(SimgridApiService);
   private readonly calendarApi = inject(CalendarApiService);
   private readonly route = inject(ActivatedRoute);
@@ -76,6 +78,12 @@ export class ChampionshipsComponent {
   readonly loadingRaces = signal(false);
   readonly deletingCustom = signal(false);
   readonly activeChampionshipIds = signal<Set<number>>(new Set());
+
+  readonly isStaleData = computed(() => {
+    const key = this.selectedChampionshipKey();
+    if (!key) return false;
+    return this.freshness.hasStaleData('/api/championships');
+  });
 
   // Modal states
   readonly exportPreviewOpen = signal(false);
@@ -402,12 +410,16 @@ export class ChampionshipsComponent {
       if (token !== this.standingsLoadToken) return;
 
       this.selectedChampionship.set(details);
-      this.activeTab.set(this.cs.isChampionshipNotStarted(details) ? 'races' : 'standings');
+      const isUpcoming = this.cs.isChampionshipNotStarted(details);
+      this.activeTab.set(isUpcoming ? 'races' : 'standings');
       this.standings.set(standingsData.entries);
       this.races.set(standingsData.races);
       this.lastUpdated.set(new Date());
-      if (!this.cs.isChampionshipNotStarted(details)) {
+      if (!isUpcoming) {
         this.cs.ensureDriverMapLoaded();
+      }
+      if (isUpcoming && this.allRaces().length === 0) {
+        void this.loadAllRaces(championshipId);
       }
     } catch (error) {
       if (token !== this.standingsLoadToken) return;

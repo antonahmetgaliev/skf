@@ -8,6 +8,7 @@ for 10 minutes to avoid hammering the SimGrid API.
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Any
 
@@ -24,10 +25,24 @@ from app.schemas.championship import (
     StandingEntry,
     StandingRace,
 )
-from app.services.cache import invalidate_cache_by_keys, invalidate_cache_by_prefix, read_cache, write_cache
+from app.services.cache import (
+    invalidate_cache_by_keys,
+    invalidate_cache_by_prefix,
+    read_cache,
+    read_stale_cache,
+    write_cache,
+)
 
 _CACHE_TTL = timedelta(minutes=10)
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, slots=True)
+class CachedResponse:
+    """Wraps service data with staleness metadata."""
+
+    data: Any
+    stale: bool = field(default=False)
 
 
 class SimgridService:
@@ -47,90 +62,128 @@ class SimgridService:
 
     async def get_championships(
         self, limit: int = 200, *, force: bool = False
-    ) -> list[ChampionshipListItem]:
+    ) -> CachedResponse:
         key = f"championships_list_{limit}"
         if not force:
             cached = await read_cache(key, _CACHE_TTL)
             if cached is not None:
-                return [ChampionshipListItem(**item) for item in cached]
+                return CachedResponse(data=[ChampionshipListItem(**item) for item in cached])
 
-        resp = await self._client.get(
-            "/api/v1/championships", params={"limit": limit, "offset": 0}
+        result = await self._request(
+            "/api/v1/championships", key, params={"limit": limit, "offset": 0}
         )
-        resp.raise_for_status()
-        items = resp.json()
-        await write_cache(key, items)
-        return [ChampionshipListItem(**item) for item in items]
+        items = result.data if isinstance(result.data, list) else []
+        return CachedResponse(
+            data=[ChampionshipListItem(**item) for item in items],
+            stale=result.stale,
+        )
 
     async def get_championship(
         self, championship_id: int, *, force: bool = False
-    ) -> ChampionshipDetails:
+    ) -> CachedResponse:
         key = f"championship_{championship_id}"
         if not force:
             cached = await read_cache(key, _CACHE_TTL)
             if cached is not None:
-                return ChampionshipDetails(**cached)
+                return CachedResponse(data=ChampionshipDetails(**cached))
 
-        resp = await self._client.get(
-            f"/api/v1/championships/{championship_id}"
+        result = await self._request(
+            f"/api/v1/championships/{championship_id}", key,
         )
-        resp.raise_for_status()
-        raw = resp.json()
-        await write_cache(key, raw)
-        return ChampionshipDetails(**raw)
+        return CachedResponse(
+            data=ChampionshipDetails(**result.data),
+            stale=result.stale,
+        )
 
     async def get_races(
         self, championship_id: int, *, force: bool = False
-    ) -> list[dict]:
+    ) -> CachedResponse:
         key = f"races_{championship_id}"
         if not force:
             cached = await read_cache(key, _CACHE_TTL)
             if cached is not None:
-                return cached if isinstance(cached, list) else []
+                return CachedResponse(data=cached if isinstance(cached, list) else [])
 
-        resp = await self._client.get(
-            "/api/v1/races", params={"championship_id": championship_id}
+        result = await self._request(
+            "/api/v1/races", key, params={"championship_id": championship_id}
         )
-        resp.raise_for_status()
-        data = resp.json()
-        items = data if isinstance(data, list) else []
-        await write_cache(key, items)
-        return items
+        items = result.data if isinstance(result.data, list) else []
+        return CachedResponse(data=items, stale=result.stale)
 
     async def get_standings(
         self, championship_id: int, *, force: bool = False
-    ) -> ChampionshipStandingsData:
+    ) -> CachedResponse:
         key = f"standings_{championship_id}"
         if not force:
             cached = await read_cache(key, _CACHE_TTL)
             if cached is not None:
-                return ChampionshipStandingsData(**cached)
+                return CachedResponse(data=ChampionshipStandingsData(**cached))
 
-        resp = await self._client.get(
-            f"/api/v1/championships/{championship_id}/standings"
-        )
-        resp.raise_for_status()
-        data = self._parse_standings(resp.json())
-        await write_cache(key, data.model_dump())
-        return data
+        try:
+            resp = await self._client.get(
+                f"/api/v1/championships/{championship_id}/standings"
+            )
+            resp.raise_for_status()
+            data = self._parse_standings(resp.json())
+            await write_cache(key, data.model_dump())
+            return CachedResponse(data=data)
+        except httpx.HTTPStatusError:
+            logger.warning(
+                "SimGrid API error for %s, attempting stale cache fallback",
+                key, exc_info=True,
+            )
+            stale = await read_stale_cache(key)
+            if stale is not None:
+                return CachedResponse(
+                    data=ChampionshipStandingsData(**stale), stale=True,
+                )
+            raise
 
     async def get_participating_users(
         self, championship_id: int, *, force: bool = False
-    ) -> list[ParticipatingUser]:
+    ) -> CachedResponse:
         key = f"participants_{championship_id}"
         if not force:
             cached = await read_cache(key, _CACHE_TTL)
             if cached is not None:
-                return [ParticipatingUser(**u) for u in cached]
+                return CachedResponse(data=[ParticipatingUser(**u) for u in cached])
 
-        resp = await self._client.get(
-            f"/api/v1/championships/{championship_id}/participating_users"
+        result = await self._request(
+            f"/api/v1/championships/{championship_id}/participating_users", key,
         )
-        resp.raise_for_status()
-        raw = resp.json()
-        items = raw if isinstance(raw, list) else []
-        await write_cache(key, items)
-        return [ParticipatingUser(**u) for u in items]
+        items = result.data if isinstance(result.data, list) else []
+        return CachedResponse(
+            data=[ParticipatingUser(**u) for u in items],
+            stale=result.stale,
+        )
+
+    # ------------------------------------------------------------------
+    # HTTP helper with stale-cache fallback
+    # ------------------------------------------------------------------
+
+    async def _request(
+        self,
+        url: str,
+        cache_key: str,
+        *,
+        params: dict[str, Any] | None = None,
+    ) -> CachedResponse:
+        """GET from SimGrid API with stale-cache fallback on upstream errors."""
+        try:
+            resp = await self._client.get(url, params=params)
+            resp.raise_for_status()
+            data = resp.json()
+            await write_cache(cache_key, data)
+            return CachedResponse(data=data)
+        except httpx.HTTPStatusError:
+            logger.warning(
+                "SimGrid API error for %s, attempting stale cache fallback",
+                cache_key, exc_info=True,
+            )
+            stale = await read_stale_cache(cache_key)
+            if stale is not None:
+                return CachedResponse(data=stale, stale=True)
+            raise
 
     # ------------------------------------------------------------------
     # Standings parsing

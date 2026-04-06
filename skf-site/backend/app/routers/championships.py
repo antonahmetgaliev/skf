@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Response, status
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,7 +23,13 @@ from app.schemas.championship import (
     PodiumEntry,
 )
 from app.services.drivers import sync_drivers_from_standings
-from app.services.simgrid import simgrid_service
+from app.services.simgrid import CachedResponse, simgrid_service
+
+
+def _apply_stale_header(result: CachedResponse, response: Response) -> None:
+    """Set X-Data-Stale header when serving stale cached data."""
+    if result.stale:
+        response.headers["X-Data-Stale"] = "true"
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +75,13 @@ async def remove_active(
 # ------------------------------------------------------------------
 
 @router.get("", response_model=list[ChampionshipListItem])
-async def list_championships(force: bool = Query(False), db: AsyncSession = Depends(get_db)):
+async def list_championships(
+    response: Response,
+    force: bool = Query(False),
+    db: AsyncSession = Depends(get_db),
+):
     try:
-        items = await simgrid_service.get_championships(force=force)
+        result = await simgrid_service.get_championships(force=force)
     except Exception:
         logger.warning("Failed to fetch championships from SimGrid", exc_info=True)
         raise HTTPException(
@@ -79,32 +89,34 @@ async def list_championships(force: bool = Query(False), db: AsyncSession = Depe
             detail="Failed to fetch championships from SimGrid.",
         )
 
+    _apply_stale_header(result, response)
+
     # Championships in the active list are active; all others are finished.
-    result = await db.execute(select(ActiveChampionship.simgrid_id))
-    active_ids = set(result.scalars().all())
+    db_result = await db.execute(select(ActiveChampionship.simgrid_id))
+    active_ids = set(db_result.scalars().all())
 
     return [
         item if item.id in active_ids
         else item.model_copy(update={"event_completed": True})
-        for item in items
+        for item in result.data
     ]
 
 
 @router.get("/podium", response_model=list[ChampionshipPodium])
 async def get_champions_podium(db: AsyncSession = Depends(get_db)):
     """Return top-3 finishers for each completed championship."""
-    result = await db.execute(
+    cache_result = await db.execute(
         select(SimgridCache).where(SimgridCache.cache_key.like("standings_%"))
     )
-    caches = result.scalars().all()
+    caches = cache_result.scalars().all()
 
     # Only non-active championships are considered finished
     active_result = await db.execute(select(ActiveChampionship.simgrid_id))
     active_ids = set(active_result.scalars().all())
 
     try:
-        championships = await simgrid_service.get_championships()
-        champ_map = {c.id: c for c in championships}
+        champ_result = await simgrid_service.get_championships()
+        champ_map = {c.id: c for c in champ_result.data}
     except Exception:
         champ_map = {}
 
@@ -224,8 +236,8 @@ async def get_driver_championship_results(
     """Return all cached championship results for a specific SimGrid driver ID."""
     # Build championship name/date map from the cached list (already in DB)
     try:
-        championships = await simgrid_service.get_championships()
-        champ_map = {c.id: c for c in championships}
+        champ_result = await simgrid_service.get_championships()
+        champ_map = {c.id: c for c in champ_result.data}
     except Exception:
         champ_map = {}
 
@@ -268,11 +280,14 @@ async def get_driver_championship_results(
 
 
 @router.get("/{championship_id}/races", response_model=list[ChampionshipRace])
-async def get_races(championship_id: int, force: bool = Query(False)):
+async def get_races(
+    championship_id: int, response: Response, force: bool = Query(False),
+):
     """Return all races for a championship (including future ones)."""
     try:
-        raw = await simgrid_service.get_races(championship_id, force=force)
-        return [ChampionshipRace(**r) for r in raw]
+        result = await simgrid_service.get_races(championship_id, force=force)
+        _apply_stale_header(result, response)
+        return [ChampionshipRace(**r) for r in result.data]
     except Exception:
         logger.warning("Failed to fetch races for championship %s", championship_id, exc_info=True)
         raise HTTPException(
@@ -282,9 +297,13 @@ async def get_races(championship_id: int, force: bool = Query(False)):
 
 
 @router.get("/{championship_id}", response_model=ChampionshipDetails)
-async def get_championship(championship_id: int, force: bool = Query(False)):
+async def get_championship(
+    championship_id: int, response: Response, force: bool = Query(False),
+):
     try:
-        return await simgrid_service.get_championship(championship_id, force=force)
+        result = await simgrid_service.get_championship(championship_id, force=force)
+        _apply_stale_header(result, response)
+        return result.data
     except Exception:
         logger.warning("Failed to fetch championship %s", championship_id, exc_info=True)
         raise HTTPException(
@@ -298,14 +317,15 @@ async def get_championship(championship_id: int, force: bool = Query(False)):
 )
 async def get_standings(
     championship_id: int,
+    response: Response,
     background_tasks: BackgroundTasks,
     force: bool = Query(False),
 ):
     try:
-        data = await simgrid_service.get_standings(championship_id, force=force)
-        # Sync driver profiles non-blocking after response is sent
-        background_tasks.add_task(sync_drivers_from_standings, data.entries)
-        return data
+        result = await simgrid_service.get_standings(championship_id, force=force)
+        _apply_stale_header(result, response)
+        background_tasks.add_task(sync_drivers_from_standings, result.data.entries)
+        return result.data
     except Exception:
         logger.warning("Failed to fetch standings for championship %s", championship_id, exc_info=True)
         raise HTTPException(
