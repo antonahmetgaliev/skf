@@ -124,7 +124,7 @@ class YouTubeService:
         if not all_video_ids:
             return []
 
-        # Step 2: batch-fetch video details to identify live streams
+        # Step 2: batch-fetch video details to identify *completed* live streams
         live_video_ids: set[str] = set()
         for i in range(0, len(all_video_ids), _MAX_PAGE_SIZE):
             batch = all_video_ids[i : i + _MAX_PAGE_SIZE]
@@ -138,7 +138,11 @@ class YouTubeService:
             )
             resp.raise_for_status()
             for item in resp.json().get("items", []):
-                if item.get("liveStreamingDetails"):
+                details = item.get("liveStreamingDetails")
+                # Only include streams that have actually ended;
+                # upcoming/live streams have liveStreamingDetails
+                # but no actualEndTime yet.
+                if details and details.get("actualEndTime"):
                     live_video_ids.add(item["id"])
 
         # Step 3: build result list preserving upload order (newest first)
