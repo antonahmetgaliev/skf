@@ -8,7 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, R
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import require_admin
+from app.auth import get_current_user_optional, require_admin
 from app.database import get_db
 from app.models.active_championship import ActiveChampionship
 from app.models.simgrid_cache import SimgridCache
@@ -79,6 +79,7 @@ async def list_championships(
     response: Response,
     force: bool = Query(False),
     db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user_optional),
 ):
     try:
         result = await simgrid_service.get_championships(force=force)
@@ -91,15 +92,19 @@ async def list_championships(
 
     _apply_stale_header(result, response)
 
-    # Championships in the active list are active; all others are finished.
     db_result = await db.execute(select(ActiveChampionship.simgrid_id))
     active_ids = set(db_result.scalars().all())
 
-    return [
-        item if item.id in active_ids
-        else item.model_copy(update={"event_completed": True})
-        for item in result.data
-    ]
+    is_admin = user is not None and user.role is not None and user.role.name == "admin"
+
+    # Admins see all championships; regular users only see active ones
+    if is_admin:
+        return [
+            item if item.id in active_ids
+            else item.model_copy(update={"event_completed": True})
+            for item in result.data
+        ]
+    return [item for item in result.data if item.id in active_ids]
 
 
 @router.get("/podium", response_model=list[ChampionshipPodium])

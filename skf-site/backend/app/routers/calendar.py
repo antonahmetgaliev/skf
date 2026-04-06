@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_admin
 from app.database import get_db
+from app.models.active_championship import ActiveChampionship
 from app.models.custom_championship import CustomChampionship, CustomRace
 from app.models.user import User
 from app.schemas.calendar import (
@@ -101,15 +102,17 @@ async def get_calendar_events(
 
     events: list[CalendarEvent] = []
 
-    # ── SimGrid championships ──
+    # ── SimGrid championships (active only) ──
+    active_result = await db.execute(select(ActiveChampionship.simgrid_id))
+    active_ids = set(active_result.scalars().all())
+
     try:
         champ_result = await simgrid_service.get_championships()
-        championships = champ_result.data
+        championships = [c for c in champ_result.data if c.id in active_ids]
     except Exception:
         championships = []
 
-    # Fetch races for all championships via /api/v1/races endpoint (cached).
-    # This returns ALL races including future ones with dates and track info.
+    # Fetch races + details only for active championships
     races_caches: dict[int, list[dict]] = {}
 
     async def _fetch_races(cid: int) -> tuple[int, list[dict]]:
@@ -126,7 +129,6 @@ async def get_calendar_events(
     for cid, data in fetch_results:
         races_caches[cid] = data
 
-    # Fetch championship details (description, game_name, dates fallback)
     detail_caches: dict[int, dict] = {}
 
     async def _fetch_detail(cid: int) -> tuple[int, dict | None]:
