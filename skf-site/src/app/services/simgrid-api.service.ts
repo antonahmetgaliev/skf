@@ -58,7 +58,6 @@ export interface StandingRace {
 export interface ChampionshipStandingsData {
   entries: StandingEntry[];
   races: StandingRace[];
-  stale: boolean;
 }
 
 export interface ChampionshipRace {
@@ -80,13 +79,6 @@ export interface ChampionshipPodium {
   championshipId: number;
   championshipName: string;
   podium: PodiumEntry[];
-}
-
-export interface ParticipatingUser {
-  userId: number;
-  username: string;
-  steam64Id: string | null;
-  discordUid: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -132,11 +124,6 @@ export class SimgridApiService {
     return this.http.delete<void>(`${this.apiBase}/active/${simgridId}`);
   }
 
-  getChampionshipParticipants(championshipId: number): Observable<ParticipatingUser[]> {
-    return this.http.get<ParticipatingUser[]>(
-      `${this.apiBase}/${championshipId}/participants`
-    );
-  }
 }
 
 

@@ -18,7 +18,6 @@ from app.schemas.championship import (
     ChampionshipRace,
     ChampionshipStandingsData,
     DriverChampionshipResult,
-    ParticipatingUser,
     PodiumEntry,
 )
 from app.services.drivers import sync_drivers_from_standings
@@ -245,18 +244,6 @@ async def get_driver_championship_results(
         key=lambda r: (r.position is None, r.position or 999, -r.championship_id)
     )
     return driver_results
-
-
-@router.get(
-    "/{championship_id}/participants", response_model=list[ParticipatingUser]
-)
-async def get_participants(championship_id: int, force: bool = Query(False)):
-    try:
-        return await simgrid_service.get_participating_users(
-            championship_id, force=force
-        )
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=str(exc))
 
 
 @router.get("/{championship_id}/races", response_model=list[ChampionshipRace])

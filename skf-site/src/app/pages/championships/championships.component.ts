@@ -9,10 +9,9 @@ import {
   ChampionshipDetails,
   ChampionshipListItem,
   ChampionshipRace,
-  ParticipatingUser,
   SimgridApiService,
   StandingEntry,
-  StandingRace
+  StandingRace,
 } from '../../services/simgrid-api.service';
 import {
   CalendarApiService,
@@ -46,18 +45,26 @@ interface ChampionshipEntry {
   customItem?: CustomChampionshipOut;
 }
 
-interface CachedStandingsData {
-  details: ChampionshipDetails;
-  entries: StandingEntry[];
-  races: StandingRace[];
-  fetchedAt: Date;
-}
-
 @Component({
   selector: 'app-championships',
-  imports: [RouterLink, NgClass, FormsModule, AlertComponent, BadgeComponent, FormFieldComponent, PageIntroComponent, BtnComponent, CardComponent, EmptyComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
+  imports: [
+    RouterLink,
+    NgClass,
+    FormsModule,
+    AlertComponent,
+    BadgeComponent,
+    FormFieldComponent,
+    PageIntroComponent,
+    BtnComponent,
+    CardComponent,
+    EmptyComponent,
+    ModalComponent,
+    PageLayoutComponent,
+    SpinnerComponent,
+    TabsComponent,
+  ],
   templateUrl: './championships.component.html',
-  styleUrl: './championships.component.scss'
+  styleUrl: './championships.component.scss',
 })
 export class ChampionshipsComponent {
   readonly auth = inject(AuthService);
@@ -66,8 +73,6 @@ export class ChampionshipsComponent {
   private readonly bwpApi = inject(BwpApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly cacheTtlMs = 60000;
-  private readonly standingsCache = new Map<number, CachedStandingsData>();
   private standingsLoadToken = 0;
   private championshipsLoadToken = 0;
   private readonly exportWidth = 1920;
@@ -75,7 +80,7 @@ export class ChampionshipsComponent {
   private readonly dateFormatter = new Intl.DateTimeFormat('en-GB', {
     day: '2-digit',
     month: '2-digit',
-    year: 'numeric'
+    year: 'numeric',
   });
 
   @ViewChild('standingsExportCanvas')
@@ -96,8 +101,6 @@ export class ChampionshipsComponent {
   readonly giveawayDrivers = signal<{ id: number; displayName: string; racesCount: number }[]>([]);
   readonly giveawayWinner = signal<string | null>(null);
   readonly errorMessage = signal('');
-  readonly infoMessage = signal('');
-  readonly staleWarning = signal(false);
   readonly lastUpdated = signal<Date | null>(null);
   readonly driverUuidBySimgridId = signal<Map<number, string>>(new Map());
   readonly activeTab = signal<'standings' | 'races' | 'participants'>('standings');
@@ -106,8 +109,6 @@ export class ChampionshipsComponent {
   readonly loadingRaces = signal(false);
   readonly deletingCustom = signal(false);
   readonly activeChampionshipIds = signal<Set<number>>(new Set());
-  readonly participants = signal<ParticipatingUser[]>([]);
-  readonly loadingParticipants = signal(false);
 
   readonly isCustomSelected = computed(() => {
     const key = this.selectedChampionshipKey();
@@ -115,9 +116,7 @@ export class ChampionshipsComponent {
   });
 
   readonly isUpcomingChampionship = computed(() => {
-    const entry = this.championships().find(e => e.key === this.selectedChampionshipKey());
-    if (!entry || entry.source !== 'simgrid' || !entry.simgridItem) return false;
-    return this.getStatusOrder(entry) === 1;
+    return this.isChampionshipNotStarted(this.selectedChampionship());
   });
 
   readonly availableTabs = computed(() => {
@@ -143,7 +142,13 @@ export class ChampionshipsComponent {
   formSubmitting = false;
 
   readonly carClasses = computed(() => {
-    const classes = [...new Set(this.standings().map(e => e.carClass).filter(c => c.length > 0))];
+    const classes = [
+      ...new Set(
+        this.standings()
+          .map((e) => e.carClass)
+          .filter((c) => c.length > 0),
+      ),
+    ];
     return classes.sort();
   });
   readonly isMulticlass = computed(() => this.carClasses().length > 1);
@@ -151,7 +156,7 @@ export class ChampionshipsComponent {
   readonly visibleStandings = computed(() => {
     const cls = this.selectedClass();
     if (!this.isMulticlass() || cls === null) return this.standings();
-    return this.standings().filter(e => e.carClass === cls);
+    return this.standings().filter((e) => e.carClass === cls);
   });
 
   openCreateModal(): void {
@@ -294,7 +299,6 @@ export class ChampionshipsComponent {
     const token = ++this.championshipsLoadToken;
     this.loadingChampionships.set(true);
     this.errorMessage.set('');
-    this.infoMessage.set('');
 
     try {
       const [simgridList, customList, activeIds] = await Promise.all([
@@ -323,8 +327,7 @@ export class ChampionshipsComponent {
       ];
 
       const sorted = entries.sort(
-        (a, b) => this.getStatusOrder(a) - this.getStatusOrder(b)
-          || a.name.localeCompare(b.name)
+        (a, b) => this.getStatusOrder(a) - this.getStatusOrder(b) || a.name.localeCompare(b.name),
       );
       this.championships.set(sorted);
 
@@ -391,7 +394,6 @@ export class ChampionshipsComponent {
         })),
       );
       this.lastUpdated.set(null);
-      this.staleWarning.set(false);
       void this.router.navigate([], {
         queryParams: { id: c.id },
         queryParamsHandling: 'merge',
@@ -399,45 +401,43 @@ export class ChampionshipsComponent {
       });
     } else if (entry?.source === 'simgrid' && entry.simgridItem) {
       this.selectedCustomChampionship.set(null);
-      this.participants.set([]);
       this.allRaces.set([]);
-      const isUpcoming = this.getStatusOrder(entry) === 1;
-      this.activeTab.set(isUpcoming ? 'races' : 'standings');
       const simgridId = entry.simgridItem.id;
       void this.router.navigate([], {
         queryParams: { id: simgridId },
         queryParamsHandling: 'merge',
         replaceUrl,
       });
-      if (isUpcoming) {
-        await this.loadChampionshipDetails(simgridId);
-        void this.loadAllRaces(simgridId);
-      } else {
-        await this.loadStandings(simgridId);
-      }
+      await this.loadStandings(simgridId);
     }
   }
 
   setActiveTab(tab: 'standings' | 'races' | 'participants'): void {
     this.activeTab.set(tab);
     this.expandedRaceIndex.set(null);
-    const simgridId = this.getSelectedSimgridId();
-    if (simgridId === null) return;
-    if (tab === 'races' && this.allRaces().length === 0) {
-      void this.loadAllRaces(simgridId);
-    }
-    if (tab === 'participants' && this.participants().length === 0) {
-      void this.loadParticipants(simgridId);
+    if (tab === 'races') {
+      const simgridId = this.getSelectedSimgridId();
+      if (simgridId !== null && this.allRaces().length === 0) {
+        void this.loadAllRaces(simgridId);
+      }
     }
   }
 
   toggleRaceExpansion(raceIndex: number): void {
-    this.expandedRaceIndex.set(
-      this.expandedRaceIndex() === raceIndex ? null : raceIndex
-    );
+    this.expandedRaceIndex.set(this.expandedRaceIndex() === raceIndex ? null : raceIndex);
   }
 
-  getRaceResultsForRace(race: ChampionshipRace, raceIndex: number): { position: number | null; displayName: string; car: string; carClass: string; dns: boolean; driverUuid: string | null }[] {
+  getRaceResultsForRace(
+    race: ChampionshipRace,
+    raceIndex: number,
+  ): {
+    position: number | null;
+    displayName: string;
+    car: string;
+    carClass: string;
+    dns: boolean;
+    driverUuid: string | null;
+  }[] {
     // Find the matching StandingRace by ID to extract per-driver results
     const standingRace = this.races().find((r) => r.id === race.id);
     const standingRaceIndex = standingRace ? this.races().indexOf(standingRace) : raceIndex;
@@ -480,7 +480,6 @@ export class ChampionshipsComponent {
     return this.races().some((r) => r.id === race.id);
   }
 
-
   openStandingsExportPreview(): void {
     if (this.loadingStandings() || !this.selectedChampionship() || this.standings().length === 0) {
       return;
@@ -505,18 +504,22 @@ export class ChampionshipsComponent {
     const championshipName = this.selectedChampionship()?.name ?? 'championship-standings';
     const fileName = `${this.toSlug(championshipName)}-standings.jpg`;
 
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        return;
-      }
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          return;
+        }
 
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      link.click();
-      URL.revokeObjectURL(url);
-    }, 'image/jpeg', 0.93);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(url);
+      },
+      'image/jpeg',
+      0.93,
+    );
   }
 
   getPosition(entry: StandingEntry, index: number): number {
@@ -534,7 +537,7 @@ export class ChampionshipsComponent {
     const idx = this.getClassIndex(cls);
     return {
       'class-tab': true,
-      'active': this.selectedClass() === cls,
+      active: this.selectedClass() === cls,
       [`class-color-${idx}`]: true,
     };
   }
@@ -623,10 +626,10 @@ export class ChampionshipsComponent {
   private getRaceResult(
     entry: StandingEntry,
     race: StandingRace,
-    raceIndex: number
+    raceIndex: number,
   ): { points: number | null; position: number | null; dns: boolean } | null {
     const byRaceId = entry.raceResults.find(
-      (item) => item.raceId !== null && item.raceId === race.id
+      (item) => item.raceId !== null && item.raceId === race.id,
     );
     if (byRaceId) {
       return byRaceId;
@@ -659,7 +662,7 @@ export class ChampionshipsComponent {
           this.loadImage('skf-logo.png'),
           this.loadImage('skf-poly-light.png'),
           this.loadImage('skf-poly-yellow.png'),
-          this.loadImage('skf-poly-dark.png')
+          this.loadImage('skf-poly-dark.png'),
         ]);
 
       const { leagueName, seasonName } = this.splitLeagueAndSeason(championship.name);
@@ -683,7 +686,7 @@ export class ChampionshipsComponent {
           height,
           134,
           ['#ffffff', '#f1f2f4', '#e6e8ec', '#d8dce2'],
-          0.72
+          0.72,
         );
       }
 
@@ -714,7 +717,7 @@ export class ChampionshipsComponent {
           height + 160,
           114,
           ['#0b0f16', '#101722', '#18202d', '#080d13'],
-          0.95
+          0.95,
         );
       }
       ctx.restore();
@@ -741,7 +744,7 @@ export class ChampionshipsComponent {
           420,
           98,
           ['#f8d646', '#f5be2d', '#e8ad11', '#ffd63a'],
-          0.44
+          0.44,
         );
       }
       ctx.restore();
@@ -768,7 +771,7 @@ export class ChampionshipsComponent {
           450,
           98,
           ['#f8d646', '#f5be2d', '#e8ad11', '#ffd63a'],
-          0.42
+          0.42,
         );
       }
       ctx.restore();
@@ -803,7 +806,7 @@ export class ChampionshipsComponent {
         274,
         900,
         64,
-        2
+        2,
       );
 
       if (seasonName.length > 0) {
@@ -888,7 +891,7 @@ export class ChampionshipsComponent {
         columnWidth,
         columnsHeight,
         rightEntries,
-        splitIndex
+        splitIndex,
       );
     } finally {
       this.exportRendering.set(false);
@@ -902,7 +905,7 @@ export class ChampionshipsComponent {
     width: number,
     height: number,
     entries: StandingEntry[],
-    globalOffset: number
+    globalOffset: number,
   ): void {
     const races = this.races().slice(0, 4);
     const raceCount = races.length;
@@ -940,7 +943,7 @@ export class ChampionshipsComponent {
         ctx,
         this.getRaceLabel(raceIndex),
         raceX + raceCellWidth * raceIndex + raceCellWidth / 2,
-        y + 30
+        y + 30,
       );
     });
 
@@ -951,13 +954,7 @@ export class ChampionshipsComponent {
 
       const rank = this.getPosition(entry, globalOffset + rowIndex);
       const badgeColor =
-        rank === 1
-          ? '#f5be2d'
-          : rank === 2
-            ? '#cfd7e1'
-            : rank === 3
-              ? '#d19a5c'
-              : '#2d3950';
+        rank === 1 ? '#f5be2d' : rank === 2 ? '#cfd7e1' : rank === 3 ? '#d19a5c' : '#2d3950';
 
       const badgeX = posX;
       const badgeY = rowY + 5;
@@ -978,7 +975,11 @@ export class ChampionshipsComponent {
 
       ctx.fillStyle = '#f6f9ff';
       ctx.font = '600 21px "Segoe UI", sans-serif';
-      const driverName = this.truncateText(ctx, entry.displayName, Math.max(120, driverWidth - (entry.dsq ? 54 : 4)));
+      const driverName = this.truncateText(
+        ctx,
+        entry.displayName,
+        Math.max(120, driverWidth - (entry.dsq ? 54 : 4)),
+      );
       ctx.fillText(driverName, driverX, rowY + rowHeight * 0.69);
 
       if (entry.dsq) {
@@ -1004,7 +1005,7 @@ export class ChampionshipsComponent {
         ctx,
         this.formatNumber(entry.score),
         scoreX + scoreWidth / 2,
-        rowY + rowHeight * 0.69
+        rowY + rowHeight * 0.69,
       );
 
       races.forEach((race, raceIndex) => {
@@ -1018,7 +1019,7 @@ export class ChampionshipsComponent {
           ctx,
           value,
           raceX + raceCellWidth * raceIndex + raceCellWidth / 2,
-          rowY + rowHeight * 0.69
+          rowY + rowHeight * 0.69,
         );
       });
     });
@@ -1032,7 +1033,7 @@ export class ChampionshipsComponent {
     height: number,
     cellSize: number,
     palette: readonly string[],
-    alpha: number
+    alpha: number,
   ): void {
     const cols = Math.ceil(width / cellSize) + 1;
     const rows = Math.ceil(height / cellSize) + 1;
@@ -1083,13 +1084,13 @@ export class ChampionshipsComponent {
     if (seasonMatch) {
       return {
         leagueName: seasonMatch[1].trim(),
-        seasonName: seasonMatch[2].toUpperCase()
+        seasonName: seasonMatch[2].toUpperCase(),
       };
     }
 
     return {
       leagueName: normalized,
-      seasonName: ''
+      seasonName: '',
     };
   }
 
@@ -1107,9 +1108,12 @@ export class ChampionshipsComponent {
       return Number.isFinite(parsed) ? parsed : Number.NEGATIVE_INFINITY;
     };
 
-    const byDateDesc = (a: StandingRace, b: StandingRace): number => toTime(b.startsAt) - toTime(a.startsAt);
+    const byDateDesc = (a: StandingRace, b: StandingRace): number =>
+      toTime(b.startsAt) - toTime(a.startsAt);
 
-    const concludedRace = races.filter((race) => race.resultsAvailable || race.ended).sort(byDateDesc)[0];
+    const concludedRace = races
+      .filter((race) => race.resultsAvailable || race.ended)
+      .sort(byDateDesc)[0];
     const latestRace = races.sort(byDateDesc)[0];
     const targetRace = concludedRace ?? latestRace;
 
@@ -1138,7 +1142,7 @@ export class ChampionshipsComponent {
     y: number,
     width: number,
     height: number,
-    alpha: number
+    alpha: number,
   ): void {
     const imageWidth = Math.max(image.width, 1);
     const imageHeight = Math.max(image.height, 1);
@@ -1166,7 +1170,6 @@ export class ChampionshipsComponent {
     ctx.restore();
   }
 
-
   private drawWrappedText(
     ctx: CanvasRenderingContext2D,
     text: string,
@@ -1174,7 +1177,7 @@ export class ChampionshipsComponent {
     y: number,
     maxWidth: number,
     lineHeight: number,
-    maxLines: number
+    maxLines: number,
   ): number {
     const words = text.split(/\s+/).filter((word) => word.length > 0);
     let line = '';
@@ -1202,7 +1205,8 @@ export class ChampionshipsComponent {
         if (lineIndex >= maxLines) {
           return currentY;
         }
-        const finalLine = lineIndex === maxLines - 1 ? this.truncateText(ctx, line, maxWidth) : line;
+        const finalLine =
+          lineIndex === maxLines - 1 ? this.truncateText(ctx, line, maxWidth) : line;
         ctx.fillText(finalLine, x, currentY);
       }
     }
@@ -1214,7 +1218,7 @@ export class ChampionshipsComponent {
     ctx: CanvasRenderingContext2D,
     text: string,
     centerX: number,
-    baselineY: number
+    baselineY: number,
   ): void {
     const width = ctx.measureText(text).width;
     ctx.fillText(text, centerX - width / 2, baselineY);
@@ -1239,7 +1243,7 @@ export class ChampionshipsComponent {
     y: number,
     width: number,
     height: number,
-    radius: number
+    radius: number,
   ): void {
     const clippedRadius = Math.min(radius, width / 2, height / 2);
 
@@ -1263,7 +1267,7 @@ export class ChampionshipsComponent {
     y: number,
     width: number,
     height: number,
-    radius: number
+    radius: number,
   ): void {
     const clippedRadius = Math.min(radius, width / 2, height / 2);
 
@@ -1304,52 +1308,29 @@ export class ChampionshipsComponent {
     return Number(key.slice(3));
   }
 
-  private async loadStandings(championshipId: number, force = false): Promise<void> {
+  private async loadStandings(championshipId: number): Promise<void> {
     const token = ++this.standingsLoadToken;
-    const cached = this.standingsCache.get(championshipId);
-
-    if (!force && cached && !this.isCacheExpired(cached)) {
-      this.errorMessage.set('');
-      this.infoMessage.set('');
-      this.selectedChampionship.set(cached.details);
-      this.standings.set(cached.entries);
-      this.races.set(cached.races);
-      this.lastUpdated.set(cached.fetchedAt);
-      return;
-    }
-
     this.loadingStandings.set(true);
     this.errorMessage.set('');
-    this.infoMessage.set('');
 
     try {
-      const detailsPromise = cached
-        ? Promise.resolve(cached.details)
-        : firstValueFrom(this.api.getChampionshipById(championshipId));
-
       const [details, standingsData] = await Promise.all([
-        detailsPromise,
-        firstValueFrom(this.api.getChampionshipStandings(championshipId))
+        firstValueFrom(this.api.getChampionshipById(championshipId)),
+        firstValueFrom(this.api.getChampionshipStandings(championshipId)),
       ]);
 
       if (token !== this.standingsLoadToken) {
         return;
       }
 
-      const fetchedAt = new Date();
       this.selectedChampionship.set(details);
+      this.activeTab.set(this.isChampionshipNotStarted(details) ? 'races' : 'standings');
       this.standings.set(standingsData.entries);
       this.races.set(standingsData.races);
-      this.staleWarning.set(standingsData.stale ?? false);
-      this.lastUpdated.set(fetchedAt);
-      this.ensureDriverMapLoaded();
-
-      this.standingsCache.set(championshipId, {
-        details,
-        entries: standingsData.entries,
-        races: standingsData.races,
-        fetchedAt
-      });
+      this.lastUpdated.set(new Date());
+      if (!this.isChampionshipNotStarted(details)) {
+        this.ensureDriverMapLoaded();
+      }
 
       if (this.exportPreviewOpen()) {
         setTimeout(() => {
@@ -1360,17 +1341,6 @@ export class ChampionshipsComponent {
       if (token !== this.standingsLoadToken) {
         return;
       }
-
-      if (this.isRateLimitError(error) && cached) {
-        this.selectedChampionship.set(cached.details);
-        this.standings.set(cached.entries);
-        this.races.set(cached.races);
-        this.lastUpdated.set(cached.fetchedAt);
-        this.errorMessage.set('');
-        this.infoMessage.set(this.toRateLimitCacheMessage(error, cached.fetchedAt));
-        return;
-      }
-
       this.errorMessage.set(this.toErrorMessage(error));
       this.selectedChampionship.set(null);
       this.standings.set([]);
@@ -1382,40 +1352,10 @@ export class ChampionshipsComponent {
     }
   }
 
-  private async loadChampionshipDetails(championshipId: number): Promise<void> {
-    this.loadingStandings.set(true);
-    this.errorMessage.set('');
-    try {
-      const details = await firstValueFrom(this.api.getChampionshipById(championshipId));
-      if (this.getSelectedSimgridId() === championshipId) {
-        this.selectedChampionship.set(details);
-        this.standings.set([]);
-        this.races.set([]);
-      }
-    } catch (error) {
-      if (this.getSelectedSimgridId() === championshipId) {
-        this.errorMessage.set(this.toErrorMessage(error));
-        this.selectedChampionship.set(null);
-      }
-    } finally {
-      this.loadingStandings.set(false);
-    }
-  }
-
-  private async loadParticipants(championshipId: number): Promise<void> {
-    this.loadingParticipants.set(true);
-    try {
-      const users = await firstValueFrom(this.api.getChampionshipParticipants(championshipId));
-      if (this.getSelectedSimgridId() === championshipId) {
-        this.participants.set(users);
-      }
-    } catch {
-      if (this.getSelectedSimgridId() === championshipId) {
-        this.participants.set([]);
-      }
-    } finally {
-      this.loadingParticipants.set(false);
-    }
+  private isChampionshipNotStarted(details: ChampionshipDetails | null): boolean {
+    if (!details?.startDate) return false;
+    const today = new Date().toISOString().slice(0, 10);
+    return details.startDate.slice(0, 10) > today;
   }
 
   private driverMapLoaded = false;
@@ -1448,19 +1388,6 @@ export class ChampionshipsComponent {
     } finally {
       this.loadingRaces.set(false);
     }
-  }
-
-  private isCacheExpired(cache: CachedStandingsData): boolean {
-    return Date.now() - cache.fetchedAt.getTime() > this.cacheTtlMs;
-  }
-
-  private isRateLimitError(error: unknown): error is HttpErrorResponse {
-    return error instanceof HttpErrorResponse && error.status === 429;
-  }
-
-  private toRateLimitCacheMessage(error: HttpErrorResponse, cachedAt: Date): string {
-    const reason = this.extractErrorReason(error) ?? 'Minute rate limit exceeded';
-    return `${reason}. Showing cached data from ${cachedAt.toLocaleTimeString()}. Try Refresh in about 1 minute.`;
   }
 
   private extractErrorReason(error: HttpErrorResponse): string | null {

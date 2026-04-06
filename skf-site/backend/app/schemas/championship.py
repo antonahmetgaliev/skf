@@ -131,7 +131,6 @@ class ChampionshipRace(CamelModel):
 class ChampionshipStandingsData(CamelModel):
     entries: list[StandingEntry] = []
     races: list[StandingRace] = []
-    stale: bool = False
 
 
 class DriverChampionshipResult(CamelModel):

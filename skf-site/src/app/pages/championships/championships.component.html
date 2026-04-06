@@ -140,16 +140,6 @@
           }
         </div>
 
-        @if (infoMessage()) {
-          <app-alert variant="info">{{ infoMessage() }}</app-alert>
-        }
-
-        @if (staleWarning()) {
-          <app-alert variant="error">
-            SimGrid is rate-limiting requests — showing cached data that may not be current. Try refreshing in a few minutes.
-          </app-alert>
-        }
-
         <!-- Main tabs -->
         <app-tabs
           [tabs]="availableTabs()"
@@ -313,25 +303,33 @@
 
         <!-- Participants tab -->
         @if (activeTab() === 'participants') {
-          @if (loadingParticipants()) {
-            <app-spinner />
-          } @else if (participants().length === 0) {
+          @if (standings().length === 0) {
             <app-empty>No participants registered for this championship yet.</app-empty>
           } @else {
-            <h3 class="section-title">Registered Participants ({{ participants().length }})</h3>
+            <h3 class="section-title">Registered Participants ({{ standings().length }})</h3>
             <div class="table-wrap">
               <table class="standings-table participants-table">
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Username</th>
+                    <th>Driver</th>
+                    <th>Country</th>
+                    <th>Car</th>
                   </tr>
                 </thead>
                 <tbody>
-                  @for (user of participants(); track user.userId; let i = $index) {
+                  @for (entry of standings(); track entry.id; let i = $index) {
                     <tr>
                       <td>{{ i + 1 }}</td>
-                      <td>{{ user.username }}</td>
+                      <td class="driver-cell">
+                        @if (driverUuidBySimgridId().get(entry.id); as uuid) {
+                          <a [routerLink]="['/drivers', uuid]" class="driver-link">{{ entry.displayName }}</a>
+                        } @else {
+                          {{ entry.displayName }}
+                        }
+                      </td>
+                      <td>{{ entry.countryCode || '-' }}</td>
+                      <td>{{ entry.car || '-' }}</td>
                     </tr>
                   }
                 </tbody>
