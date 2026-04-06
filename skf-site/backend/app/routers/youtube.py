@@ -12,9 +12,9 @@ router = APIRouter(prefix="/youtube", tags=["YouTube"])
 
 @router.get("/live-streams", response_model=list[YouTubeVideo])
 async def get_live_streams(
-    limit: int = Query(10, ge=1, le=50),
+    limit: int = Query(50, ge=1, le=200),
 ):
-    """Return recent completed live streams."""
+    """Return past completed live streams."""
     return await youtube_service.get_live_streams(limit=limit)
 
 

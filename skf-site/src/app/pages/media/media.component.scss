@@ -13,6 +13,20 @@
   }
 }
 
+/* ── Sections ── */
+.broadcast-section {
+  margin-bottom: 2.5rem;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 /* ── Video grid ── */
 .video-grid {
   display: grid;

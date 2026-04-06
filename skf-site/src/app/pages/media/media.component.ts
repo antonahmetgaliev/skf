@@ -14,7 +14,8 @@ import { MediaApiService, YouTubeVideo } from '../../services/media-api.service'
 export class MediaComponent {
   private readonly mediaApi = inject(MediaApiService);
 
-  readonly videos = signal<YouTubeVideo[]>([]);
+  readonly pastVideos = signal<YouTubeVideo[]>([]);
+  readonly upcomingVideos = signal<YouTubeVideo[]>([]);
   readonly loading = signal(false);
   readonly errorMessage = signal('');
 
@@ -35,8 +36,12 @@ export class MediaComponent {
   private async loadVideos(): Promise<void> {
     this.loading.set(true);
     try {
-      const data = await firstValueFrom(this.mediaApi.getLiveStreams(50));
-      this.videos.set(data);
+      const [past, upcoming] = await Promise.all([
+        firstValueFrom(this.mediaApi.getLiveStreams(50)),
+        firstValueFrom(this.mediaApi.getUpcomingStreams(10)),
+      ]);
+      this.pastVideos.set(past);
+      this.upcomingVideos.set(upcoming);
     } catch {
       this.errorMessage.set('Failed to load videos.');
     } finally {

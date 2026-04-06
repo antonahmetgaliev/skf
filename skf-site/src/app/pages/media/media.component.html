@@ -9,35 +9,71 @@
     <p class="status-msg error">{{ errorMessage() }}</p>
   }
 
-  @if (!loading() && videos().length > 0) {
-    <div class="video-grid">
-      @for (video of videos(); track video.videoId) {
-        <a
-          class="video-card-link"
-          [href]="'https://www.youtube.com/watch?v=' + video.videoId"
-          target="_blank"
-          rel="noopener"
-        >
-          <app-card class="video-card">
-            @if (video.thumbnailUrl) {
-              <img
-                class="video-thumb"
-                [src]="video.thumbnailUrl"
-                [alt]="video.title"
-                loading="lazy"
-              />
-            }
-            <div class="video-info">
-              <h3 class="video-title">{{ video.title }}</h3>
-              <span class="video-date">{{ formatDate(video.publishedAt) }}</span>
-            </div>
-          </app-card>
-        </a>
-      }
-    </div>
-  }
+  @if (!loading() && !errorMessage()) {
+    @if (upcomingVideos().length > 0) {
+      <section class="broadcast-section">
+        <h2 class="section-title">Upcoming Broadcasts</h2>
+        <div class="video-grid">
+          @for (video of upcomingVideos(); track video.videoId) {
+            <a
+              class="video-card-link"
+              [href]="'https://www.youtube.com/watch?v=' + video.videoId"
+              target="_blank"
+              rel="noopener"
+            >
+              <app-card class="video-card">
+                @if (video.thumbnailUrl) {
+                  <img
+                    class="video-thumb"
+                    [src]="video.thumbnailUrl"
+                    [alt]="video.title"
+                    loading="lazy"
+                  />
+                }
+                <div class="video-info">
+                  <h3 class="video-title">{{ video.title }}</h3>
+                  <span class="video-date">{{ formatDate(video.publishedAt) }}</span>
+                </div>
+              </app-card>
+            </a>
+          }
+        </div>
+      </section>
+    }
 
-  @if (!loading() && !errorMessage() && videos().length === 0) {
-    <p class="status-msg">No videos found.</p>
+    @if (pastVideos().length > 0) {
+      <section class="broadcast-section">
+        <h2 class="section-title">Past Broadcasts</h2>
+        <div class="video-grid">
+          @for (video of pastVideos(); track video.videoId) {
+            <a
+              class="video-card-link"
+              [href]="'https://www.youtube.com/watch?v=' + video.videoId"
+              target="_blank"
+              rel="noopener"
+            >
+              <app-card class="video-card">
+                @if (video.thumbnailUrl) {
+                  <img
+                    class="video-thumb"
+                    [src]="video.thumbnailUrl"
+                    [alt]="video.title"
+                    loading="lazy"
+                  />
+                }
+                <div class="video-info">
+                  <h3 class="video-title">{{ video.title }}</h3>
+                  <span class="video-date">{{ formatDate(video.publishedAt) }}</span>
+                </div>
+              </app-card>
+            </a>
+          }
+        </div>
+      </section>
+    }
+
+    @if (pastVideos().length === 0 && upcomingVideos().length === 0) {
+      <p class="status-msg">No videos found.</p>
+    }
   }
 </app-page>
