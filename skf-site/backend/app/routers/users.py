@@ -18,7 +18,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.get("", response_model=list[UserOut])
 async def list_users(
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(User).order_by(User.username))
@@ -49,7 +49,9 @@ async def update_user(
     result = await db.execute(select(User).where(User.id == user_id))
     target = result.scalar_one_or_none()
     if not target:
-        raise HTTPException(status_code=404, detail="User not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+        )
 
     # Super-admin protections
     if target.role.name == ROLE_SUPER_ADMIN and admin.role.name != ROLE_SUPER_ADMIN:
@@ -113,12 +115,14 @@ async def update_user(
 )
 async def force_logout(
     user_id: uuid.UUID,
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     """Delete all sessions for a user (force logout)."""
     result = await db.execute(select(User).where(User.id == user_id))
     if not result.scalar_one_or_none():
-        raise HTTPException(status_code=404, detail="User not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+        )
     await db.execute(delete(Session).where(Session.user_id == user_id))
     await db.commit()

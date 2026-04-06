@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,6 +24,8 @@ from app.schemas.championship import (
 )
 from app.services.drivers import sync_drivers_from_standings
 from app.services.simgrid import simgrid_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/championships", tags=["Championships"])
 
@@ -68,8 +72,12 @@ async def remove_active(
 async def list_championships(force: bool = Query(False), db: AsyncSession = Depends(get_db)):
     try:
         items = await simgrid_service.get_championships(force=force)
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=str(exc))
+    except Exception:
+        logger.warning("Failed to fetch championships from SimGrid", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to fetch championships from SimGrid.",
+        )
 
     # Championships in the active list are active; all others are finished.
     result = await db.execute(select(ActiveChampionship.simgrid_id))
@@ -138,7 +146,10 @@ async def get_champions_podium(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/raw-cache", include_in_schema=False)
-async def raw_championship_cache(db: AsyncSession = Depends(get_db)):
+async def raw_championship_cache(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
     """Debug: return the raw cached SimGrid championship list to inspect field names."""
     result = await db.execute(
         select(SimgridCache).where(SimgridCache.cache_key.like("championships_list%"))
@@ -153,7 +164,10 @@ async def raw_championship_cache(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/raw-detail-cache", include_in_schema=False)
-async def raw_detail_cache(db: AsyncSession = Depends(get_db)):
+async def raw_detail_cache(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
     """Debug: return raw cached championship detail to inspect field names."""
     result = await db.execute(
         select(SimgridCache).where(SimgridCache.cache_key.like("championship_%"))
@@ -168,7 +182,11 @@ async def raw_detail_cache(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/raw-standings-cache/{championship_id}", include_in_schema=False)
-async def raw_standings_cache(championship_id: int, db: AsyncSession = Depends(get_db)):
+async def raw_standings_cache(
+    championship_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
     """Debug: return the cached standings data (post-parsing)."""
     result = await db.execute(
         select(SimgridCache).where(
@@ -182,7 +200,10 @@ async def raw_standings_cache(championship_id: int, db: AsyncSession = Depends(g
 
 
 @router.get("/raw-standings-api/{championship_id}", include_in_schema=False)
-async def raw_standings_api(championship_id: int):
+async def raw_standings_api(
+    championship_id: int,
+    _: User = Depends(require_admin),
+):
     """Debug: return the raw SimGrid standings API response (unparsed)."""
     import httpx
     from app.config import settings
@@ -252,16 +273,24 @@ async def get_races(championship_id: int, force: bool = Query(False)):
     try:
         raw = await simgrid_service.get_races(championship_id, force=force)
         return [ChampionshipRace(**r) for r in raw]
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=str(exc))
+    except Exception:
+        logger.warning("Failed to fetch races for championship %s", championship_id, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to fetch races from SimGrid.",
+        )
 
 
 @router.get("/{championship_id}", response_model=ChampionshipDetails)
 async def get_championship(championship_id: int, force: bool = Query(False)):
     try:
         return await simgrid_service.get_championship(championship_id, force=force)
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=str(exc))
+    except Exception:
+        logger.warning("Failed to fetch championship %s", championship_id, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to fetch championship from SimGrid.",
+        )
 
 
 @router.get(
@@ -277,6 +306,9 @@ async def get_standings(
         # Sync driver profiles non-blocking after response is sent
         background_tasks.add_task(sync_drivers_from_standings, data.entries)
         return data
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=str(exc))
-
+    except Exception:
+        logger.warning("Failed to fetch standings for championship %s", championship_id, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to fetch standings from SimGrid.",
+        )

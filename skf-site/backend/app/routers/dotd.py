@@ -243,7 +243,7 @@ async def cast_vote(
 async def delete_poll(
     poll_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _user: User = Depends(require_moderator),
+    _: User = Depends(require_moderator),
 ):
     """Permanently delete a poll and all its votes (moderator/admin only)."""
     poll = await _get_poll_or_404(poll_id, db)

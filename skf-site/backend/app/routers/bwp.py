@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_admin
@@ -28,6 +28,31 @@ router = APIRouter(prefix="/bwp", tags=["BWP License"])
 
 
 # ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+async def _get_driver_or_404(driver_id: uuid.UUID, db: AsyncSession) -> Driver:
+    result = await db.execute(select(Driver).where(Driver.id == driver_id))
+    driver = result.scalar_one_or_none()
+    if not driver:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found."
+        )
+    return driver
+
+
+async def _get_rule_or_404(rule_id: uuid.UUID, db: AsyncSession) -> PenaltyRule:
+    result = await db.execute(select(PenaltyRule).where(PenaltyRule.id == rule_id))
+    rule = result.scalar_one_or_none()
+    if not rule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Penalty rule not found."
+        )
+    return rule
+
+
+# ---------------------------------------------------------------------------
 # Drivers
 # ---------------------------------------------------------------------------
 
@@ -41,7 +66,7 @@ async def list_drivers(db: AsyncSession = Depends(get_db)):
 @router.post("/drivers", response_model=DriverOut, status_code=status.HTTP_201_CREATED)
 async def create_driver(
     body: DriverCreate,
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     existing = await db.execute(
@@ -62,13 +87,10 @@ async def create_driver(
 @router.delete("/drivers/{driver_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_driver(
     driver_id: uuid.UUID,
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Driver).where(Driver.id == driver_id))
-    driver = result.scalar_one_or_none()
-    if not driver:
-        raise HTTPException(status_code=404, detail="Driver not found.")
+    driver = await _get_driver_or_404(driver_id, db)
     await db.delete(driver)
     await db.commit()
 
@@ -86,13 +108,10 @@ async def delete_driver(
 async def add_point(
     driver_id: uuid.UUID,
     body: BwpPointCreate,
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Driver).where(Driver.id == driver_id))
-    if not result.scalar_one_or_none():
-        raise HTTPException(status_code=404, detail="Driver not found.")
-
+    await _get_driver_or_404(driver_id, db)
     point = BwpPoint(
         driver_id=driver_id,
         points=body.points,
@@ -108,13 +127,15 @@ async def add_point(
 @router.delete("/points/{point_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_point(
     point_id: uuid.UUID,
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(BwpPoint).where(BwpPoint.id == point_id))
     point = result.scalar_one_or_none()
     if not point:
-        raise HTTPException(status_code=404, detail="Point not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Point not found."
+        )
     await db.delete(point)
     await db.commit()
 
@@ -137,7 +158,7 @@ async def list_penalty_rules(db: AsyncSession = Depends(get_db)):
 )
 async def create_penalty_rule(
     body: PenaltyRuleCreate,
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     # Auto-increment sort_order
@@ -160,13 +181,10 @@ async def create_penalty_rule(
 async def update_penalty_rule(
     rule_id: uuid.UUID,
     body: PenaltyRuleUpdate,
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(PenaltyRule).where(PenaltyRule.id == rule_id))
-    rule = result.scalar_one_or_none()
-    if not rule:
-        raise HTTPException(status_code=404, detail="Penalty rule not found.")
+    rule = await _get_rule_or_404(rule_id, db)
     if body.threshold is not None:
         rule.threshold = body.threshold
     if body.label is not None:
@@ -179,13 +197,10 @@ async def update_penalty_rule(
 @router.delete("/penalty-rules/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_penalty_rule(
     rule_id: uuid.UUID,
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(PenaltyRule).where(PenaltyRule.id == rule_id))
-    rule = result.scalar_one_or_none()
-    if not rule:
-        raise HTTPException(status_code=404, detail="Penalty rule not found.")
+    rule = await _get_rule_or_404(rule_id, db)
     await db.delete(rule)
     await db.commit()
 
@@ -203,16 +218,12 @@ async def delete_penalty_rule(
 async def set_clearance(
     driver_id: uuid.UUID,
     rule_id: uuid.UUID,
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     """Mark a penalty rule as cleared for a driver."""
-    result = await db.execute(select(Driver).where(Driver.id == driver_id))
-    if not result.scalar_one_or_none():
-        raise HTTPException(status_code=404, detail="Driver not found.")
-    result = await db.execute(select(PenaltyRule).where(PenaltyRule.id == rule_id))
-    if not result.scalar_one_or_none():
-        raise HTTPException(status_code=404, detail="Penalty rule not found.")
+    await _get_driver_or_404(driver_id, db)
+    await _get_rule_or_404(rule_id, db)
     # Check if already cleared
     result = await db.execute(
         select(PenaltyClearance).where(
@@ -238,7 +249,7 @@ async def set_clearance(
 async def remove_clearance(
     driver_id: uuid.UUID,
     rule_id: uuid.UUID,
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     """Un-mark a penalty rule as cleared for a driver."""
@@ -250,6 +261,8 @@ async def remove_clearance(
     )
     clearance = result.scalar_one_or_none()
     if not clearance:
-        raise HTTPException(status_code=404, detail="Clearance not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Clearance not found."
+        )
     await db.delete(clearance)
     await db.commit()

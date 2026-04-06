@@ -24,7 +24,7 @@ from app.schemas.incidents import (
     ResolveIncident,
 )
 
-router = APIRouter(tags=["incidents"])
+router = APIRouter(prefix="/incidents", tags=["Incidents"])
 
 
 def _window_with_incidents_query():
@@ -63,7 +63,7 @@ async def _get_incident_or_404(
 
 # ── Windows ─────────────────────────────────────────────────────────────────
 
-@router.get("/incidents/windows", response_model=list[IncidentWindowListItem])
+@router.get("/windows", response_model=list[IncidentWindowListItem])
 async def list_windows(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
@@ -75,14 +75,14 @@ async def list_windows(
 
 
 @router.post(
-    "/incidents/windows",
+    "/windows",
     response_model=IncidentWindowOut,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_window(
     payload: IncidentWindowCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_admin),
+    _: User = Depends(require_admin),
 ):
     now = datetime.now(timezone.utc)
     window = IncidentWindow(
@@ -93,14 +93,14 @@ async def create_window(
         interval_hours=payload.interval_hours,
         opened_at=now,
         closes_at=now + timedelta(hours=payload.interval_hours),
-        opened_by_user_id=current_user.id,
+        opened_by_user_id=_.id,
     )
     db.add(window)
     await db.commit()
     return await _get_window_or_404(window.id, db)
 
 
-@router.get("/incidents/windows/{window_id}", response_model=IncidentWindowOut)
+@router.get("/windows/{window_id}", response_model=IncidentWindowOut)
 async def get_window(
     window_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -109,7 +109,7 @@ async def get_window(
     return await _get_window_or_404(window_id, db)
 
 
-@router.patch("/incidents/windows/{window_id}", response_model=IncidentWindowOut)
+@router.patch("/windows/{window_id}", response_model=IncidentWindowOut)
 async def update_window(
     window_id: uuid.UUID,
     payload: IncidentWindowUpdate,
@@ -127,7 +127,7 @@ async def update_window(
 
 
 @router.delete(
-    "/incidents/windows/{window_id}", status_code=status.HTTP_204_NO_CONTENT
+    "/windows/{window_id}", status_code=status.HTTP_204_NO_CONTENT
 )
 async def delete_window(
     window_id: uuid.UUID,
@@ -142,7 +142,7 @@ async def delete_window(
 # ── Incidents ────────────────────────────────────────────────────────────────
 
 @router.post(
-    "/incidents/windows/{window_id}/incidents",
+    "/windows/{window_id}/incidents",
     response_model=IncidentOut,
     status_code=status.HTTP_201_CREATED,
 )
@@ -174,25 +174,25 @@ async def file_incident(
     return await _get_incident_or_404(incident.id, db)
 
 
-@router.patch("/incidents/{incident_id}/resolve", response_model=IncidentOut)
+@router.patch("/{incident_id}/resolve", response_model=IncidentOut)
 async def resolve_incident(
     incident_id: uuid.UUID,
     payload: ResolveIncident,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_judge),
+    _: User = Depends(require_judge),
 ):
     incident = await _get_incident_or_404(incident_id, db)
     if incident.resolution is not None:
         incident.resolution.verdict = payload.verdict
         incident.resolution.time_penalty_seconds = payload.time_penalty_seconds
         incident.resolution.bwp_points = payload.bwp_points
-        incident.resolution.judge_user_id = current_user.id
+        incident.resolution.judge_user_id = _.id
         incident.resolution.resolved_at = datetime.now(timezone.utc)
     else:
         db.add(
             IncidentResolution(
                 incident_id=incident.id,
-                judge_user_id=current_user.id,
+                judge_user_id=_.id,
                 verdict=payload.verdict,
                 time_penalty_seconds=payload.time_penalty_seconds,
                 bwp_points=payload.bwp_points,
@@ -203,7 +203,7 @@ async def resolve_incident(
     return await _get_incident_or_404(incident_id, db)
 
 
-@router.patch("/incidents/{incident_id}/apply-bwp", response_model=IncidentOut)
+@router.patch("/{incident_id}/apply-bwp", response_model=IncidentOut)
 async def apply_bwp(
     incident_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -220,7 +220,7 @@ async def apply_bwp(
     return await _get_incident_or_404(incident_id, db)
 
 
-@router.patch("/incidents/{incident_id}/unapply-bwp", response_model=IncidentOut)
+@router.patch("/{incident_id}/unapply-bwp", response_model=IncidentOut)
 async def unapply_bwp(
     incident_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),

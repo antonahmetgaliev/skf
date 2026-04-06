@@ -7,15 +7,13 @@ the results in the SimgridCache table to minimise API quota usage.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from typing import Any
 
 import httpx
-from sqlalchemy import select
 
 from app.config import settings
-from app.database import async_session
-from app.models.simgrid_cache import SimgridCache
+from app.services.cache import invalidate_cache_by_prefix, read_cache, read_stale_cache, write_cache
 
 _CACHE_TTL = timedelta(minutes=30)
 _YT_BASE = "https://www.googleapis.com/youtube/v3"
@@ -63,8 +61,8 @@ class YouTubeService:
     ) -> list[dict[str, Any]]:
         """Fetch YouTube search results by eventType with caching."""
         if not force:
-            cached = await self._read_cache(cache_key)
-            if cached is not None:
+            cached = await read_cache(cache_key, _CACHE_TTL)
+            if cached is not None and isinstance(cached, list):
                 return cached[:limit]
 
         try:
@@ -84,8 +82,8 @@ class YouTubeService:
             data = resp.json()
         except Exception:
             logger.warning("YouTube search (%s) fetch failed", event_type, exc_info=True)
-            stale = await self._read_stale_cache(cache_key)
-            if stale is not None:
+            stale = await read_stale_cache(cache_key)
+            if stale is not None and isinstance(stale, list):
                 return stale[:limit]
             return []
 
@@ -107,81 +105,16 @@ class YouTubeService:
                 "thumbnail_url": thumb.get("url", ""),
             })
 
-        await self._write_cache(cache_key, videos)
+        await write_cache(cache_key, videos)
         return videos[:limit]
 
     # ------------------------------------------------------------------
-    # Database cache helpers (same pattern as SimgridService)
+    # Cache management
     # ------------------------------------------------------------------
-
-    async def _read_cache(self, key: str) -> list | None:
-        try:
-            async with async_session() as session:
-                row = (
-                    await session.execute(
-                        select(SimgridCache).where(SimgridCache.cache_key == key)
-                    )
-                ).scalar_one_or_none()
-                if row is None:
-                    return None
-                age = datetime.now(timezone.utc) - row.fetched_at.replace(
-                    tzinfo=timezone.utc
-                )
-                if age > _CACHE_TTL:
-                    return None
-                return row.data if isinstance(row.data, list) else None
-        except Exception:
-            logger.warning("DB cache read failed for key=%s", key, exc_info=True)
-            return None
-
-    async def _read_stale_cache(self, key: str) -> list | None:
-        try:
-            async with async_session() as session:
-                row = (
-                    await session.execute(
-                        select(SimgridCache).where(SimgridCache.cache_key == key)
-                    )
-                ).scalar_one_or_none()
-                if row is None:
-                    return None
-                return row.data if isinstance(row.data, list) else None
-        except Exception:
-            logger.warning("DB stale cache read failed for key=%s", key, exc_info=True)
-            return None
-
-    async def _write_cache(self, key: str, data: Any) -> None:
-        try:
-            async with async_session() as session:
-                existing = (
-                    await session.execute(
-                        select(SimgridCache).where(SimgridCache.cache_key == key)
-                    )
-                ).scalar_one_or_none()
-                now = datetime.now(timezone.utc)
-                if existing:
-                    existing.data = data
-                    existing.fetched_at = now
-                else:
-                    session.add(SimgridCache(cache_key=key, data=data, fetched_at=now))
-                await session.commit()
-        except Exception:
-            logger.warning("DB cache write failed for key=%s", key, exc_info=True)
-
 
     async def invalidate_cache(self) -> None:
         """Delete all YouTube cache entries."""
-        from sqlalchemy import delete
-
-        try:
-            async with async_session() as session:
-                await session.execute(
-                    delete(SimgridCache).where(
-                        SimgridCache.cache_key.like("youtube_%")
-                    )
-                )
-                await session.commit()
-        except Exception:
-            logger.warning("YouTube cache invalidation failed", exc_info=True)
+        await invalidate_cache_by_prefix("youtube_")
 
 
 youtube_service = YouTubeService()

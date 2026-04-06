@@ -283,7 +283,7 @@ def _overlaps_month(
 
 @router.get("/custom-championships", response_model=list[CustomChampionshipOut])
 async def list_custom_championships(
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -299,7 +299,7 @@ async def list_custom_championships(
 )
 async def create_custom_championship(
     body: CustomChampionshipCreate,
-    admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     champ = CustomChampionship(
@@ -307,7 +307,7 @@ async def create_custom_championship(
         game=body.game.strip(),
         car_class=body.car_class.strip() if body.car_class else None,
         description=body.description,
-        created_by_user_id=admin.id,
+        created_by_user_id=_.id,
     )
     for idx, race_data in enumerate(body.races):
         champ.races.append(
@@ -330,7 +330,7 @@ async def create_custom_championship(
 async def update_custom_championship(
     champ_id: uuid.UUID,
     body: CustomChampionshipUpdate,
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     champ = await _get_championship_or_404(champ_id, db)
@@ -350,7 +350,7 @@ async def update_custom_championship(
 )
 async def delete_custom_championship(
     champ_id: uuid.UUID,
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     champ = await _get_championship_or_404(champ_id, db)
@@ -369,7 +369,7 @@ async def delete_custom_championship(
 async def add_race(
     champ_id: uuid.UUID,
     body: CustomRaceCreate,
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     champ = await _get_championship_or_404(champ_id, db)
@@ -394,7 +394,7 @@ async def update_race(
     champ_id: uuid.UUID,
     race_id: uuid.UUID,
     body: CustomRaceUpdate,
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     await _get_championship_or_404(champ_id, db)
@@ -426,7 +426,7 @@ async def update_race(
 async def delete_race(
     champ_id: uuid.UUID,
     race_id: uuid.UUID,
-    _admin: User = Depends(require_admin),
+    _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     await _get_championship_or_404(champ_id, db)
