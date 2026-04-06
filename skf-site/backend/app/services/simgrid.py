@@ -33,7 +33,8 @@ from app.services.cache import (
     write_cache,
 )
 
-_CACHE_TTL = timedelta(minutes=10)
+_TTL_STATIC = timedelta(days=1)     # championships list, details, races
+_TTL_LIVE = timedelta(minutes=10)   # standings, participants
 logger = logging.getLogger(__name__)
 
 
@@ -65,7 +66,7 @@ class SimgridService:
     ) -> CachedResponse:
         key = f"championships_list_{limit}"
         if not force:
-            cached = await read_cache(key, _CACHE_TTL)
+            cached = await read_cache(key, _TTL_STATIC)
             if cached is not None:
                 return CachedResponse(data=[ChampionshipListItem(**item) for item in cached])
 
@@ -83,7 +84,7 @@ class SimgridService:
     ) -> CachedResponse:
         key = f"championship_{championship_id}"
         if not force:
-            cached = await read_cache(key, _CACHE_TTL)
+            cached = await read_cache(key, _TTL_STATIC)
             if cached is not None:
                 return CachedResponse(data=ChampionshipDetails(**cached))
 
@@ -100,7 +101,7 @@ class SimgridService:
     ) -> CachedResponse:
         key = f"races_{championship_id}"
         if not force:
-            cached = await read_cache(key, _CACHE_TTL)
+            cached = await read_cache(key, _TTL_STATIC)
             if cached is not None:
                 return CachedResponse(data=cached if isinstance(cached, list) else [])
 
@@ -115,7 +116,7 @@ class SimgridService:
     ) -> CachedResponse:
         key = f"standings_{championship_id}"
         if not force:
-            cached = await read_cache(key, _CACHE_TTL)
+            cached = await read_cache(key, _TTL_LIVE)
             if cached is not None:
                 return CachedResponse(data=ChampionshipStandingsData(**cached))
 
@@ -144,7 +145,7 @@ class SimgridService:
     ) -> CachedResponse:
         key = f"participants_{championship_id}"
         if not force:
-            cached = await read_cache(key, _CACHE_TTL)
+            cached = await read_cache(key, _TTL_LIVE)
             if cached is not None:
                 return CachedResponse(data=[ParticipatingUser(**u) for u in cached])
 
