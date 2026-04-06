@@ -38,6 +38,11 @@
             </a>
           }
         </div>
+        @if (hasMoreUpcoming()) {
+          <div class="show-more">
+            <app-btn variant="outline" size="sm" (click)="showMoreUpcoming()">Show More</app-btn>
+          </div>
+        }
       </section>
     }
 
@@ -69,10 +74,15 @@
             </a>
           }
         </div>
+        @if (hasMorePast()) {
+          <div class="show-more">
+            <app-btn variant="outline" size="sm" (click)="showMorePast()">Show More</app-btn>
+          </div>
+        }
       </section>
     }
 
-    @if (pastVideos().length === 0 && upcomingVideos().length === 0) {
+    @if (allPastVideos().length === 0 && allUpcomingVideos().length === 0) {
       <p class="status-msg">No videos found.</p>
     }
   }
