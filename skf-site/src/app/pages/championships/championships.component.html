@@ -189,8 +189,10 @@
                   }
                   <th>Car</th>
                   <th>Score</th>
-                  @for (race of races(); track race.id; let raceIndex = $index) {
-                    <th [attr.title]="getRaceTitle(race, raceIndex)">{{ getRaceLabel(raceIndex) }}</th>
+                  @if (hasRaceBreakdown()) {
+                    @for (race of races(); track race.id; let raceIndex = $index) {
+                      <th [attr.title]="getRaceTitle(race, raceIndex)">{{ getRaceLabel(raceIndex) }}</th>
+                    }
                   }
                 </tr>
               </thead>
@@ -221,8 +223,10 @@
                       }
                       <td>{{ entry.car || '-' }}</td>
                       <td>{{ formatNumber(entry.score) }}</td>
-                      @for (race of races(); track race.id; let raceIndex = $index) {
-                        <td class="race-position">{{ formatRacePosition(entry, race, raceIndex) }}</td>
+                      @if (hasRaceBreakdown()) {
+                        @for (race of races(); track race.id; let raceIndex = $index) {
+                          <td class="race-position">{{ formatRacePosition(entry, race, raceIndex) }}</td>
+                        }
                       }
                     </tr>
                   }

@@ -117,6 +117,9 @@ export class ChampionshipsComponent {
     return classes.sort();
   });
   readonly isMulticlass = computed(() => this.carClasses().length > 1);
+  readonly hasRaceBreakdown = computed(() =>
+    this.standings().some((e) => e.raceResults.length > 0),
+  );
   readonly selectedClass = signal<string | null>(null);
   readonly visibleStandings = computed(() => {
     const cls = this.selectedClass();
@@ -199,7 +202,8 @@ export class ChampionshipsComponent {
   }
 
   getOverallColspan(): number {
-    return 5 + this.races().length + (this.isMulticlass() ? 1 : 0);
+    const raceCols = this.hasRaceBreakdown() ? this.races().length : 0;
+    return 5 + raceCols + (this.isMulticlass() ? 1 : 0);
   }
 
   // ------------------------------------------------------------------
