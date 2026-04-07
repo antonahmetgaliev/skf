@@ -191,9 +191,40 @@ class YouTubeService:
         )
         resp.raise_for_status()
 
+        items = resp.json().get("items", [])
+        if not items:
+            return []
+
+        # Collect video IDs and snippets from search results
+        video_ids: list[str] = []
+        snippets_by_id: dict[str, dict[str, Any]] = {}
+        for item in items:
+            vid = item.get("id", {}).get("videoId", "")
+            if vid:
+                video_ids.append(vid)
+                snippets_by_id[vid] = item.get("snippet", {})
+
+        # Fetch scheduledStartTime from liveStreamingDetails
+        scheduled_times: dict[str, str] = {}
+        if video_ids:
+            detail_resp = await self._client.get(
+                "/videos",
+                params={
+                    "part": "liveStreamingDetails",
+                    "id": ",".join(video_ids),
+                    "key": settings.youtube_api_key,
+                },
+            )
+            detail_resp.raise_for_status()
+            for item in detail_resp.json().get("items", []):
+                details = item.get("liveStreamingDetails", {})
+                scheduled = details.get("scheduledStartTime", "")
+                if scheduled:
+                    scheduled_times[item["id"]] = scheduled
+
         videos: list[dict[str, Any]] = []
-        for item in resp.json().get("items", []):
-            snippet = item.get("snippet", {})
+        for vid in video_ids:
+            snippet = snippets_by_id[vid]
             thumbnails = snippet.get("thumbnails", {})
             thumb = (
                 thumbnails.get("high")
@@ -202,10 +233,10 @@ class YouTubeService:
                 or {}
             )
             videos.append({
-                "video_id": item.get("id", {}).get("videoId", ""),
+                "video_id": vid,
                 "title": snippet.get("title", ""),
                 "description": snippet.get("description", ""),
-                "published_at": snippet.get("publishedAt", ""),
+                "published_at": scheduled_times.get(vid, snippet.get("publishedAt", "")),
                 "thumbnail_url": thumb.get("url", ""),
             })
         return videos
