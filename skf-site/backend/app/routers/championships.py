@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response, status
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -77,12 +77,11 @@ async def remove_active(
 @router.get("", response_model=list[ChampionshipListItem])
 async def list_championships(
     response: Response,
-    force: bool = Query(False),
     db: AsyncSession = Depends(get_db),
     user: User | None = Depends(get_current_user_optional),
 ):
     try:
-        result = await simgrid_service.get_championships(force=force)
+        result = await simgrid_service.get_championships()
     except Exception:
         logger.warning("Failed to fetch championships from SimGrid", exc_info=True)
         raise HTTPException(
@@ -286,11 +285,11 @@ async def get_driver_championship_results(
 
 @router.get("/{championship_id}/races", response_model=list[ChampionshipRace])
 async def get_races(
-    championship_id: int, response: Response, force: bool = Query(False),
+    championship_id: int, response: Response,
 ):
     """Return all races for a championship (including future ones)."""
     try:
-        result = await simgrid_service.get_races(championship_id, force=force)
+        result = await simgrid_service.get_races(championship_id)
         _apply_stale_header(result, response)
         return [ChampionshipRace(**r) for r in result.data]
     except Exception:
@@ -303,10 +302,10 @@ async def get_races(
 
 @router.get("/{championship_id}", response_model=ChampionshipDetails)
 async def get_championship(
-    championship_id: int, response: Response, force: bool = Query(False),
+    championship_id: int, response: Response,
 ):
     try:
-        result = await simgrid_service.get_championship(championship_id, force=force)
+        result = await simgrid_service.get_championship(championship_id)
         _apply_stale_header(result, response)
         return result.data
     except Exception:
@@ -324,10 +323,9 @@ async def get_standings(
     championship_id: int,
     response: Response,
     background_tasks: BackgroundTasks,
-    force: bool = Query(False),
 ):
     try:
-        result = await simgrid_service.get_standings(championship_id, force=force)
+        result = await simgrid_service.get_standings(championship_id)
         _apply_stale_header(result, response)
         background_tasks.add_task(sync_drivers_from_standings, result.data.entries)
         return result.data

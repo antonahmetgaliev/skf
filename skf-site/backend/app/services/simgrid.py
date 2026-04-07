@@ -62,13 +62,12 @@ class SimgridService:
     # ------------------------------------------------------------------
 
     async def get_championships(
-        self, limit: int = 200, *, force: bool = False
+        self, limit: int = 200,
     ) -> CachedResponse:
         key = f"championships_list_{limit}"
-        if not force:
-            cached = await read_cache(key, _TTL_STATIC)
-            if cached is not None:
-                return CachedResponse(data=[ChampionshipListItem(**item) for item in cached])
+        cached = await read_cache(key, _TTL_STATIC)
+        if cached is not None:
+            return CachedResponse(data=[ChampionshipListItem(**item) for item in cached])
 
         result = await self._request(
             "/api/v1/championships", key, params={"limit": limit, "offset": 0}
@@ -80,13 +79,12 @@ class SimgridService:
         )
 
     async def get_championship(
-        self, championship_id: int, *, force: bool = False
+        self, championship_id: int,
     ) -> CachedResponse:
         key = f"championship_{championship_id}"
-        if not force:
-            cached = await read_cache(key, _TTL_STATIC)
-            if cached is not None:
-                return CachedResponse(data=ChampionshipDetails(**cached))
+        cached = await read_cache(key, _TTL_STATIC)
+        if cached is not None:
+            return CachedResponse(data=ChampionshipDetails(**cached))
 
         result = await self._request(
             f"/api/v1/championships/{championship_id}", key,
@@ -97,13 +95,12 @@ class SimgridService:
         )
 
     async def get_races(
-        self, championship_id: int, *, force: bool = False
+        self, championship_id: int,
     ) -> CachedResponse:
         key = f"races_{championship_id}"
-        if not force:
-            cached = await read_cache(key, _TTL_STATIC)
-            if cached is not None:
-                return CachedResponse(data=cached if isinstance(cached, list) else [])
+        cached = await read_cache(key, _TTL_STATIC)
+        if cached is not None:
+            return CachedResponse(data=cached if isinstance(cached, list) else [])
 
         result = await self._request(
             "/api/v1/races", key, params={"championship_id": championship_id}
@@ -112,13 +109,12 @@ class SimgridService:
         return CachedResponse(data=items, stale=result.stale)
 
     async def get_standings(
-        self, championship_id: int, *, force: bool = False
+        self, championship_id: int,
     ) -> CachedResponse:
         key = f"standings_{championship_id}"
-        if not force:
-            cached = await read_cache(key, _TTL_LIVE)
-            if cached is not None:
-                return CachedResponse(data=ChampionshipStandingsData(**cached))
+        cached = await read_cache(key, _TTL_LIVE)
+        if cached is not None:
+            return CachedResponse(data=ChampionshipStandingsData(**cached))
 
         try:
             resp = await self._client.get(
@@ -141,13 +137,12 @@ class SimgridService:
             raise
 
     async def get_participating_users(
-        self, championship_id: int, *, force: bool = False
+        self, championship_id: int,
     ) -> CachedResponse:
         key = f"participants_{championship_id}"
-        if not force:
-            cached = await read_cache(key, _TTL_LIVE)
-            if cached is not None:
-                return CachedResponse(data=[ParticipatingUser(**u) for u in cached])
+        cached = await read_cache(key, _TTL_LIVE)
+        if cached is not None:
+            return CachedResponse(data=[ParticipatingUser(**u) for u in cached])
 
         result = await self._request(
             f"/api/v1/championships/{championship_id}/participating_users", key,

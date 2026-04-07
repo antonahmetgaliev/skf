@@ -107,13 +107,15 @@ export class AdminComponent implements OnInit {
 
   // -- Site --
 
-  clearCache(): void {
+  clearCache(domain?: string): void {
     if (this.clearingCache()) return;
     this.clearingCache.set(true);
     this.cacheMessage.set('');
-    this.http.post('/api/admin/clear-cache', {}).subscribe({
+    const params = domain ? { params: { domain } } : {};
+    this.http.post('/api/admin/clear-cache', {}, params).subscribe({
       next: () => {
-        this.cacheMessage.set('Cache cleared successfully.');
+        const label = domain ?? 'All';
+        this.cacheMessage.set(`${label} cache cleared.`);
         this.clearingCache.set(false);
       },
       error: () => {

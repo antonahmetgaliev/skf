@@ -39,15 +39,14 @@ class YouTubeService:
     # ------------------------------------------------------------------
 
     async def get_live_streams(
-        self, *, limit: int = 10, force: bool = False,
+        self, *, limit: int = 10,
     ) -> list[dict[str, Any]]:
         """Return past completed live streams from the channel."""
         cache_key = "youtube_live_streams"
 
-        if not force:
-            cached = await read_cache(cache_key, _CACHE_TTL)
-            if cached is not None and isinstance(cached, list):
-                return cached[:limit]
+        cached = await read_cache(cache_key, _CACHE_TTL)
+        if cached is not None and isinstance(cached, list):
+            return cached[:limit]
 
         try:
             videos = await self._fetch_past_streams(limit=limit)
@@ -62,15 +61,14 @@ class YouTubeService:
         return videos[:limit]
 
     async def get_upcoming_streams(
-        self, *, limit: int = 10, force: bool = False,
+        self, *, limit: int = 10,
     ) -> list[dict[str, Any]]:
         """Return upcoming/scheduled live streams from the channel."""
         cache_key = "youtube_upcoming_streams"
 
-        if not force:
-            cached = await read_cache(cache_key, _CACHE_TTL)
-            if cached is not None and isinstance(cached, list):
-                return cached[:limit]
+        cached = await read_cache(cache_key, _CACHE_TTL)
+        if cached is not None and isinstance(cached, list):
+            return cached[:limit]
 
         try:
             videos = await self._search_by_event_type("upcoming", limit=limit)

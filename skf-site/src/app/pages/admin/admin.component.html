@@ -96,12 +96,17 @@
     <app-card [animated]="true">
       <h3 class="section-title">Cache</h3>
       <p class="section-description">
-        Clear all cached data from external sources (SimGrid, YouTube).
-        Fresh data will be fetched on the next request.
+        Clear cached data from external sources. Fresh data will be fetched on the next request.
       </p>
       <div class="cache-actions">
         <app-btn variant="danger" size="sm" [disabled]="clearingCache()" (click)="clearCache()">
-          {{ clearingCache() ? 'Clearing...' : 'Clear Cache' }}
+          {{ clearingCache() ? 'Clearing...' : 'Clear All' }}
+        </app-btn>
+        <app-btn variant="ghost" size="sm" [disabled]="clearingCache()" (click)="clearCache('simgrid')">
+          SimGrid
+        </app-btn>
+        <app-btn variant="ghost" size="sm" [disabled]="clearingCache()" (click)="clearCache('youtube')">
+          YouTube
         </app-btn>
         @if (cacheMessage()) {
           <span class="cache-message">{{ cacheMessage() }}</span>
