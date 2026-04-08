@@ -2,39 +2,45 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+// ── Output types ───────────────────────────────────────────────────────────
+
 export interface IncidentResolution {
   id: string;
-  incidentId: string;
+  incidentDriverId: string;
   judgeUserId: string | null;
   verdict: string;
-  timePenaltySeconds: number | null;
   bwpPoints: number | null;
   bwpApplied: boolean;
   resolvedAt: string;
+}
+
+export interface IncidentDriver {
+  id: string;
+  driverName: string;
+  driverId: string | null;
+  sortOrder: number;
+  resolution: IncidentResolution | null;
 }
 
 export interface Incident {
   id: string;
   windowId: string;
   reporterUserId: string | null;
-  driver1Name: string;
-  driver1DriverId: string | null;
-  driver2Name: string | null;
-  driver2DriverId: string | null;
-  lapNumber: number | null;
-  turn: string | null;
-  description: string;
+  sessionName: string | null;
+  time: string | null;
+  description: string | null;
   status: string;
   createdAt: string;
-  resolution: IncidentResolution | null;
+  drivers: IncidentDriver[];
 }
 
 export interface IncidentWindowListItem {
   id: string;
-  championshipId: number;
-  championshipName: string;
-  raceId: number;
+  championshipId: number | null;
+  championshipName: string | null;
+  raceId: number | null;
   raceName: string;
+  date: string | null;
   intervalHours: number;
   openedAt: string;
   closesAt: string;
@@ -47,29 +53,30 @@ export interface IncidentWindowOut extends IncidentWindowListItem {
   incidents: Incident[];
 }
 
+// ── Input types ────────────────────────────────────────────────────────────
+
 export interface IncidentWindowCreate {
-  championshipId: number;
-  championshipName: string;
-  raceId: number;
+  championshipId?: number | null;
+  championshipName?: string | null;
+  raceId?: number | null;
   raceName: string;
-  intervalHours: number;
+  date?: string | null;
+  intervalHours?: number;
 }
 
-export interface IncidentCreate {
-  driver1Name: string;
-  driver1DriverId: string | null;
-  driver2Name: string | null;
-  driver2DriverId: string | null;
-  lapNumber: number | null;
-  turn: string | null;
-  description: string;
+export interface IncidentFileCreate {
+  sessionName?: string | null;
+  time?: string | null;
+  description?: string | null;
+  drivers: string[];
 }
 
-export interface ResolveIncident {
+export interface ResolveDriverIncident {
   verdict: string;
-  timePenaltySeconds: number | null;
-  bwpPoints: number | null;
+  bwpPoints?: number | null;
 }
+
+// ── Service ────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
 export class IncidentsApiService {
@@ -109,30 +116,30 @@ export class IncidentsApiService {
     return this.http.delete<void>(`${this.base}/windows/${windowId}`);
   }
 
-  fileIncident(windowId: string, payload: IncidentCreate): Observable<Incident> {
+  fileIncident(windowId: string, payload: IncidentFileCreate): Observable<Incident> {
     return this.http.post<Incident>(
       `${this.base}/windows/${windowId}/incidents`,
       payload
     );
   }
 
-  resolveIncident(incidentId: string, payload: ResolveIncident): Observable<Incident> {
-    return this.http.patch<Incident>(
-      `/api/incidents/${incidentId}/resolve`,
+  resolveDriver(incidentDriverId: string, payload: ResolveDriverIncident): Observable<IncidentDriver> {
+    return this.http.patch<IncidentDriver>(
+      `${this.base}/drivers/${incidentDriverId}/resolve`,
       payload
     );
   }
 
-  applyBwp(incidentId: string): Observable<Incident> {
-    return this.http.patch<Incident>(
-      `/api/incidents/${incidentId}/apply-bwp`,
+  applyDriverBwp(incidentDriverId: string): Observable<IncidentDriver> {
+    return this.http.patch<IncidentDriver>(
+      `${this.base}/drivers/${incidentDriverId}/apply-bwp`,
       {}
     );
   }
 
-  unapplyBwp(incidentId: string): Observable<Incident> {
-    return this.http.patch<Incident>(
-      `/api/incidents/${incidentId}/unapply-bwp`,
+  discardDriverBwp(incidentDriverId: string): Observable<IncidentDriver> {
+    return this.http.patch<IncidentDriver>(
+      `${this.base}/drivers/${incidentDriverId}/discard`,
       {}
     );
   }

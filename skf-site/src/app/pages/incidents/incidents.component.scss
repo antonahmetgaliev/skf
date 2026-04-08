@@ -110,6 +110,7 @@
 .detail-race {
   font-size: 0.9rem;
   color: var(--muted);
+  display: block;
 }
 
 .detail-meta {
@@ -148,74 +149,219 @@
   font-weight: 600;
 }
 
-// ── Table ─────────────────────────────────────────────────────────────────
-.table-wrap {
-  overflow-x: auto;
-}
-
-.incidents-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-
-  th {
-    text-align: left;
-    padding: 0.5rem 0.75rem;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.12);
-    color: var(--muted);
-    font-weight: 700;
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-  }
-
-  td {
-    padding: 0.65rem 0.75rem;
-    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-    color: var(--ink);
-    vertical-align: middle;
-  }
-
-  tr:last-child td {
-    border-bottom: none;
-  }
-
-  tr.row--resolved td {
-    opacity: 0.6;
-  }
-
-  tr:hover td {
-    background: rgba(243, 180, 25, 0.04);
-  }
-}
-
-.row-num {
-  color: var(--muted);
-  width: 2rem;
-  font-weight: 600;
-  font-size: 0.8rem;
-}
-
-.lap-turn {
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  color: var(--charcoal);
-}
-
-.row-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-
-.status-badges {
+// ── Incident Cards ────────────────────────────────────────────────────────
+.incident-cards {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.3rem;
-  line-height: 1;
+  gap: 0.5rem;
+}
+
+.incident-card {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: rgba(243, 180, 25, 0.35);
+  }
+
+  &--resolved {
+    opacity: 0.7;
+  }
+}
+
+.incident-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  background: rgba(40, 36, 30, 0.5);
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(243, 180, 25, 0.06);
+  }
+}
+
+.incident-num {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.8rem;
+  min-width: 2rem;
+}
+
+.incident-drivers {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--ink);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.incident-session,
+.incident-time {
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.incident-status {
+  flex-shrink: 0;
+}
+
+.incident-chevron {
+  font-size: 0.75rem;
+  color: var(--muted);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+
+  &--open {
+    transform: rotate(90deg);
+  }
+}
+
+.incident-card-body {
+  padding: 0.85rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  background: rgba(30, 28, 24, 0.4);
+}
+
+.incident-description {
+  margin-bottom: 0.85rem;
+}
+
+.label-eyebrow {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.desc-cell {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+// ── Driver rows (per-driver within expanded card) ─────────────────────────
+.driver-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.driver-row {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.driver-row-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.driver-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+
+.driver-resolution {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(243, 180, 25, 0.05);
+  font-size: 0.82rem;
+}
+
+.resolution-verdict {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.resolution-bwp {
+  color: var(--gold-deep);
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+// ── Judge inline resolve form ─────────────────────────────────────────────
+.driver-resolve-form {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.resolve-fields {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.resolve-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  input {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--ink);
+    font-size: 0.82rem;
+    font-family: inherit;
+
+    &::placeholder {
+      color: var(--muted);
+    }
+  }
+
+  &--verdict {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  &--bwp {
+    width: 70px;
+  }
+}
+
+.resolve-error {
+  margin: 0.3rem 0 0;
+  font-size: 0.75rem;
+  color: var(--danger);
+}
+
+// ── Card footer ───────────────────────────────────────────────────────────
+.incident-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.06);
+}
+
+.incident-filed {
+  font-size: 0.72rem;
+  color: var(--muted);
 }
 
 // ── Inline links ─────────────────────────────────────────────────────────
@@ -248,34 +394,39 @@
   }
 }
 
-// ── Incident context (shown in resolve modal) ─────────────────────────────
-.incident-context {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 0.85rem 1rem;
-  background: rgba(255, 255, 255, 0.03);
+// ── File Incident modal: driver inputs ───────────────────────────────────
+.driver-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
 }
 
-.context-eyebrow {
-  margin: 0 0 0.5rem;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--muted);
+.driver-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+
+  app-form-field {
+    flex: 1;
+  }
 }
 
-
-.desc-cell {
-  white-space: pre-wrap;
-  word-break: break-word;
+.remove-driver {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
 }
 
-// ── Resolution block ───────────────────────────────────────────────────────
+.add-driver {
+  align-self: flex-start;
+}
+
+// ── Resolution block (detail modal) ────────────────────────────────────────
 .resolution-block {
   border: 1px solid rgba(243, 180, 25, 0.3);
   border-radius: 12px;
   padding: 0.85rem 1rem;
+  margin-top: 0.75rem;
   background: rgba(243, 180, 25, 0.05);
 }
 
@@ -286,4 +437,11 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--gold-deep);
+}
+
+.no-resolution {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-style: italic;
 }

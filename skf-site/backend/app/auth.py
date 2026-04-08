@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.config import Settings
 from app.database import get_db
 from app.models.user import Session, User, ROLE_SUPER_ADMIN
 
@@ -80,3 +81,25 @@ def require_role(*roles: str) -> Callable:
 require_admin = require_role("admin", "super_admin")
 require_moderator = require_role("moderator", "admin", "super_admin")
 require_judge = require_role("racing_judge", "admin", "super_admin")
+
+
+async def require_api_token(request: Request) -> None:
+    """Validate ``Authorization: Bearer <token>`` against the configured incident API token."""
+    settings = Settings()  # type: ignore[call-arg]
+    token = settings.incident_api_token
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Incident API token not configured.",
+        )
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing bearer token.",
+        )
+    if auth_header[7:] != token:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid API token.",
+        )

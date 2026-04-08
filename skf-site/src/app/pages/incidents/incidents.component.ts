@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { BadgeComponent } from '../../components/badge/badge.component';
+import { BadgeComponent, BadgeVariant } from '../../components/badge/badge.component';
 import { CardComponent } from '../../components/card/card.component';
 import { DetailListComponent } from '../../components/detail-list/detail-list.component';
 import { FormFieldComponent } from '../../components/form-field/form-field.component';
@@ -21,6 +21,7 @@ import {
 } from '../../services/simgrid-api.service';
 import {
   Incident,
+  IncidentDriver,
   IncidentWindowListItem,
   IncidentWindowOut,
   IncidentsApiService,
@@ -38,6 +39,8 @@ export class IncidentsComponent implements OnInit {
   private readonly simgridApi = inject(SimgridApiService);
   private readonly bwpApi = inject(BwpApiService);
 
+  readonly verdictPresets = ['NFA', 'Warning', '5s Time Penalty', '10s Time Penalty', 'Drive Through', 'Stop & Go', 'DSQ'];
+
   // ── Data ──────────────────────────────────────────────────────────
   readonly windows = signal<IncidentWindowListItem[]>([]);
   readonly loadingWindows = signal(false);
@@ -51,10 +54,11 @@ export class IncidentsComponent implements OnInit {
   // ── Modal visibility ──────────────────────────────────────────────
   readonly showNewWindowModal = signal(false);
   readonly showNewIncidentModal = signal(false);
-  readonly showResolveModal = signal(false);
   readonly showDetailModal = signal(false);
   readonly detailIncident = signal<Incident | null>(null);
-  readonly rvIncident = signal<Incident | null>(null);
+
+  // ── Expanded incidents (for inline resolution) ────────────────────
+  readonly expandedIncidentId = signal<string | null>(null);
 
   // ── New Window form fields ────────────────────────────────────────
   nwChampId: number | null = null;
@@ -65,24 +69,19 @@ export class IncidentsComponent implements OnInit {
   nwSubmitting = false;
   nwError = '';
 
-  // ── New Incident form fields ───────────────────────────────────────
-  niDriver1Name = '';
-  niDriver1Id: string | null = null;
-  niDriver2Name = '';
-  niDriver2Id: string | null = null;
-  niLap: number | null = null;
-  niTurn = '';
+  // ── File Incident form fields ──────────────────────────────────────
+  niDriverNames: string[] = ['', ''];
+  niSessionName = '';
+  niTime = '';
   niDescription = '';
   niSubmitting = false;
   niError = '';
 
-  // ── Resolve form fields ───────────────────────────────────────────
-  rvIncidentId: string | null = null;
-  rvVerdict = '';
-  rvTimePenalty: number | null = null;
-  rvBwpPoints: number | null = null;
-  rvSubmitting = false;
-  rvError = '';
+  // ── Per-driver resolve state (keyed by incidentDriverId) ──────────
+  rvVerdicts: Record<string, string> = {};
+  rvBwpPoints: Record<string, number | null> = {};
+  rvSubmitting: Record<string, boolean> = {};
+  rvError: Record<string, string> = {};
 
   ngOnInit(): void {
     this.loadWindows();
@@ -166,8 +165,8 @@ export class IncidentsComponent implements OnInit {
   }
 
   async submitNewWindow(): Promise<void> {
-    if (!this.nwChampId || !this.nwRaceId) {
-      this.nwError = 'Please select a championship and race.';
+    if (!this.nwRaceName.trim()) {
+      this.nwError = 'Race name is required.';
       return;
     }
     this.nwSubmitting = true;
@@ -214,40 +213,33 @@ export class IncidentsComponent implements OnInit {
   // ── File Incident ─────────────────────────────────────────────────
 
   openNewIncidentModal(): void {
-    this.niDriver1Name = '';
-    this.niDriver1Id = null;
-    this.niDriver2Name = '';
-    this.niDriver2Id = null;
-    this.niLap = null;
-    this.niTurn = '';
+    this.niDriverNames = ['', ''];
+    this.niSessionName = '';
+    this.niTime = '';
     this.niDescription = '';
     this.niError = '';
     this.showNewIncidentModal.set(true);
   }
 
-  onDriver1Change(): void {
-    const match = this.bwpDrivers().find(
-      (d) => d.name === this.niDriver1Name
-    );
-    this.niDriver1Id = match?.id ?? null;
+  addDriver(): void {
+    this.niDriverNames = [...this.niDriverNames, ''];
   }
 
-  onDriver2Change(): void {
-    const match = this.bwpDrivers().find(
-      (d) => d.name === this.niDriver2Name
-    );
-    this.niDriver2Id = match?.id ?? null;
+  removeDriver(index: number): void {
+    if (this.niDriverNames.length <= 1) return;
+    this.niDriverNames = this.niDriverNames.filter((_, i) => i !== index);
+  }
+
+  trackByIndex(index: number): number {
+    return index;
   }
 
   async submitIncident(): Promise<void> {
     const windowId = this.windowDetail()?.id;
     if (!windowId) return;
-    if (!this.niDriver1Name.trim()) {
-      this.niError = 'Driver 1 name is required.';
-      return;
-    }
-    if (!this.niDescription.trim()) {
-      this.niError = 'Description is required.';
+    const drivers = this.niDriverNames.map((n) => n.trim()).filter(Boolean);
+    if (drivers.length === 0) {
+      this.niError = 'At least one driver is required.';
       return;
     }
     this.niSubmitting = true;
@@ -255,13 +247,10 @@ export class IncidentsComponent implements OnInit {
     try {
       await firstValueFrom(
         this.incidentsApi.fileIncident(windowId, {
-          driver1Name: this.niDriver1Name.trim(),
-          driver1DriverId: this.niDriver1Id,
-          driver2Name: this.niDriver2Name.trim() || null,
-          driver2DriverId: this.niDriver2Id,
-          lapNumber: this.niLap,
-          turn: this.niTurn.trim() || null,
-          description: this.niDescription.trim(),
+          sessionName: this.niSessionName.trim() || undefined,
+          time: this.niTime.trim() || undefined,
+          description: this.niDescription.trim() || undefined,
+          drivers,
         })
       );
       this.showNewIncidentModal.set(false);
@@ -273,55 +262,60 @@ export class IncidentsComponent implements OnInit {
     }
   }
 
-  // ── Resolve Incident ───────────────────────────────────────────────
+  // ── Expand / Collapse incidents ────────────────────────────────────
 
-  openResolveModal(incident: Incident): void {
-    this.rvIncident.set(incident);
-    this.rvIncidentId = incident.id;
-    this.rvVerdict = incident.resolution?.verdict ?? '';
-    this.rvTimePenalty = incident.resolution?.timePenaltySeconds ?? null;
-    this.rvBwpPoints = incident.resolution?.bwpPoints ?? null;
-    this.rvError = '';
-    this.showResolveModal.set(true);
+  toggleIncident(incidentId: string): void {
+    this.expandedIncidentId.set(
+      this.expandedIncidentId() === incidentId ? null : incidentId
+    );
   }
 
-  async submitResolve(): Promise<void> {
-    if (!this.rvIncidentId) return;
-    if (!this.rvVerdict.trim()) {
-      this.rvError = 'Verdict is required.';
+  // ── Per-driver resolve ─────────────────────────────────────────────
+
+  initResolveFields(driver: IncidentDriver): void {
+    if (this.rvVerdicts[driver.id] === undefined) {
+      this.rvVerdicts[driver.id] = driver.resolution?.verdict ?? '';
+      this.rvBwpPoints[driver.id] = driver.resolution?.bwpPoints ?? null;
+    }
+  }
+
+  async submitResolveDriver(driverId: string): Promise<void> {
+    const verdict = (this.rvVerdicts[driverId] ?? '').trim();
+    if (!verdict) {
+      this.rvError[driverId] = 'Verdict is required.';
       return;
     }
-    this.rvSubmitting = true;
-    this.rvError = '';
+    this.rvSubmitting[driverId] = true;
+    this.rvError[driverId] = '';
     try {
       await firstValueFrom(
-        this.incidentsApi.resolveIncident(this.rvIncidentId, {
-          verdict: this.rvVerdict.trim(),
-          timePenaltySeconds: this.rvTimePenalty,
-          bwpPoints: this.rvBwpPoints,
+        this.incidentsApi.resolveDriver(driverId, {
+          verdict,
+          bwpPoints: this.rvBwpPoints[driverId],
         })
       );
-      this.showResolveModal.set(false);
+      delete this.rvVerdicts[driverId];
+      delete this.rvBwpPoints[driverId];
       const windowId = this.windowDetail()?.id;
       if (windowId) await this.selectWindow(windowId, true);
     } catch {
-      this.rvError = 'Failed to submit resolution. Please try again.';
+      this.rvError[driverId] = 'Failed to save verdict.';
     } finally {
-      this.rvSubmitting = false;
+      this.rvSubmitting[driverId] = false;
     }
   }
 
-  // ── Apply / Unapply BWP ────────────────────────────────────────────
+  // ── Apply / Discard BWP ────────────────────────────────────────────
 
-  async applyBwp(incidentId: string): Promise<void> {
-    await firstValueFrom(this.incidentsApi.applyBwp(incidentId));
+  async applyDriverBwp(driverId: string): Promise<void> {
+    await firstValueFrom(this.incidentsApi.applyDriverBwp(driverId));
     const windowId = this.windowDetail()?.id;
     if (windowId) await this.selectWindow(windowId, true);
   }
 
-  async unapplyBwp(incidentId: string): Promise<void> {
-    if (!confirm('Remove the BWP Applied mark from this incident?')) return;
-    await firstValueFrom(this.incidentsApi.unapplyBwp(incidentId));
+  async discardDriverBwp(driverId: string): Promise<void> {
+    if (!confirm('Discard BWP points for this driver?')) return;
+    await firstValueFrom(this.incidentsApi.discardDriverBwp(driverId));
     const windowId = this.windowDetail()?.id;
     if (windowId) await this.selectWindow(windowId, true);
   }
@@ -335,10 +329,15 @@ export class IncidentsComponent implements OnInit {
 
   // ── Helpers ───────────────────────────────────────────────────────
 
-  formatPenalty(seconds: number | null): string {
-    if (seconds === null) return '—';
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return m > 0 ? `${m}m ${s}s` : `${s}s`;
+  driverNames(incident: Incident): string {
+    return incident.drivers.map((d) => d.driverName).join(' vs ');
+  }
+
+  driverStatusBadge(driver: IncidentDriver): { variant: BadgeVariant; label: string } {
+    if (!driver.resolution) return { variant: 'pending', label: 'Open' };
+    if (driver.resolution.verdict === 'NFA') return { variant: 'resolved', label: 'NFA' };
+    if (driver.resolution.bwpApplied) return { variant: 'applied', label: 'BWP Applied' };
+    if (driver.resolution.bwpPoints) return { variant: 'bwp-pending', label: 'BWP Pending' };
+    return { variant: 'resolved', label: 'Resolved' };
   }
 }

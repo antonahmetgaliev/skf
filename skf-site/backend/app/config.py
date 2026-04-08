@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     discord_guild_id: str = ""
     discord_bot_token: str = ""
 
+    # Incident ingestion API token (shared with external tool)
+    incident_api_token: str = ""
+
     # Session
     session_secret: str = "change-me-in-production"
     session_max_age_hours: int = 24 * 7  # 1 week

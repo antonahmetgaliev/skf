@@ -26,8 +26,13 @@
               [class.window-item--open]="w.isOpen"
               (click)="selectWindow(w.id)"
             >
-              <div class="window-item-name">{{ w.championshipName }}</div>
-              <div class="window-item-race">{{ w.raceName }}</div>
+              <div class="window-item-name">{{ w.raceName }}</div>
+              @if (w.championshipName) {
+                <div class="window-item-race">{{ w.championshipName }}</div>
+              }
+              @if (w.date) {
+                <div class="window-item-race">{{ w.date }}</div>
+              }
               <div class="window-item-meta">
                 @if (w.isOpen) {
                   <app-badge variant="open">OPEN · {{ closesIn(w.closesAt) }}</app-badge>
@@ -54,8 +59,13 @@
       } @else if (windowDetail(); as w) {
         <div class="detail-header">
           <div class="detail-title-block">
-            <h2 class="detail-title">{{ w.championshipName }}</h2>
-            <span class="detail-race">{{ w.raceName }}</span>
+            <h2 class="detail-title">{{ w.raceName }}</h2>
+            @if (w.championshipName) {
+              <span class="detail-race">{{ w.championshipName }}</span>
+            }
+            @if (w.date) {
+              <span class="detail-race">{{ w.date }}</span>
+            }
           </div>
           <div class="detail-meta">
             @if (w.isOpen) {
@@ -91,72 +101,121 @@
         @if (w.incidents.length === 0) {
           <app-empty>No incidents filed yet.</app-empty>
         } @else {
-          <div class="table-wrap">
-            <table class="incidents-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Driver 1</th>
-                  <th>Driver 2</th>
-                  <th>Lap / Turn</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (inc of w.incidents; track inc.id; let i = $index) {
-                  <tr [class.row--resolved]="inc.status === 'resolved'">
-                    <td class="row-num">{{ i + 1 }}</td>
-                    <td>{{ inc.driver1Name }}</td>
-                    <td>{{ inc.driver2Name || '—' }}</td>
-                    <td class="lap-turn">
-                      @if (inc.lapNumber !== null || inc.turn) {
-                        {{ inc.lapNumber !== null ? 'L' + inc.lapNumber : '' }}{{ inc.lapNumber !== null && inc.turn ? ' / ' : '' }}{{ inc.turn || '' }}
-                      } @else {
-                        —
-                      }
-                    </td>
-                    <td>
-                      <div class="status-badges">
-                        @if (inc.status === 'resolved') {
-                          <app-badge variant="resolved">Resolved</app-badge>
-                        } @else {
-                          <app-badge variant="pending">Open</app-badge>
-                        }
-                        @if (inc.resolution?.bwpPoints) {
-                          @if (inc.resolution?.bwpApplied) {
-                            <app-badge variant="applied">BWP Applied</app-badge>
-                          } @else {
-                            <app-badge variant="bwp-pending">BWP Pending</app-badge>
-                          }
-                        }
+          <div class="incident-cards">
+            @for (inc of w.incidents; track inc.id; let i = $index) {
+              <div class="incident-card" [class.incident-card--resolved]="inc.status === 'resolved'">
+                <div class="incident-card-header" (click)="toggleIncident(inc.id)">
+                  <span class="incident-num">#{{ i + 1 }}</span>
+                  <span class="incident-drivers">{{ driverNames(inc) }}</span>
+                  @if (inc.sessionName) {
+                    <span class="incident-session">{{ inc.sessionName }}</span>
+                  }
+                  @if (inc.time) {
+                    <span class="incident-time">{{ inc.time }}</span>
+                  }
+                  <div class="incident-status">
+                    @if (inc.status === 'resolved') {
+                      <app-badge variant="resolved">Resolved</app-badge>
+                    } @else {
+                      <app-badge variant="pending">Open</app-badge>
+                    }
+                  </div>
+                  <span class="incident-chevron" [class.incident-chevron--open]="expandedIncidentId() === inc.id">▸</span>
+                </div>
+
+                @if (expandedIncidentId() === inc.id) {
+                  <div class="incident-card-body">
+                    @if (inc.description) {
+                      <div class="incident-description">
+                        <span class="label-eyebrow">Description</span>
+                        <p class="desc-cell">{{ inc.description }}</p>
                       </div>
-                    </td>
-                    <td class="row-actions">
-                      <button class="btn-link" type="button" (click)="openDetailModal(inc)">
-                        View
-                      </button>
-                      @if (auth.isJudge()) {
-                        <button class="btn-link btn-link--judge" type="button" (click)="openResolveModal(inc)">
-                          {{ inc.status === 'resolved' ? 'Edit Verdict' : 'Resolve' }}
-                        </button>
+                    }
+
+                    <div class="driver-rows">
+                      @for (drv of inc.drivers; track drv.id) {
+                        <div class="driver-row">
+                          <div class="driver-row-header">
+                            <span class="driver-name">{{ drv.driverName }}</span>
+                            <app-badge [variant]="driverStatusBadge(drv).variant">{{ driverStatusBadge(drv).label }}</app-badge>
+                          </div>
+
+                          <!-- Existing resolution display -->
+                          @if (drv.resolution) {
+                            <div class="driver-resolution">
+                              <span class="resolution-verdict">{{ drv.resolution.verdict }}</span>
+                              @if (drv.resolution.bwpPoints !== null) {
+                                <span class="resolution-bwp">{{ drv.resolution.bwpPoints }} BWP</span>
+                              }
+                              @if (auth.isAdmin() && drv.resolution.bwpPoints) {
+                                @if (!drv.resolution.bwpApplied) {
+                                  <button class="btn-link btn-link--bwp" type="button" (click)="applyDriverBwp(drv.id)">Apply BWP</button>
+                                } @else {
+                                  <app-badge variant="applied">Applied</app-badge>
+                                  <button class="btn-link btn-link--danger" type="button" (click)="discardDriverBwp(drv.id)">Discard</button>
+                                }
+                              }
+                            </div>
+                          }
+
+                          <!-- Judge inline resolve form -->
+                          @if (auth.isJudge()) {
+                            <div class="driver-resolve-form" [hidden]="false">
+                              {{ initResolveFields(drv) }}
+                              <div class="resolve-fields">
+                                <div class="resolve-field resolve-field--verdict">
+                                  <label class="label-eyebrow" [for]="'rv-verdict-' + drv.id">Verdict</label>
+                                  <input
+                                    [id]="'rv-verdict-' + drv.id"
+                                    type="text"
+                                    [attr.list]="'verdict-presets-' + drv.id"
+                                    [ngModel]="rvVerdicts[drv.id]"
+                                    (ngModelChange)="rvVerdicts[drv.id] = $event"
+                                    placeholder="Select or type…"
+                                  />
+                                  <datalist [id]="'verdict-presets-' + drv.id">
+                                    @for (v of verdictPresets; track v) {
+                                      <option [value]="v"></option>
+                                    }
+                                  </datalist>
+                                </div>
+                                <div class="resolve-field resolve-field--bwp">
+                                  <label class="label-eyebrow" [for]="'rv-bwp-' + drv.id">BWP</label>
+                                  <input
+                                    [id]="'rv-bwp-' + drv.id"
+                                    type="number"
+                                    min="0"
+                                    [ngModel]="rvBwpPoints[drv.id]"
+                                    (ngModelChange)="rvBwpPoints[drv.id] = $event"
+                                    placeholder="0"
+                                  />
+                                </div>
+                                <app-btn
+                                  variant="accent"
+                                  size="sm"
+                                  [disabled]="rvSubmitting[drv.id]"
+                                  (click)="submitResolveDriver(drv.id)"
+                                >
+                                  {{ rvSubmitting[drv.id] ? 'Saving…' : (drv.resolution ? 'Update' : 'Save') }}
+                                </app-btn>
+                              </div>
+                              @if (rvError[drv.id]) {
+                                <p class="resolve-error">{{ rvError[drv.id] }}</p>
+                              }
+                            </div>
+                          }
+                        </div>
                       }
-                      @if (auth.isAdmin() && inc.resolution?.bwpPoints) {
-                        @if (!inc.resolution?.bwpApplied) {
-                          <button class="btn-link btn-link--bwp" type="button" (click)="applyBwp(inc.id)">
-                            Mark BWP Applied
-                          </button>
-                        } @else {
-                          <button class="btn-link btn-link--danger" type="button" (click)="unapplyBwp(inc.id)">
-                            Unapply BWP
-                          </button>
-                        }
-                      }
-                    </td>
-                  </tr>
+                    </div>
+
+                    <div class="incident-card-footer">
+                      <span class="incident-filed">Filed {{ inc.createdAt | date:'dd MMM yyyy HH:mm' }}</span>
+                      <button class="btn-link" type="button" (click)="openDetailModal(inc)">Full Detail</button>
+                    </div>
+                  </div>
                 }
-              </tbody>
-            </table>
+              </div>
+            }
           </div>
         }
       }
@@ -167,7 +226,7 @@
 
 <!-- ── New Window Modal ──────────────────────────────────────────────────── -->
 <app-modal title="Open Incident Window" width="md" [(open)]="showNewWindowModal">
-  <app-form-field label="Championship" fieldId="nwChamp">
+  <app-form-field label="Championship (optional)" fieldId="nwChamp">
     <select
       id="nwChamp"
       [ngModel]="nwChampId ?? ''"
@@ -181,17 +240,26 @@
   </app-form-field>
 
   <app-form-field label="Race" fieldId="nwRace">
-    <select
-      id="nwRace"
-      [disabled]="!nwChampId || loadingRaces()"
-      [ngModel]="nwRaceId ?? ''"
-      (ngModelChange)="onRaceChange($event)"
-    >
-      <option value="">{{ loadingRaces() ? 'Loading…' : '— Select race —' }}</option>
-      @for (r of availableRaces(); track r.id) {
-        <option [value]="r.id">{{ r.displayName }}</option>
-      }
-    </select>
+    @if (nwChampId) {
+      <select
+        id="nwRace"
+        [disabled]="loadingRaces()"
+        [ngModel]="nwRaceId ?? ''"
+        (ngModelChange)="onRaceChange($event)"
+      >
+        <option value="">{{ loadingRaces() ? 'Loading…' : '— Select race —' }}</option>
+        @for (r of availableRaces(); track r.id) {
+          <option [value]="r.id">{{ r.displayName }}</option>
+        }
+      </select>
+    } @else {
+      <input
+        id="nwRace"
+        type="text"
+        [(ngModel)]="nwRaceName"
+        placeholder="Race name…"
+      />
+    }
   </app-form-field>
 
   <app-form-field label="Reporting Window (hours)" fieldId="nwInterval" [error]="nwError">
@@ -220,59 +288,52 @@
 
 <!-- ── File Incident Modal ───────────────────────────────────────────────── -->
 <app-modal title="File Incident" width="md" [(open)]="showNewIncidentModal">
-  <app-form-field label="Driver 1 (involved) *" fieldId="niD1">
-    <input
-      id="niD1"
-      type="text"
-      list="driver1-list"
-      [(ngModel)]="niDriver1Name"
-      (change)="onDriver1Change()"
-      placeholder="Driver name…"
-    />
-    <datalist id="driver1-list">
-      @for (d of bwpDrivers(); track d.id) {
-        <option [value]="d.name"></option>
-      }
-    </datalist>
-  </app-form-field>
-
-  <app-form-field label="Driver 2 (optional)" fieldId="niD2">
-    <input
-      id="niD2"
-      type="text"
-      list="driver2-list"
-      [(ngModel)]="niDriver2Name"
-      (change)="onDriver2Change()"
-      placeholder="Driver name…"
-    />
-    <datalist id="driver2-list">
-      @for (d of bwpDrivers(); track d.id) {
-        <option [value]="d.name"></option>
-      }
-    </datalist>
-  </app-form-field>
+  <div class="driver-inputs">
+    @for (name of niDriverNames; track trackByIndex($index); let i = $index) {
+      <div class="driver-input-row">
+        <app-form-field [label]="'Driver ' + (i + 1)" [fieldId]="'niD' + i">
+          <input
+            [id]="'niD' + i"
+            type="text"
+            [attr.list]="'driver-list-' + i"
+            [ngModel]="niDriverNames[i]"
+            (ngModelChange)="niDriverNames[i] = $event"
+            placeholder="Driver name…"
+          />
+          <datalist [id]="'driver-list-' + i">
+            @for (d of bwpDrivers(); track d.id) {
+              <option [value]="d.name"></option>
+            }
+          </datalist>
+        </app-form-field>
+        @if (niDriverNames.length > 1) {
+          <button class="btn-link btn-link--danger remove-driver" type="button" (click)="removeDriver(i)">✕</button>
+        }
+      </div>
+    }
+    <button class="btn-link add-driver" type="button" (click)="addDriver()">+ Add Driver</button>
+  </div>
 
   <div class="form-row">
-    <app-form-field label="Lap (optional)" fieldId="niLap">
+    <app-form-field label="Session (optional)" fieldId="niSession">
       <input
-        id="niLap"
-          type="number"
-        min="0"
-        [(ngModel)]="niLap"
-        placeholder="e.g. 3"
+        id="niSession"
+        type="text"
+        [(ngModel)]="niSessionName"
+        placeholder="e.g. RACE, QUALIFYING"
       />
     </app-form-field>
-    <app-form-field label="Turn (optional)" fieldId="niTurn">
+    <app-form-field label="Time (optional)" fieldId="niTime">
       <input
-        id="niTurn"
-          type="text"
-        [(ngModel)]="niTurn"
-        placeholder="e.g. T1"
+        id="niTime"
+        type="text"
+        [(ngModel)]="niTime"
+        placeholder="e.g. 0:32:15"
       />
     </app-form-field>
   </div>
 
-  <app-form-field label="Description *" fieldId="niDesc" [error]="niError">
+  <app-form-field label="Description (optional)" fieldId="niDesc" [error]="niError">
     <textarea
       id="niDesc"
       rows="4"
@@ -295,84 +356,19 @@
   </div>
 </app-modal>
 
-<!-- ── Resolve Modal ──────────────────────────────────────────────────────── -->
-<app-modal title="Incident Verdict" width="lg" [(open)]="showResolveModal">
-  @if (rvIncident(); as inc) {
-    <div class="incident-context">
-      <p class="context-eyebrow">Incident context</p>
-      <app-detail-list>
-        <dt>Driver 1</dt><dd>{{ inc.driver1Name }}</dd>
-        @if (inc.driver2Name) {
-          <dt>Driver 2</dt><dd>{{ inc.driver2Name }}</dd>
-        }
-        @if (inc.lapNumber !== null || inc.turn) {
-          <dt>Lap / Turn</dt>
-          <dd>{{ inc.lapNumber !== null ? 'L' + inc.lapNumber : '' }}{{ (inc.lapNumber !== null && inc.turn) ? ' / ' : '' }}{{ inc.turn || '' }}</dd>
-        }
-        <dt>Description</dt><dd class="desc-cell">{{ inc.description }}</dd>
-      </app-detail-list>
-    </div>
-  }
-
-  <app-form-field label="Verdict *" fieldId="rvVerdict">
-    <textarea
-      id="rvVerdict"
-      rows="4"
-      [(ngModel)]="rvVerdict"
-      placeholder="Describe the decision…"
-    ></textarea>
-  </app-form-field>
-
-  <div class="form-row">
-    <app-form-field label="Time Penalty (seconds)" fieldId="rvTime">
-      <input
-        id="rvTime"
-          type="number"
-        min="0"
-        [(ngModel)]="rvTimePenalty"
-        placeholder="e.g. 30"
-      />
-    </app-form-field>
-    <app-form-field label="BWP Points" fieldId="rvBwp" [error]="rvError">
-      <input
-        id="rvBwp"
-          type="number"
-        min="0"
-        [(ngModel)]="rvBwpPoints"
-        placeholder="e.g. 3"
-      />
-    </app-form-field>
-  </div>
-
-  <div modal-footer>
-    <app-btn variant="ghost" (click)="showResolveModal.set(false)">
-      Cancel
-    </app-btn>
-    <app-btn
-      variant="accent"
-      [disabled]="rvSubmitting"
-      (click)="submitResolve()"
-    >
-      {{ rvSubmitting ? 'Saving…' : 'Save Verdict' }}
-    </app-btn>
-  </div>
-</app-modal>
-
 <!-- ── Incident Detail Modal ─────────────────────────────────────────────── -->
 <app-modal title="Incident Detail" width="lg" [(open)]="showDetailModal">
   @if (detailIncident(); as inc) {
     <app-detail-list>
-      <dt>Driver 1</dt><dd>{{ inc.driver1Name }}</dd>
-      @if (inc.driver2Name) {
-        <dt>Driver 2</dt><dd>{{ inc.driver2Name }}</dd>
+      @if (inc.sessionName) {
+        <dt>Session</dt><dd>{{ inc.sessionName }}</dd>
       }
-      @if (inc.lapNumber !== null) {
-        <dt>Lap</dt><dd>{{ inc.lapNumber }}</dd>
+      @if (inc.time) {
+        <dt>Time</dt><dd>{{ inc.time }}</dd>
       }
-      @if (inc.turn) {
-        <dt>Turn</dt><dd>{{ inc.turn }}</dd>
+      @if (inc.description) {
+        <dt>Description</dt><dd class="desc-cell">{{ inc.description }}</dd>
       }
-      <dt>Description</dt><dd class="desc-cell">{{ inc.description }}</dd>
       <dt>Filed</dt><dd>{{ inc.createdAt | date:'dd MMM yyyy HH:mm' }}</dd>
       <dt>Status</dt>
       <dd>
@@ -384,44 +380,31 @@
       </dd>
     </app-detail-list>
 
-    @if (inc.resolution; as r) {
+    @for (drv of inc.drivers; track drv.id) {
       <div class="resolution-block">
-        <h4 class="resolution-heading">Resolution</h4>
-        <app-detail-list>
-          <dt>Verdict</dt><dd class="desc-cell">{{ r.verdict }}</dd>
-          @if (r.timePenaltySeconds !== null) {
-            <dt>Time Penalty</dt><dd>{{ formatPenalty(r.timePenaltySeconds) }}</dd>
-          }
-          @if (r.bwpPoints !== null) {
-            <dt>BWP Points</dt>
-            <dd>
-              {{ r.bwpPoints }}
-              @if (r.bwpApplied) {
-                <app-badge variant="applied">Applied</app-badge>
-                @if (auth.isAdmin()) {
-                  <button class="btn-link btn-link--danger" type="button" (click)="unapplyBwp(inc.id); showDetailModal.set(false)">
-                    Unapply
-                  </button>
+        <h4 class="resolution-heading">{{ drv.driverName }}</h4>
+        @if (drv.resolution; as r) {
+          <app-detail-list>
+            <dt>Verdict</dt><dd class="desc-cell">{{ r.verdict }}</dd>
+            @if (r.bwpPoints !== null) {
+              <dt>BWP Points</dt>
+              <dd>
+                {{ r.bwpPoints }}
+                @if (r.bwpApplied) {
+                  <app-badge variant="applied">Applied</app-badge>
                 }
-              } @else if (auth.isAdmin()) {
-                <button class="btn-link btn-link--bwp" type="button" (click)="applyBwp(inc.id); showDetailModal.set(false)">
-                  Mark Applied
-                </button>
-              }
-            </dd>
-          }
-          <dt>Resolved</dt><dd>{{ r.resolvedAt | date:'dd MMM yyyy HH:mm' }}</dd>
-        </app-detail-list>
+              </dd>
+            }
+            <dt>Resolved</dt><dd>{{ r.resolvedAt | date:'dd MMM yyyy HH:mm' }}</dd>
+          </app-detail-list>
+        } @else {
+          <p class="no-resolution">Not yet resolved</p>
+        }
       </div>
     }
   }
 
   <div modal-footer>
-    @if (auth.isJudge() && detailIncident(); as inc) {
-      <app-btn variant="ghost" (click)="openResolveModal(inc); showDetailModal.set(false)">
-        {{ inc.resolution ? 'Edit Verdict' : 'Resolve' }}
-      </app-btn>
-    }
     <app-btn variant="accent" (click)="showDetailModal.set(false)">
       Close
     </app-btn>
