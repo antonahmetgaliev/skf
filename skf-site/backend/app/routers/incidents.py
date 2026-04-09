@@ -126,7 +126,7 @@ async def list_verdict_rules(
 async def create_verdict_rule(
     payload: VerdictRuleCreate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_judge),
 ):
     # Auto-set sort_order to max + 1
     result = await db.execute(select(func.coalesce(func.max(VerdictRule.sort_order), 0)))
@@ -147,7 +147,7 @@ async def update_verdict_rule(
     rule_id: uuid.UUID,
     payload: VerdictRuleUpdate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_judge),
 ):
     result = await db.execute(select(VerdictRule).where(VerdictRule.id == rule_id))
     rule = result.scalar_one_or_none()
@@ -166,7 +166,7 @@ async def update_verdict_rule(
 async def delete_verdict_rule(
     rule_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_judge),
 ):
     result = await db.execute(select(VerdictRule).where(VerdictRule.id == rule_id))
     rule = result.scalar_one_or_none()
@@ -197,7 +197,7 @@ async def list_description_presets(
 async def create_description_preset(
     payload: DescriptionPresetCreate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_judge),
 ):
     result = await db.execute(
         select(func.coalesce(func.max(DescriptionPreset.sort_order), 0))
@@ -215,7 +215,7 @@ async def update_description_preset(
     preset_id: uuid.UUID,
     payload: DescriptionPresetUpdate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_judge),
 ):
     result = await db.execute(
         select(DescriptionPreset).where(DescriptionPreset.id == preset_id)
@@ -234,7 +234,7 @@ async def update_description_preset(
 async def delete_description_preset(
     preset_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_judge),
 ):
     result = await db.execute(
         select(DescriptionPreset).where(DescriptionPreset.id == preset_id)

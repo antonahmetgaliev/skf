@@ -46,7 +46,7 @@
       }
     </app-card>
 
-    @if (auth.isAdmin()) {
+    @if (auth.isAdmin() || auth.isJudge()) {
       <app-card class="verdict-rules-card">
         <h2 class="sidebar-heading">Verdict Rules</h2>
         <table class="verdict-rules-table">

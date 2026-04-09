@@ -620,12 +620,20 @@ class TestVerdictRules:
         assert rule_id not in ids
 
     @pytest.mark.anyio
-    async def test_create_requires_admin(self, judge_client: AsyncClient):
+    async def test_create_allowed_for_judge(self, judge_client: AsyncClient):
         resp = await judge_client.post(
+            RULES_URL,
+            json={"verdict": "Judge Created", "defaultBwp": 0},
+        )
+        assert resp.status_code == 201
+
+    @pytest.mark.anyio
+    async def test_create_requires_auth(self, client: AsyncClient):
+        resp = await client.post(
             RULES_URL,
             json={"verdict": "Unauthorized", "defaultBwp": 0},
         )
-        assert resp.status_code == 403
+        assert resp.status_code in (401, 403)
 
 
 # =====================================================================
@@ -773,9 +781,17 @@ class TestDescriptionPresets:
         assert preset_id not in ids
 
     @pytest.mark.anyio
-    async def test_create_requires_admin(self, judge_client: AsyncClient):
+    async def test_create_allowed_for_judge(self, judge_client: AsyncClient):
         resp = await judge_client.post(
+            DESC_URL,
+            json={"text": "Judge Created"},
+        )
+        assert resp.status_code == 201
+
+    @pytest.mark.anyio
+    async def test_create_requires_auth(self, client: AsyncClient):
+        resp = await client.post(
             DESC_URL,
             json={"text": "Unauthorized"},
         )
-        assert resp.status_code == 403
+        assert resp.status_code in (401, 403)
