@@ -9,7 +9,7 @@ import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { TabsComponent } from '../../components/tabs/tabs.component';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AuthService, AuthUser } from '../../services/auth.service';
+import { AuthService, AuthUser, ROLES, Role } from '../../services/auth.service';
 
 @Component({
   selector: 'app-admin',
@@ -60,7 +60,7 @@ export class AdminComponent implements OnInit {
     );
   }
 
-  changeRole(user: AuthUser, newRole: string): void {
+  changeRole(user: AuthUser, newRole: Role): void {
     this.http
       .patch<AuthUser>(`/api/users/${user.id}`, { role: newRole })
       .subscribe({
@@ -93,16 +93,16 @@ export class AdminComponent implements OnInit {
   canEdit(target: AuthUser): boolean {
     const me = this.auth.user();
     if (!me) return false;
-    if (target.role === 'super_admin' && me.role !== 'super_admin') return false;
-    if (target.role === 'admin' && me.role !== 'super_admin') return false;
+    if (target.role === ROLES.SUPER_ADMIN && me.role !== ROLES.SUPER_ADMIN) return false;
+    if (target.role === ROLES.ADMIN && me.role !== ROLES.SUPER_ADMIN) return false;
     return true;
   }
 
-  availableRoles(): string[] {
+  availableRoles(): Role[] {
     if (this.auth.isSuperAdmin()) {
-      return ['driver', 'racing_judge', 'admin', 'super_admin'];
+      return [ROLES.DRIVER, ROLES.JUDGE, ROLES.ADMIN, ROLES.SUPER_ADMIN];
     }
-    return ['driver', 'racing_judge', 'admin'];
+    return [ROLES.DRIVER, ROLES.JUDGE, ROLES.ADMIN];
   }
 
   // -- Site --

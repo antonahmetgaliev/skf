@@ -94,7 +94,7 @@ async def list_championships(
     db_result = await db.execute(select(ActiveChampionship.simgrid_id))
     active_ids = set(db_result.scalars().all())
 
-    is_admin = user is not None and user.role is not None and user.role.name == "admin"
+    is_admin = user is not None and user.role is not None and user.role.name in ("admin", "super_admin")
 
     # Admins see all championships; regular users only see active ones
     if is_admin:
