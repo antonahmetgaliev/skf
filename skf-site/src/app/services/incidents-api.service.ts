@@ -76,6 +76,18 @@ export interface ResolveDriverIncident {
   bwpPoints?: number | null;
 }
 
+export interface VerdictRule {
+  id: string;
+  verdict: string;
+  defaultBwp: number;
+  sortOrder: number;
+}
+
+export interface VerdictRuleCreate {
+  verdict: string;
+  defaultBwp: number;
+}
+
 // ── Service ────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
@@ -142,5 +154,23 @@ export class IncidentsApiService {
       `${this.base}/drivers/${incidentDriverId}/discard`,
       {}
     );
+  }
+
+  // ── Verdict rules ──────────────────────────────────────────────────────
+
+  getVerdictRules(): Observable<VerdictRule[]> {
+    return this.http.get<VerdictRule[]>(`${this.base}/verdict-rules`);
+  }
+
+  createVerdictRule(payload: VerdictRuleCreate): Observable<VerdictRule> {
+    return this.http.post<VerdictRule>(`${this.base}/verdict-rules`, payload);
+  }
+
+  updateVerdictRule(id: string, payload: Partial<VerdictRuleCreate>): Observable<VerdictRule> {
+    return this.http.patch<VerdictRule>(`${this.base}/verdict-rules/${id}`, payload);
+  }
+
+  deleteVerdictRule(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/verdict-rules/${id}`);
   }
 }

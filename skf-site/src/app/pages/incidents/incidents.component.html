@@ -45,6 +45,53 @@
         </ul>
       }
     </app-card>
+
+    @if (auth.isAdmin()) {
+      <app-card class="verdict-rules-card">
+        <h2 class="sidebar-heading">Verdict Rules</h2>
+        <table class="verdict-rules-table">
+          <thead>
+            <tr>
+              <th>Verdict</th>
+              <th>BWP</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rule of verdictRules(); track rule.id) {
+              <tr>
+                @if (editingRuleId === rule.id) {
+                  <td>
+                    <input type="text" [(ngModel)]="editRuleVerdict" class="rule-input" />
+                  </td>
+                  <td>
+                    <input type="number" min="0" [(ngModel)]="editRuleDefaultBwp" class="rule-input rule-input--bwp" />
+                  </td>
+                  <td class="rule-actions">
+                    <button class="btn-link" type="button" (click)="saveEditRule()">Save</button>
+                    <button class="btn-link btn-link--muted" type="button" (click)="cancelEditRule()">Cancel</button>
+                  </td>
+                } @else {
+                  <td>{{ rule.verdict }}</td>
+                  <td><app-badge variant="bwp-pending">{{ rule.defaultBwp }}</app-badge></td>
+                  <td class="rule-actions">
+                    <button class="btn-link" type="button" (click)="startEditRule(rule)">Edit</button>
+                    <button class="btn-link btn-link--danger" type="button" (click)="deleteVerdictRule(rule.id)">×</button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+        <div class="verdict-rule-form">
+          <input type="text" [(ngModel)]="newRuleVerdict" placeholder="Verdict name" class="rule-input" />
+          <input type="number" min="0" [(ngModel)]="newRuleDefaultBwp" placeholder="BWP" class="rule-input rule-input--bwp" />
+          <app-btn variant="accent" size="sm" (click)="addVerdictRule()" [disabled]="!newRuleVerdict.trim()">
+            Add
+          </app-btn>
+        </div>
+      </app-card>
+    }
     </aside>
 
     <!-- Window detail panel -->
@@ -170,11 +217,11 @@
                                     type="text"
                                     [attr.list]="'verdict-presets-' + drv.id"
                                     [ngModel]="rvVerdicts[drv.id]"
-                                    (ngModelChange)="rvVerdicts[drv.id] = $event"
+                                    (ngModelChange)="rvVerdicts[drv.id] = $event; onVerdictChange(drv.id, $event)"
                                     placeholder="Select or type…"
                                   />
                                   <datalist [id]="'verdict-presets-' + drv.id">
-                                    @for (v of verdictPresets; track v) {
+                                    @for (v of verdictPresets(); track v) {
                                       <option [value]="v"></option>
                                     }
                                   </datalist>

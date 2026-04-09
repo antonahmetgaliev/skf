@@ -13,8 +13,9 @@ from sqlalchemy.orm import selectinload
 from app.auth import get_current_user, require_admin, require_api_token, require_judge
 from app.database import get_db
 from app.models.bwp import BwpPoint, Driver
-from app.services.simgrid import simgrid_service
-from app.models.incidents import Incident, IncidentDriver, IncidentResolution, IncidentWindow
+from app.models.incidents import (
+    Incident, IncidentDriver, IncidentResolution, IncidentWindow, VerdictRule,
+)
 from app.models.user import User
 from app.schemas.incidents import (
     IncidentBatchCreate,
@@ -26,6 +27,9 @@ from app.schemas.incidents import (
     IncidentWindowOut,
     IncidentWindowUpdate,
     ResolveDriverIncident,
+    VerdictRuleCreate,
+    VerdictRuleOut,
+    VerdictRuleUpdate,
 )
 
 router = APIRouter(prefix="/incidents", tags=["Incidents"])
@@ -95,6 +99,77 @@ async def _update_incident_status(incident_id: uuid.UUID, db: AsyncSession) -> N
     incident.status = "resolved" if all_resolved else "open"
 
 
+# ── Verdict rules ────────────────────────────────────────────────────────────
+
+@router.get("/verdict-rules", response_model=list[VerdictRuleOut])
+async def list_verdict_rules(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(VerdictRule).order_by(VerdictRule.sort_order)
+    )
+    return result.scalars().all()
+
+
+@router.post(
+    "/verdict-rules",
+    response_model=VerdictRuleOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_verdict_rule(
+    payload: VerdictRuleCreate,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    # Auto-set sort_order to max + 1
+    result = await db.execute(select(func.coalesce(func.max(VerdictRule.sort_order), 0)))
+    max_order = result.scalar_one()
+    rule = VerdictRule(
+        verdict=payload.verdict,
+        default_bwp=payload.default_bwp,
+        sort_order=max_order + 1,
+    )
+    db.add(rule)
+    await db.commit()
+    await db.refresh(rule)
+    return rule
+
+
+@router.patch("/verdict-rules/{rule_id}", response_model=VerdictRuleOut)
+async def update_verdict_rule(
+    rule_id: uuid.UUID,
+    payload: VerdictRuleUpdate,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    result = await db.execute(select(VerdictRule).where(VerdictRule.id == rule_id))
+    rule = result.scalar_one_or_none()
+    if rule is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Verdict rule not found.")
+    if payload.verdict is not None:
+        rule.verdict = payload.verdict
+    if payload.default_bwp is not None:
+        rule.default_bwp = payload.default_bwp
+    await db.commit()
+    await db.refresh(rule)
+    return rule
+
+
+@router.delete("/verdict-rules/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_verdict_rule(
+    rule_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    result = await db.execute(select(VerdictRule).where(VerdictRule.id == rule_id))
+    rule = result.scalar_one_or_none()
+    if rule is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Verdict rule not found.")
+    await db.delete(rule)
+    await db.commit()
+
+
 # ── Batch ingestion (token-auth'd) ──────────────────────────────────────────
 
 @router.post(
@@ -107,26 +182,21 @@ async def ingest_incidents(
     payload: IncidentBatchCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    # Find or create window by race_id
+    # Look up existing window by race_id (admin must create it first)
     q = select(IncidentWindow).where(IncidentWindow.race_id == payload.race_id)
     result = await db.execute(q)
     window = result.scalar_one_or_none()
 
     if window is None:
-        race_name = await simgrid_service.get_race_name(payload.race_id)
-        today = date.today().isoformat()
-        now = datetime.now(timezone.utc)
-        window = IncidentWindow(
-            championship_id=payload.championship_id,
-            race_id=payload.race_id,
-            race_name=race_name,
-            date=today,
-            interval_hours=24,
-            opened_at=now,
-            closes_at=now + timedelta(hours=24),
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No incident window found for race {payload.race_id}.",
         )
-        db.add(window)
-        await db.flush()
+    if not window.is_open:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Incident window for this race is closed.",
+        )
 
     # Create incidents + drivers
     for inc_data in payload.incidents:

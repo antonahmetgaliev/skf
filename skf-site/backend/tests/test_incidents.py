@@ -165,10 +165,6 @@ async def shared_client(engine, admin_user, judge_user):
 # Helpers
 # ---------------------------------------------------------------------------
 
-async def _coro(value):
-    """Wrap a value in a coroutine (for monkeypatching async methods)."""
-    return value
-
 INGEST_URL = "/api/incidents/ingest"
 BATCH_PAYLOAD = {
     "raceId": 142899,
@@ -208,13 +204,14 @@ class TestTokenAuth:
         assert resp.status_code == 403
 
     @pytest.mark.anyio
-    async def test_ingest_valid_token(self, client: AsyncClient):
+    async def test_ingest_valid_token_no_window(self, client: AsyncClient):
+        """Auth passes but no window exists → 404."""
         resp = await client.post(
             INGEST_URL,
             json=BATCH_PAYLOAD,
             headers={"Authorization": "Bearer test-token-secret"},
         )
-        assert resp.status_code == 201
+        assert resp.status_code == 404
 
 
 # =====================================================================
@@ -222,17 +219,58 @@ class TestTokenAuth:
 # =====================================================================
 
 class TestBatchIngestion:
+
+    INGEST_HEADERS = {"Authorization": "Bearer test-token-secret"}
+
+    async def _create_window(self, admin_client: AsyncClient) -> str:
+        """Helper: create a window with race_id matching BATCH_PAYLOAD."""
+        resp = await admin_client.post(
+            "/api/incidents/windows",
+            json={
+                "raceName": "Ignition League - Round 1",
+                "raceId": 142899,
+                "championshipId": 20697,
+                "intervalHours": 48,
+            },
+        )
+        assert resp.status_code == 201
+        return resp.json()["id"]
+
     @pytest.mark.anyio
-    async def test_creates_window_and_incidents(self, client: AsyncClient, monkeypatch):
-        from app.services import simgrid as sg_mod
-        monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Ignition League - Round 1"))
+    async def test_ingest_no_window_returns_404(self, client: AsyncClient):
+        """Ingest without a pre-existing window → 404."""
         resp = await client.post(
-            INGEST_URL,
-            json=BATCH_PAYLOAD,
-            headers={"Authorization": "Bearer test-token-secret"},
+            INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS
+        )
+        assert resp.status_code == 404
+        assert "No incident window found" in resp.json()["detail"]
+
+    @pytest.mark.anyio
+    async def test_ingest_closed_window_returns_409(
+        self, client: AsyncClient, admin_client: AsyncClient
+    ):
+        """Ingest to a closed window → 409."""
+        window_id = await self._create_window(admin_client)
+        await admin_client.patch(
+            f"/api/incidents/windows/{window_id}",
+            json={"isManuallyClosed": True},
+        )
+        resp = await client.post(
+            INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS
+        )
+        assert resp.status_code == 409
+
+    @pytest.mark.anyio
+    async def test_ingest_adds_to_existing_window(
+        self, client: AsyncClient, admin_client: AsyncClient
+    ):
+        window_id = await self._create_window(admin_client)
+        resp = await client.post(
+            INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS
         )
         assert resp.status_code == 201
         data = resp.json()
+        assert data["id"] == window_id
         assert data["raceName"] == "Ignition League - Round 1"
         assert data["raceId"] == 142899
         assert data["championshipId"] == 20697
@@ -248,36 +286,38 @@ class TestBatchIngestion:
         assert len(inc1["drivers"]) == 2
 
     @pytest.mark.anyio
-    async def test_reuses_existing_window(self, client: AsyncClient, monkeypatch):
-        from app.services import simgrid as sg_mod
-        monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Ignition League - Round 1"))
-        headers = {"Authorization": "Bearer test-token-secret"}
-        resp1 = await client.post(INGEST_URL, json=BATCH_PAYLOAD, headers=headers)
+    async def test_reuses_existing_window(
+        self, client: AsyncClient, admin_client: AsyncClient
+    ):
+        window_id = await self._create_window(admin_client)
+        resp1 = await client.post(
+            INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS
+        )
         assert resp1.status_code == 201
-        window_id_1 = resp1.json()["id"]
+        assert resp1.json()["id"] == window_id
 
-        resp2 = await client.post(INGEST_URL, json=BATCH_PAYLOAD, headers=headers)
+        resp2 = await client.post(
+            INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS
+        )
         assert resp2.status_code == 201
-        window_id_2 = resp2.json()["id"]
-        assert window_id_1 == window_id_2
+        assert resp2.json()["id"] == window_id
         # Should now have 4 incidents (2 + 2)
         assert len(resp2.json()["incidents"]) == 4
 
     @pytest.mark.anyio
-    async def test_driver_matching(self, client: AsyncClient, db: AsyncSession, monkeypatch):
+    async def test_driver_matching(
+        self, client: AsyncClient, admin_client: AsyncClient, db: AsyncSession
+    ):
         """When a BWP Driver exists with the same name, the incident_driver should link to it."""
-        from app.services import simgrid as sg_mod
-        monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Test Race"))
         from app.models.bwp import Driver
         drv = Driver(name="Serhii Kachan")
         db.add(drv)
         await db.commit()
         await db.refresh(drv)
 
+        await self._create_window(admin_client)
         resp = await client.post(
-            INGEST_URL,
-            json=BATCH_PAYLOAD,
-            headers={"Authorization": "Bearer test-token-secret"},
+            INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS
         )
         assert resp.status_code == 201
         inc0 = resp.json()["incidents"][0]
@@ -547,3 +587,72 @@ class TestWindowCrud:
 
         del_resp = await admin_client.delete(f"/api/incidents/windows/{wid}")
         assert del_resp.status_code == 204
+
+
+# =====================================================================
+# Verdict rules CRUD
+# =====================================================================
+
+RULES_URL = "/api/incidents/verdict-rules"
+
+
+class TestVerdictRules:
+    @pytest.mark.anyio
+    async def test_list_verdict_rules(self, admin_client: AsyncClient):
+        resp = await admin_client.get(RULES_URL)
+        assert resp.status_code == 200
+        assert isinstance(resp.json(), list)
+
+    @pytest.mark.anyio
+    async def test_create_verdict_rule(self, admin_client: AsyncClient):
+        resp = await admin_client.post(
+            RULES_URL,
+            json={"verdict": "New Penalty", "defaultBwp": 5},
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["verdict"] == "New Penalty"
+        assert data["defaultBwp"] == 5
+        assert data["sortOrder"] >= 1
+
+    @pytest.mark.anyio
+    async def test_update_verdict_rule(self, admin_client: AsyncClient):
+        # Create
+        create_resp = await admin_client.post(
+            RULES_URL,
+            json={"verdict": "Old Name", "defaultBwp": 1},
+        )
+        rule_id = create_resp.json()["id"]
+
+        # Update
+        resp = await admin_client.patch(
+            f"{RULES_URL}/{rule_id}",
+            json={"verdict": "Updated Name", "defaultBwp": 3},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["verdict"] == "Updated Name"
+        assert resp.json()["defaultBwp"] == 3
+
+    @pytest.mark.anyio
+    async def test_delete_verdict_rule(self, admin_client: AsyncClient):
+        create_resp = await admin_client.post(
+            RULES_URL,
+            json={"verdict": "To Delete", "defaultBwp": 0},
+        )
+        rule_id = create_resp.json()["id"]
+
+        del_resp = await admin_client.delete(f"{RULES_URL}/{rule_id}")
+        assert del_resp.status_code == 204
+
+        # Verify it's gone
+        get_resp = await admin_client.get(RULES_URL)
+        ids = [r["id"] for r in get_resp.json()]
+        assert rule_id not in ids
+
+    @pytest.mark.anyio
+    async def test_create_requires_admin(self, judge_client: AsyncClient):
+        resp = await judge_client.post(
+            RULES_URL,
+            json={"verdict": "Unauthorized", "defaultBwp": 0},
+        )
+        assert resp.status_code == 403

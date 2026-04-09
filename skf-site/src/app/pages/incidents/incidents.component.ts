@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BadgeComponent, BadgeVariant } from '../../components/badge/badge.component';
 import { CardComponent } from '../../components/card/card.component';
@@ -25,6 +25,7 @@ import {
   IncidentWindowListItem,
   IncidentWindowOut,
   IncidentsApiService,
+  VerdictRule,
 } from '../../services/incidents-api.service';
 
 @Component({
@@ -39,7 +40,8 @@ export class IncidentsComponent implements OnInit {
   private readonly simgridApi = inject(SimgridApiService);
   private readonly bwpApi = inject(BwpApiService);
 
-  readonly verdictPresets = ['NFA', 'Warning', '5s Time Penalty', '10s Time Penalty', 'Drive Through', 'Stop & Go', 'DSQ'];
+  readonly verdictRules = signal<VerdictRule[]>([]);
+  readonly verdictPresets = computed(() => this.verdictRules().map(r => r.verdict));
 
   // ── Data ──────────────────────────────────────────────────────────
   readonly windows = signal<IncidentWindowListItem[]>([]);
@@ -85,6 +87,7 @@ export class IncidentsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadWindows();
+    this.loadVerdictRules();
     firstValueFrom(this.bwpApi.getDrivers()).then((ds) =>
       this.bwpDrivers.set(ds)
     );
@@ -279,6 +282,13 @@ export class IncidentsComponent implements OnInit {
     }
   }
 
+  onVerdictChange(driverId: string, verdict: string): void {
+    const rule = this.verdictRules().find(r => r.verdict === verdict);
+    if (rule) {
+      this.rvBwpPoints[driverId] = rule.defaultBwp;
+    }
+  }
+
   async submitResolveDriver(driverId: string): Promise<void> {
     const verdict = (this.rvVerdicts[driverId] ?? '').trim();
     if (!verdict) {
@@ -339,5 +349,61 @@ export class IncidentsComponent implements OnInit {
     if (driver.resolution.bwpApplied) return { variant: 'applied', label: 'BWP Applied' };
     if (driver.resolution.bwpPoints) return { variant: 'bwp-pending', label: 'BWP Pending' };
     return { variant: 'resolved', label: 'Resolved' };
+  }
+
+  // ── Verdict rules CRUD ─────────────────────────────────────────────
+
+  newRuleVerdict = '';
+  newRuleDefaultBwp = 0;
+  editingRuleId: string | null = null;
+  editRuleVerdict = '';
+  editRuleDefaultBwp = 0;
+
+  async loadVerdictRules(): Promise<void> {
+    try {
+      const rules = await firstValueFrom(this.incidentsApi.getVerdictRules());
+      this.verdictRules.set(rules);
+    } catch { /* silent — rules are optional for page load */ }
+  }
+
+  async addVerdictRule(): Promise<void> {
+    if (!this.newRuleVerdict.trim()) return;
+    await firstValueFrom(
+      this.incidentsApi.createVerdictRule({
+        verdict: this.newRuleVerdict.trim(),
+        defaultBwp: this.newRuleDefaultBwp,
+      })
+    );
+    this.newRuleVerdict = '';
+    this.newRuleDefaultBwp = 0;
+    await this.loadVerdictRules();
+  }
+
+  startEditRule(rule: VerdictRule): void {
+    this.editingRuleId = rule.id;
+    this.editRuleVerdict = rule.verdict;
+    this.editRuleDefaultBwp = rule.defaultBwp;
+  }
+
+  cancelEditRule(): void {
+    this.editingRuleId = null;
+  }
+
+  async saveEditRule(): Promise<void> {
+    if (!this.editingRuleId) return;
+    await firstValueFrom(
+      this.incidentsApi.updateVerdictRule(this.editingRuleId, {
+        verdict: this.editRuleVerdict.trim(),
+        defaultBwp: this.editRuleDefaultBwp,
+      })
+    );
+    this.editingRuleId = null;
+    await this.loadVerdictRules();
+  }
+
+  async deleteVerdictRule(id: string): Promise<void> {
+    if (!confirm('Delete this verdict rule?')) return;
+    await firstValueFrom(this.incidentsApi.deleteVerdictRule(id));
+    await this.loadVerdictRules();
   }
 }

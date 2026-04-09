@@ -54,6 +54,27 @@ class ResolveDriverIncident(CamelModel):
     bwp_points: int | None = Field(default=None, ge=0)
 
 
+# ── Verdict rule schemas ────────────────────────────────────────────────────
+
+class VerdictRuleOut(CamelModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    verdict: str
+    default_bwp: int
+    sort_order: int
+
+
+class VerdictRuleCreate(CamelModel):
+    verdict: str = Field(min_length=1, max_length=100)
+    default_bwp: int = Field(default=0, ge=0)
+
+
+class VerdictRuleUpdate(CamelModel):
+    verdict: str | None = Field(default=None, min_length=1, max_length=100)
+    default_bwp: int | None = Field(default=None, ge=0)
+
+
 # ── Output schemas ──────────────────────────────────────────────────────────
 
 class IncidentResolutionOut(CamelModel):
