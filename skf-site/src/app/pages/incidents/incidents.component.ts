@@ -26,6 +26,7 @@ import {
   IncidentWindowOut,
   IncidentsApiService,
   VerdictRule,
+  DescriptionPreset,
 } from '../../services/incidents-api.service';
 
 @Component({
@@ -43,15 +44,8 @@ export class IncidentsComponent implements OnInit {
   readonly verdictRules = signal<VerdictRule[]>([]);
   readonly verdictPresets = computed(() => this.verdictRules().map(r => r.verdict));
 
-  readonly descriptionPresets = [
-    'Avoidable contact',
-    'Avoidable contact (position returned)',
-    'Unsafe rejoin',
-    'Racing incident',
-    'Braking mistake',
-    'Forcing off track',
-    'Dangerous driving',
-  ];
+  readonly descriptionPresets = signal<DescriptionPreset[]>([]);
+  readonly descriptionPresetTexts = computed(() => this.descriptionPresets().map(p => p.text));
 
   // ── Data ──────────────────────────────────────────────────────────
   readonly windows = signal<IncidentWindowListItem[]>([]);
@@ -101,6 +95,7 @@ export class IncidentsComponent implements OnInit {
   ngOnInit(): void {
     this.loadWindows();
     this.loadVerdictRules();
+    this.loadDescriptionPresets();
     firstValueFrom(this.bwpApi.getDrivers()).then((ds) =>
       this.bwpDrivers.set(ds)
     );
@@ -432,5 +427,53 @@ export class IncidentsComponent implements OnInit {
     if (!confirm('Delete this verdict rule?')) return;
     await firstValueFrom(this.incidentsApi.deleteVerdictRule(id));
     await this.loadVerdictRules();
+  }
+
+  // ── Description presets CRUD ───────────────────────────────────────
+
+  newPresetText = '';
+  editingPresetId: string | null = null;
+  editPresetText = '';
+
+  async loadDescriptionPresets(): Promise<void> {
+    try {
+      const presets = await firstValueFrom(this.incidentsApi.getDescriptionPresets());
+      this.descriptionPresets.set(presets);
+    } catch { /* silent */ }
+  }
+
+  async addDescriptionPreset(): Promise<void> {
+    if (!this.newPresetText.trim()) return;
+    await firstValueFrom(
+      this.incidentsApi.createDescriptionPreset({ text: this.newPresetText.trim() })
+    );
+    this.newPresetText = '';
+    await this.loadDescriptionPresets();
+  }
+
+  startEditPreset(preset: DescriptionPreset): void {
+    this.editingPresetId = preset.id;
+    this.editPresetText = preset.text;
+  }
+
+  cancelEditPreset(): void {
+    this.editingPresetId = null;
+  }
+
+  async saveEditPreset(): Promise<void> {
+    if (!this.editingPresetId) return;
+    await firstValueFrom(
+      this.incidentsApi.updateDescriptionPreset(this.editingPresetId, {
+        text: this.editPresetText.trim(),
+      })
+    );
+    this.editingPresetId = null;
+    await this.loadDescriptionPresets();
+  }
+
+  async deleteDescriptionPreset(id: string): Promise<void> {
+    if (!confirm('Delete this description preset?')) return;
+    await firstValueFrom(this.incidentsApi.deleteDescriptionPreset(id));
+    await this.loadDescriptionPresets();
   }
 }

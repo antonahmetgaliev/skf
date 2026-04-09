@@ -86,6 +86,24 @@ class VerdictRuleUpdate(CamelModel):
     default_bwp: int | None = Field(default=None, ge=0)
 
 
+# ── Description preset schemas ──────────────────────────────────────────────
+
+class DescriptionPresetOut(CamelModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    text: str
+    sort_order: int
+
+
+class DescriptionPresetCreate(CamelModel):
+    text: str = Field(min_length=1, max_length=200)
+
+
+class DescriptionPresetUpdate(CamelModel):
+    text: str | None = Field(default=None, min_length=1, max_length=200)
+
+
 # ── Output schemas ──────────────────────────────────────────────────────────
 
 class IncidentResolutionOut(CamelModel):

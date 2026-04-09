@@ -152,3 +152,13 @@ class VerdictRule(Base):
     verdict: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     default_bwp: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+
+class DescriptionPreset(Base):
+    __tablename__ = "description_presets"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    text: Mapped[str] = mapped_column(String(200), nullable=False, unique=True)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

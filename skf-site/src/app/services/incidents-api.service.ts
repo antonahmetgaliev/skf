@@ -100,6 +100,16 @@ export interface VerdictRuleCreate {
   defaultBwp: number;
 }
 
+export interface DescriptionPreset {
+  id: string;
+  text: string;
+  sortOrder: number;
+}
+
+export interface DescriptionPresetCreate {
+  text: string;
+}
+
 // ── Service ────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
@@ -191,5 +201,23 @@ export class IncidentsApiService {
 
   deleteVerdictRule(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/verdict-rules/${id}`);
+  }
+
+  // ── Description presets ─────────────────────────────────────────────────
+
+  getDescriptionPresets(): Observable<DescriptionPreset[]> {
+    return this.http.get<DescriptionPreset[]>(`${this.base}/description-presets`);
+  }
+
+  createDescriptionPreset(payload: DescriptionPresetCreate): Observable<DescriptionPreset> {
+    return this.http.post<DescriptionPreset>(`${this.base}/description-presets`, payload);
+  }
+
+  updateDescriptionPreset(id: string, payload: Partial<DescriptionPresetCreate>): Observable<DescriptionPreset> {
+    return this.http.patch<DescriptionPreset>(`${this.base}/description-presets/${id}`, payload);
+  }
+
+  deleteDescriptionPreset(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/description-presets/${id}`);
   }
 }

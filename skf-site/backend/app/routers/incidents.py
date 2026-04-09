@@ -16,6 +16,7 @@ from app.models.bwp import BwpPoint, Driver
 from app.services.simgrid import simgrid_service
 from app.models.incidents import (
     Incident, IncidentDriver, IncidentResolution, IncidentWindow, VerdictRule,
+    DescriptionPreset,
 )
 from app.models.user import User
 from app.schemas.incidents import (
@@ -32,6 +33,9 @@ from app.schemas.incidents import (
     VerdictRuleCreate,
     VerdictRuleOut,
     VerdictRuleUpdate,
+    DescriptionPresetCreate,
+    DescriptionPresetOut,
+    DescriptionPresetUpdate,
 )
 
 router = APIRouter(prefix="/incidents", tags=["Incidents"])
@@ -169,6 +173,76 @@ async def delete_verdict_rule(
     if rule is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Verdict rule not found.")
     await db.delete(rule)
+    await db.commit()
+
+
+# ── Description presets ──────────────────────────────────────────────────────
+
+@router.get("/description-presets", response_model=list[DescriptionPresetOut])
+async def list_description_presets(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(DescriptionPreset).order_by(DescriptionPreset.sort_order)
+    )
+    return result.scalars().all()
+
+
+@router.post(
+    "/description-presets",
+    response_model=DescriptionPresetOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_description_preset(
+    payload: DescriptionPresetCreate,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    result = await db.execute(
+        select(func.coalesce(func.max(DescriptionPreset.sort_order), 0))
+    )
+    max_order = result.scalar_one()
+    preset = DescriptionPreset(text=payload.text, sort_order=max_order + 1)
+    db.add(preset)
+    await db.commit()
+    await db.refresh(preset)
+    return preset
+
+
+@router.patch("/description-presets/{preset_id}", response_model=DescriptionPresetOut)
+async def update_description_preset(
+    preset_id: uuid.UUID,
+    payload: DescriptionPresetUpdate,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    result = await db.execute(
+        select(DescriptionPreset).where(DescriptionPreset.id == preset_id)
+    )
+    preset = result.scalar_one_or_none()
+    if preset is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Description preset not found.")
+    if payload.text is not None:
+        preset.text = payload.text
+    await db.commit()
+    await db.refresh(preset)
+    return preset
+
+
+@router.delete("/description-presets/{preset_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_description_preset(
+    preset_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    result = await db.execute(
+        select(DescriptionPreset).where(DescriptionPreset.id == preset_id)
+    )
+    preset = result.scalar_one_or_none()
+    if preset is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Description preset not found.")
+    await db.delete(preset)
     await db.commit()
 
 

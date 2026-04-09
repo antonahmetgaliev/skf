@@ -715,3 +715,67 @@ class TestBulkResolve:
         assert res["verdict"] == "TP +5s"
         assert res["bwpPoints"] == 2
         assert res["description"] == "Changed after review"
+
+
+# =====================================================================
+# Description presets CRUD
+# =====================================================================
+
+DESC_URL = "/api/incidents/description-presets"
+
+
+class TestDescriptionPresets:
+    @pytest.mark.anyio
+    async def test_list_description_presets(self, admin_client: AsyncClient):
+        resp = await admin_client.get(DESC_URL)
+        assert resp.status_code == 200
+        assert isinstance(resp.json(), list)
+
+    @pytest.mark.anyio
+    async def test_create_description_preset(self, admin_client: AsyncClient):
+        resp = await admin_client.post(
+            DESC_URL,
+            json={"text": "Test description"},
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["text"] == "Test description"
+        assert data["sortOrder"] >= 1
+
+    @pytest.mark.anyio
+    async def test_update_description_preset(self, admin_client: AsyncClient):
+        create_resp = await admin_client.post(
+            DESC_URL,
+            json={"text": "Old text"},
+        )
+        preset_id = create_resp.json()["id"]
+
+        resp = await admin_client.patch(
+            f"{DESC_URL}/{preset_id}",
+            json={"text": "Updated text"},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["text"] == "Updated text"
+
+    @pytest.mark.anyio
+    async def test_delete_description_preset(self, admin_client: AsyncClient):
+        create_resp = await admin_client.post(
+            DESC_URL,
+            json={"text": "To Delete"},
+        )
+        preset_id = create_resp.json()["id"]
+
+        del_resp = await admin_client.delete(f"{DESC_URL}/{preset_id}")
+        assert del_resp.status_code == 204
+
+        get_resp = await admin_client.get(DESC_URL)
+        ids = [p["id"] for p in get_resp.json()]
+        assert preset_id not in ids
+
+    @pytest.mark.anyio
+    async def test_create_requires_admin(self, judge_client: AsyncClient):
+        resp = await judge_client.post(
+            DESC_URL,
+            json={"text": "Unauthorized"},
+        )
+        assert resp.status_code == 403

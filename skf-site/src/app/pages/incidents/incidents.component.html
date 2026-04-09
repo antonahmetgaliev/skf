@@ -91,6 +91,45 @@
           </app-btn>
         </div>
       </app-card>
+
+      <app-card class="verdict-rules-card">
+        <h2 class="sidebar-heading">Description Presets</h2>
+        <table class="verdict-rules-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (preset of descriptionPresets(); track preset.id) {
+              <tr>
+                @if (editingPresetId === preset.id) {
+                  <td>
+                    <input type="text" [(ngModel)]="editPresetText" class="rule-input" />
+                  </td>
+                  <td class="rule-actions">
+                    <button class="btn-link" type="button" (click)="saveEditPreset()">Save</button>
+                    <button class="btn-link btn-link--muted" type="button" (click)="cancelEditPreset()">Cancel</button>
+                  </td>
+                } @else {
+                  <td>{{ preset.text }}</td>
+                  <td class="rule-actions">
+                    <button class="btn-link" type="button" (click)="startEditPreset(preset)">Edit</button>
+                    <button class="btn-link btn-link--danger" type="button" (click)="deleteDescriptionPreset(preset.id)">×</button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+        <div class="verdict-rule-form">
+          <input type="text" [(ngModel)]="newPresetText" placeholder="Description text" class="rule-input" />
+          <app-btn variant="accent" size="sm" (click)="addDescriptionPreset()" [disabled]="!newPresetText.trim()">
+            Add
+          </app-btn>
+        </div>
+      </app-card>
     }
     </aside>
 
@@ -259,7 +298,7 @@
                             autocomplete="off"
                           />
                           <datalist [id]="'desc-options-' + inc.id">
-                            @for (opt of descriptionPresets; track opt) {
+                            @for (opt of descriptionPresetTexts(); track opt) {
                               <option [value]="opt"></option>
                             }
                           </datalist>
