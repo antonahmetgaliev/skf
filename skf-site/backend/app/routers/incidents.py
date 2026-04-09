@@ -343,7 +343,7 @@ async def apply_bwp(
             driver_id=entry.driver_id,
             points=entry.resolution.bwp_points,
             issued_on=today,
-            expires_on=today + timedelta(days=365),
+            expires_on=today + timedelta(days=90),
         ))
 
     await db.commit()
