@@ -375,9 +375,11 @@ export class IncidentsComponent implements OnInit {
 
   // ── Copy decisions for Discord ─────────────────────────────────────
 
+  readonly showDiscordPreview = signal(false);
+  discordPreviewText = '';
   copiedDecisions = false;
 
-  async copyDecisionsForDiscord(window: IncidentWindowOut): Promise<void> {
+  openDiscordPreview(window: IncidentWindowOut): void {
     const lines: string[] = [window.raceName];
     for (const inc of window.incidents) {
       for (const drv of inc.drivers) {
@@ -392,7 +394,13 @@ export class IncidentsComponent implements OnInit {
         lines.push(`${session} | ${time} | ${drv.driverName} | ${desc} | ${verdict} | ${bwp}`);
       }
     }
-    await navigator.clipboard.writeText(lines.join('\n\n'));
+    this.discordPreviewText = lines.join('\n\n');
+    this.copiedDecisions = false;
+    this.showDiscordPreview.set(true);
+  }
+
+  async copyDiscordText(): Promise<void> {
+    await navigator.clipboard.writeText(this.discordPreviewText);
     this.copiedDecisions = true;
     setTimeout(() => (this.copiedDecisions = false), 2000);
   }

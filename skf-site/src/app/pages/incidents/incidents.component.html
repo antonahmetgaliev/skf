@@ -178,8 +178,8 @@
         <div class="incidents-toolbar">
           <span class="incident-count">{{ w.incidents.length }} incident{{ w.incidents.length !== 1 ? 's' : '' }}</span>
           @if (auth.isAdmin() || auth.isJudge()) {
-            <app-btn variant="ghost" size="sm" (click)="copyDecisionsForDiscord(w)">
-              {{ copiedDecisions ? '✓ Copied' : 'Copy for Discord' }}
+            <app-btn variant="ghost" size="sm" (click)="openDiscordPreview(w)">
+              Copy for Discord
             </app-btn>
           }
           @if (w.isOpen && auth.isLoggedIn()) {
@@ -523,6 +523,19 @@
 
   <div modal-footer>
     <app-btn variant="accent" (click)="showDetailModal.set(false)">
+      Close
+    </app-btn>
+  </div>
+</app-modal>
+
+<!-- Discord preview modal -->
+<app-modal title="Discord Preview" width="md" [(open)]="showDiscordPreview">
+  <pre class="discord-preview">{{ discordPreviewText }}</pre>
+  <div modal-footer>
+    <app-btn variant="accent" (click)="copyDiscordText()">
+      {{ copiedDecisions ? '✓ Copied!' : 'Copy to Clipboard' }}
+    </app-btn>
+    <app-btn variant="ghost" (click)="showDiscordPreview.set(false)">
       Close
     </app-btn>
   </div>
