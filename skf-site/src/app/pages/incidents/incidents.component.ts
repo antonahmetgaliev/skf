@@ -43,6 +43,16 @@ export class IncidentsComponent implements OnInit {
   readonly verdictRules = signal<VerdictRule[]>([]);
   readonly verdictPresets = computed(() => this.verdictRules().map(r => r.verdict));
 
+  readonly descriptionPresets = [
+    'Avoidable contact',
+    'Avoidable contact (position returned)',
+    'Unsafe rejoin',
+    'Racing incident',
+    'Braking mistake',
+    'Forcing off track',
+    'Dangerous driving',
+  ];
+
   // ── Data ──────────────────────────────────────────────────────────
   readonly windows = signal<IncidentWindowListItem[]>([]);
   readonly loadingWindows = signal(false);

@@ -249,13 +249,20 @@
                       <div class="incident-resolve-footer">
                         <div class="resolve-field resolve-field--description">
                           <label class="label-eyebrow" [for]="'rv-desc-' + inc.id">Decision description</label>
-                          <textarea
+                          <input
+                            type="text"
                             [id]="'rv-desc-' + inc.id"
-                            rows="2"
+                            [attr.list]="'desc-options-' + inc.id"
                             [ngModel]="rvDescriptions[inc.id]"
                             (ngModelChange)="rvDescriptions[inc.id] = $event"
-                            placeholder="Describe the decision…"
-                          ></textarea>
+                            placeholder="Choose or type description…"
+                            autocomplete="off"
+                          />
+                          <datalist [id]="'desc-options-' + inc.id">
+                            @for (opt of descriptionPresets; track opt) {
+                              <option [value]="opt"></option>
+                            }
+                          </datalist>
                         </div>
                         <app-btn
                           variant="accent"

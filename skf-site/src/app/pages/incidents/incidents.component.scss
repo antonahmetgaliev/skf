@@ -365,7 +365,7 @@
   flex: 1;
   min-width: 200px;
 
-  textarea {
+  input {
     width: 100%;
     padding: 0.35rem 0.5rem;
     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -374,7 +374,6 @@
     color: var(--ink);
     font-size: 0.82rem;
     font-family: inherit;
-    resize: vertical;
 
     &::placeholder {
       color: var(--muted);
