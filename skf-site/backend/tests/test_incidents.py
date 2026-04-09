@@ -166,6 +166,11 @@ async def shared_client(engine, admin_user, judge_user):
 # ---------------------------------------------------------------------------
 
 INGEST_URL = "/api/incidents/ingest"
+
+async def _coro(value):
+    """Wrap a value in a coroutine (for monkeypatching async methods)."""
+    return value
+
 BATCH_PAYLOAD = {
     "raceId": 142899,
     "championshipId": 20697,
@@ -204,14 +209,16 @@ class TestTokenAuth:
         assert resp.status_code == 403
 
     @pytest.mark.anyio
-    async def test_ingest_valid_token_no_window(self, client: AsyncClient):
-        """Auth passes but no window exists → 404."""
+    async def test_ingest_valid_token_no_window(self, client: AsyncClient, monkeypatch):
+        """Auth passes, auto-creates window → 201."""
+        from app.services import simgrid as sg_mod
+        monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Test Race"))
         resp = await client.post(
             INGEST_URL,
             json=BATCH_PAYLOAD,
             headers={"Authorization": "Bearer test-token-secret"},
         )
-        assert resp.status_code == 404
+        assert resp.status_code == 201
 
 
 # =====================================================================
@@ -222,55 +229,17 @@ class TestBatchIngestion:
 
     INGEST_HEADERS = {"Authorization": "Bearer test-token-secret"}
 
-    async def _create_window(self, admin_client: AsyncClient) -> str:
-        """Helper: create a window with race_id matching BATCH_PAYLOAD."""
-        resp = await admin_client.post(
-            "/api/incidents/windows",
-            json={
-                "raceName": "Ignition League - Round 1",
-                "raceId": 142899,
-                "championshipId": 20697,
-                "intervalHours": 48,
-            },
-        )
-        assert resp.status_code == 201
-        return resp.json()["id"]
-
     @pytest.mark.anyio
-    async def test_ingest_no_window_returns_404(self, client: AsyncClient):
-        """Ingest without a pre-existing window → 404."""
+    async def test_creates_window_and_incidents(self, client: AsyncClient, monkeypatch):
+        from app.services import simgrid as sg_mod
+        monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Ignition League - Round 1"))
         resp = await client.post(
-            INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS
-        )
-        assert resp.status_code == 404
-        assert "No incident window found" in resp.json()["detail"]
-
-    @pytest.mark.anyio
-    async def test_ingest_closed_window_returns_409(
-        self, client: AsyncClient, admin_client: AsyncClient
-    ):
-        """Ingest to a closed window → 409."""
-        window_id = await self._create_window(admin_client)
-        await admin_client.patch(
-            f"/api/incidents/windows/{window_id}",
-            json={"isManuallyClosed": True},
-        )
-        resp = await client.post(
-            INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS
-        )
-        assert resp.status_code == 409
-
-    @pytest.mark.anyio
-    async def test_ingest_adds_to_existing_window(
-        self, client: AsyncClient, admin_client: AsyncClient
-    ):
-        window_id = await self._create_window(admin_client)
-        resp = await client.post(
-            INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS
+            INGEST_URL,
+            json=BATCH_PAYLOAD,
+            headers=self.INGEST_HEADERS,
         )
         assert resp.status_code == 201
         data = resp.json()
-        assert data["id"] == window_id
         assert data["raceName"] == "Ignition League - Round 1"
         assert data["raceId"] == 142899
         assert data["championshipId"] == 20697
@@ -286,36 +255,37 @@ class TestBatchIngestion:
         assert len(inc1["drivers"]) == 2
 
     @pytest.mark.anyio
-    async def test_reuses_existing_window(
-        self, client: AsyncClient, admin_client: AsyncClient
-    ):
-        window_id = await self._create_window(admin_client)
+    async def test_reuses_existing_window(self, client: AsyncClient, monkeypatch):
+        from app.services import simgrid as sg_mod
+        monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Ignition League - Round 1"))
         resp1 = await client.post(
             INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS
         )
         assert resp1.status_code == 201
-        assert resp1.json()["id"] == window_id
+        window_id_1 = resp1.json()["id"]
 
         resp2 = await client.post(
             INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS
         )
         assert resp2.status_code == 201
-        assert resp2.json()["id"] == window_id
+        window_id_2 = resp2.json()["id"]
+        assert window_id_1 == window_id_2
         # Should now have 4 incidents (2 + 2)
         assert len(resp2.json()["incidents"]) == 4
 
     @pytest.mark.anyio
     async def test_driver_matching(
-        self, client: AsyncClient, admin_client: AsyncClient, db: AsyncSession
+        self, client: AsyncClient, db: AsyncSession, monkeypatch
     ):
         """When a BWP Driver exists with the same name, the incident_driver should link to it."""
+        from app.services import simgrid as sg_mod
+        monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Test Race"))
         from app.models.bwp import Driver
         drv = Driver(name="Serhii Kachan")
         db.add(drv)
         await db.commit()
         await db.refresh(drv)
 
-        await self._create_window(admin_client)
         resp = await client.post(
             INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS
         )
