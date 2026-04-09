@@ -165,10 +165,14 @@ async def shared_client(engine, admin_user, judge_user):
 # Helpers
 # ---------------------------------------------------------------------------
 
+async def _coro(value):
+    """Wrap a value in a coroutine (for monkeypatching async methods)."""
+    return value
+
 INGEST_URL = "/api/incidents/ingest"
 BATCH_PAYLOAD = {
-    "raceName": "Monaco GP 2024",
-    "date": "2024-05-26",
+    "raceId": 142899,
+    "championshipId": 20697,
     "incidents": [
         {
             "sessionName": "RACE",
@@ -219,7 +223,9 @@ class TestTokenAuth:
 
 class TestBatchIngestion:
     @pytest.mark.anyio
-    async def test_creates_window_and_incidents(self, client: AsyncClient):
+    async def test_creates_window_and_incidents(self, client: AsyncClient, monkeypatch):
+        from app.services import simgrid as sg_mod
+        monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Ignition League - Round 1"))
         resp = await client.post(
             INGEST_URL,
             json=BATCH_PAYLOAD,
@@ -227,8 +233,9 @@ class TestBatchIngestion:
         )
         assert resp.status_code == 201
         data = resp.json()
-        assert data["raceName"] == "Monaco GP 2024"
-        assert data["date"] == "2024-05-26"
+        assert data["raceName"] == "Ignition League - Round 1"
+        assert data["raceId"] == 142899
+        assert data["championshipId"] == 20697
         assert len(data["incidents"]) == 2
         # First incident has 3 drivers
         inc0 = data["incidents"][0]
@@ -241,7 +248,9 @@ class TestBatchIngestion:
         assert len(inc1["drivers"]) == 2
 
     @pytest.mark.anyio
-    async def test_reuses_existing_window(self, client: AsyncClient):
+    async def test_reuses_existing_window(self, client: AsyncClient, monkeypatch):
+        from app.services import simgrid as sg_mod
+        monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Ignition League - Round 1"))
         headers = {"Authorization": "Bearer test-token-secret"}
         resp1 = await client.post(INGEST_URL, json=BATCH_PAYLOAD, headers=headers)
         assert resp1.status_code == 201
@@ -255,8 +264,10 @@ class TestBatchIngestion:
         assert len(resp2.json()["incidents"]) == 4
 
     @pytest.mark.anyio
-    async def test_driver_matching(self, client: AsyncClient, db: AsyncSession):
+    async def test_driver_matching(self, client: AsyncClient, db: AsyncSession, monkeypatch):
         """When a BWP Driver exists with the same name, the incident_driver should link to it."""
+        from app.services import simgrid as sg_mod
+        monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Test Race"))
         from app.models.bwp import Driver
         drv = Driver(name="Serhii Kachan")
         db.add(drv)

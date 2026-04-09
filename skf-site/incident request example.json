@@ -1,6 +1,6 @@
 {
-  "raceName": "Formula 1 Grand Prix of Monaco 2024",
-  "date": "2024-05-26",
+  "raceId": 142899,
+  "championshipId": 20697,
   "incidents": [
     {
       "sessionName": "QUALIFYING",

@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 from app.auth import get_current_user, require_admin, require_api_token, require_judge
 from app.database import get_db
 from app.models.bwp import BwpPoint, Driver
+from app.services.simgrid import simgrid_service
 from app.models.incidents import Incident, IncidentDriver, IncidentResolution, IncidentWindow
 from app.models.user import User
 from app.schemas.incidents import (
@@ -106,18 +107,20 @@ async def ingest_incidents(
     payload: IncidentBatchCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    # Find or create window by race_name + date
-    q = select(IncidentWindow).where(IncidentWindow.race_name == payload.race_name)
-    if payload.date:
-        q = q.where(IncidentWindow.date == payload.date)
+    # Find or create window by race_id
+    q = select(IncidentWindow).where(IncidentWindow.race_id == payload.race_id)
     result = await db.execute(q)
     window = result.scalar_one_or_none()
 
     if window is None:
+        race_name = await simgrid_service.get_race_name(payload.race_id)
+        today = date.today().isoformat()
         now = datetime.now(timezone.utc)
         window = IncidentWindow(
-            race_name=payload.race_name,
-            date=payload.date,
+            championship_id=payload.championship_id,
+            race_id=payload.race_id,
+            race_name=race_name,
+            date=today,
             interval_hours=24,
             opened_at=now,
             closes_at=now + timedelta(hours=24),

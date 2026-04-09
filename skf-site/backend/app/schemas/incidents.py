@@ -33,8 +33,8 @@ class IncidentBatchItem(CamelModel):
 
 
 class IncidentBatchCreate(CamelModel):
-    race_name: str = Field(min_length=1, max_length=200)
-    date: str | None = None
+    race_id: int
+    championship_id: int
     incidents: list[IncidentBatchItem] = Field(min_length=1)
 
 

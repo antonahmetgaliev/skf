@@ -153,6 +153,16 @@ class SimgridService:
             stale=result.stale,
         )
 
+    async def get_race_name(self, race_id: int) -> str:
+        """Fetch a single race's display name from SimGrid."""
+        try:
+            resp = await self._client.get(f"/api/v1/races/{race_id}")
+            resp.raise_for_status()
+            data = resp.json()
+            return data.get("display_name") or data.get("race_name") or f"Race {race_id}"
+        except Exception:
+            return f"Race {race_id}"
+
     # ------------------------------------------------------------------
     # HTTP helper with stale-cache fallback
     # ------------------------------------------------------------------
