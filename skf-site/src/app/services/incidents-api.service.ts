@@ -29,6 +29,8 @@ export interface Incident {
   reporterUserId: string | null;
   sessionName: string | null;
   time: string | null;
+  lap: string | null;
+  corner: string | null;
   description: string | null;
   status: string;
   createdAt: string;
@@ -66,8 +68,8 @@ export interface IncidentWindowCreate {
 }
 
 export interface IncidentFileCreate {
-  sessionName?: string | null;
-  time?: string | null;
+  lap?: string | null;
+  corner?: string | null;
   description?: string | null;
   drivers: string[];
 }

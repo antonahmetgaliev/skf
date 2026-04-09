@@ -310,12 +310,12 @@ class TestFileIncident:
         assert w_resp.status_code == 201
         window_id = w_resp.json()["id"]
 
-        # File an incident with 3 drivers
+        # File an incident with lap and corner
         resp = await admin_client.post(
             f"/api/incidents/windows/{window_id}/incidents",
             json={
-                "sessionName": "QUALIFYING",
-                "time": "0:12:00",
+                "lap": "5",
+                "corner": "Eau Rouge",
                 "description": "Contact in Eau Rouge",
                 "drivers": ["Driver A", "Driver B", "Driver C"],
             },
@@ -323,7 +323,8 @@ class TestFileIncident:
         assert resp.status_code == 201
         data = resp.json()
         assert len(data["drivers"]) == 3
-        assert data["sessionName"] == "QUALIFYING"
+        assert data["lap"] == "5"
+        assert data["corner"] == "Eau Rouge"
         assert data["description"] == "Contact in Eau Rouge"
 
     @pytest.mark.anyio
@@ -344,6 +345,43 @@ class TestFileIncident:
             json={"drivers": ["Driver A"]},
         )
         assert resp.status_code == 409
+
+    @pytest.mark.anyio
+    async def test_file_incident_unauthenticated(self, shared_client: AsyncClient):
+        ac = shared_client
+        # Admin creates a window
+        _set_auth_user(ac._admin_user)
+        w_resp = await ac.post(
+            "/api/incidents/windows",
+            json={"raceName": "Anon Filing", "intervalHours": 48},
+        )
+        window_id = w_resp.json()["id"]
+
+        # Clear auth to simulate unauthenticated user
+        from app.auth import get_current_user, get_current_user_optional
+        from app.main import app
+        app.dependency_overrides[get_current_user] = lambda: (_ for _ in ()).throw(
+            __import__('fastapi').HTTPException(status_code=401)
+        )
+        app.dependency_overrides[get_current_user_optional] = lambda: None
+
+        # Unauthenticated user files an incident
+        resp = await ac.post(
+            f"/api/incidents/windows/{window_id}/incidents",
+            json={
+                "lap": "3",
+                "corner": "Turn 1",
+                "drivers": ["Driver X", "Driver Y"],
+            },
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["reporterUserId"] is None
+        assert len(data["drivers"]) == 2
+        assert data["lap"] == "3"
+
+        # Restore admin auth for subsequent tests
+        _set_auth_user(ac._admin_user)
 
 
 # =====================================================================

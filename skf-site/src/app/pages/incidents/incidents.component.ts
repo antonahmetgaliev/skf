@@ -77,8 +77,8 @@ export class IncidentsComponent implements OnInit {
 
   // ── File Incident form fields ──────────────────────────────────────
   niDriverNames: string[] = ['', ''];
-  niSessionName = '';
-  niTime = '';
+  niLap = '';
+  niCorner = '';
   niDescription = '';
   niSubmitting = false;
   niError = '';
@@ -225,8 +225,8 @@ export class IncidentsComponent implements OnInit {
 
   openNewIncidentModal(): void {
     this.niDriverNames = ['', ''];
-    this.niSessionName = '';
-    this.niTime = '';
+    this.niLap = '';
+    this.niCorner = '';
     this.niDescription = '';
     this.niError = '';
     this.showNewIncidentModal.set(true);
@@ -258,8 +258,8 @@ export class IncidentsComponent implements OnInit {
     try {
       await firstValueFrom(
         this.incidentsApi.fileIncident(windowId, {
-          sessionName: this.niSessionName.trim() || undefined,
-          time: this.niTime.trim() || undefined,
+          lap: this.niLap.trim() || undefined,
+          corner: this.niCorner.trim() || undefined,
           description: this.niDescription.trim() || undefined,
           drivers,
         })
@@ -384,14 +384,20 @@ export class IncidentsComponent implements OnInit {
     for (const inc of window.incidents) {
       for (const drv of inc.drivers) {
         if (!drv.resolution) continue;
-        const session = inc.sessionName ?? '';
-        const time = inc.time ?? '';
+        const parts: string[] = [];
+        if (inc.sessionName) parts.push(inc.sessionName);
+        if (inc.time) parts.push(inc.time);
+        if (inc.lap) parts.push(`Lap ${inc.lap}`);
+        if (inc.corner) parts.push(inc.corner);
+        parts.push(drv.driverName);
         const desc = drv.resolution.description ?? '';
-        const verdict = drv.resolution.verdict;
+        if (desc) parts.push(desc);
+        parts.push(drv.resolution.verdict);
         const bwp = drv.resolution.bwpPoints
           ? `${drv.resolution.bwpPoints} BWP`
           : '-';
-        lines.push(`${session} | ${time} | ${drv.driverName} | ${desc} | ${verdict} | ${bwp}`);
+        parts.push(bwp);
+        lines.push(parts.join(' | '));
       }
     }
     this.discordPreviewText = lines.join('\n\n');

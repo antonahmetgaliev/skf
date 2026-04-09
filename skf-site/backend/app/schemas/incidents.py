@@ -41,8 +41,8 @@ class IncidentBatchCreate(CamelModel):
 # ── Manual file incident ────────────────────────────────────────────────────
 
 class IncidentFileCreate(CamelModel):
-    session_name: str | None = Field(default=None, max_length=100)
-    time: str | None = Field(default=None, max_length=50)
+    lap: str | None = Field(default=None, max_length=20)
+    corner: str | None = Field(default=None, max_length=50)
     description: str | None = None
     drivers: list[str] = Field(min_length=1)
 
@@ -137,6 +137,8 @@ class IncidentOut(CamelModel):
     reporter_user_id: uuid.UUID | None
     session_name: str | None
     time: str | None
+    lap: str | None
+    corner: str | None
     description: str | None
     status: str
     created_at: datetime

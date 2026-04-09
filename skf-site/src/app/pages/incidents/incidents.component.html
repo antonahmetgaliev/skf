@@ -182,7 +182,7 @@
               Copy for Discord
             </app-btn>
           }
-          @if (w.isOpen && auth.isLoggedIn()) {
+          @if (w.isOpen) {
             <app-btn variant="accent" size="sm" (click)="openNewIncidentModal()">
               + File Incident
             </app-btn>
@@ -203,6 +203,12 @@
                   }
                   @if (inc.time) {
                     <span class="incident-time">{{ inc.time }}</span>
+                  }
+                  @if (inc.lap) {
+                    <span class="incident-session">Lap {{ inc.lap }}</span>
+                  }
+                  @if (inc.corner) {
+                    <span class="incident-time">{{ inc.corner }}</span>
                   }
                   <div class="incident-status">
                     @if (inc.status === 'resolved') {
@@ -429,20 +435,20 @@
   </div>
 
   <div class="form-row">
-    <app-form-field label="Session (optional)" fieldId="niSession">
+    <app-form-field label="Lap (optional)" fieldId="niLap">
       <input
-        id="niSession"
+        id="niLap"
         type="text"
-        [(ngModel)]="niSessionName"
-        placeholder="e.g. RACE, QUALIFYING"
+        [(ngModel)]="niLap"
+        placeholder="e.g. 5"
       />
     </app-form-field>
-    <app-form-field label="Time (optional)" fieldId="niTime">
+    <app-form-field label="Corner (optional)" fieldId="niCorner">
       <input
-        id="niTime"
+        id="niCorner"
         type="text"
-        [(ngModel)]="niTime"
-        placeholder="e.g. 0:32:15"
+        [(ngModel)]="niCorner"
+        placeholder="e.g. Turn 1"
       />
     </app-form-field>
   </div>
@@ -479,6 +485,12 @@
       }
       @if (inc.time) {
         <dt>Time</dt><dd>{{ inc.time }}</dd>
+      }
+      @if (inc.lap) {
+        <dt>Lap</dt><dd>{{ inc.lap }}</dd>
+      }
+      @if (inc.corner) {
+        <dt>Corner</dt><dd>{{ inc.corner }}</dd>
       }
       @if (inc.description) {
         <dt>Description</dt><dd class="desc-cell">{{ inc.description }}</dd>

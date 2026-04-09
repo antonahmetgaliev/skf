@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.auth import get_current_user, require_admin, require_api_token, require_judge
+from app.auth import get_current_user, get_current_user_optional, require_admin, require_api_token, require_judge
 from app.database import get_db
 from app.models.bwp import BwpPoint, Driver
 from app.services.simgrid import simgrid_service
@@ -393,7 +393,7 @@ async def file_incident(
     window_id: uuid.UUID,
     payload: IncidentFileCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user_optional),
 ):
     window = await _get_window_or_404(window_id, db)
     if not window.is_open:
@@ -403,9 +403,9 @@ async def file_incident(
         )
     incident = Incident(
         window_id=window.id,
-        reporter_user_id=current_user.id,
-        session_name=payload.session_name,
-        time=payload.time,
+        reporter_user_id=current_user.id if current_user else None,
+        lap=payload.lap,
+        corner=payload.corner,
         description=payload.description,
     )
     db.add(incident)

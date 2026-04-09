@@ -70,6 +70,8 @@ class Incident(Base):
     )
     session_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     time: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    lap: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    corner: Mapped[str | None] = mapped_column(String(50), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
     created_at: Mapped[datetime] = mapped_column(
