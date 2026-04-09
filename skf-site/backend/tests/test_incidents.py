@@ -250,6 +250,7 @@ class TestBatchIngestion:
         assert inc0["drivers"][0]["driverName"] == "Serhii Kachan"
         assert inc0["sessionName"] == "RACE"
         assert inc0["time"] == "0:05:51"
+        assert inc0["source"] == "ingested"
         # Second incident has 2 drivers
         inc1 = data["incidents"][1]
         assert len(inc1["drivers"]) == 2
@@ -326,6 +327,7 @@ class TestFileIncident:
         assert data["lap"] == "5"
         assert data["corner"] == "Eau Rouge"
         assert data["description"] == "Contact in Eau Rouge"
+        assert data["source"] == "filed"
 
     @pytest.mark.anyio
     async def test_file_incident_closed_window(self, admin_client: AsyncClient):
@@ -377,6 +379,7 @@ class TestFileIncident:
         assert resp.status_code == 201
         data = resp.json()
         assert data["reporterUserId"] is None
+        assert data["source"] == "filed"
         assert len(data["drivers"]) == 2
         assert data["lap"] == "3"
 

@@ -140,6 +140,7 @@ class IncidentOut(CamelModel):
     lap: str | None
     corner: str | None
     description: str | None
+    source: str
     status: str
     created_at: datetime
     drivers: list[IncidentDriverOut] = []

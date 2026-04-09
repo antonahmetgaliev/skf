@@ -32,6 +32,7 @@ export interface Incident {
   lap: string | null;
   corner: string | null;
   description: string | null;
+  source: string;
   status: string;
   createdAt: string;
   drivers: IncidentDriver[];

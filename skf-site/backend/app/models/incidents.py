@@ -73,6 +73,7 @@ class Incident(Base):
     lap: Mapped[str | None] = mapped_column(String(20), nullable=True)
     corner: Mapped[str | None] = mapped_column(String(50), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source: Mapped[str] = mapped_column(String(20), nullable=False, default="filed")
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

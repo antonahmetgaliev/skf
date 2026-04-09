@@ -194,9 +194,14 @@
         } @else {
           <div class="incident-cards">
             @for (inc of w.incidents; track inc.id; let i = $index) {
-              <div class="incident-card" [class.incident-card--resolved]="inc.status === 'resolved'">
+              <div class="incident-card" [class.incident-card--resolved]="inc.status === 'resolved'" [class.incident-card--filed]="inc.source === 'filed'">
                 <div class="incident-card-header" (click)="toggleIncident(inc.id)">
                   <span class="incident-num">#{{ i + 1 }}</span>
+                  @if (inc.source === 'filed') {
+                    <span class="incident-source incident-source--filed">Report</span>
+                  } @else {
+                    <span class="incident-source incident-source--ingested">Auto</span>
+                  }
                   <span class="incident-drivers">{{ driverNames(inc) }}</span>
                   @if (inc.sessionName) {
                     <span class="incident-session">{{ inc.sessionName }}</span>

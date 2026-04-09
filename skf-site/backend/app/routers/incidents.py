@@ -285,6 +285,7 @@ async def ingest_incidents(
             window_id=window.id,
             session_name=inc_data.session_name,
             time=inc_data.time,
+            source="ingested",
         )
         db.add(incident)
         await db.flush()
