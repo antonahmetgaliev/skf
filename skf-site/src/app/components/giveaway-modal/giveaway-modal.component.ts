@@ -17,7 +17,7 @@ export class GiveawayModalComponent {
   readonly standings = input.required<StandingEntry[]>();
   readonly open = model.required<boolean>();
 
-  readonly minRaces = signal(1);
+  readonly minRaces = signal(0);
   readonly winner = signal<string | null>(null);
   readonly drivers = computed(() => this.cs.computeEligibleDrivers(this.standings(), this.minRaces()));
 
@@ -27,7 +27,7 @@ export class GiveawayModalComponent {
 
   onMinRacesChange(event: Event): void {
     const value = parseInt((event.target as HTMLInputElement).value, 10);
-    this.minRaces.set(Number.isFinite(value) && value > 0 ? value : 1);
+    this.minRaces.set(Number.isFinite(value) && value >= 0 ? value : 0);
     this.winner.set(null);
   }
 
