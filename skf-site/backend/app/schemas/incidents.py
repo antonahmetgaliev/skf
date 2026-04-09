@@ -54,6 +54,17 @@ class ResolveDriverIncident(CamelModel):
     bwp_points: int | None = Field(default=None, ge=0)
 
 
+class ResolveDriverItem(CamelModel):
+    incident_driver_id: uuid.UUID
+    verdict: str = Field(min_length=1)
+    bwp_points: int | None = Field(default=None, ge=0)
+
+
+class BulkResolveIncident(CamelModel):
+    description: str | None = Field(default=None, max_length=2000)
+    drivers: list[ResolveDriverItem] = Field(min_length=1)
+
+
 # ── Verdict rule schemas ────────────────────────────────────────────────────
 
 class VerdictRuleOut(CamelModel):
@@ -85,6 +96,7 @@ class IncidentResolutionOut(CamelModel):
     judge_user_id: uuid.UUID | None
     verdict: str
     bwp_points: int | None
+    description: str | None
     bwp_applied: bool
     resolved_at: datetime
 

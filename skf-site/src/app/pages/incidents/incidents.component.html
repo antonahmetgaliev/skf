@@ -205,10 +205,10 @@
                             </div>
                           }
 
-                          <!-- Judge inline resolve form -->
+                          <!-- Judge inline resolve form (verdict + BWP per driver) -->
                           @if (auth.isJudge()) {
-                            <div class="driver-resolve-form" [hidden]="false">
-                              {{ initResolveFields(drv) }}
+                            {{ initResolveFields(inc) }}
+                            <div class="driver-resolve-form">
                               <div class="resolve-fields">
                                 <div class="resolve-field resolve-field--verdict">
                                   <label class="label-eyebrow" [for]="'rv-verdict-' + drv.id">Verdict</label>
@@ -237,23 +237,39 @@
                                     placeholder="0"
                                   />
                                 </div>
-                                <app-btn
-                                  variant="accent"
-                                  size="sm"
-                                  [disabled]="rvSubmitting[drv.id]"
-                                  (click)="submitResolveDriver(drv.id)"
-                                >
-                                  {{ rvSubmitting[drv.id] ? 'Saving…' : (drv.resolution ? 'Update' : 'Save') }}
-                                </app-btn>
                               </div>
-                              @if (rvError[drv.id]) {
-                                <p class="resolve-error">{{ rvError[drv.id] }}</p>
-                              }
                             </div>
                           }
                         </div>
                       }
                     </div>
+
+                    <!-- Judge: shared description + single save button per incident -->
+                    @if (auth.isJudge()) {
+                      <div class="incident-resolve-footer">
+                        <div class="resolve-field resolve-field--description">
+                          <label class="label-eyebrow" [for]="'rv-desc-' + inc.id">Decision description</label>
+                          <textarea
+                            [id]="'rv-desc-' + inc.id"
+                            rows="2"
+                            [ngModel]="rvDescriptions[inc.id]"
+                            (ngModelChange)="rvDescriptions[inc.id] = $event"
+                            placeholder="Describe the decision…"
+                          ></textarea>
+                        </div>
+                        <app-btn
+                          variant="accent"
+                          size="sm"
+                          [disabled]="rvIncSubmitting[inc.id]"
+                          (click)="submitResolveIncident(inc)"
+                        >
+                          {{ rvIncSubmitting[inc.id] ? 'Saving…' : (inc.status === 'resolved' ? 'Update All' : 'Save All') }}
+                        </app-btn>
+                        @if (rvIncError[inc.id]) {
+                          <p class="resolve-error">{{ rvIncError[inc.id] }}</p>
+                        }
+                      </div>
+                    }
 
                     <div class="incident-card-footer">
                       <span class="incident-filed">Filed {{ inc.createdAt | date:'dd MMM yyyy HH:mm' }}</span>
@@ -441,6 +457,9 @@
                   <app-badge variant="applied">Applied</app-badge>
                 }
               </dd>
+            }
+            @if (r.description) {
+              <dt>Decision</dt><dd class="desc-cell">{{ r.description }}</dd>
             }
             <dt>Resolved</dt><dd>{{ r.resolvedAt | date:'dd MMM yyyy HH:mm' }}</dd>
           </app-detail-list>

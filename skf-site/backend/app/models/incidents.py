@@ -134,6 +134,7 @@ class IncidentResolution(Base):
     )
     verdict: Mapped[str] = mapped_column(Text, nullable=False)
     bwp_points: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     bwp_applied: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     resolved_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

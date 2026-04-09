@@ -82,8 +82,11 @@ export class IncidentsComponent implements OnInit {
   // ── Per-driver resolve state (keyed by incidentDriverId) ──────────
   rvVerdicts: Record<string, string> = {};
   rvBwpPoints: Record<string, number | null> = {};
-  rvSubmitting: Record<string, boolean> = {};
-  rvError: Record<string, string> = {};
+
+  // ── Per-incident resolve state (keyed by incidentId) ──────────────
+  rvDescriptions: Record<string, string> = {};
+  rvIncSubmitting: Record<string, boolean> = {};
+  rvIncError: Record<string, string> = {};
 
   ngOnInit(): void {
     this.loadWindows();
@@ -275,10 +278,16 @@ export class IncidentsComponent implements OnInit {
 
   // ── Per-driver resolve ─────────────────────────────────────────────
 
-  initResolveFields(driver: IncidentDriver): void {
-    if (this.rvVerdicts[driver.id] === undefined) {
-      this.rvVerdicts[driver.id] = driver.resolution?.verdict ?? '';
-      this.rvBwpPoints[driver.id] = driver.resolution?.bwpPoints ?? null;
+  initResolveFields(incident: Incident): void {
+    for (const driver of incident.drivers) {
+      if (this.rvVerdicts[driver.id] === undefined) {
+        this.rvVerdicts[driver.id] = driver.resolution?.verdict ?? '';
+        this.rvBwpPoints[driver.id] = driver.resolution?.bwpPoints ?? null;
+      }
+    }
+    if (this.rvDescriptions[incident.id] === undefined) {
+      const existing = incident.drivers.find(d => d.resolution?.description)?.resolution?.description;
+      this.rvDescriptions[incident.id] = existing ?? '';
     }
   }
 
@@ -289,29 +298,37 @@ export class IncidentsComponent implements OnInit {
     }
   }
 
-  async submitResolveDriver(driverId: string): Promise<void> {
-    const verdict = (this.rvVerdicts[driverId] ?? '').trim();
-    if (!verdict) {
-      this.rvError[driverId] = 'Verdict is required.';
+  async submitResolveIncident(incident: Incident): Promise<void> {
+    const drivers = incident.drivers.map(d => ({
+      incidentDriverId: d.id,
+      verdict: (this.rvVerdicts[d.id] ?? '').trim(),
+      bwpPoints: this.rvBwpPoints[d.id],
+    }));
+    const missing = drivers.filter(d => !d.verdict);
+    if (missing.length > 0) {
+      this.rvIncError[incident.id] = 'Verdict is required for all drivers.';
       return;
     }
-    this.rvSubmitting[driverId] = true;
-    this.rvError[driverId] = '';
+    this.rvIncSubmitting[incident.id] = true;
+    this.rvIncError[incident.id] = '';
     try {
       await firstValueFrom(
-        this.incidentsApi.resolveDriver(driverId, {
-          verdict,
-          bwpPoints: this.rvBwpPoints[driverId],
+        this.incidentsApi.bulkResolveIncident(incident.id, {
+          description: this.rvDescriptions[incident.id]?.trim() || undefined,
+          drivers,
         })
       );
-      delete this.rvVerdicts[driverId];
-      delete this.rvBwpPoints[driverId];
+      for (const d of incident.drivers) {
+        delete this.rvVerdicts[d.id];
+        delete this.rvBwpPoints[d.id];
+      }
+      delete this.rvDescriptions[incident.id];
       const windowId = this.windowDetail()?.id;
       if (windowId) await this.selectWindow(windowId, true);
     } catch {
-      this.rvError[driverId] = 'Failed to save verdict.';
+      this.rvIncError[incident.id] = 'Failed to save verdicts.';
     } finally {
-      this.rvSubmitting[driverId] = false;
+      this.rvIncSubmitting[incident.id] = false;
     }
   }
 

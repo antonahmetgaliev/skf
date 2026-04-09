@@ -626,3 +626,92 @@ class TestVerdictRules:
             json={"verdict": "Unauthorized", "defaultBwp": 0},
         )
         assert resp.status_code == 403
+
+
+# =====================================================================
+# Bulk resolve (one button per incident)
+# =====================================================================
+
+class TestBulkResolve:
+    @pytest.mark.anyio
+    async def test_bulk_resolve_all_drivers(self, shared_client: AsyncClient):
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        w_resp = await ac.post(
+            "/api/incidents/windows",
+            json={"raceName": "Bulk Test", "intervalHours": 48},
+        )
+        assert w_resp.status_code == 201
+        window_id = w_resp.json()["id"]
+        await ac.post(
+            f"/api/incidents/windows/{window_id}/incidents",
+            json={"drivers": ["D1", "D2", "D3"]},
+        )
+        w = await ac.get(f"/api/incidents/windows/{window_id}")
+        inc = w.json()["incidents"][0]
+        incident_id = inc["id"]
+        drivers = inc["drivers"]
+
+        # Judge bulk resolves all three drivers at once
+        _set_auth_user(ac._judge_user)
+        resp = await ac.patch(
+            f"/api/incidents/{incident_id}/resolve",
+            json={
+                "description": "D1 caused a collision, D2 and D3 are victims",
+                "drivers": [
+                    {"incidentDriverId": drivers[0]["id"], "verdict": "TP +5s", "bwpPoints": 2},
+                    {"incidentDriverId": drivers[1]["id"], "verdict": "NFA", "bwpPoints": 0},
+                    {"incidentDriverId": drivers[2]["id"], "verdict": "NFA", "bwpPoints": 0},
+                ],
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "resolved"
+        assert len(data["drivers"]) == 3
+        # All have resolutions
+        for d in data["drivers"]:
+            assert d["resolution"] is not None
+            assert d["resolution"]["description"] == "D1 caused a collision, D2 and D3 are victims"
+        # First driver got TP +5s
+        assert data["drivers"][0]["resolution"]["verdict"] == "TP +5s"
+        assert data["drivers"][0]["resolution"]["bwpPoints"] == 2
+
+    @pytest.mark.anyio
+    async def test_bulk_resolve_partial_update(self, shared_client: AsyncClient):
+        """Bulk resolve can update already-resolved drivers."""
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        w_resp = await ac.post(
+            "/api/incidents/windows",
+            json={"raceName": "Partial Update", "intervalHours": 48},
+        )
+        window_id = w_resp.json()["id"]
+        await ac.post(
+            f"/api/incidents/windows/{window_id}/incidents",
+            json={"drivers": ["D1"]},
+        )
+        w = await ac.get(f"/api/incidents/windows/{window_id}")
+        inc = w.json()["incidents"][0]
+        drv_id = inc["drivers"][0]["id"]
+
+        # First resolve
+        _set_auth_user(ac._judge_user)
+        await ac.patch(
+            f"/api/incidents/{inc['id']}/resolve",
+            json={"drivers": [{"incidentDriverId": drv_id, "verdict": "Warning"}]},
+        )
+
+        # Update with new verdict + description
+        resp = await ac.patch(
+            f"/api/incidents/{inc['id']}/resolve",
+            json={
+                "description": "Changed after review",
+                "drivers": [{"incidentDriverId": drv_id, "verdict": "TP +5s", "bwpPoints": 2}],
+            },
+        )
+        assert resp.status_code == 200
+        res = resp.json()["drivers"][0]["resolution"]
+        assert res["verdict"] == "TP +5s"
+        assert res["bwpPoints"] == 2
+        assert res["description"] == "Changed after review"

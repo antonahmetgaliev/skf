@@ -19,6 +19,7 @@ from app.models.incidents import (
 )
 from app.models.user import User
 from app.schemas.incidents import (
+    BulkResolveIncident,
     IncidentBatchCreate,
     IncidentFileCreate,
     IncidentOut,
@@ -389,6 +390,66 @@ async def resolve_driver(
     # Refresh to pick up newly created resolution
     await db.refresh(entry, attribute_names=["resolution"])
     return entry
+
+
+# ── Bulk resolve (one button per incident) ───────────────────────────────────
+
+@router.patch(
+    "/{incident_id}/resolve",
+    response_model=IncidentOut,
+)
+async def bulk_resolve_incident(
+    incident_id: uuid.UUID,
+    payload: BulkResolveIncident,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_judge),
+):
+    # Verify incident exists
+    result = await db.execute(
+        select(Incident)
+        .options(selectinload(Incident.drivers).selectinload(IncidentDriver.resolution))
+        .where(Incident.id == incident_id)
+    )
+    incident = result.scalar_one_or_none()
+    if incident is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found.")
+
+    driver_map = {d.id: d for d in incident.drivers}
+    now = datetime.now(timezone.utc)
+
+    for drv_payload in payload.drivers:
+        entry = driver_map.get(drv_payload.incident_driver_id)
+        if entry is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Driver {drv_payload.incident_driver_id} not in this incident.",
+            )
+        if entry.resolution is not None:
+            entry.resolution.verdict = drv_payload.verdict
+            entry.resolution.bwp_points = drv_payload.bwp_points
+            entry.resolution.description = payload.description
+            entry.resolution.judge_user_id = user.id
+            entry.resolution.resolved_at = now
+        else:
+            db.add(IncidentResolution(
+                incident_driver_id=entry.id,
+                judge_user_id=user.id,
+                verdict=drv_payload.verdict,
+                bwp_points=drv_payload.bwp_points,
+                description=payload.description,
+            ))
+
+    await db.flush()
+    await _update_incident_status(incident_id, db)
+    await db.commit()
+
+    # Reload
+    result = await db.execute(
+        select(Incident)
+        .options(selectinload(Incident.drivers).selectinload(IncidentDriver.resolution))
+        .where(Incident.id == incident_id)
+    )
+    return result.scalar_one()
 
 
 # ── BWP apply / discard ─────────────────────────────────────────────────────

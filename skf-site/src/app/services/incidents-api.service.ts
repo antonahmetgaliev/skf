@@ -10,6 +10,7 @@ export interface IncidentResolution {
   judgeUserId: string | null;
   verdict: string;
   bwpPoints: number | null;
+  description: string | null;
   bwpApplied: boolean;
   resolvedAt: string;
 }
@@ -76,6 +77,17 @@ export interface ResolveDriverIncident {
   bwpPoints?: number | null;
 }
 
+export interface BulkResolveDriverItem {
+  incidentDriverId: string;
+  verdict: string;
+  bwpPoints?: number | null;
+}
+
+export interface BulkResolveIncident {
+  description?: string | null;
+  drivers: BulkResolveDriverItem[];
+}
+
 export interface VerdictRule {
   id: string;
   verdict: string;
@@ -138,6 +150,13 @@ export class IncidentsApiService {
   resolveDriver(incidentDriverId: string, payload: ResolveDriverIncident): Observable<IncidentDriver> {
     return this.http.patch<IncidentDriver>(
       `${this.base}/drivers/${incidentDriverId}/resolve`,
+      payload
+    );
+  }
+
+  bulkResolveIncident(incidentId: string, payload: BulkResolveIncident): Observable<Incident> {
+    return this.http.patch<Incident>(
+      `${this.base}/${incidentId}/resolve`,
       payload
     );
   }
