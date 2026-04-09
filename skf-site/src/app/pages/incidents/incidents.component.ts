@@ -373,6 +373,30 @@ export class IncidentsComponent implements OnInit {
     return { variant: 'resolved', label: 'Resolved' };
   }
 
+  // ── Copy decisions for Discord ─────────────────────────────────────
+
+  copiedDecisions = false;
+
+  async copyDecisionsForDiscord(window: IncidentWindowOut): Promise<void> {
+    const lines: string[] = [window.raceName];
+    for (const inc of window.incidents) {
+      for (const drv of inc.drivers) {
+        if (!drv.resolution) continue;
+        const session = inc.sessionName ?? '';
+        const time = inc.time ?? '';
+        const desc = drv.resolution.description ?? '';
+        const verdict = drv.resolution.verdict;
+        const bwp = drv.resolution.bwpPoints
+          ? `${drv.resolution.bwpPoints} BWP`
+          : '-';
+        lines.push(`${session} | ${time} | ${drv.driverName} | ${desc} | ${verdict} | ${bwp}`);
+      }
+    }
+    await navigator.clipboard.writeText(lines.join('\n\n'));
+    this.copiedDecisions = true;
+    setTimeout(() => (this.copiedDecisions = false), 2000);
+  }
+
   // ── Verdict rules CRUD ─────────────────────────────────────────────
 
   newRuleVerdict = '';
