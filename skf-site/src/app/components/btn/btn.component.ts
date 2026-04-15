@@ -1,4 +1,4 @@
-import { Component, HostBinding, HostListener, inject, input } from '@angular/core';
+import { Component, ElementRef, HostBinding, HostListener, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 })
 export class BtnComponent {
   private readonly router = inject(Router);
+  private readonly el = inject(ElementRef);
 
   readonly variant = input<'accent' | 'primary' | 'danger' | 'ghost' | 'outline'>('accent');
   readonly size = input<'xs' | 'sm' | 'md'>('md');
@@ -41,6 +42,14 @@ export class BtnComponent {
     const link = this.routerLink();
     if (link) {
       this.router.navigateByUrl(link);
+      return;
+    }
+    if (this.type() === 'submit') {
+      const form = (this.el.nativeElement as HTMLElement).closest('form');
+      if (form) {
+        form.requestSubmit();
+        return;
+      }
     }
   }
 
