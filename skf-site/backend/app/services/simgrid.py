@@ -8,26 +8,29 @@ for 10 minutes to avoid hammering the SimGrid API.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Any
 
 import httpx
 
 from app.config import settings
+from app.middleware import mark_stale
 from app.schemas.championship import (
     ChampionshipDetails,
     ChampionshipListItem,
-    ChampionshipRace,
+    ChampionshipPodium,
     ChampionshipStandingsData,
+    DriverChampionshipResult,
     DriverRaceResult,
     ParticipatingUser,
+    PodiumEntry,
     StandingEntry,
     StandingRace,
 )
 from app.services.cache import (
     invalidate_cache_by_keys,
     invalidate_cache_by_prefix,
+    read_all_by_prefix,
     read_cache,
     read_stale_cache,
     write_cache,
@@ -36,14 +39,6 @@ from app.services.cache import (
 _TTL_STATIC = timedelta(days=1)     # championships list, details, races
 _TTL_LIVE = timedelta(minutes=10)   # standings, participants
 logger = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True, slots=True)
-class CachedResponse:
-    """Wraps service data with staleness metadata."""
-
-    data: Any
-    stale: bool = field(default=False)
 
 
 class SimgridService:
@@ -63,58 +58,51 @@ class SimgridService:
 
     async def get_championships(
         self, limit: int = 200,
-    ) -> CachedResponse:
+    ) -> list[ChampionshipListItem]:
         key = f"championships_list_{limit}"
         cached = await read_cache(key, _TTL_STATIC)
         if cached is not None:
-            return CachedResponse(data=[ChampionshipListItem(**item) for item in cached])
+            return [ChampionshipListItem(**item) for item in cached]
 
-        result = await self._request(
+        data = await self._request(
             "/api/v1/championships", key, params={"limit": limit, "offset": 0}
         )
-        items = result.data if isinstance(result.data, list) else []
-        return CachedResponse(
-            data=[ChampionshipListItem(**item) for item in items],
-            stale=result.stale,
-        )
+        items = data if isinstance(data, list) else []
+        return [ChampionshipListItem(**item) for item in items]
 
     async def get_championship(
         self, championship_id: int,
-    ) -> CachedResponse:
+    ) -> ChampionshipDetails:
         key = f"championship_{championship_id}"
         cached = await read_cache(key, _TTL_STATIC)
         if cached is not None:
-            return CachedResponse(data=ChampionshipDetails(**cached))
+            return ChampionshipDetails(**cached)
 
-        result = await self._request(
+        data = await self._request(
             f"/api/v1/championships/{championship_id}", key,
         )
-        return CachedResponse(
-            data=ChampionshipDetails(**result.data),
-            stale=result.stale,
-        )
+        return ChampionshipDetails(**data)
 
     async def get_races(
         self, championship_id: int,
-    ) -> CachedResponse:
+    ) -> list[dict]:
         key = f"races_{championship_id}"
         cached = await read_cache(key, _TTL_STATIC)
         if cached is not None:
-            return CachedResponse(data=cached if isinstance(cached, list) else [])
+            return cached if isinstance(cached, list) else []
 
-        result = await self._request(
+        data = await self._request(
             "/api/v1/races", key, params={"championship_id": championship_id}
         )
-        items = result.data if isinstance(result.data, list) else []
-        return CachedResponse(data=items, stale=result.stale)
+        return data if isinstance(data, list) else []
 
     async def get_standings(
         self, championship_id: int,
-    ) -> CachedResponse:
+    ) -> ChampionshipStandingsData:
         key = f"standings_{championship_id}"
         cached = await read_cache(key, _TTL_LIVE)
         if cached is not None:
-            return CachedResponse(data=ChampionshipStandingsData(**cached))
+            return ChampionshipStandingsData(**cached)
 
         try:
             resp = await self._client.get(
@@ -123,7 +111,7 @@ class SimgridService:
             resp.raise_for_status()
             data = self._parse_standings(resp.json())
             await write_cache(key, data.model_dump())
-            return CachedResponse(data=data)
+            return data
         except httpx.HTTPStatusError:
             logger.warning(
                 "SimGrid API error for %s, attempting stale cache fallback",
@@ -131,27 +119,23 @@ class SimgridService:
             )
             stale = await read_stale_cache(key)
             if stale is not None:
-                return CachedResponse(
-                    data=ChampionshipStandingsData(**stale), stale=True,
-                )
+                mark_stale()
+                return ChampionshipStandingsData(**stale)
             raise
 
     async def get_participating_users(
         self, championship_id: int,
-    ) -> CachedResponse:
+    ) -> list[ParticipatingUser]:
         key = f"participants_{championship_id}"
         cached = await read_cache(key, _TTL_LIVE)
         if cached is not None:
-            return CachedResponse(data=[ParticipatingUser(**u) for u in cached])
+            return [ParticipatingUser(**u) for u in cached]
 
-        result = await self._request(
+        data = await self._request(
             f"/api/v1/championships/{championship_id}/participating_users", key,
         )
-        items = result.data if isinstance(result.data, list) else []
-        return CachedResponse(
-            data=[ParticipatingUser(**u) for u in items],
-            stale=result.stale,
-        )
+        items = data if isinstance(data, list) else []
+        return [ParticipatingUser(**u) for u in items]
 
     async def get_race_name(self, race_id: int) -> str:
         """Fetch a single race's display name from SimGrid."""
@@ -164,6 +148,119 @@ class SimgridService:
             return f"Race {race_id}"
 
     # ------------------------------------------------------------------
+    # Aggregate views derived from cached standings
+    # ------------------------------------------------------------------
+
+    async def build_champions_podiums(
+        self, active_ids: set[int],
+    ) -> list[ChampionshipPodium]:
+        """Return top-3 podiums for finished championships (not in *active_ids*).
+
+        Reads cached standings entries directly so completed seasons remain
+        viewable even after the SimGrid API drops them from active rotation.
+        """
+        cached_standings = await read_all_by_prefix("standings_")
+        champ_map = await self._championship_map()
+
+        podiums: list[ChampionshipPodium] = []
+        for cache_key, raw in cached_standings:
+            champ_id = self._championship_id_from_cache_key(cache_key)
+            if champ_id is None or champ_id in active_ids:
+                continue
+            standings = self._standings_from_cache(raw)
+            if standings is None:
+                continue
+
+            top3 = sorted(
+                (e for e in standings.entries if e.position in (1, 2, 3) and not e.dsq),
+                key=lambda e: e.position or 999,
+            )
+            if not top3:
+                continue
+
+            champ = champ_map.get(champ_id)
+            podiums.append(ChampionshipPodium(
+                championship_id=champ_id,
+                championship_name=champ.name if champ else f"Championship #{champ_id}",
+                podium=[
+                    PodiumEntry(
+                        simgrid_driver_id=e.id,
+                        display_name=e.display_name,
+                        position=e.position or 0,
+                    )
+                    for e in top3
+                ],
+            ))
+
+        podiums.sort(key=lambda p: -p.championship_id)
+        return podiums
+
+    async def find_driver_championship_results(
+        self, simgrid_driver_id: int,
+    ) -> list[DriverChampionshipResult]:
+        """Return per-championship results for *simgrid_driver_id* across all caches."""
+        cached_standings = await read_all_by_prefix("standings_")
+        champ_map = await self._championship_map()
+
+        results: list[DriverChampionshipResult] = []
+        for cache_key, raw in cached_standings:
+            champ_id = self._championship_id_from_cache_key(cache_key)
+            if champ_id is None:
+                continue
+            standings = self._standings_from_cache(raw)
+            if standings is None:
+                continue
+
+            entry = next(
+                (e for e in standings.entries if e.id == simgrid_driver_id), None
+            )
+            if entry is None:
+                continue
+
+            champ = champ_map.get(champ_id)
+            results.append(DriverChampionshipResult(
+                championship_id=champ_id,
+                championship_name=champ.name if champ else f"Championship #{champ_id}",
+                position=entry.position,
+                score=entry.score,
+                dsq=entry.dsq,
+                start_date=champ.start_date if champ else None,
+                end_date=champ.end_date if champ else None,
+                accepting_registrations=champ.accepting_registrations if champ else False,
+            ))
+
+        results.sort(
+            key=lambda r: (r.position is None, r.position or 999, -r.championship_id)
+        )
+        return results
+
+    async def _championship_map(self) -> dict[int, ChampionshipListItem]:
+        """Build a championship-id → list-item lookup, tolerating upstream failures."""
+        try:
+            return {c.id: c for c in await self.get_championships()}
+        except Exception:
+            logger.warning(
+                "Failed to fetch championships for cache lookup", exc_info=True
+            )
+            return {}
+
+    @staticmethod
+    def _championship_id_from_cache_key(cache_key: str) -> int | None:
+        try:
+            return int(cache_key.split("_", 1)[1])
+        except (ValueError, IndexError):
+            return None
+
+    @staticmethod
+    def _standings_from_cache(raw: Any) -> ChampionshipStandingsData | None:
+        if not isinstance(raw, dict):
+            return None
+        try:
+            return ChampionshipStandingsData(**raw)
+        except Exception:
+            return None
+
+    # ------------------------------------------------------------------
     # HTTP helper with stale-cache fallback
     # ------------------------------------------------------------------
 
@@ -173,14 +270,14 @@ class SimgridService:
         cache_key: str,
         *,
         params: dict[str, Any] | None = None,
-    ) -> CachedResponse:
+    ) -> Any:
         """GET from SimGrid API with stale-cache fallback on upstream errors."""
         try:
             resp = await self._client.get(url, params=params)
             resp.raise_for_status()
             data = resp.json()
             await write_cache(cache_key, data)
-            return CachedResponse(data=data)
+            return data
         except httpx.HTTPStatusError:
             logger.warning(
                 "SimGrid API error for %s, attempting stale cache fallback",
@@ -188,7 +285,8 @@ class SimgridService:
             )
             stale = await read_stale_cache(cache_key)
             if stale is not None:
-                return CachedResponse(data=stale, stale=True)
+                mark_stale()
+                return stale
             raise
 
     # ------------------------------------------------------------------

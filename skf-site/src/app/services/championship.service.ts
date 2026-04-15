@@ -196,9 +196,6 @@ export class ChampionshipService {
       if (error.status === 0) {
         return 'Unable to reach The SimGrid API. Please try again later.';
       }
-      if (error.status === 200) {
-        return 'API returned HTML instead of JSON. The SimGrid may be experiencing issues.';
-      }
       if (error.status === 429) {
         return this.extractErrorReason(error) ?? 'Minute rate limit exceeded';
       }

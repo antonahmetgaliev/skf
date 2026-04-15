@@ -38,6 +38,28 @@ async def read_cache(
         return None
 
 
+async def read_all_by_prefix(prefix: str) -> list[tuple[str, dict | list]]:
+    """Return all ``(cache_key, data)`` entries whose key starts with *prefix*.
+
+    Ignores TTL — intended for archival reads where stale data is acceptable.
+    """
+    try:
+        async with async_session() as session:
+            rows = (
+                await session.execute(
+                    select(SimgridCache).where(
+                        SimgridCache.cache_key.like(f"{prefix}%")
+                    )
+                )
+            ).scalars().all()
+            return [(row.cache_key, row.data) for row in rows]
+    except Exception:
+        logger.warning(
+            "Cache prefix read failed for prefix=%s", prefix, exc_info=True
+        )
+        return []
+
+
 async def read_stale_cache(key: str) -> dict | list | None:
     """Return cached data regardless of age (fallback for API failures)."""
     try:

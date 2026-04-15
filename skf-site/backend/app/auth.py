@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from app.config import Settings
 from app.database import get_db
-from app.models.user import Session, User, ROLE_SUPER_ADMIN
+from app.models.user import Session, User, ROLE_ADMIN, ROLE_SUPER_ADMIN
 
 SESSION_COOKIE = "session_id"
 
@@ -64,6 +64,13 @@ async def get_current_user(
     return user
 
 
+def is_admin(user: User | None) -> bool:
+    """True when *user* is an admin or super-admin (handles ``None``)."""
+    if user is None or user.role is None:
+        return False
+    return user.role.name in (ROLE_ADMIN, ROLE_SUPER_ADMIN)
+
+
 def require_role(*roles: str) -> Callable:
     """Return a FastAPI dependency that checks the user's role."""
 
@@ -78,9 +85,9 @@ def require_role(*roles: str) -> Callable:
     return _check
 
 
-require_admin = require_role("admin", "super_admin")
-require_moderator = require_role("moderator", "admin", "super_admin")
-require_judge = require_role("racing_judge", "admin", "super_admin")
+require_admin = require_role(ROLE_ADMIN, ROLE_SUPER_ADMIN)
+require_moderator = require_role("moderator", ROLE_ADMIN, ROLE_SUPER_ADMIN)
+require_judge = require_role("racing_judge", ROLE_ADMIN, ROLE_SUPER_ADMIN)
 
 
 async def require_api_token(request: Request) -> None:
