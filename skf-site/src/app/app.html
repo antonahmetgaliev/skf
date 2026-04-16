@@ -40,7 +40,48 @@
       <a routerLink="/drivers" routerLinkActive="active">Drivers</a>
       <a routerLink="/calendar" routerLinkActive="active">Calendar</a>
       <a routerLink="/bwp-license" routerLinkActive="active">BWP License</a>
-      <a routerLink="/regulations" routerLinkActive="active">Regulations</a>
+      <div class="site-nav-dropdown" [class.open]="regulationsOpen()">
+        <button
+          type="button"
+          class="site-nav-dropdown-trigger"
+          [class.active]="regulationsActive()"
+          [attr.aria-expanded]="regulationsOpen()"
+          aria-haspopup="menu"
+          (click)="toggleRegulations()"
+        >
+          Regulations
+          <span class="site-nav-dropdown-chevron" aria-hidden="true">▾</span>
+        </button>
+        @if (regulationsOpen()) {
+          <div class="site-nav-dropdown-menu" role="menu">
+            <a
+              routerLink="/regulations"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              (click)="closeRegulations()"
+              role="menuitem"
+            >General Regulations</a>
+            <a
+              routerLink="/regulations/iracing-league"
+              routerLinkActive="active"
+              (click)="closeRegulations()"
+              role="menuitem"
+            >SKF iRacing League</a>
+            <a
+              routerLink="/regulations/nightfall-gte"
+              routerLinkActive="active"
+              (click)="closeRegulations()"
+              role="menuitem"
+            >SKF Nightfall GTE Championship</a>
+            <a
+              routerLink="/regulations/thunder-trucks"
+              routerLinkActive="active"
+              (click)="closeRegulations()"
+              role="menuitem"
+            >SKF Thunder Truck Series</a>
+          </div>
+        }
+      </div>
       <a routerLink="/media" routerLinkActive="active">Media</a>
       @if (auth.isAdmin()) {
         <a routerLink="/admin" routerLinkActive="active">Admin</a>

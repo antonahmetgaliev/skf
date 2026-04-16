@@ -98,6 +98,85 @@ h4 {
   line-height: 1.65;
 }
 
+// ── Plain bullet lists ──────────────────────────────────────────
+
+.bullets {
+  list-style: disc;
+  margin: 0.5rem 0 0;
+  padding-left: 1.4rem;
+  display: grid;
+  gap: 0.35rem;
+  line-height: 1.65;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.bullets li::marker {
+  color: var(--gold);
+}
+
+// ── Reg tables (calendars, scoring, prizes) ─────────────────────
+
+.table-wrap {
+  overflow-x: auto;
+  margin: 0.75rem 0 0.25rem;
+  border: 1px solid var(--card-border, rgba(243, 180, 25, 0.25));
+  border-radius: 10px;
+}
+
+.reg-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.02);
+
+  th,
+  td {
+    padding: 0.55rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(243, 180, 25, 0.15);
+    white-space: nowrap;
+  }
+
+  th {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.75rem;
+    color: var(--gold);
+    background: rgba(243, 180, 25, 0.08);
+  }
+
+  tbody th {
+    background: rgba(243, 180, 25, 0.05);
+    color: var(--ink-soft);
+  }
+
+  tbody tr:last-child th,
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.reg-table.compact {
+  font-size: 0.8rem;
+
+  th,
+  td {
+    padding: 0.35rem 0.5rem;
+  }
+}
+
+code {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+  background: rgba(243, 180, 25, 0.1);
+  color: var(--gold);
+  padding: 0 0.3rem;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
 // ── Discord Link ─────────────────────────────────────────────────
 
 .discord-link {
