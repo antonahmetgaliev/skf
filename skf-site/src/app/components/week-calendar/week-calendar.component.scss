@@ -446,8 +446,33 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .schedule-grid {
+  .schedule-grid,
+  .schedule-grid.champs-only {
     grid-template-columns: 1fr;
+  }
+
+  .schedule {
+    padding: 1.5rem 0 2rem;
+  }
+
+  .schedule-panel {
+    border-radius: 14px;
+  }
+
+  .champ-name {
+    white-space: normal;
+  }
+
+  .next-race-name {
+    white-space: normal;
+  }
+
+  .week-race-champ {
+    white-space: normal;
+  }
+
+  .week-race-track {
+    white-space: normal;
   }
 }
 
