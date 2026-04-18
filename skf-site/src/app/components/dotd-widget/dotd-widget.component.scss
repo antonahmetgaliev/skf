@@ -412,3 +412,52 @@
   gap: 10px;
   margin-top: 20px;
 }
+
+// ── Responsive ──────────────────────────────────────────────────────────────
+
+@media (max-width: 640px) {
+  .dotd-header {
+    padding: 8px 12px;
+  }
+
+  .dotd-title {
+    font-size: 0.85rem;
+  }
+
+  .dotd-body {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .poll-card {
+    min-width: 0;
+    max-width: none;
+    flex: 1 1 100%;
+  }
+
+  .candidate-row {
+    grid-template-columns: 24px 1fr auto;
+    gap: 4px;
+    padding: 4px 6px;
+  }
+
+  .vote-bar-wrap {
+    display: none;
+  }
+
+  .vote-raw {
+    display: none;
+  }
+
+  .candidate-name {
+    font-size: 0.82rem;
+  }
+
+  .modal-backdrop {
+    padding: 20px 12px;
+  }
+
+  .modal-box {
+    padding: 20px 16px 18px;
+  }
+}

@@ -565,6 +565,56 @@
   color: var(--muted);
 }
 
+@media (max-width: 640px) {
+  .incident-card-header {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .incident-drivers {
+    white-space: normal;
+    flex-basis: 100%;
+    order: -1;
+  }
+
+  .incident-session,
+  .incident-time {
+    font-size: 0.7rem;
+  }
+
+  .resolve-fields {
+    flex-direction: column;
+  }
+
+  .resolve-field--verdict {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .incident-resolve-footer {
+    flex-direction: column;
+  }
+
+  .resolve-field--description {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .detail-header {
+    flex-direction: column;
+  }
+
+  .detail-actions {
+    width: 100%;
+  }
+
+  .incidents-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
 .discord-preview {
   white-space: pre-wrap;
   word-break: break-word;

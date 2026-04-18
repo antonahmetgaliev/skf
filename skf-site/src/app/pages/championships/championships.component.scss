@@ -436,6 +436,48 @@ $class-palette: #f3b419, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
   }
 }
 
+@media (max-width: 640px) {
+  .championship-banner {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .race-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .race-card-info {
+    width: 100%;
+  }
+
+  .race-card-status {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .class-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 0.25rem;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .class-tab {
+    flex-shrink: 0;
+  }
+
+  .details-actions {
+    flex-wrap: wrap;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .championship-button {
     transition: none;

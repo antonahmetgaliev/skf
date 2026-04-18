@@ -280,6 +280,49 @@
   display: block;
 }
 
+/* ── Hamburger button ── */
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: rgba(243, 180, 25, 0.5);
+  }
+}
+
+.hamburger-line {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--ink);
+  border-radius: 2px;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.hamburger.open {
+  .hamburger-line:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  .hamburger-line:nth-child(2) {
+    opacity: 0;
+  }
+  .hamburger-line:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+}
+
 /* ── Auth zone ── */
 
 .auth-zone {
@@ -287,6 +330,14 @@
   align-items: center;
   gap: 0.75rem;
   flex-shrink: 0;
+}
+
+.auth-zone--mobile {
+  display: none;
+}
+
+.auth-zone--desktop {
+  display: flex;
 }
 
 .user-badge {
@@ -379,12 +430,71 @@
 
 @media (max-width: 900px) {
   .site-header {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .hamburger {
+    display: flex;
   }
 
   .site-nav {
+    display: none;
     width: 100%;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--card-border);
+
+    &--open {
+      display: flex;
+    }
+
+    a {
+      width: 100%;
+      text-align: left;
+      padding: 0.55rem 0.9rem;
+      border-radius: 10px;
+    }
+  }
+
+  .site-nav-dropdown {
+    width: 100%;
+  }
+
+  .site-nav-dropdown-trigger {
+    width: 100%;
+    text-align: left;
+    padding: 0.55rem 0.9rem;
+    border-radius: 10px;
+  }
+
+  .auth-zone--desktop {
+    display: none;
+  }
+
+  .auth-zone--mobile {
+    display: flex;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--card-border);
+    width: 100%;
+  }
+
+  .brand {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .view-as-bar {
+    flex-wrap: wrap;
+    font-size: 0.65rem;
+    padding: 0.3rem 0.75rem;
+  }
+
+  .user-name {
+    display: none;
   }
 }
 

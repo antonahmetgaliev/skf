@@ -18,6 +18,7 @@ export class App implements OnInit {
 
   readonly regulationsOpen = signal(false);
   readonly regulationsActive = signal(false);
+  readonly mobileMenuOpen = signal(false);
 
   ngOnInit(): void {
     this.auth.loadUser();
@@ -27,6 +28,7 @@ export class App implements OnInit {
       .subscribe((e) => {
         this.updateRegulationsActive(e.urlAfterRedirects);
         this.regulationsOpen.set(false);
+        this.mobileMenuOpen.set(false);
       });
   }
 
@@ -36,6 +38,13 @@ export class App implements OnInit {
 
   closeRegulations(): void {
     this.regulationsOpen.set(false);
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen.update((v) => !v);
+    if (!this.mobileMenuOpen()) {
+      this.regulationsOpen.set(false);
+    }
   }
 
   @HostListener('document:click', ['$event'])
@@ -53,6 +62,7 @@ export class App implements OnInit {
   @HostListener('document:keydown.escape')
   onEscape(): void {
     this.regulationsOpen.set(false);
+    this.mobileMenuOpen.set(false);
   }
 
   private updateRegulationsActive(url: string): void {

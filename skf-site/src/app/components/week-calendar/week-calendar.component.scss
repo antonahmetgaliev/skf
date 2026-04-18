@@ -450,3 +450,40 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .schedule-panel {
+    padding: 1rem;
+  }
+
+  .week-race-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+
+  .week-race-date {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .champ-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .champ-status {
+    align-items: flex-start;
+  }
+
+  .next-race-card {
+    flex-direction: column;
+  }
+
+  .next-race-image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+}

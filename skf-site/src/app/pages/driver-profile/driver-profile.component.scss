@@ -337,3 +337,81 @@ h1 {
   font-style: italic;
 }
 
+/* ── Responsive ── */
+
+@media (max-width: 640px) {
+  app-card {
+    padding: 1.25rem;
+  }
+
+  .driver-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .driver-identity {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .driver-avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 1.5rem;
+  }
+
+  .bwp-summary {
+    flex-direction: row;
+    gap: 0.75rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .stats-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .stat {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0.55rem 0.75rem;
+  }
+
+  .points-header,
+  .point-row {
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.82rem;
+  }
+
+  .points-header {
+    display: none;
+  }
+
+  .champ-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .champ-meta {
+    width: 100%;
+  }
+
+  .champ-name {
+    white-space: normal;
+  }
+
+  .champ-result {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .champ-score {
+    text-align: left;
+  }
+}
+
