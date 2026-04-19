@@ -311,7 +311,8 @@ class SimgridService:
                 e.display_name,
             ),
         )
-        return ChampionshipStandingsData(entries=entries, races=races)
+        sorted_races = sorted(races, key=lambda r: r.starts_at or "")
+        return ChampionshipStandingsData(entries=entries, races=sorted_races)
 
     def _parse_races(self, value: Any) -> list[StandingRace]:
         if not isinstance(value, list):
