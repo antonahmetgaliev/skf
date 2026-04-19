@@ -94,14 +94,18 @@ export class IncidentsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadWindows();
-    this.loadVerdictRules();
-    this.loadDescriptionPresets();
-    firstValueFrom(this.bwpApi.getDrivers()).then((ds) =>
-      this.bwpDrivers.set(ds)
-    );
-    firstValueFrom(this.simgridApi.getChampionships()).then((cs) =>
-      this.championships.set(cs)
-    );
+    if (this.auth.isJudge()) {
+      this.loadVerdictRules();
+      this.loadDescriptionPresets();
+    }
+    if (this.auth.isAdmin()) {
+      firstValueFrom(this.bwpApi.getDrivers()).then((ds) =>
+        this.bwpDrivers.set(ds)
+      );
+      firstValueFrom(this.simgridApi.getChampionships()).then((cs) =>
+        this.championships.set(cs)
+      );
+    }
   }
 
   // ── Windows ───────────────────────────────────────────────────────

@@ -311,7 +311,6 @@ async def ingest_incidents(
 @router.get("/windows", response_model=list[IncidentWindowListItem])
 async def list_windows(
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
 ):
     result = await db.execute(
         select(IncidentWindow).order_by(IncidentWindow.opened_at.desc())
@@ -350,7 +349,6 @@ async def create_window(
 async def get_window(
     window_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
 ):
     return await _get_window_or_404(window_id, db)
 
