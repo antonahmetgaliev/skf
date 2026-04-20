@@ -16,7 +16,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   padding: 0.55rem 1rem;
-  font-size: 0.95rem;
+  font-size: var(--text-lg);
   color: var(--ink);
   background: var(--card-bg);
   outline: none;
@@ -28,7 +28,7 @@
 }
 
 .count {
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   color: var(--muted);
   white-space: nowrap;
 }
@@ -84,7 +84,7 @@
 
 .driver-name {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: var(--text-lg);
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
@@ -92,9 +92,7 @@
 }
 
 .driver-meta {
-  font-size: 0.73rem;
+  font-size: var(--text-sm);
   color: var(--muted);
-  letter-spacing: 0.06em;
+  letter-spacing: var(--tracking-normal);
 }
-
-

@@ -49,9 +49,9 @@
 }
 
 .meta {
-  font-size: 0.8rem;
+  font-size: var(--text-base);
   text-transform: uppercase;
-  letter-spacing: 0.18em;
+  letter-spacing: var(--tracking-widest);
   color: var(--muted);
 }
 
@@ -82,9 +82,9 @@
   grid-template-columns: minmax(0, 120px) minmax(0, 1fr);
   gap: 0.75rem;
   padding: 0 0.4rem;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -118,9 +118,9 @@
   grid-template-columns: minmax(0, 140px) minmax(0, 1fr) auto;
   gap: 0.75rem;
   padding: 0 0.75rem;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -165,7 +165,7 @@
 
 .hint {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--text-md);
   color: var(--muted);
 }
 
@@ -205,8 +205,8 @@
 
 .driver h3 {
   margin: 0 0 0.25rem;
-  font-size: 1.1rem;
-  letter-spacing: 0.04em;
+  font-size: var(--text-2xl);
+  letter-spacing: var(--tracking-tight);
   text-transform: uppercase;
 }
 
@@ -223,7 +223,7 @@
 .driver-meta {
   margin: 0;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-md);
 }
 
 .driver-penalty {
@@ -242,9 +242,9 @@
   padding: 0.25rem 0.75rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-normal);
   text-transform: uppercase;
 }
 
@@ -277,19 +277,19 @@
 .point-value {
   display: block;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-normal);
   text-transform: uppercase;
 }
 
 .point-date {
   display: block;
-  font-size: 0.8rem;
+  font-size: var(--text-base);
   color: var(--muted);
 }
 
 .point-meta {
   text-align: right;
-  font-size: 0.85rem;
+  font-size: var(--text-md);
   color: var(--charcoal);
   display: grid;
   gap: 0.2rem;
@@ -309,9 +309,9 @@
   color: var(--danger);
   padding: 0.1rem 0.4rem;
   border-radius: 6px;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-wide);
 }
 
 .btn-link {
@@ -319,10 +319,10 @@
   border: none;
   color: var(--danger);
   padding: 0;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-normal);
   cursor: pointer;
 }
 
@@ -402,9 +402,9 @@
   position: absolute;
   top: 100%;
   margin-top: 4px;
-  font-size: 0.65rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-normal);
   color: var(--muted);
   white-space: nowrap;
 }
@@ -429,7 +429,7 @@
   gap: 0.5rem;
   padding: 0.3rem 0.5rem;
   border-radius: 8px;
-  font-size: 0.8rem;
+  font-size: var(--text-base);
   color: var(--muted);
   border: 1px solid transparent;
   transition: background 0.2s ease;
@@ -484,9 +484,9 @@
   border-radius: 999px;
   background: rgba(46, 139, 87, 0.15);
   color: #2e8b57;
-  font-size: 0.65rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   margin-left: auto;
 }
@@ -497,9 +497,9 @@
   border-radius: 999px;
   background: rgba(185, 71, 46, 0.15);
   color: var(--danger);
-  font-size: 0.65rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   margin-left: auto;
 }

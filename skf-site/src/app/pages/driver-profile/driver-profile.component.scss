@@ -57,9 +57,9 @@ app-card {
 h1 {
   margin: 0 0 0.3rem;
   font-family: var(--font-display);
-  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-size: var(--heading-2xl);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-normal);
   color: var(--ink);
 }
 
@@ -68,9 +68,9 @@ h1 {
   padding: 0.15rem 0.6rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   color: var(--muted);
   margin-right: 0.5rem;
@@ -78,7 +78,7 @@ h1 {
 
 .simgrid-name {
   margin: 0.35rem 0 0;
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   color: var(--muted);
 }
 
@@ -109,9 +109,9 @@ h1 {
 }
 
 .bwp-label {
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   color: var(--muted);
   white-space: nowrap;
@@ -141,16 +141,16 @@ h1 {
 
 .stat-value {
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: var(--heading-2xl);
   font-weight: 800;
   color: var(--ink);
   line-height: 1;
 }
 
 .stat-label {
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--muted);
   text-align: center;
@@ -161,9 +161,9 @@ h1 {
 .points-section h2 {
   margin: 0 0 0.75rem;
   font-family: var(--font-display);
-  font-size: 0.85rem;
+  font-size: var(--text-md);
   text-transform: uppercase;
-  letter-spacing: 0.18em;
+  letter-spacing: var(--tracking-widest);
   color: var(--muted);
 }
 
@@ -182,14 +182,14 @@ h1 {
   gap: 1rem;
   padding: 0.65rem 1rem;
   align-items: center;
-  font-size: 0.85rem;
+  font-size: var(--text-md);
 }
 
 .points-header {
   background: rgba(255, 255, 255, 0.05);
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -209,7 +209,7 @@ h1 {
 .point-value {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: var(--text-lg);
   color: var(--ink);
 }
 
@@ -224,9 +224,9 @@ h1 {
   h2 {
     margin: 0 0 0.85rem;
     font-family: var(--font-display);
-    font-size: 0.85rem;
+    font-size: var(--text-md);
     text-transform: uppercase;
-    letter-spacing: 0.16em;
+    letter-spacing: var(--tracking-wider);
     color: var(--muted);
   }
 }
@@ -261,7 +261,7 @@ h1 {
 
 .champ-name {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--text-lg);
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
@@ -272,9 +272,9 @@ h1 {
   flex-shrink: 0;
   padding: 0.1rem 0.5rem;
   border-radius: 999px;
-  font-size: 0.65rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
 
   &.active {
@@ -294,9 +294,9 @@ h1 {
 .position-badge {
   padding: 0.2rem 0.7rem;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--tracking-normal);
   white-space: nowrap;
 
   &[data-badge='champion'] {
@@ -317,7 +317,7 @@ h1 {
 }
 
 .position-plain {
-  font-size: 0.85rem;
+  font-size: var(--text-md);
   font-weight: 600;
   color: var(--muted);
   min-width: 2.5rem;
@@ -325,14 +325,14 @@ h1 {
 }
 
 .champ-score {
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   color: var(--muted);
   min-width: 4rem;
   text-align: right;
 }
 
 .loading-row {
-  font-size: 0.85rem;
+  font-size: var(--text-md);
   color: var(--muted);
   font-style: italic;
 }
@@ -384,7 +384,7 @@ h1 {
     grid-template-columns: 1fr;
     gap: 0.3rem;
     padding: 0.55rem 0.75rem;
-    font-size: 0.82rem;
+    font-size: var(--text-base);
   }
 
   .points-header {
@@ -414,4 +414,3 @@ h1 {
     text-align: left;
   }
 }
-

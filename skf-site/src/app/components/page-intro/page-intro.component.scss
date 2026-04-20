@@ -13,27 +13,18 @@
   }
 }
 
-.eyebrow {
-  margin: 0 0 0.15rem;
-  font-size: 0.68rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--gold-deep);
-}
-
 h1 {
   margin: 0 0 0.25rem;
   font-family: var(--font-display);
-  font-size: clamp(2rem, 3vw, 3rem);
-  letter-spacing: 0.04em;
+  font-size: var(--heading-3xl);
+  letter-spacing: var(--tracking-tight);
   text-transform: uppercase;
   color: var(--ink);
 }
 
 .subtitle {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text-xl);
   color: var(--muted);
 }
 

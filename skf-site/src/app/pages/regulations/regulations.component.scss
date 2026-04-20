@@ -21,8 +21,8 @@ h2 {
   margin: 0 0 1rem;
   font-family: var(--font-display);
   text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  letter-spacing: var(--tracking-widest);
+  font-size: var(--heading-lg);
   color: var(--ink);
 }
 
@@ -30,8 +30,8 @@ h3 {
   margin: 1.25rem 0 0.6rem;
   font-family: var(--font-display);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+  letter-spacing: var(--tracking-wide);
+  font-size: var(--heading-md);
   color: var(--ink-soft);
 }
 
@@ -39,8 +39,8 @@ h4 {
   margin: 1rem 0 0.5rem;
   font-family: var(--font-display);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: clamp(0.85rem, 1.4vw, 0.95rem);
+  letter-spacing: var(--tracking-wide);
+  font-size: var(--heading-sm);
   color: var(--muted);
 }
 
@@ -53,7 +53,7 @@ h4 {
   gap: 0.5rem;
   line-height: 1.65;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: var(--text-lg);
 }
 
 .rules.sub {
@@ -83,7 +83,7 @@ h4 {
   gap: 0.35rem;
   line-height: 1.65;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: var(--text-lg);
 }
 
 .penalty-tiers li::marker,
@@ -94,7 +94,7 @@ h4 {
 .tier-intro {
   margin: 0 0 0.5rem;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: var(--text-lg);
   line-height: 1.65;
 }
 
@@ -108,7 +108,7 @@ h4 {
   gap: 0.35rem;
   line-height: 1.65;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: var(--text-lg);
 }
 
 .bullets li::marker {
@@ -127,7 +127,7 @@ h4 {
 .reg-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: var(--text-lg);
   color: var(--muted);
   background: rgba(255, 255, 255, 0.02);
 
@@ -142,8 +142,8 @@ h4 {
   th {
     font-family: var(--font-display);
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-size: 0.75rem;
+    letter-spacing: var(--tracking-wide);
+    font-size: var(--text-sm);
     color: var(--gold);
     background: rgba(243, 180, 25, 0.08);
   }
@@ -160,7 +160,7 @@ h4 {
 }
 
 .reg-table.compact {
-  font-size: 0.8rem;
+  font-size: var(--text-base);
 
   th,
   td {
@@ -216,4 +216,3 @@ code {
     padding-left: 1.2rem;
   }
 }
-
