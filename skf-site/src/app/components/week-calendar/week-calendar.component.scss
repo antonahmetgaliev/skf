@@ -25,12 +25,23 @@
 /* ── Grid layout ── */
 .schedule-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 3fr 2fr;
   gap: 1rem;
 
   &.champs-only {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+.sidebar-panels {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* When today panel is absent, sidebar spans full width */
+.schedule-grid.champs-only .sidebar-panels {
+  grid-column: 1 / -1;
 }
 
 /* ── Panels ── */
@@ -80,6 +91,12 @@
   );
 }
 
+.today-races-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+
 .race-card--today {
   text-align: center;
   padding: 1.5rem 1rem;
@@ -89,7 +106,6 @@
     rgba(243, 180, 25, 0.06) 0%,
     transparent 100%
   );
-  margin-bottom: 0.75rem;
 }
 
 .race-badge {
@@ -141,6 +157,12 @@
   margin-top: 0.5rem;
   padding-top: 0.75rem;
   border-top: 1px dashed var(--separator);
+}
+
+.broadcasts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.35rem;
 }
 
 .broadcast-item {
@@ -436,6 +458,10 @@
   .schedule-grid,
   .schedule-grid.champs-only {
     grid-template-columns: 1fr;
+  }
+
+  .sidebar-panels {
+    grid-column: 1;
   }
 
   .schedule {
