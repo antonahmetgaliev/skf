@@ -10,12 +10,12 @@ from app.services.youtube import youtube_service
 router = APIRouter(prefix="/youtube", tags=["YouTube"])
 
 
-@router.get("/live-streams", response_model=list[YouTubeVideo])
-async def get_live_streams(
+@router.get("/past-streams", response_model=list[YouTubeVideo])
+async def get_past_streams(
     limit: int = Query(50, ge=1, le=200),
 ):
     """Return past completed live streams."""
-    return await youtube_service.get_live_streams(limit=limit)
+    return await youtube_service.get_past_streams(limit=limit)
 
 
 @router.get("/upcoming-streams", response_model=list[YouTubeVideo])

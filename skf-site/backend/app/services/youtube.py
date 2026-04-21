@@ -7,6 +7,7 @@ the results to minimise API quota usage.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import timedelta
 from typing import Any
@@ -38,11 +39,11 @@ class YouTubeService:
     # Public API
     # ------------------------------------------------------------------
 
-    async def get_live_streams(
+    async def get_past_streams(
         self, *, limit: int = 10,
     ) -> list[dict[str, Any]]:
         """Return past completed live streams from the channel."""
-        cache_key = "youtube_live_streams"
+        cache_key = "youtube_past_streams"
 
         cached = await read_cache(cache_key, _CACHE_TTL)
         if cached is not None and isinstance(cached, list):
@@ -63,7 +64,7 @@ class YouTubeService:
     async def get_upcoming_streams(
         self, *, limit: int = 10,
     ) -> list[dict[str, Any]]:
-        """Return upcoming/scheduled live streams from the channel."""
+        """Return upcoming/scheduled and currently-live streams from the channel."""
         cache_key = "youtube_upcoming_streams"
 
         cached = await read_cache(cache_key, _CACHE_TTL)
@@ -71,7 +72,17 @@ class YouTubeService:
             return cached[:limit]
 
         try:
-            videos = await self._search_by_event_type("upcoming", limit=limit)
+            upcoming, live = await asyncio.gather(
+                self._search_by_event_type("upcoming", limit=limit),
+                self._search_by_event_type("live", limit=limit),
+            )
+            # Merge: live first, then upcoming, deduplicate by video_id
+            seen: set[str] = set()
+            videos: list[dict[str, Any]] = []
+            for v in [*live, *upcoming]:
+                if v["video_id"] not in seen:
+                    seen.add(v["video_id"])
+                    videos.append(v)
         except Exception:
             logger.warning("YouTube upcoming-streams fetch failed", exc_info=True)
             stale = await read_stale_cache(cache_key)

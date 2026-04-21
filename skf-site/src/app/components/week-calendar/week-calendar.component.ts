@@ -131,7 +131,7 @@ export class WeekCalendarComponent {
       const todayStr = this.toDateStr(new Date());
 
       const [completed, upcoming] = await Promise.all([
-        firstValueFrom(this.mediaApi.getLiveStreams(6)).catch(() => [] as YouTubeVideo[]),
+        firstValueFrom(this.mediaApi.getPastStreams(6)).catch(() => [] as YouTubeVideo[]),
         firstValueFrom(this.mediaApi.getUpcomingStreams(6)).catch(() => [] as YouTubeVideo[]),
       ]);
 
