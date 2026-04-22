@@ -1,0 +1,39 @@
+:host {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.85rem;
+}
+
+.toggle {
+  display: inline-flex;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 3px;
+  gap: 2px;
+}
+
+.toggle-option {
+  border: none;
+  background: none;
+  padding: 0.35rem 1rem;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+
+  &:hover:not(.active) {
+    color: var(--ink-soft);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  &.active {
+    color: var(--gold-deep);
+    background: rgba(243, 180, 25, 0.12);
+  }
+}

@@ -1,10 +1,10 @@
 <app-page>
   <app-page-intro title="Season Calendar" />
 
-  <app-tabs
-    [tabs]="viewTabs"
-    [activeTab]="viewMode()"
-    (tabChange)="setViewMode($event)"
+  <app-toggle
+    [options]="viewTabs"
+    [activeKey]="viewMode()"
+    (keyChange)="setViewMode($event)"
   />
 
   <!-- ── Month View ── -->
@@ -184,8 +184,8 @@
                     <span class="event-car-class">{{ event.carClass }}</span>
                   }
                   @if (event.races.length > 0) {
-                    <div class="event-races">
-                      @for (race of event.races; track $index) {
+                    <div class="event-races event-races--column">
+                      @for (race of sortedRaces(event.races); track $index) {
                         <span class="race-pill">
                           @if (race.name) { {{ race.name }} }
                           @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }
