@@ -78,6 +78,12 @@ export class CalendarApiService {
     });
   }
 
+  getYearEvents(year: number): Observable<CalendarEvent[]> {
+    return this.http.get<CalendarEvent[]>(`${this.base}/events`, {
+      params: { year: String(year) },
+    });
+  }
+
   getCustomChampionships(): Observable<CustomChampionshipOut[]> {
     return this.http.get<CustomChampionshipOut[]>(`${this.base}/custom-championships`);
   }

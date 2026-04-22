@@ -92,13 +92,17 @@ async def _get_championship_or_404(
 @router.get("/events", response_model=list[CalendarEvent])
 async def get_calendar_events(
     year: int = Query(..., ge=2020, le=2100),
-    month: int = Query(..., ge=1, le=12),
+    month: int | None = Query(None, ge=1, le=12),
     db: AsyncSession = Depends(get_db),
 ):
-    """Return merged SimGrid + custom championship events for the given month."""
-    _, days_in_month = monthrange(year, month)
-    month_start = datetime(year, month, 1, tzinfo=timezone.utc)
-    month_end = datetime(year, month, days_in_month, 23, 59, 59, tzinfo=timezone.utc)
+    """Return merged SimGrid + custom championship events for the given month (or full year)."""
+    if month is not None:
+        _, days_in_month = monthrange(year, month)
+        range_start = datetime(year, month, 1, tzinfo=timezone.utc)
+        range_end = datetime(year, month, days_in_month, 23, 59, 59, tzinfo=timezone.utc)
+    else:
+        range_start = datetime(year, 1, 1, tzinfo=timezone.utc)
+        range_end = datetime(year, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
 
     events: list[CalendarEvent] = []
 
@@ -196,7 +200,7 @@ async def get_calendar_events(
 
         # Dateless championships are included (unscheduled) — skip month filter
         has_any_date = start is not None or end is not None or any(r.date for r in races)
-        if has_any_date and not _overlaps_month(start, end, races, month_start, month_end):
+        if has_any_date and not _overlaps_month(start, end, races, range_start, range_end):
             continue
 
         detail = detail_caches.get(champ.id, {})
@@ -233,7 +237,7 @@ async def get_calendar_events(
         ]
 
         # Check overlap
-        if not _overlaps_month(earliest, latest, custom_races, month_start, month_end):
+        if not _overlaps_month(earliest, latest, custom_races, range_start, range_end):
             # Still include if championship has no races with dates (show as dateless)
             if race_dates:
                 continue

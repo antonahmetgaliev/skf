@@ -7,6 +7,7 @@ import { CardComponent } from '../../components/card/card.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
+import { TabsComponent } from '../../components/tabs/tabs.component';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -23,11 +24,23 @@ interface CalendarDay {
   events: CalendarEvent[];
 }
 
+interface YearMonthGroup {
+  month: number;
+  label: string;
+  events: CalendarEvent[];
+}
+
+type ViewMode = 'month' | 'year';
+
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const VIEW_TABS: { key: string; label: string }[] = [
+  { key: 'month', label: 'Month' },
+  { key: 'year', label: 'Year' },
+];
 
 @Component({
   selector: 'app-calendar',
-  imports: [NgClass, RouterLink, AlertComponent, BadgeComponent, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent],
+  imports: [NgClass, RouterLink, AlertComponent, BadgeComponent, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
 })
@@ -35,12 +48,19 @@ export class CalendarComponent {
   private readonly calendarApi = inject(CalendarApiService);
 
   readonly weekDays = WEEK_DAYS;
+  readonly viewTabs = VIEW_TABS;
+  readonly viewMode = signal<ViewMode>('month');
   readonly currentYear = signal(new Date().getFullYear());
   readonly currentMonth = signal(new Date().getMonth() + 1); // 1-based
   readonly events = signal<CalendarEvent[]>([]);
   readonly loading = signal(false);
   readonly selectedDay = signal<number | null>(null);
   readonly errorMessage = signal('');
+
+  // Year view state
+  readonly yearEvents = signal<CalendarEvent[]>([]);
+  readonly yearLoading = signal(false);
+  readonly yearError = signal('');
 
   readonly monthLabel = computed(() => {
     const d = new Date(this.currentYear(), this.currentMonth() - 1, 1);
@@ -79,6 +99,22 @@ export class CalendarComponent {
     });
   });
 
+  readonly yearLabel = computed(() => String(this.currentYear()));
+
+  readonly yearEventsByMonth = computed<YearMonthGroup[]>(() => {
+    const events = this.yearEvents();
+    const year = this.currentYear();
+    const groups: YearMonthGroup[] = [];
+
+    for (let m = 1; m <= 12; m++) {
+      const monthEvents = events.filter((e) => this.eventFallsInMonth(e, year, m));
+      if (monthEvents.length === 0) continue;
+      const label = new Date(year, m - 1, 1).toLocaleString('en-US', { month: 'long' });
+      groups.push({ month: m, label, events: monthEvents });
+    }
+    return groups;
+  });
+
   constructor() {
     this.loadEvents();
   }
@@ -111,6 +147,22 @@ export class CalendarComponent {
     this.selectedDay.set(this.selectedDay() === day ? null : day);
   }
 
+  setViewMode(mode: string): void {
+    this.viewMode.set(mode as ViewMode);
+    if (mode === 'year') {
+      this.loadYearEvents();
+    }
+  }
+
+  navigateYear(delta: number): void {
+    this.currentYear.set(this.currentYear() + delta);
+    if (this.viewMode() === 'year') {
+      this.loadYearEvents();
+    } else {
+      this.loadEvents();
+    }
+  }
+
   getEventTypeLabel(type: CalendarEventType): string {
     return type.charAt(0).toUpperCase() + type.slice(1);
   }
@@ -134,6 +186,21 @@ export class CalendarComponent {
   }
 
   // ── Private ──
+
+  private async loadYearEvents(): Promise<void> {
+    this.yearLoading.set(true);
+    this.yearError.set('');
+    try {
+      const data = await firstValueFrom(
+        this.calendarApi.getYearEvents(this.currentYear()),
+      );
+      this.yearEvents.set(data);
+    } catch {
+      this.yearError.set('Failed to load calendar events.');
+    } finally {
+      this.yearLoading.set(false);
+    }
+  }
 
   private async loadEvents(): Promise<void> {
     this.loading.set(true);
@@ -226,6 +293,29 @@ export class CalendarComponent {
       if (event.startDate && toLocalDateStr(event.startDate) === dayStr) return true;
       if (event.endDate && toLocalDateStr(event.endDate) === dayStr) return true;
     }
+
+    return false;
+  }
+
+  private eventFallsInMonth(event: CalendarEvent, year: number, month: number): boolean {
+    const prefix = `${year}-${String(month).padStart(2, '0')}`;
+
+    for (const race of event.races) {
+      if (race.date && toLocalDateStr(race.date).startsWith(prefix)) {
+        return true;
+      }
+    }
+
+    // Check start/end date range overlap with month
+    const monthStart = new Date(year, month - 1, 1);
+    const monthEnd = new Date(year, month, 0, 23, 59, 59);
+
+    const start = event.startDate ? new Date(event.startDate) : null;
+    const end = event.endDate ? new Date(event.endDate) : null;
+
+    if (start && end) return start <= monthEnd && end >= monthStart;
+    if (start) return start >= monthStart && start <= monthEnd;
+    if (end) return end >= monthStart && end <= monthEnd;
 
     return false;
   }
