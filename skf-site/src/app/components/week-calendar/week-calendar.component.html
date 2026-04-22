@@ -5,7 +5,7 @@
   @if (loading()) {
     <div class="loader"><app-spinner /></div>
   } @else {
-    <div class="schedule-grid" [class.champs-only]="!hasWeekContent()">
+    <div class="schedule-grid" [class.no-today]="!hasTodayContent()">
 
       <!-- ── Today's races + broadcasts (hero) ── -->
       @if (hasTodayContent()) {
