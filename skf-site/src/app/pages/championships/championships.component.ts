@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -140,6 +140,16 @@ export class ChampionshipsComponent {
       }
     });
     void this.loadChampionships();
+
+    // Reload championships when admin status changes (e.g. after auth resolves on page reload)
+    let prevIsAdmin = this.auth.isAdmin();
+    effect(() => {
+      const isAdmin = this.auth.isAdmin();
+      if (isAdmin && !prevIsAdmin) {
+        void this.loadChampionships();
+      }
+      prevIsAdmin = isAdmin;
+    });
   }
 
   // ------------------------------------------------------------------
