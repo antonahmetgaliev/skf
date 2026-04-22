@@ -91,7 +91,7 @@ export class WeekCalendarComponent {
 
       const [events, broadcasts] = await Promise.all([
         this.fetchEventsForRange(monday, sunday),
-        this.loadTodayBroadcasts(),
+        firstValueFrom(this.mediaApi.getTodayBroadcasts()).catch(() => [] as YouTubeVideo[]),
       ]);
 
       // Extract all races for the week
@@ -123,39 +123,6 @@ export class WeekCalendarComponent {
       }
     } finally {
       this.loading.set(false);
-    }
-  }
-
-  private async loadTodayBroadcasts(): Promise<YouTubeVideo[]> {
-    try {
-      const todayStr = this.toDateStr(new Date());
-
-      const [completed, upcoming] = await Promise.all([
-        firstValueFrom(this.mediaApi.getPastStreams(6)).catch(() => [] as YouTubeVideo[]),
-        firstValueFrom(this.mediaApi.getUpcomingStreams(6)).catch(() => [] as YouTubeVideo[]),
-      ]);
-
-      // Upcoming streams scheduled for today + today's completed streams
-      const todayCompleted = completed.filter(
-        (s) => toLocalDateStr(s.publishedAt) === todayStr,
-      );
-      const todayUpcoming = upcoming.filter(
-        (s) => toLocalDateStr(s.publishedAt) === todayStr,
-      );
-
-      // Deduplicate by videoId (upcoming → completed transition)
-      const seen = new Set<string>();
-      const merged: YouTubeVideo[] = [];
-      for (const s of [...todayUpcoming, ...todayCompleted]) {
-        if (!seen.has(s.videoId)) {
-          seen.add(s.videoId);
-          merged.push(s);
-        }
-      }
-
-      return merged;
-    } catch {
-      return [];
     }
   }
 
