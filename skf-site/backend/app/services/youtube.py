@@ -1,13 +1,11 @@
 """YouTube Data API service with database caching.
 
 Fetches live streams from a YouTube channel using the PlaylistItems
-API (for past broadcasts) and Search API (for upcoming), and caches
-the results to minimise API quota usage.
+API, and caches the results to minimise API quota usage.
 """
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from datetime import timedelta
 from typing import Any
@@ -72,17 +70,7 @@ class YouTubeService:
             return cached[:limit]
 
         try:
-            upcoming, live = await asyncio.gather(
-                self._search_by_event_type("upcoming", limit=limit),
-                self._search_by_event_type("live", limit=limit),
-            )
-            # Merge: live first, then upcoming, deduplicate by video_id
-            seen: set[str] = set()
-            videos: list[dict[str, Any]] = []
-            for v in [*live, *upcoming]:
-                if v["video_id"] not in seen:
-                    seen.add(v["video_id"])
-                    videos.append(v)
+            videos = await self._fetch_upcoming_streams()
         except Exception:
             logger.warning("YouTube upcoming-streams fetch failed", exc_info=True)
             stale = await read_stale_cache(cache_key)
@@ -94,14 +82,14 @@ class YouTubeService:
         return videos[:limit]
 
     # ------------------------------------------------------------------
-    # Past streams via PlaylistItems + Videos detail
+    # Playlist scan (shared by past + upcoming)
     # ------------------------------------------------------------------
 
-    async def _fetch_past_streams(self, *, limit: int) -> list[dict[str, Any]]:
-        """Fetch all uploads, then filter to those that were live streams."""
+    async def _scan_uploads(self) -> tuple[list[str], dict[str, dict[str, Any]]]:
+        """Paginate through the channel's uploads playlist.
+        Returns (ordered video IDs, snippet dict keyed by ID)."""
         playlist_id = _uploads_playlist_id(settings.youtube_channel_id)
 
-        # Step 1: paginate through the uploads playlist
         all_video_ids: list[str] = []
         snippets_by_id: dict[str, dict[str, Any]] = {}
         page_token: str | None = None
@@ -130,13 +118,16 @@ class YouTubeService:
             if not page_token:
                 break
 
-        if not all_video_ids:
-            return []
+        return all_video_ids, snippets_by_id
 
-        # Step 2: batch-fetch video details to identify *completed* live streams
-        live_video_ids: set[str] = set()
-        for i in range(0, len(all_video_ids), _MAX_PAGE_SIZE):
-            batch = all_video_ids[i : i + _MAX_PAGE_SIZE]
+    async def _fetch_stream_details(
+        self, video_ids: list[str],
+    ) -> dict[str, dict[str, Any]]:
+        """Batch-fetch liveStreamingDetails for a list of video IDs.
+        Returns a dict keyed by video ID."""
+        details_by_id: dict[str, dict[str, Any]] = {}
+        for i in range(0, len(video_ids), _MAX_PAGE_SIZE):
+            batch = video_ids[i : i + _MAX_PAGE_SIZE]
             resp = await self._client.get(
                 "/videos",
                 params={
@@ -148,106 +139,76 @@ class YouTubeService:
             resp.raise_for_status()
             for item in resp.json().get("items", []):
                 details = item.get("liveStreamingDetails")
-                # Only include streams that have actually ended;
-                # upcoming/live streams have liveStreamingDetails
-                # but no actualEndTime yet.
-                if details and details.get("actualEndTime"):
-                    live_video_ids.add(item["id"])
+                if details:
+                    details_by_id[item["id"]] = details
+        return details_by_id
 
-        # Step 3: build result list preserving upload order (newest first)
+    @staticmethod
+    def _build_video(
+        vid: str,
+        snippet: dict[str, Any],
+        published_at: str | None = None,
+    ) -> dict[str, Any]:
+        thumbnails = snippet.get("thumbnails", {})
+        thumb = (
+            thumbnails.get("high")
+            or thumbnails.get("medium")
+            or thumbnails.get("default")
+            or {}
+        )
+        return {
+            "video_id": vid,
+            "title": snippet.get("title", ""),
+            "description": snippet.get("description", ""),
+            "published_at": published_at or snippet.get("publishedAt", ""),
+            "thumbnail_url": thumb.get("url", ""),
+        }
+
+    # ------------------------------------------------------------------
+    # Past streams
+    # ------------------------------------------------------------------
+
+    async def _fetch_past_streams(self, *, limit: int) -> list[dict[str, Any]]:
+        """Fetch uploads and filter to completed live streams."""
+        all_video_ids, snippets_by_id = await self._scan_uploads()
+        if not all_video_ids:
+            return []
+
+        details_by_id = await self._fetch_stream_details(all_video_ids)
+
         videos: list[dict[str, Any]] = []
         for vid in all_video_ids:
-            if vid not in live_video_ids:
-                continue
-            snippet = snippets_by_id[vid]
-            thumbnails = snippet.get("thumbnails", {})
-            thumb = (
-                thumbnails.get("high")
-                or thumbnails.get("medium")
-                or thumbnails.get("default")
-                or {}
-            )
-            videos.append({
-                "video_id": vid,
-                "title": snippet.get("title", ""),
-                "description": snippet.get("description", ""),
-                "published_at": snippet.get("publishedAt", ""),
-                "thumbnail_url": thumb.get("url", ""),
-            })
-            if len(videos) >= limit:
-                break
-
+            details = details_by_id.get(vid)
+            if details and details.get("actualEndTime"):
+                videos.append(self._build_video(vid, snippets_by_id[vid]))
+                if len(videos) >= limit:
+                    break
         return videos
 
     # ------------------------------------------------------------------
-    # Upcoming streams via Search API
+    # Upcoming / live streams
     # ------------------------------------------------------------------
 
-    async def _search_by_event_type(
-        self, event_type: str, *, limit: int,
-    ) -> list[dict[str, Any]]:
-        resp = await self._client.get(
-            "/search",
-            params={
-                "part": "snippet",
-                "channelId": settings.youtube_channel_id,
-                "type": "video",
-                "eventType": event_type,
-                "order": "date",
-                "maxResults": limit,
-                "key": settings.youtube_api_key,
-            },
-        )
-        resp.raise_for_status()
-
-        items = resp.json().get("items", [])
-        if not items:
+    async def _fetch_upcoming_streams(self) -> list[dict[str, Any]]:
+        """Fetch uploads and filter to upcoming/live streams (no actualEndTime)."""
+        all_video_ids, snippets_by_id = await self._scan_uploads()
+        if not all_video_ids:
             return []
 
-        # Collect video IDs and snippets from search results
-        video_ids: list[str] = []
-        snippets_by_id: dict[str, dict[str, Any]] = {}
-        for item in items:
-            vid = item.get("id", {}).get("videoId", "")
-            if vid:
-                video_ids.append(vid)
-                snippets_by_id[vid] = item.get("snippet", {})
-
-        # Fetch scheduledStartTime from liveStreamingDetails
-        scheduled_times: dict[str, str] = {}
-        if video_ids:
-            detail_resp = await self._client.get(
-                "/videos",
-                params={
-                    "part": "liveStreamingDetails",
-                    "id": ",".join(video_ids),
-                    "key": settings.youtube_api_key,
-                },
-            )
-            detail_resp.raise_for_status()
-            for item in detail_resp.json().get("items", []):
-                details = item.get("liveStreamingDetails", {})
-                scheduled = details.get("scheduledStartTime", "")
-                if scheduled:
-                    scheduled_times[item["id"]] = scheduled
+        details_by_id = await self._fetch_stream_details(all_video_ids)
 
         videos: list[dict[str, Any]] = []
-        for vid in video_ids:
-            snippet = snippets_by_id[vid]
-            thumbnails = snippet.get("thumbnails", {})
-            thumb = (
-                thumbnails.get("high")
-                or thumbnails.get("medium")
-                or thumbnails.get("default")
-                or {}
-            )
-            videos.append({
-                "video_id": vid,
-                "title": snippet.get("title", ""),
-                "description": snippet.get("description", ""),
-                "published_at": scheduled_times.get(vid, snippet.get("publishedAt", "")),
-                "thumbnail_url": thumb.get("url", ""),
-            })
+        for vid in all_video_ids:
+            details = details_by_id.get(vid)
+            if details and not details.get("actualEndTime"):
+                scheduled = details.get("scheduledStartTime", "")
+                videos.append(self._build_video(
+                    vid, snippets_by_id[vid],
+                    published_at=scheduled or None,
+                ))
+
+        # Sort by scheduled time ascending (soonest first)
+        videos.sort(key=lambda v: v["published_at"])
         return videos
 
     # ------------------------------------------------------------------
