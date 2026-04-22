@@ -180,7 +180,17 @@ class YouTubeService:
         for vid in all_video_ids:
             details = details_by_id.get(vid)
             if details and details.get("actualEndTime"):
-                videos.append(self._build_video(vid, snippets_by_id[vid]))
+                # Use actual/scheduled start time so the date reflects
+                # when the stream happened, not when the VOD was published.
+                stream_date = (
+                    details.get("actualStartTime")
+                    or details.get("scheduledStartTime")
+                    or None
+                )
+                videos.append(self._build_video(
+                    vid, snippets_by_id[vid],
+                    published_at=stream_date,
+                ))
                 if len(videos) >= limit:
                     break
         return videos
