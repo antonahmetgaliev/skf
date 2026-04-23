@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import require_admin
 from app.database import get_db
 from app.models.active_championship import ActiveChampionship
-from app.models.community import Community, Game
+from app.models.community import Community
 from app.models.custom_championship import CustomChampionship, CustomRace
 from app.models.user import User
 from app.schemas.calendar import (
@@ -31,9 +31,6 @@ from app.schemas.calendar import (
     CustomRaceCreate,
     CustomRaceOut,
     CustomRaceUpdate,
-    GameCreate,
-    GameOut,
-    GameUpdate,
 )
 from app.services.simgrid import simgrid_service
 
@@ -184,72 +181,35 @@ async def delete_community(
     await db.commit()
 
 
-# ── Game CRUD ────────────────────────────────────────────────────────────────
+# ── Simulators & Car Classes (from SimGrid API) ─────────────────────────────
 
 
-@router.get("/games", response_model=list[GameOut])
-async def list_games(
-    db: AsyncSession = Depends(get_db),
-):
-    """Public endpoint – returns all games for filter dropdowns and forms."""
-    result = await db.execute(select(Game).order_by(Game.name))
-    return result.scalars().all()
-
-
-@router.post(
-    "/games",
-    response_model=GameOut,
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_game(
-    body: GameCreate,
-    _: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    game = Game(name=body.name.strip())
-    db.add(game)
-    await db.commit()
-    await db.refresh(game)
-    return game
-
-
-@router.patch("/games/{game_id}", response_model=GameOut)
-async def update_game(
-    game_id: uuid.UUID,
-    body: GameUpdate,
-    _: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(select(Game).where(Game.id == game_id))
-    game = result.scalar_one_or_none()
-    if game is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Game not found."
+@router.get("/simulators", response_model=list[str])
+async def list_simulators():
+    """Return simulator/game names from SimGrid."""
+    try:
+        games = await simgrid_service.get_games()
+        return sorted(
+            g["name"] for g in games if isinstance(g, dict) and g.get("name")
         )
-    update_data = body.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        if isinstance(value, str):
-            value = value.strip()
-        setattr(game, field, value)
-    await db.commit()
-    await db.refresh(game)
-    return game
+    except Exception:
+        return []
 
 
-@router.delete("/games/{game_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_game(
-    game_id: uuid.UUID,
-    _: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db),
+@router.get("/car-classes", response_model=list[str])
+async def list_car_classes(
+    game_id: int | None = Query(None, alias="gameId"),
 ):
-    result = await db.execute(select(Game).where(Game.id == game_id))
-    game = result.scalar_one_or_none()
-    if game is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Game not found."
+    """Return car class names from SimGrid, optionally filtered by game."""
+    try:
+        classes = await simgrid_service.get_car_classes(game_id)
+        return sorted(
+            c["name"]
+            for c in classes
+            if isinstance(c, dict) and c.get("name") and c["name"] != "All"
         )
-    await db.delete(game)
-    await db.commit()
+    except Exception:
+        return []
 
 
 # ── Merged calendar endpoint ─────────────────────────────────────────────────

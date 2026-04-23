@@ -1,38 +1,3 @@
-<!-- Simulators section -->
-<app-card [animated]="true">
-  <h3 class="section-title">Simulators</h3>
-  <p class="section-description">
-    Manage the list of sim racing simulators. Used in championship forms and calendar filters.
-  </p>
-
-  <div class="simulators-list">
-    @for (sim of simulators(); track sim.id) {
-      <div class="simulator-row">
-        <span class="simulator-name">{{ sim.name }}</span>
-        <app-btn variant="danger" size="sm" (click)="deleteSimulator(sim)">Delete</app-btn>
-      </div>
-    }
-    @if (simulators().length === 0) {
-      <p class="empty">No simulators yet.</p>
-    }
-  </div>
-
-  <div class="add-simulator-row">
-    <app-form-field label="New simulator" fieldId="newSimulator">
-      <input
-        id="newSimulator"
-        type="text"
-        placeholder="e.g. iRacing, ACC, F1 24"
-        [ngModel]="newSimulatorName()"
-        (ngModelChange)="newSimulatorName.set($event)"
-        (keydown.enter)="addSimulator()"
-        autocomplete="off"
-      />
-    </app-form-field>
-    <app-btn variant="primary" size="sm" (click)="addSimulator()">Add</app-btn>
-  </div>
-</app-card>
-
 <!-- Communities section -->
 <app-card [animated]="true">
   <h3 class="section-title">Communities</h3>
@@ -138,12 +103,12 @@
         <app-form-field label="Simulator" fieldId="champSimulator">
           <select
             id="champSimulator"
-            [ngModel]="champForm().gameId"
-            (ngModelChange)="onSimulatorSelect($event)"
+            [ngModel]="champForm().game"
+            (ngModelChange)="updateChampField('game', $event)"
           >
-            <option [ngValue]="null">— Select simulator —</option>
-            @for (g of simulators(); track g.id) {
-              <option [ngValue]="g.id">{{ g.name }}</option>
+            <option [ngValue]="''">— Select simulator —</option>
+            @for (sim of simulators(); track sim) {
+              <option [ngValue]="sim">{{ sim }}</option>
             }
           </select>
         </app-form-field>

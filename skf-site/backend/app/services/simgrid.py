@@ -147,6 +147,33 @@ class SimgridService:
         except Exception:
             return f"Race {race_id}"
 
+    async def get_games(self) -> list[dict]:
+        """Fetch all games from SimGrid."""
+        key = "games_list"
+        cached = await read_cache(key, _TTL_STATIC)
+        if cached is not None:
+            return cached if isinstance(cached, list) else []
+
+        data = await self._request("/api/v1/games", key)
+        return data if isinstance(data, list) else []
+
+    async def get_car_classes(
+        self, game_id: int | None = None,
+    ) -> list[dict]:
+        """Fetch car classes from SimGrid, optionally filtered by game."""
+        suffix = f"_{game_id}" if game_id else ""
+        key = f"car_classes{suffix}"
+        cached = await read_cache(key, _TTL_STATIC)
+        if cached is not None:
+            return cached if isinstance(cached, list) else []
+
+        params: dict[str, Any] = {}
+        if game_id is not None:
+            params["game_id"] = game_id
+
+        data = await self._request("/api/v1/car_classes", key, params=params)
+        return data if isinstance(data, list) else []
+
     # ------------------------------------------------------------------
     # Aggregate views derived from cached standings
     # ------------------------------------------------------------------

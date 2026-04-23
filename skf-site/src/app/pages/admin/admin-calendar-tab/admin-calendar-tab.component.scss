@@ -26,40 +26,6 @@
   gap: 0.5rem;
 }
 
-// Simulators
-
-.simulators-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-bottom: 0.75rem;
-}
-
-.simulator-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.4rem 0.65rem;
-  border-radius: 8px;
-  background: rgba(40, 36, 30, 0.6);
-}
-
-.simulator-name {
-  font-weight: 600;
-  font-size: var(--text-base);
-}
-
-.add-simulator-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
-
-  app-form-field {
-    flex: 1;
-    max-width: 300px;
-  }
-}
-
 // Communities
 
 .community-form {

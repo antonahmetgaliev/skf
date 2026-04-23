@@ -12,7 +12,6 @@ import {
   CustomChampionshipCreate,
   CustomChampionshipOut,
   CustomRaceCreate,
-  Game,
 } from '../../../services/calendar-api.service';
 
 @Component({
@@ -25,7 +24,7 @@ export class AdminCalendarTabComponent implements OnInit {
   private readonly calendarApi = inject(CalendarApiService);
 
   readonly communities = signal<Community[]>([]);
-  readonly simulators = signal<Game[]>([]);
+  readonly simulators = signal<string[]>([]);
   readonly communitiesLoading = signal(false);
   readonly selectedCommunity = signal<Community | null>(null);
   readonly communityChampionships = signal<CustomChampionshipOut[]>([]);
@@ -34,10 +33,8 @@ export class AdminCalendarTabComponent implements OnInit {
   readonly communityForm = signal<CommunityCreate>({ name: '', color: '#f5bf24', discordUrl: null });
   readonly editingCommunityId = signal<string | null>(null);
 
-  readonly newSimulatorName = signal('');
-
-  readonly champForm = signal<{ name: string; game: string; gameId: string | null; carClass: string | null; description: string | null }>({
-    name: '', game: '', gameId: null, carClass: null, description: null,
+  readonly champForm = signal<{ name: string; game: string; carClass: string | null; description: string | null }>({
+    name: '', game: '', carClass: null, description: null,
   });
   readonly editingChampId = signal<string | null>(null);
 
@@ -47,7 +44,7 @@ export class AdminCalendarTabComponent implements OnInit {
     this.communityForm.update((f) => ({ ...f, [field]: value }));
   }
 
-  updateChampField(field: 'name' | 'game' | 'gameId' | 'carClass' | 'description', value: string | null): void {
+  updateChampField(field: 'name' | 'game' | 'carClass' | 'description', value: string | null): void {
     this.champForm.update((f) => ({ ...f, [field]: value }));
   }
 
@@ -60,28 +57,9 @@ export class AdminCalendarTabComponent implements OnInit {
     this.loadSimulators();
   }
 
-  // -- Simulators --
-
   loadSimulators(): void {
-    this.calendarApi.getGames().subscribe({
+    this.calendarApi.getSimulators().subscribe({
       next: (data) => this.simulators.set(data),
-    });
-  }
-
-  addSimulator(): void {
-    const name = this.newSimulatorName().trim();
-    if (!name) return;
-    this.calendarApi.createGame({ name }).subscribe({
-      next: (sim) => {
-        this.simulators.update((list) => [...list, sim].sort((a, b) => a.name.localeCompare(b.name)));
-        this.newSimulatorName.set('');
-      },
-    });
-  }
-
-  deleteSimulator(sim: Game): void {
-    this.calendarApi.deleteGame(sim.id).subscribe({
-      next: () => this.simulators.update((list) => list.filter((g) => g.id !== sim.id)),
     });
   }
 
@@ -175,13 +153,8 @@ export class AdminCalendarTabComponent implements OnInit {
   }
 
   resetChampForm(): void {
-    this.champForm.set({ name: '', game: '', gameId: null, carClass: null, description: null });
+    this.champForm.set({ name: '', game: '', carClass: null, description: null });
     this.editingChampId.set(null);
-  }
-
-  onSimulatorSelect(gameId: string): void {
-    const sim = this.simulators().find((g) => g.id === gameId);
-    this.champForm.update((f) => ({ ...f, gameId: gameId || null, game: sim?.name ?? '' }));
   }
 
   saveChampionship(): void {
@@ -194,7 +167,6 @@ export class AdminCalendarTabComponent implements OnInit {
       this.calendarApi.updateCustomChampionship(editId, {
         name: form.name.trim(),
         game: form.game.trim(),
-        gameId: form.gameId,
         carClass: form.carClass?.trim() || null,
         description: form.description?.trim() || null,
       }).subscribe({
@@ -208,7 +180,7 @@ export class AdminCalendarTabComponent implements OnInit {
         name: form.name.trim(),
         game: form.game.trim(),
         communityId: community.id,
-        gameId: form.gameId,
+        gameId: null,
         carClass: form.carClass?.trim() || null,
         description: form.description?.trim() || null,
         races: [],
@@ -227,7 +199,6 @@ export class AdminCalendarTabComponent implements OnInit {
     this.champForm.set({
       name: champ.name,
       game: champ.game,
-      gameId: champ.gameId,
       carClass: champ.carClass,
       description: champ.description,
     });

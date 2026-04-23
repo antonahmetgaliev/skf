@@ -101,21 +101,6 @@ export interface CommunityUpdate {
   isVisible?: boolean;
 }
 
-// ── Game ────────────────────────────────────────────────────────────────────
-
-export interface Game {
-  id: string;
-  name: string;
-  createdAt: string;
-}
-
-export interface GameCreate {
-  name: string;
-}
-
-export interface GameUpdate {
-  name?: string;
-}
 
 @Injectable({ providedIn: 'root' })
 export class CalendarApiService {
@@ -154,22 +139,14 @@ export class CalendarApiService {
     return this.http.delete<void>(`${this.base}/communities/${id}`);
   }
 
-  // ── Games ──
+  // ── Simulators & Car Classes (from SimGrid) ──
 
-  getGames(): Observable<Game[]> {
-    return this.http.get<Game[]>(`${this.base}/games`);
+  getSimulators(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.base}/simulators`);
   }
 
-  createGame(payload: GameCreate): Observable<Game> {
-    return this.http.post<Game>(`${this.base}/games`, payload);
-  }
-
-  updateGame(id: string, payload: GameUpdate): Observable<Game> {
-    return this.http.patch<Game>(`${this.base}/games/${id}`, payload);
-  }
-
-  deleteGame(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.base}/games/${id}`);
+  getCarClasses(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.base}/car-classes`);
   }
 
   // ── Custom Championships ──

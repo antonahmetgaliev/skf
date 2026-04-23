@@ -66,6 +66,8 @@ export class CalendarComponent implements OnInit {
 
   // Filters
   readonly communities = signal<Community[]>([]);
+  readonly simulators = signal<string[]>([]);
+  readonly carClasses = signal<string[]>([]);
   readonly selectedCommunityIds = signal<Set<string>>(new Set());
   readonly filtersOpen = signal(false);
   readonly selectedSimulator = signal<string | null>(null);
@@ -130,21 +132,11 @@ export class CalendarComponent implements OnInit {
     return groups;
   });
 
-  // Available filter values derived from current events
-  readonly availableSimulators = computed(() => {
-    const all = this.viewMode() === 'year' ? this.yearEvents() : this.events();
-    const sims = new Set(all.map((e) => e.game).filter(Boolean));
-    return [...sims].sort();
-  });
-
-  readonly availableCarClasses = computed(() => {
-    const all = this.viewMode() === 'year' ? this.yearEvents() : this.events();
-    const classes = new Set(all.map((e) => e.carClass).filter((c): c is string => !!c));
-    return [...classes].sort();
-  });
 
   ngOnInit(): void {
     this.loadCommunities();
+    this.loadSimulators();
+    this.loadCarClasses();
     this.loadEvents();
   }
 
@@ -266,6 +258,24 @@ export class CalendarComponent implements OnInit {
       this.communities.set(data);
     } catch {
       // Communities are non-critical; calendar still works without them
+    }
+  }
+
+  private async loadSimulators(): Promise<void> {
+    try {
+      const data = await firstValueFrom(this.calendarApi.getSimulators());
+      this.simulators.set(data);
+    } catch {
+      // Simulators are non-critical; calendar still works without them
+    }
+  }
+
+  private async loadCarClasses(): Promise<void> {
+    try {
+      const data = await firstValueFrom(this.calendarApi.getCarClasses());
+      this.carClasses.set(data);
+    } catch {
+      // Car classes are non-critical; calendar still works without them
     }
   }
 
