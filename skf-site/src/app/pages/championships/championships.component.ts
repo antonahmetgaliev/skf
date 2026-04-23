@@ -162,7 +162,7 @@ export class ChampionshipsComponent {
   }
 
   hasRaceResults(race: ChampionshipRace): boolean {
-    return this.cs.hasRaceResults(race, this.races());
+    return this.cs.hasRaceResults(race, this.races(), this.standings());
   }
 
   getRaceResultsForRace(race: ChampionshipRace, raceIndex: number) {

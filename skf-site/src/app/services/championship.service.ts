@@ -143,8 +143,14 @@ export class ChampionshipService {
     return race.ended || race.resultsAvailable ? 'completed' : 'upcoming';
   }
 
-  hasRaceResults(race: ChampionshipRace, races: StandingRace[]): boolean {
-    return races.some((r) => r.id === race.id);
+  hasRaceResults(race: ChampionshipRace, races: StandingRace[], standings: StandingEntry[]): boolean {
+    if (!races.some((r) => r.id === race.id)) return false;
+    const raceIndex = races.findIndex((r) => r.id === race.id);
+    return standings.some((e) =>
+      e.raceResults.some(
+        (rr) => (rr.raceId !== null && rr.raceId === race.id) || rr.raceIndex === raceIndex,
+      ),
+    );
   }
 
   getRaceLabel(index: number): string {
