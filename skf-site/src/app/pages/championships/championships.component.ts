@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -9,10 +9,6 @@ import {
   StandingEntry,
   StandingRace,
 } from '../../services/simgrid-api.service';
-import {
-  CalendarApiService,
-  CustomChampionshipOut,
-} from '../../services/calendar-api.service';
 import { AuthService } from '../../services/auth.service';
 import { ChampionshipEntry, ChampionshipService } from '../../services/championship.service';
 import { DataFreshnessService } from '../../services/data-freshness.service';
@@ -21,7 +17,6 @@ import { AlertComponent } from '../../components/alert/alert.component';
 import { BadgeComponent } from '../../components/badge/badge.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
-import { CustomChampionshipFormComponent } from '../../components/custom-championship-form/custom-championship-form.component';
 import { EmptyComponent } from '../../components/empty/empty.component';
 import { GiveawayModalComponent } from '../../components/giveaway-modal/giveaway-modal.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
@@ -39,7 +34,6 @@ import { TabsComponent } from '../../components/tabs/tabs.component';
     BadgeComponent,
     BtnComponent,
     CardComponent,
-    CustomChampionshipFormComponent,
     EmptyComponent,
     GiveawayModalComponent,
     PageIntroComponent,
@@ -56,7 +50,6 @@ export class ChampionshipsComponent {
   readonly cs = inject(ChampionshipService);
   readonly freshness = inject(DataFreshnessService);
   private readonly api = inject(SimgridApiService);
-  private readonly calendarApi = inject(CalendarApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private standingsLoadToken = 0;
@@ -65,7 +58,6 @@ export class ChampionshipsComponent {
   readonly championships = signal<ChampionshipEntry[]>([]);
   readonly selectedChampionshipKey = signal<string | null>(null);
   readonly selectedChampionship = signal<ChampionshipDetails | null>(null);
-  readonly selectedCustomChampionship = signal<CustomChampionshipOut | null>(null);
   readonly standings = signal<StandingEntry[]>([]);
   readonly races = signal<StandingRace[]>([]);
   readonly loadingChampionships = signal(false);
@@ -76,7 +68,6 @@ export class ChampionshipsComponent {
   readonly expandedRaceIndex = signal<number | null>(null);
   readonly allRaces = signal<ChampionshipRace[]>([]);
   readonly loadingRaces = signal(false);
-  readonly deletingCustom = signal(false);
   readonly activeChampionshipIds = signal<Set<number>>(new Set());
 
   readonly isStaleData = computed(() => {
@@ -88,12 +79,6 @@ export class ChampionshipsComponent {
   // Modal states
   readonly exportPreviewOpen = signal(false);
   readonly giveawayOpen = signal(false);
-  readonly createModalOpen = signal(false);
-
-  readonly isCustomSelected = computed(() => {
-    const key = this.selectedChampionshipKey();
-    return key !== null && key.startsWith('custom-');
-  });
 
   readonly isUpcomingChampionship = computed(() => {
     return this.cs.isChampionshipNotStarted(this.selectedChampionship());
@@ -134,22 +119,10 @@ export class ChampionshipsComponent {
         const num = Number(id);
         if (Number.isFinite(num) && num > 0) {
           this.selectChampionship(`sg-${num}`);
-        } else {
-          this.selectChampionship(`custom-${id}`);
         }
       }
     });
     void this.loadChampionships();
-
-    // Reload championships when admin status changes (e.g. after auth resolves on page reload)
-    let prevIsAdmin = this.auth.isAdmin();
-    effect(() => {
-      const isAdmin = this.auth.isAdmin();
-      if (isAdmin && !prevIsAdmin) {
-        void this.loadChampionships();
-      }
-      prevIsAdmin = isAdmin;
-    });
   }
 
   // ------------------------------------------------------------------
@@ -226,30 +199,18 @@ export class ChampionshipsComponent {
     this.errorMessage.set('');
 
     try {
-      const [simgridList, customList, activeIds] = await Promise.all([
+      const [simgridList, activeIds] = await Promise.all([
         firstValueFrom(this.api.getChampionships()),
-        this.auth.isAdmin()
-          ? firstValueFrom(this.calendarApi.getCustomChampionships())
-          : Promise.resolve([] as CustomChampionshipOut[]),
         firstValueFrom(this.api.getActiveChampionships()),
       ]);
       if (token !== this.championshipsLoadToken) return;
       this.activeChampionshipIds.set(new Set(activeIds));
 
-      const entries: ChampionshipEntry[] = [
-        ...customList.map((c) => ({
-          key: `custom-${c.id}`,
-          source: 'custom' as const,
-          name: c.name,
-          customItem: c,
-        })),
-        ...simgridList.map((s) => ({
-          key: `sg-${s.id}`,
-          source: 'simgrid' as const,
-          name: s.name,
-          simgridItem: s,
-        })),
-      ];
+      const entries: ChampionshipEntry[] = simgridList.map((s) => ({
+        key: `sg-${s.id}`,
+        name: s.name,
+        simgridItem: s,
+      }));
 
       const sorted = entries.sort(
         (a, b) => this.cs.getStatusOrder(a) - this.cs.getStatusOrder(b) || a.name.localeCompare(b.name),
@@ -259,7 +220,6 @@ export class ChampionshipsComponent {
       if (sorted.length === 0) {
         this.selectedChampionshipKey.set(null);
         this.selectedChampionship.set(null);
-        this.selectedCustomChampionship.set(null);
         this.standings.set([]);
         this.races.set([]);
         return;
@@ -275,7 +235,6 @@ export class ChampionshipsComponent {
       this.errorMessage.set(this.cs.toErrorMessage(error));
       this.championships.set([]);
       this.selectedChampionship.set(null);
-      this.selectedCustomChampionship.set(null);
       this.standings.set([]);
       this.races.set([]);
     } finally {
@@ -298,31 +257,7 @@ export class ChampionshipsComponent {
 
     const entry = this.championships().find((e) => e.key === key);
 
-    if (entry?.source === 'custom' && entry.customItem) {
-      const c = entry.customItem;
-      this.selectedChampionship.set(null);
-      this.selectedCustomChampionship.set(c);
-      this.standings.set([]);
-      this.races.set([]);
-      this.activeTab.set('races');
-      this.allRaces.set(
-        c.races.map((r, i) => ({
-          id: i,
-          displayName: r.track ?? `Race ${i + 1}`,
-          startsAt: r.date,
-          track: r.track,
-          resultsAvailable: false,
-          ended: false,
-        })),
-      );
-      this.lastUpdated.set(null);
-      void this.router.navigate([], {
-        queryParams: { id: c.id },
-        queryParamsHandling: 'merge',
-        replaceUrl,
-      });
-    } else if (entry?.source === 'simgrid' && entry.simgridItem) {
-      this.selectedCustomChampionship.set(null);
+    if (entry) {
       this.allRaces.set([]);
       const simgridId = entry.simgridItem.id;
       void this.router.navigate([], {
@@ -377,22 +312,6 @@ export class ChampionshipsComponent {
 
   isChampionshipActive(simgridId: number): boolean {
     return this.activeChampionshipIds().has(simgridId);
-  }
-
-  async deleteCustomChampionship(): Promise<void> {
-    const custom = this.selectedCustomChampionship();
-    if (!custom || this.deletingCustom()) return;
-    this.deletingCustom.set(true);
-    try {
-      await firstValueFrom(this.calendarApi.deleteCustomChampionship(custom.id));
-      this.selectedCustomChampionship.set(null);
-      this.selectedChampionshipKey.set(null);
-      void this.loadChampionships();
-    } catch {
-      this.errorMessage.set('Failed to delete championship.');
-    } finally {
-      this.deletingCustom.set(false);
-    }
   }
 
   openStandingsExportPreview(): void {

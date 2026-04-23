@@ -1,0 +1,248 @@
+:host {
+  display: contents;
+}
+
+.section-title {
+  margin: 0 0 0.4rem;
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+}
+
+.section-description {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: var(--text-md);
+  line-height: 1.5;
+}
+
+.empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+// Simulators
+
+.simulators-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.simulator-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(40, 36, 30, 0.6);
+}
+
+.simulator-name {
+  font-weight: 600;
+  font-size: var(--text-base);
+}
+
+.add-simulator-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+
+  app-form-field {
+    flex: 1;
+    max-width: 300px;
+  }
+}
+
+// Communities
+
+.community-form {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: rgba(40, 36, 30, 0.4);
+}
+
+.community-form-fields {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+
+  app-form-field {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  input[type="color"] {
+    height: 38px;
+    padding: 2px;
+    cursor: pointer;
+  }
+}
+
+.community-form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.community-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.community-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(40, 36, 30, 0.6);
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: rgba(40, 36, 30, 0.85);
+  }
+
+  &.selected {
+    border-color: var(--gold);
+    background: rgba(243, 180, 25, 0.06);
+  }
+}
+
+.community-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.community-color-swatch {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.community-name {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-family: var(--font-display);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+}
+
+.community-discord {
+  font-size: var(--text-xs);
+  color: var(--gold-deep);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// Championships
+
+.champ-form {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: rgba(40, 36, 30, 0.4);
+}
+
+.champ-form-fields {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+
+  app-form-field {
+    flex: 1;
+    min-width: 150px;
+  }
+}
+
+.champ-form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.champ-item {
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(40, 36, 30, 0.6);
+  margin-bottom: 0.6rem;
+}
+
+.champ-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.champ-name {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-family: var(--font-display);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+}
+
+.champ-meta {
+  margin: 0.1rem 0 0;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.race-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.race-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.race-info {
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.race-date-text {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  margin-left: 0.4rem;
+}
+
+.add-race-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+
+  app-form-field {
+    flex: 1;
+    min-width: 140px;
+  }
+}

@@ -1,11 +1,5 @@
 <app-page>
-  <app-page-intro title="Championships">
-    @if (auth.isAdmin()) {
-      <app-btn variant="accent" size="sm" (click)="createModalOpen.set(true)">
-        + Add Custom Championship
-      </app-btn>
-    }
-  </app-page-intro>
+  <app-page-intro title="Championships" />
 
   <div class="layout">
     <aside>
@@ -30,10 +24,8 @@
             >
               <span class="championship-name">{{ entry.name }}</span>
               <span class="championship-footer">
-                @if (entry.source === 'simgrid' && entry.simgridItem) {
-                  <span class="championship-id">#{{ entry.simgridItem.id }}</span>
-                }
-                @if (cs.getStatusLabel(entry, auth.isAdmin()); as label) {
+                <span class="championship-id">#{{ entry.simgridItem.id }}</span>
+                @if (cs.getStatusLabel(entry); as label) {
                   <span class="championship-status-tag">{{ label }}</span>
                 }
               </span>
@@ -50,54 +42,6 @@
         <app-spinner />
       } @else if (errorMessage()) {
         <app-alert variant="error">{{ errorMessage() }}</app-alert>
-      } @else if (selectedCustomChampionship(); as custom) {
-        <!-- Custom championship details -->
-        <div class="details-header">
-          <div class="details-info">
-            <h2>{{ custom.name }}</h2>
-            <p class="meta">{{ custom.game }}
-              @if (custom.carClass) {
-                — {{ custom.carClass }}
-              }
-            </p>
-            @if (custom.description) {
-              <p class="meta">{{ custom.description }}</p>
-            }
-          </div>
-          @if (auth.isAdmin()) {
-            <div class="details-actions">
-              <app-btn variant="danger" size="sm" [disabled]="deletingCustom()" (click)="deleteCustomChampionship()">
-                {{ deletingCustom() ? 'Deleting...' : 'Delete' }}
-              </app-btn>
-            </div>
-          }
-        </div>
-
-        @if (allRaces().length === 0) {
-          <app-empty>No races scheduled for this championship.</app-empty>
-        } @else {
-          <h3 class="section-title">Race Schedule</h3>
-          <div class="races-list">
-            @for (race of allRaces(); track race.id; let raceIndex = $index) {
-              <div class="race-card">
-                <div class="race-card-header">
-                  <div class="race-card-info">
-                    <span class="race-round">R{{ raceIndex + 1 }}</span>
-                    <div class="race-card-details">
-                      <span class="race-card-name">{{ race.displayName }}</span>
-                      <span class="race-card-date">
-                        {{ formatRaceDate(race.startsAt) }}
-                        @if (race.track) {
-                          — {{ race.track }}
-                        }
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
-        }
       } @else if (selectedChampionship(); as championship) {
         <div class="details-header">
           @if (championship.image) {
@@ -362,5 +306,3 @@
     [(open)]="exportPreviewOpen"
   />
 }
-
-<app-custom-championship-form [(open)]="createModalOpen" (created)="loadChampionships()" />
