@@ -7,10 +7,10 @@
     />
   </app-form-field>
 
-  <app-form-field label="Game *">
+  <app-form-field label="Simulator *">
     <input
       type="text"
-      [(ngModel)]="game"
+      [(ngModel)]="simulator"
       placeholder="e.g. ACC, iRacing"
     />
   </app-form-field>
@@ -61,7 +61,7 @@
     <app-btn variant="ghost" (click)="open.set(false)">Cancel</app-btn>
     <app-btn
       variant="accent"
-      [disabled]="submitting || !name.trim() || !game.trim()"
+      [disabled]="submitting || !name.trim() || !simulator.trim()"
       (click)="submit()"
     >
       {{ submitting ? 'Creating...' : 'Create Championship' }}

@@ -68,7 +68,7 @@ export class CalendarComponent implements OnInit {
   readonly communities = signal<Community[]>([]);
   readonly selectedCommunityIds = signal<Set<string>>(new Set());
   readonly filtersOpen = signal(false);
-  readonly selectedGame = signal<string | null>(null);
+  readonly selectedSimulator = signal<string | null>(null);
   readonly selectedCarClass = signal<string | null>(null);
 
   readonly monthLabel = computed(() => {
@@ -131,10 +131,10 @@ export class CalendarComponent implements OnInit {
   });
 
   // Available filter values derived from current events
-  readonly availableGames = computed(() => {
+  readonly availableSimulators = computed(() => {
     const all = this.viewMode() === 'year' ? this.yearEvents() : this.events();
-    const games = new Set(all.map((e) => e.game).filter(Boolean));
-    return [...games].sort();
+    const sims = new Set(all.map((e) => e.game).filter(Boolean));
+    return [...sims].sort();
   });
 
   readonly availableCarClasses = computed(() => {
@@ -245,13 +245,14 @@ export class CalendarComponent implements OnInit {
   }
 
   clearFilters(): void {
-    this.selectedGame.set(null);
+    this.selectedSimulator.set(null);
     this.selectedCarClass.set(null);
   }
 
   hasActiveFilters(): boolean {
-    return this.selectedGame() !== null || this.selectedCarClass() !== null;
+    return this.selectedSimulator() !== null || this.selectedCarClass() !== null;
   }
+
 
   getCommunityColor(event: CalendarEvent): string {
     return event.communityColor ?? SKF_COLOR;
@@ -300,7 +301,7 @@ export class CalendarComponent implements OnInit {
 
   private applyFilters(events: CalendarEvent[]): CalendarEvent[] {
     const communityIds = this.selectedCommunityIds();
-    const game = this.selectedGame();
+    const simulator = this.selectedSimulator();
     const carClass = this.selectedCarClass();
 
     return events.filter((e) => {
@@ -310,8 +311,8 @@ export class CalendarComponent implements OnInit {
         if (!communityIds.has(eventCommunityKey)) return false;
       }
 
-      // Game filter
-      if (game && e.game !== game) return false;
+      // Simulator filter
+      if (simulator && e.game !== simulator) return false;
 
       // Car class filter
       if (carClass && e.carClass !== carClass) return false;

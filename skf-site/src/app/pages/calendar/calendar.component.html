@@ -11,6 +11,22 @@
   <div class="community-filters">
     <button
       type="button"
+      class="filter-toggle-btn"
+      [class.active]="filtersOpen() || hasActiveFilters()"
+      (click)="toggleFilters()"
+      title="Toggle filters"
+    >
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M1 2a1 1 0 011-1h12a1 1 0 01.8 1.6L10 9.3V13a1 1 0 01-.5.9l-2 1A1 1 0 016 14V9.3L1.2 2.6A1 1 0 011 2z"/>
+      </svg>
+      Filters
+      @if (hasActiveFilters()) {
+        <span class="filter-badge">!</span>
+      }
+    </button>
+
+    <button
+      type="button"
       class="community-chip"
       [class.active]="selectedCommunityIds().size === 0"
       (click)="toggleCommunity(null)"
@@ -31,22 +47,6 @@
         (click)="toggleCommunity(c.id)"
       >{{ c.name }}</button>
     }
-
-    <button
-      type="button"
-      class="filter-toggle-btn"
-      [class.active]="filtersOpen() || hasActiveFilters()"
-      (click)="toggleFilters()"
-      title="Toggle filters"
-    >
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-        <path d="M1 2a1 1 0 011-1h12a1 1 0 01.8 1.6L10 9.3V13a1 1 0 01-.5.9l-2 1A1 1 0 016 14V9.3L1.2 2.6A1 1 0 011 2z"/>
-      </svg>
-      Filters
-      @if (hasActiveFilters()) {
-        <span class="filter-badge">!</span>
-      }
-    </button>
   </div>
 
   <!-- ── Layout: sidebar + calendar ── -->
@@ -55,15 +55,15 @@
     @if (filtersOpen()) {
       <aside class="filter-sidebar">
         <div class="filter-section">
-          <label class="filter-label" for="gameFilter">Game</label>
+          <label class="filter-label" for="simulatorFilter">Simulator</label>
           <select
-            id="gameFilter"
+            id="simulatorFilter"
             class="filter-select"
-            [ngModel]="selectedGame()"
-            (ngModelChange)="selectedGame.set($event || null)"
+            [ngModel]="selectedSimulator()"
+            (ngModelChange)="selectedSimulator.set($event || null)"
           >
-            <option [ngValue]="null">All games</option>
-            @for (g of availableGames(); track g) {
+            <option [ngValue]="null">All simulators</option>
+            @for (g of availableSimulators(); track g) {
               <option [ngValue]="g">{{ g }}</option>
             }
           </select>
@@ -125,18 +125,16 @@
                     [class.has-events]="day.events.length > 0 && day.isCurrentMonth"
                     (click)="day.isCurrentMonth ? selectDay(day.dayNumber) : null"
                   >
+                    <span class="day-number">{{ day.dayNumber }}</span>
                     @if (day.communityColors.length > 0 && day.isCurrentMonth) {
-                      <div class="community-segments">
+                      <div class="community-dots">
                         @for (color of day.communityColors; track color) {
-                          <span class="community-segment" [style.background]="color"></span>
+                          <span class="community-dot" [style.background]="color"></span>
+                        }
+                        @if (day.events.length > 1) {
+                          <span class="event-count">{{ day.events.length }}</span>
                         }
                       </div>
-                    }
-                    <span class="day-number">{{ day.dayNumber }}</span>
-                    @if (day.events.length > 0 && day.isCurrentMonth) {
-                      @if (day.events.length > 1) {
-                        <span class="event-count">{{ day.events.length }}</span>
-                      }
                     }
                   </div>
                 }
@@ -159,7 +157,7 @@
                     >{{ event.communityName }}</span>
                   }
                   @if (event.game) {
-                    <span class="event-game">{{ event.game }}</span>
+                    <span class="event-simulator">{{ event.game }}</span>
                   }
                 </div>
                 @if (event.image) {
@@ -224,7 +222,7 @@
                           >{{ event.communityName }}</span>
                         }
                         @if (event.game) {
-                          <span class="event-game">{{ event.game }}</span>
+                          <span class="event-simulator">{{ event.game }}</span>
                         }
                       </div>
                       <h4 class="event-name">{{ event.name }}</h4>

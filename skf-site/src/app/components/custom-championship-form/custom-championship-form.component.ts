@@ -29,7 +29,7 @@ export class CustomChampionshipFormComponent {
   readonly created = output<void>();
 
   name = '';
-  game = '';
+  simulator = '';
   carClass = '';
   description = '';
   races: RaceFormRow[] = [{ date: '', track: '' }];
@@ -37,7 +37,7 @@ export class CustomChampionshipFormComponent {
 
   resetForm(): void {
     this.name = '';
-    this.game = '';
+    this.simulator = '';
     this.carClass = '';
     this.description = '';
     this.races = [{ date: '', track: '' }];
@@ -52,7 +52,7 @@ export class CustomChampionshipFormComponent {
   }
 
   async submit(): Promise<void> {
-    if (!this.name.trim() || !this.game.trim()) return;
+    if (!this.name.trim() || !this.simulator.trim()) return;
     this.submitting = true;
 
     const racePayloads: CustomRaceCreate[] = this.races
@@ -64,7 +64,7 @@ export class CustomChampionshipFormComponent {
 
     const payload: CustomChampionshipCreate = {
       name: this.name.trim(),
-      game: this.game.trim(),
+      game: this.simulator.trim(),
       carClass: this.carClass.trim() || null,
       description: this.description.trim() || null,
       communityId: null,
