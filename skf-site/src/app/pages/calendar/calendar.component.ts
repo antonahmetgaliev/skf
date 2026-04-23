@@ -1,8 +1,6 @@
-import { NgClass } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertComponent } from '../../components/alert/alert.component';
-import { BadgeComponent } from '../../components/badge/badge.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
@@ -14,7 +12,6 @@ import { firstValueFrom } from 'rxjs';
 import {
   CalendarApiService,
   CalendarEvent,
-  CalendarEventType,
   Community,
 } from '../../services/calendar-api.service';
 import { toLocalDateStr } from '../../utils/date';
@@ -44,7 +41,8 @@ const VIEW_TABS: { key: string; label: string }[] = [
 
 @Component({
   selector: 'app-calendar',
-  imports: [NgClass, FormsModule, RouterLink, AlertComponent, BadgeComponent, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
+  imports: [FormsModule, RouterLink, AlertComponent, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
+
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
 })
@@ -201,10 +199,6 @@ export class CalendarComponent implements OnInit {
       if (!b.date) return -1;
       return new Date(a.date).getTime() - new Date(b.date).getTime();
     });
-  }
-
-  getEventTypeLabel(type: CalendarEventType): string {
-    return type.charAt(0).toUpperCase() + type.slice(1);
   }
 
   formatRaceDate(isoDate: string): string {
