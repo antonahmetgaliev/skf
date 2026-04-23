@@ -67,6 +67,8 @@ export class CustomChampionshipFormComponent {
       game: this.game.trim(),
       carClass: this.carClass.trim() || null,
       description: this.description.trim() || null,
+      communityId: null,
+      gameId: null,
       races: racePayloads,
     };
 

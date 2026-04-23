@@ -23,6 +23,9 @@ export interface CalendarEvent {
   source: 'simgrid' | 'custom';
   simgridChampionshipId: number | null;
   customChampionshipId: string | null;
+  communityId: string | null;
+  communityName: string | null;
+  communityColor: string | null;
   races: CalendarRace[];
 }
 
@@ -44,6 +47,8 @@ export interface CustomChampionshipCreate {
   game: string;
   carClass: string | null;
   description: string | null;
+  communityId: string | null;
+  gameId: string | null;
   races: CustomRaceCreate[];
 }
 
@@ -53,6 +58,8 @@ export interface CustomChampionshipUpdate {
   carClass?: string | null;
   description?: string | null;
   isVisible?: boolean;
+  communityId?: string | null;
+  gameId?: string | null;
 }
 
 export interface CustomChampionshipOut {
@@ -64,13 +71,58 @@ export interface CustomChampionshipOut {
   isVisible: boolean;
   races: CustomRaceOut[];
   createdByUserId: string | null;
+  communityId: string | null;
+  gameId: string | null;
+  gameName: string | null;
   createdAt: string;
+}
+
+// ── Community ───────────────────────────────────────────────────────────────
+
+export interface Community {
+  id: string;
+  name: string;
+  color: string | null;
+  discordUrl: string | null;
+  isVisible: boolean;
+  createdAt: string;
+}
+
+export interface CommunityCreate {
+  name: string;
+  color: string | null;
+  discordUrl: string | null;
+}
+
+export interface CommunityUpdate {
+  name?: string;
+  color?: string | null;
+  discordUrl?: string | null;
+  isVisible?: boolean;
+}
+
+// ── Game ────────────────────────────────────────────────────────────────────
+
+export interface Game {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface GameCreate {
+  name: string;
+}
+
+export interface GameUpdate {
+  name?: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class CalendarApiService {
   private readonly http = inject(HttpClient);
   private readonly base = '/api/calendar';
+
+  // ── Events ──
 
   getEvents(year: number, month: number): Observable<CalendarEvent[]> {
     return this.http.get<CalendarEvent[]>(`${this.base}/events`, {
@@ -84,8 +136,50 @@ export class CalendarApiService {
     });
   }
 
-  getCustomChampionships(): Observable<CustomChampionshipOut[]> {
-    return this.http.get<CustomChampionshipOut[]>(`${this.base}/custom-championships`);
+  // ── Communities ──
+
+  getCommunities(): Observable<Community[]> {
+    return this.http.get<Community[]>(`${this.base}/communities`);
+  }
+
+  createCommunity(payload: CommunityCreate): Observable<Community> {
+    return this.http.post<Community>(`${this.base}/communities`, payload);
+  }
+
+  updateCommunity(id: string, payload: CommunityUpdate): Observable<Community> {
+    return this.http.patch<Community>(`${this.base}/communities/${id}`, payload);
+  }
+
+  deleteCommunity(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/communities/${id}`);
+  }
+
+  // ── Games ──
+
+  getGames(): Observable<Game[]> {
+    return this.http.get<Game[]>(`${this.base}/games`);
+  }
+
+  createGame(payload: GameCreate): Observable<Game> {
+    return this.http.post<Game>(`${this.base}/games`, payload);
+  }
+
+  updateGame(id: string, payload: GameUpdate): Observable<Game> {
+    return this.http.patch<Game>(`${this.base}/games/${id}`, payload);
+  }
+
+  deleteGame(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/games/${id}`);
+  }
+
+  // ── Custom Championships ──
+
+  getCustomChampionships(communityId?: string): Observable<CustomChampionshipOut[]> {
+    const params: Record<string, string> = {};
+    if (communityId) {
+      params['communityId'] = communityId;
+    }
+    return this.http.get<CustomChampionshipOut[]>(`${this.base}/custom-championships`, { params });
   }
 
   createCustomChampionship(payload: CustomChampionshipCreate): Observable<CustomChampionshipOut> {
@@ -105,6 +199,8 @@ export class CalendarApiService {
   deleteCustomChampionship(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/custom-championships/${id}`);
   }
+
+  // ── Custom Races ──
 
   addRace(champId: string, payload: CustomRaceCreate): Observable<CustomRaceOut> {
     return this.http.post<CustomRaceOut>(

@@ -7,208 +7,304 @@
     (keyChange)="setViewMode($event)"
   />
 
-  <!-- ── Month View ── -->
-  @if (viewMode() === 'month') {
-    <app-card class="calendar-card">
-      <!-- Header with navigation -->
-      <div class="calendar-header">
-        <app-btn variant="ghost" size="sm" (click)="navigateMonth(-1)">&larr; Prev</app-btn>
-        <h2 class="month-label">{{ monthLabel() }}</h2>
-        <div class="header-actions">
-          <app-btn variant="ghost" size="sm" (click)="goToToday()">Today</app-btn>
-          <app-btn variant="ghost" size="sm" (click)="navigateMonth(1)">Next &rarr;</app-btn>
+  <!-- ── Community filter chips ── -->
+  <div class="community-filters">
+    <button
+      type="button"
+      class="community-chip"
+      [class.active]="selectedCommunityIds().size === 0"
+      (click)="toggleCommunity(null)"
+    >All</button>
+    <button
+      type="button"
+      class="community-chip"
+      [class.active]="isCommunitySelected('skf')"
+      [style.--chip-color]="'#f5bf24'"
+      (click)="toggleCommunity('skf')"
+    >SKF</button>
+    @for (c of communities(); track c.id) {
+      <button
+        type="button"
+        class="community-chip"
+        [class.active]="isCommunitySelected(c.id)"
+        [style.--chip-color]="c.color"
+        (click)="toggleCommunity(c.id)"
+      >{{ c.name }}</button>
+    }
+
+    <button
+      type="button"
+      class="filter-toggle-btn"
+      [class.active]="filtersOpen() || hasActiveFilters()"
+      (click)="toggleFilters()"
+      title="Toggle filters"
+    >
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M1 2a1 1 0 011-1h12a1 1 0 01.8 1.6L10 9.3V13a1 1 0 01-.5.9l-2 1A1 1 0 016 14V9.3L1.2 2.6A1 1 0 011 2z"/>
+      </svg>
+      Filters
+      @if (hasActiveFilters()) {
+        <span class="filter-badge">!</span>
+      }
+    </button>
+  </div>
+
+  <!-- ── Layout: sidebar + calendar ── -->
+  <div class="calendar-layout">
+    <!-- Collapsible filter sidebar -->
+    @if (filtersOpen()) {
+      <aside class="filter-sidebar">
+        <div class="filter-section">
+          <label class="filter-label" for="gameFilter">Game</label>
+          <select
+            id="gameFilter"
+            class="filter-select"
+            [ngModel]="selectedGame()"
+            (ngModelChange)="selectedGame.set($event || null)"
+          >
+            <option [ngValue]="null">All games</option>
+            @for (g of availableGames(); track g) {
+              <option [ngValue]="g">{{ g }}</option>
+            }
+          </select>
         </div>
-      </div>
 
-      <!-- Legend -->
-      <div class="calendar-legend">
-        <span class="legend-item">
-          <span class="legend-dot dot-past"></span>
-          <span class="legend-text">Past <span class="legend-hint">Finished</span></span>
-        </span>
-        <span class="legend-item">
-          <span class="legend-dot dot-ongoing"></span>
-          <span class="legend-text">Ongoing <span class="legend-hint">In progress</span></span>
-        </span>
-        <span class="legend-item">
-          <span class="legend-dot dot-upcoming"></span>
-          <span class="legend-text">Upcoming <span class="legend-hint">Registration open</span></span>
-        </span>
-        <span class="legend-item">
-          <span class="legend-dot dot-future"></span>
-          <span class="legend-text">Future <span class="legend-hint">Stay tuned</span></span>
-        </span>
-      </div>
+        <div class="filter-section">
+          <label class="filter-label" for="classFilter">Car Class</label>
+          <select
+            id="classFilter"
+            class="filter-select"
+            [ngModel]="selectedCarClass()"
+            (ngModelChange)="selectedCarClass.set($event || null)"
+          >
+            <option [ngValue]="null">All classes</option>
+            @for (c of availableCarClasses(); track c) {
+              <option [ngValue]="c">{{ c }}</option>
+            }
+          </select>
+        </div>
 
-      @if (loading()) {
-        <app-spinner />
-      } @else if (errorMessage()) {
-        <app-alert variant="error">{{ errorMessage() }}</app-alert>
-      } @else {
-        <!-- Calendar grid -->
-        <div class="calendar-grid">
-          @for (dayName of weekDays; track dayName) {
-            <div class="calendar-weekday">{{ dayName }}</div>
-          }
+        @if (hasActiveFilters()) {
+          <app-btn variant="ghost" size="sm" (click)="clearFilters()">Clear filters</app-btn>
+        }
+      </aside>
+    }
 
-          @for (week of calendarGrid(); track $index) {
-            @for (day of week; track $index) {
-              <div
-                class="calendar-cell"
-                [class.other-month]="!day.isCurrentMonth"
-                [class.today]="day.isToday"
-                [class.selected]="selectedDay() === day.dayNumber && day.isCurrentMonth"
-                [class.has-events]="day.events.length > 0 && day.isCurrentMonth"
-                (click)="day.isCurrentMonth ? selectDay(day.dayNumber) : null"
-              >
-                <span class="day-number">{{ day.dayNumber }}</span>
-                @if (day.events.length > 0 && day.isCurrentMonth) {
-                  @if (day.events.length > 1) {
-                    <span class="event-count">{{ day.events.length }}</span>
-                  }
-                  <div class="event-bars">
-                    @for (event of day.events.slice(0, 4); track event.id) {
-                      <span
-                        class="event-bar"
-                        [ngClass]="'dot-' + event.eventType"
-                        [title]="event.name"
-                      ></span>
+    <div class="calendar-main">
+      <!-- ── Month View ── -->
+      @if (viewMode() === 'month') {
+        <app-card class="calendar-card">
+          <!-- Header with navigation -->
+          <div class="calendar-header">
+            <app-btn variant="ghost" size="sm" (click)="navigateMonth(-1)">&larr; Prev</app-btn>
+            <h2 class="month-label">{{ monthLabel() }}</h2>
+            <div class="header-actions">
+              <app-btn variant="ghost" size="sm" (click)="goToToday()">Today</app-btn>
+              <app-btn variant="ghost" size="sm" (click)="navigateMonth(1)">Next &rarr;</app-btn>
+            </div>
+          </div>
+
+          <!-- Legend -->
+          <div class="calendar-legend">
+            <span class="legend-item">
+              <span class="legend-dot dot-past"></span>
+              <span class="legend-text">Past <span class="legend-hint">Finished</span></span>
+            </span>
+            <span class="legend-item">
+              <span class="legend-dot dot-ongoing"></span>
+              <span class="legend-text">Ongoing <span class="legend-hint">In progress</span></span>
+            </span>
+            <span class="legend-item">
+              <span class="legend-dot dot-upcoming"></span>
+              <span class="legend-text">Upcoming <span class="legend-hint">Registration open</span></span>
+            </span>
+            <span class="legend-item">
+              <span class="legend-dot dot-future"></span>
+              <span class="legend-text">Future <span class="legend-hint">Stay tuned</span></span>
+            </span>
+          </div>
+
+          @if (loading()) {
+            <app-spinner />
+          } @else if (errorMessage()) {
+            <app-alert variant="error">{{ errorMessage() }}</app-alert>
+          } @else {
+            <!-- Calendar grid -->
+            <div class="calendar-grid">
+              @for (dayName of weekDays; track dayName) {
+                <div class="calendar-weekday">{{ dayName }}</div>
+              }
+
+              @for (week of calendarGrid(); track $index) {
+                @for (day of week; track $index) {
+                  <div
+                    class="calendar-cell"
+                    [class.other-month]="!day.isCurrentMonth"
+                    [class.today]="day.isToday"
+                    [class.selected]="selectedDay() === day.dayNumber && day.isCurrentMonth"
+                    [class.has-events]="day.events.length > 0 && day.isCurrentMonth"
+                    (click)="day.isCurrentMonth ? selectDay(day.dayNumber) : null"
+                  >
+                    @if (day.communityColors.length > 0 && day.isCurrentMonth) {
+                      <div class="community-segments">
+                        @for (color of day.communityColors; track color) {
+                          <span class="community-segment" [style.background]="color"></span>
+                        }
+                      </div>
+                    }
+                    <span class="day-number">{{ day.dayNumber }}</span>
+                    @if (day.events.length > 0 && day.isCurrentMonth) {
+                      @if (day.events.length > 1) {
+                        <span class="event-count">{{ day.events.length }}</span>
+                      }
                     }
                   </div>
                 }
-              </div>
-            }
-          }
-        </div>
-      }
-    </app-card>
-
-    <!-- Selected day detail panel -->
-    @if (selectedDay() !== null && selectedDayEvents().length > 0) {
-      <app-card class="day-detail">
-        <h3>{{ selectedDayLabel() }}</h3>
-        @for (event of selectedDayEvents(); track event.id) {
-          <div class="event-card" [ngClass]="'event-card--' + event.eventType">
-            <div class="event-card-header">
-              <app-badge [variant]="event.eventType">
-                {{ getEventTypeLabel(event.eventType) }}
-              </app-badge>
-              @if (event.game) {
-                <span class="event-game">{{ event.game }}</span>
               }
             </div>
-            @if (event.image) {
-              <img class="event-thumbnail" [src]="event.image" [alt]="event.name" />
-            }
-            <h4 class="event-name">{{ event.name }}</h4>
-            @if (event.carClass) {
-              <span class="event-car-class">{{ event.carClass }}</span>
-            }
-            @if (event.description) {
-              <p class="event-description">{{ event.description }}</p>
-            }
-            @if (event.races.length > 0) {
-              <div class="event-races">
-                @for (race of getRacesForSelectedDay(event); track $index) {
-                  <span class="race-pill">
-                    @if (race.name) { {{ race.name }} }
-                    @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }
-                    @if (race.date) {
-                      <span class="race-date">{{ formatRaceDate(race.date) }}</span>
+          }
+        </app-card>
+
+        <!-- Selected day detail panel -->
+        @if (selectedDay() !== null && selectedDayEvents().length > 0) {
+          <app-card class="day-detail">
+            <h3>{{ selectedDayLabel() }}</h3>
+            @for (event of selectedDayEvents(); track event.id) {
+              <div class="event-card" [ngClass]="'event-card--' + event.eventType">
+                <div class="event-card-header">
+                  <app-badge [variant]="event.eventType">
+                    {{ getEventTypeLabel(event.eventType) }}
+                  </app-badge>
+                  @if (event.communityName) {
+                    <span
+                      class="community-badge"
+                      [style.background]="event.communityColor"
+                    >{{ event.communityName }}</span>
+                  }
+                  @if (event.game) {
+                    <span class="event-game">{{ event.game }}</span>
+                  }
+                </div>
+                @if (event.image) {
+                  <img class="event-thumbnail" [src]="event.image" [alt]="event.name" />
+                }
+                <h4 class="event-name">{{ event.name }}</h4>
+                @if (event.carClass) {
+                  <span class="event-car-class">{{ event.carClass }}</span>
+                }
+                @if (event.description) {
+                  <p class="event-description">{{ event.description }}</p>
+                }
+                @if (event.races.length > 0) {
+                  <div class="event-races">
+                    @for (race of getRacesForSelectedDay(event); track $index) {
+                      <span class="race-pill">
+                        @if (race.name) { {{ race.name }} }
+                        @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }
+                        @if (race.date) {
+                          <span class="race-date">{{ formatRaceDate(race.date) }}</span>
+                        }
+                      </span>
                     }
-                  </span>
+                  </div>
+                }
+                @if (event.simgridChampionshipId) {
+                  <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>
                 }
               </div>
             }
-            @if (event.simgridChampionshipId) {
-              <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>
-            }
-          </div>
+          </app-card>
         }
-      </app-card>
-    }
-  }
+      }
 
-  <!-- ── Year View ── -->
-  @if (viewMode() === 'year') {
-    <app-card class="calendar-card">
-      <div class="calendar-header">
-        <app-btn variant="ghost" size="sm" (click)="navigateYear(-1)">&larr; Prev</app-btn>
-        <h2 class="month-label">{{ yearLabel() }}</h2>
-        <div class="header-actions">
-          <app-btn variant="ghost" size="sm" (click)="navigateYear(1)">Next &rarr;</app-btn>
-        </div>
-      </div>
+      <!-- ── Year View ── -->
+      @if (viewMode() === 'year') {
+        <app-card class="calendar-card">
+          <div class="calendar-header">
+            <app-btn variant="ghost" size="sm" (click)="navigateYear(-1)">&larr; Prev</app-btn>
+            <h2 class="month-label">{{ yearLabel() }}</h2>
+            <div class="header-actions">
+              <app-btn variant="ghost" size="sm" (click)="navigateYear(1)">Next &rarr;</app-btn>
+            </div>
+          </div>
 
-      <!-- Legend -->
-      <div class="calendar-legend">
-        <span class="legend-item">
-          <span class="legend-dot dot-past"></span>
-          <span class="legend-text">Past <span class="legend-hint">Finished</span></span>
-        </span>
-        <span class="legend-item">
-          <span class="legend-dot dot-ongoing"></span>
-          <span class="legend-text">Ongoing <span class="legend-hint">In progress</span></span>
-        </span>
-        <span class="legend-item">
-          <span class="legend-dot dot-upcoming"></span>
-          <span class="legend-text">Upcoming <span class="legend-hint">Registration open</span></span>
-        </span>
-        <span class="legend-item">
-          <span class="legend-dot dot-future"></span>
-          <span class="legend-text">Future <span class="legend-hint">Stay tuned</span></span>
-        </span>
-      </div>
+          <!-- Legend -->
+          <div class="calendar-legend">
+            <span class="legend-item">
+              <span class="legend-dot dot-past"></span>
+              <span class="legend-text">Past <span class="legend-hint">Finished</span></span>
+            </span>
+            <span class="legend-item">
+              <span class="legend-dot dot-ongoing"></span>
+              <span class="legend-text">Ongoing <span class="legend-hint">In progress</span></span>
+            </span>
+            <span class="legend-item">
+              <span class="legend-dot dot-upcoming"></span>
+              <span class="legend-text">Upcoming <span class="legend-hint">Registration open</span></span>
+            </span>
+            <span class="legend-item">
+              <span class="legend-dot dot-future"></span>
+              <span class="legend-text">Future <span class="legend-hint">Stay tuned</span></span>
+            </span>
+          </div>
 
-      @if (yearLoading()) {
-        <app-spinner />
-      } @else if (yearError()) {
-        <app-alert variant="error">{{ yearError() }}</app-alert>
-      } @else {
-        @for (group of yearEventsByMonth(); track group.month) {
-          <div class="year-month-section">
-            <h3 class="year-month-heading">{{ group.label }}</h3>
-            <div class="year-event-list">
-              @for (event of group.events; track event.id) {
-                <div class="event-card" [ngClass]="'event-card--' + event.eventType">
-                  <div class="event-card-header">
-                    <app-badge [variant]="event.eventType">
-                      {{ getEventTypeLabel(event.eventType) }}
-                    </app-badge>
-                    @if (event.game) {
-                      <span class="event-game">{{ event.game }}</span>
-                    }
-                  </div>
-                  <h4 class="event-name">{{ event.name }}</h4>
-                  @if (event.carClass) {
-                    <span class="event-car-class">{{ event.carClass }}</span>
-                  }
-                  @if (event.races.length > 0) {
-                    <div class="event-races event-races--column">
-                      @for (race of sortedRaces(event.races); track $index) {
-                        <span class="race-pill">
-                          @if (race.name) { {{ race.name }} }
-                          @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }
-                          @if (race.date) {
-                            <span class="race-date">{{ formatRaceDate(race.date) }}</span>
+          @if (yearLoading()) {
+            <app-spinner />
+          } @else if (yearError()) {
+            <app-alert variant="error">{{ yearError() }}</app-alert>
+          } @else {
+            @for (group of yearEventsByMonth(); track group.month) {
+              <div class="year-month-section">
+                <h3 class="year-month-heading">{{ group.label }}</h3>
+                <div class="year-event-list">
+                  @for (event of group.events; track event.id) {
+                    <div class="event-card" [ngClass]="'event-card--' + event.eventType">
+                      <div class="event-card-header">
+                        <app-badge [variant]="event.eventType">
+                          {{ getEventTypeLabel(event.eventType) }}
+                        </app-badge>
+                        @if (event.communityName) {
+                          <span
+                            class="community-badge"
+                            [style.background]="event.communityColor"
+                          >{{ event.communityName }}</span>
+                        }
+                        @if (event.game) {
+                          <span class="event-game">{{ event.game }}</span>
+                        }
+                      </div>
+                      <h4 class="event-name">{{ event.name }}</h4>
+                      @if (event.carClass) {
+                        <span class="event-car-class">{{ event.carClass }}</span>
+                      }
+                      @if (event.races.length > 0) {
+                        <div class="event-races event-races--column">
+                          @for (race of sortedRaces(event.races); track $index) {
+                            <span class="race-pill">
+                              @if (race.name) { {{ race.name }} }
+                              @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }
+                              @if (race.date) {
+                                <span class="race-date">{{ formatRaceDate(race.date) }}</span>
+                              }
+                            </span>
                           }
-                        </span>
+                        </div>
+                      }
+                      @if (event.simgridChampionshipId) {
+                        <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>
                       }
                     </div>
                   }
-                  @if (event.simgridChampionshipId) {
-                    <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>
-                  }
                 </div>
-              }
-            </div>
-          </div>
-        }
+              </div>
+            }
 
-        @if (yearEventsByMonth().length === 0) {
-          <p class="year-empty">No events found for {{ yearLabel() }}.</p>
-        }
+            @if (yearEventsByMonth().length === 0) {
+              <p class="year-empty">No events found for {{ yearLabel() }}.</p>
+            }
+          }
+        </app-card>
       }
-    </app-card>
-  }
+    </div>
+  </div>
 </app-page>
