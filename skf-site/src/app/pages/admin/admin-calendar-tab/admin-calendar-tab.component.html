@@ -10,36 +10,34 @@
   } @else {
     <!-- Community form -->
     <div class="community-form">
-      <div class="community-form-fields">
-        <app-form-field label="Name" fieldId="communityName">
-          <input
-            id="communityName"
-            type="text"
-            placeholder="Community name"
-            [ngModel]="communityForm().name"
-            (ngModelChange)="updateCommunityField('name', $event)"
-            autocomplete="off"
-          />
-        </app-form-field>
-        <app-form-field label="Color" fieldId="communityColor">
-          <input
-            id="communityColor"
-            type="color"
-            [ngModel]="communityForm().color"
-            (ngModelChange)="updateCommunityField('color', $event)"
-          />
-        </app-form-field>
-        <app-form-field label="Discord URL" fieldId="communityDiscord">
-          <input
-            id="communityDiscord"
-            type="url"
-            placeholder="https://discord.gg/..."
-            [ngModel]="communityForm().discordUrl"
-            (ngModelChange)="updateCommunityField('discordUrl', $event)"
-            autocomplete="off"
-          />
-        </app-form-field>
-      </div>
+      <app-form-field label="Name" fieldId="communityName">
+        <input
+          id="communityName"
+          type="text"
+          placeholder="Community name"
+          [ngModel]="communityForm().name"
+          (ngModelChange)="updateCommunityField('name', $event)"
+          autocomplete="off"
+        />
+      </app-form-field>
+      <app-form-field label="Color" fieldId="communityColor">
+        <input
+          id="communityColor"
+          type="color"
+          [ngModel]="communityForm().color"
+          (ngModelChange)="updateCommunityField('color', $event)"
+        />
+      </app-form-field>
+      <app-form-field label="Discord URL" fieldId="communityDiscord">
+        <input
+          id="communityDiscord"
+          type="url"
+          placeholder="https://discord.gg/..."
+          [ngModel]="communityForm().discordUrl"
+          (ngModelChange)="updateCommunityField('discordUrl', $event)"
+          autocomplete="off"
+        />
+      </app-form-field>
       <div class="community-form-actions">
         <app-btn variant="primary" size="sm" (click)="saveCommunity()">
           {{ editingCommunityId() ? 'Update' : 'Add Community' }}
@@ -89,50 +87,48 @@
 
     <!-- Championship form -->
     <div class="champ-form">
-      <div class="champ-form-fields">
-        <app-form-field label="Name" fieldId="champName">
-          <input
-            id="champName"
-            type="text"
-            placeholder="Championship name"
-            [ngModel]="champForm().name"
-            (ngModelChange)="updateChampField('name', $event)"
-            autocomplete="off"
-          />
-        </app-form-field>
-        <app-form-field label="Simulator" fieldId="champSimulator">
-          <select
-            id="champSimulator"
-            [ngModel]="champForm().game"
-            (ngModelChange)="updateChampField('game', $event)"
-          >
-            <option [ngValue]="''">— Select simulator —</option>
-            @for (sim of simulators(); track sim) {
-              <option [ngValue]="sim">{{ sim }}</option>
-            }
-          </select>
-        </app-form-field>
-        <app-form-field label="Car Class" fieldId="champCarClass">
-          <input
-            id="champCarClass"
-            type="text"
-            placeholder="e.g. GT3, LMP2"
-            [ngModel]="champForm().carClass"
-            (ngModelChange)="updateChampField('carClass', $event)"
-            autocomplete="off"
-          />
-        </app-form-field>
-        <app-form-field label="Description" fieldId="champDesc">
-          <input
-            id="champDesc"
-            type="text"
-            placeholder="Optional description"
-            [ngModel]="champForm().description"
-            (ngModelChange)="updateChampField('description', $event)"
-            autocomplete="off"
-          />
-        </app-form-field>
-      </div>
+      <app-form-field label="Name" fieldId="champName">
+        <input
+          id="champName"
+          type="text"
+          placeholder="Championship name"
+          [ngModel]="champForm().name"
+          (ngModelChange)="updateChampField('name', $event)"
+          autocomplete="off"
+        />
+      </app-form-field>
+      <app-form-field label="Simulator" fieldId="champSimulator">
+        <select
+          id="champSimulator"
+          [ngModel]="champForm().game"
+          (ngModelChange)="updateChampField('game', $event)"
+        >
+          <option [ngValue]="''">— Select simulator —</option>
+          @for (sim of simulators(); track sim) {
+            <option [ngValue]="sim">{{ sim }}</option>
+          }
+        </select>
+      </app-form-field>
+      <app-form-field label="Car Class" fieldId="champCarClass">
+        <input
+          id="champCarClass"
+          type="text"
+          placeholder="e.g. GT3, LMP2"
+          [ngModel]="champForm().carClass"
+          (ngModelChange)="updateChampField('carClass', $event)"
+          autocomplete="off"
+        />
+      </app-form-field>
+      <app-form-field label="Description" fieldId="champDesc">
+        <input
+          id="champDesc"
+          type="text"
+          placeholder="Optional description"
+          [ngModel]="champForm().description"
+          (ngModelChange)="updateChampField('description', $event)"
+          autocomplete="off"
+        />
+      </app-form-field>
       <div class="champ-form-actions">
         <app-btn variant="primary" size="sm" (click)="saveChampionship()">
           {{ editingChampId() ? 'Update' : 'Add Championship' }}

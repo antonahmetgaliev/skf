@@ -30,6 +30,13 @@ interface YearMonthGroup {
   events: CalendarEvent[];
 }
 
+interface YearCommunityColumn {
+  id: string;
+  name: string;
+  color: string;
+  months: YearMonthGroup[];
+}
+
 type ViewMode = 'month' | 'year';
 
 const SKF_COLOR = '#f5bf24'; // gold
@@ -128,6 +135,39 @@ export class CalendarComponent implements OnInit {
       groups.push({ month: m, label, events: monthEvents });
     }
     return groups;
+  });
+
+  readonly yearCommunityColumns = computed<YearCommunityColumn[]>(() => {
+    const events = this.filteredYearEvents();
+    const year = this.currentYear();
+    const communities = this.communities();
+
+    // Build community map: SKF first, then custom communities
+    const columnDefs: { id: string; name: string; color: string }[] = [
+      { id: 'skf', name: 'SKF', color: SKF_COLOR },
+      ...communities.map((c) => ({ id: c.id, name: c.name, color: c.color ?? SKF_COLOR })),
+    ];
+
+    const columns: YearCommunityColumn[] = [];
+
+    for (const def of columnDefs) {
+      const communityEvents = events.filter((e) =>
+        def.id === 'skf' ? !e.communityId : e.communityId === def.id,
+      );
+      if (communityEvents.length === 0) continue;
+
+      const months: YearMonthGroup[] = [];
+      for (let m = 1; m <= 12; m++) {
+        const monthEvents = communityEvents.filter((e) => this.eventFallsInMonth(e, year, m));
+        if (monthEvents.length === 0) continue;
+        const label = new Date(year, m - 1, 1).toLocaleString('en-US', { month: 'short' });
+        months.push({ month: m, label, events: monthEvents });
+      }
+
+      columns.push({ id: def.id, name: def.name, color: def.color, months });
+    }
+
+    return columns;
   });
 
 

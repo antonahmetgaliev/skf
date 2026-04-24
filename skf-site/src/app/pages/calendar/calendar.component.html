@@ -194,68 +194,74 @@
 
       <!-- ── Year View ── -->
       @if (viewMode() === 'year') {
-        <app-card class="calendar-card">
-          <div class="calendar-header">
-            <app-btn variant="ghost" size="sm" (click)="navigateYear(-1)">&larr; Prev</app-btn>
-            <h2 class="month-label">{{ yearLabel() }}</h2>
-            <div class="header-actions">
-              <app-btn variant="ghost" size="sm" (click)="navigateYear(1)">Next &rarr;</app-btn>
+        <div class="year-header-card">
+          <app-card class="calendar-card">
+            <div class="calendar-header">
+              <app-btn variant="ghost" size="sm" (click)="navigateYear(-1)">&larr; Prev</app-btn>
+              <h2 class="month-label">{{ yearLabel() }}</h2>
+              <div class="header-actions">
+                <app-btn variant="ghost" size="sm" (click)="navigateYear(1)">Next &rarr;</app-btn>
+              </div>
             </div>
-          </div>
+          </app-card>
+        </div>
 
-          @if (yearLoading()) {
-            <app-spinner />
-          } @else if (yearError()) {
-            <app-alert variant="error">{{ yearError() }}</app-alert>
-          } @else {
-            @for (group of yearEventsByMonth(); track group.month) {
-              <div class="year-month-section">
-                <h3 class="year-month-heading">{{ group.label }}</h3>
-                <div class="year-event-list">
-                  @for (event of group.events; track event.id) {
-                    <div class="event-card">
-                      <div class="event-card-header">
-                        @if (event.communityName) {
-                          <span
-                            class="community-badge"
-                            [style.background]="event.communityColor"
-                          >{{ event.communityName }}</span>
-                        }
-                        @if (event.game) {
-                          <span class="event-simulator">{{ event.game }}</span>
-                        }
-                      </div>
-                      <h4 class="event-name">{{ event.name }}</h4>
-                      @if (event.carClass) {
-                        <span class="event-car-class">{{ event.carClass }}</span>
-                      }
-                      @if (event.races.length > 0) {
-                        <div class="event-races event-races--column">
-                          @for (race of sortedRaces(event.races); track $index) {
-                            <span class="race-pill">
-                              @if (race.name) { {{ race.name }} }
-                              @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }
-                              @if (race.date) {
-                                <span class="race-date">{{ formatRaceDate(race.date) }}</span>
+        @if (yearLoading()) {
+          <app-spinner />
+        } @else if (yearError()) {
+          <app-alert variant="error">{{ yearError() }}</app-alert>
+        } @else if (yearCommunityColumns().length === 0) {
+          <app-card>
+            <p class="year-empty">No events found for {{ yearLabel() }}.</p>
+          </app-card>
+        } @else {
+          <div class="year-columns">
+            @for (col of yearCommunityColumns(); track col.id) {
+              <div class="year-column">
+                <div class="year-column-header">
+                  <span class="year-column-dot" [style.background]="col.color"></span>
+                  <h3 class="year-column-title">{{ col.name }}</h3>
+                </div>
+                @for (group of col.months; track group.month) {
+                  <div class="year-month-section">
+                    <h4 class="year-month-heading">{{ group.label }}</h4>
+                    <div class="year-event-list">
+                      @for (event of group.events; track event.id) {
+                        <div class="event-card">
+                          <div class="event-card-header">
+                            @if (event.game) {
+                              <span class="event-simulator">{{ event.game }}</span>
+                            }
+                          </div>
+                          <h4 class="event-name">{{ event.name }}</h4>
+                          @if (event.carClass) {
+                            <span class="event-car-class">{{ event.carClass }}</span>
+                          }
+                          @if (event.races.length > 0) {
+                            <div class="event-races event-races--column">
+                              @for (race of sortedRaces(event.races); track $index) {
+                                <span class="race-pill">
+                                  @if (race.name) { {{ race.name }} }
+                                  @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }
+                                  @if (race.date) {
+                                    <span class="race-date">{{ formatRaceDate(race.date) }}</span>
+                                  }
+                                </span>
                               }
-                            </span>
+                            </div>
+                          }
+                          @if (event.simgridChampionshipId) {
+                            <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>
                           }
                         </div>
                       }
-                      @if (event.simgridChampionshipId) {
-                        <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>
-                      }
                     </div>
-                  }
-                </div>
+                  </div>
+                }
               </div>
             }
-
-            @if (yearEventsByMonth().length === 0) {
-              <p class="year-empty">No events found for {{ yearLabel() }}.</p>
-            }
-          }
-        </app-card>
+          </div>
+        }
       }
     </div>
   </div>
