@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BadgeComponent, BadgeVariant } from '../../components/badge/badge.component';
 import { CardComponent } from '../../components/card/card.component';
@@ -92,20 +92,34 @@ export class IncidentsComponent implements OnInit {
   rvIncSubmitting: Record<string, boolean> = {};
   rvIncError: Record<string, string> = {};
 
+  private judgeDataLoaded = false;
+  private adminDataLoaded = false;
+
+  constructor() {
+    effect(() => {
+      const canJudge = this.auth.isJudge();
+      const canAdmin = this.auth.isAdmin();
+
+      if (canJudge && !this.judgeDataLoaded) {
+        this.judgeDataLoaded = true;
+        void this.loadVerdictRules();
+        void this.loadDescriptionPresets();
+      }
+
+      if (canAdmin && !this.adminDataLoaded) {
+        this.adminDataLoaded = true;
+        firstValueFrom(this.bwpApi.getDrivers()).then((ds) =>
+          this.bwpDrivers.set(ds)
+        );
+        firstValueFrom(this.simgridApi.getChampionships()).then((cs) =>
+          this.championships.set(cs)
+        );
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.loadWindows();
-    if (this.auth.isJudge()) {
-      this.loadVerdictRules();
-      this.loadDescriptionPresets();
-    }
-    if (this.auth.isAdmin()) {
-      firstValueFrom(this.bwpApi.getDrivers()).then((ds) =>
-        this.bwpDrivers.set(ds)
-      );
-      firstValueFrom(this.simgridApi.getChampionships()).then((cs) =>
-        this.championships.set(cs)
-      );
-    }
   }
 
   // ── Windows ───────────────────────────────────────────────────────
