@@ -123,18 +123,12 @@
                     [class.today]="day.isToday"
                     [class.selected]="selectedDay() === day.dayNumber && day.isCurrentMonth"
                     [class.has-events]="day.events.length > 0 && day.isCurrentMonth"
+                    [style.background]="day.isCurrentMonth ? tileBackground(day) : null"
                     (click)="day.isCurrentMonth ? selectDay(day.dayNumber) : null"
                   >
                     <span class="day-number">{{ day.dayNumber }}</span>
-                    @if (day.communityColors.length > 0 && day.isCurrentMonth) {
-                      <div class="community-dots">
-                        @for (color of day.communityColors; track color) {
-                          <span class="community-dot" [style.background]="color"></span>
-                        }
-                        @if (day.events.length > 1) {
-                          <span class="event-count">{{ day.events.length }}</span>
-                        }
-                      </div>
+                    @if (day.events.length > 1 && day.isCurrentMonth) {
+                      <span class="event-count">{{ day.events.length }}</span>
                     }
                   </div>
                 }

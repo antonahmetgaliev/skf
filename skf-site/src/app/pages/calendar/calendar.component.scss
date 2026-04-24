@@ -148,20 +148,6 @@
   min-width: 0;
 }
 
-// ── Community dots on day tiles ────────────────────────────────────────────
-.community-dots {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  margin-top: auto;
-}
-
-.community-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
 
 // ── Calendar header ─────────────────────────────────────────────────────────
 .calendar-header {
@@ -263,7 +249,8 @@
   font-weight: 800;
   color: var(--ink-soft);
   line-height: 1;
-  margin-left: 2px;
+  margin-top: auto;
+  align-self: flex-end;
 }
 
 // ── Community badge on event cards ──────────────────────────────────────────
@@ -542,11 +529,6 @@
   .calendar-cell {
     min-height: 2.2rem;
     padding: 0.2rem;
-  }
-
-  .community-dot {
-    width: 6px;
-    height: 6px;
   }
 
   .day-number {
