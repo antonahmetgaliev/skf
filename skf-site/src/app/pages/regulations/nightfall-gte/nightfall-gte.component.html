@@ -1,0 +1,222 @@
+<app-page>
+  <app-page-intro
+    title="SKF Nightfall GTE Championship"
+    subtitle="Individual Regulations &mdash; Le Mans Ultimate GTE championship."
+  />
+
+  <!-- Section 1 -->
+  <app-card [animated]="true" class="reg-section" id="general-info">
+    <h2>1. General Information</h2>
+    <ol class="rules">
+      <li>This regulation may be amended or supplemented by the Responsible Officials, taking into account the wishes and comments of the drivers during breaks between championships.</li>
+      <li>No changes to the regulation are allowed during the championship. The SKF Racing Hub General Regulations apply, which every participant must read and comply with.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 2 -->
+  <app-card [animated]="true" class="reg-section" id="organization">
+    <h2>2. Championship Organization</h2>
+    <ol class="rules">
+      <li>The championship (hereinafter &mdash; the Championship) is held on Le Mans Ultimate using the governing documents (Individual Regulations and Driving Rules). The panel of stewards consists of Arsen Petrosian and Andriy Vorona.</li>
+      <li>
+        The official championship announcement board is maintained:
+        <ul class="bullets">
+          <li>on the organizer&rsquo;s Discord;</li>
+          <li>on SKF Racing Hub social media.</li>
+        </ul>
+      </li>
+      <li>Current championship information is published on all official SKF Racing Hub resources.</li>
+      <li>All drivers and responsible persons must follow impartial reporting rules and must not distort race results.</li>
+      <li>Disputes are resolved through submission of protests.</li>
+      <li>Championship stewarding is conducted offline, with all incidents and protests reviewed.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 3 -->
+  <app-card [animated]="true" class="reg-section" id="championship">
+    <h2>3. Championship</h2>
+    <ol class="rules">
+      <li>Each championship round is conducted according to the approved calendar in the individual standings.</li>
+      <li>The championship consists of four rounds.</li>
+      <li>
+        The date and track for each round are specified in the calendar, which is prepared by the Organizer and published on the Organizer&rsquo;s Discord in the <code>#lmu-2026-calendar</code> channel and on social media.
+      </li>
+    </ol>
+
+    <h3>Calendar</h3>
+    <div class="table-wrap">
+      <table class="reg-table">
+        <thead>
+          <tr>
+            <th>Round</th>
+            <th>Date</th>
+            <th>Track</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Round 1</td><td>25.04</td><td>Barcelona</td></tr>
+          <tr><td>Round 2</td><td>02.05</td><td>Spa-Francorchamps</td></tr>
+          <tr><td>Round 3</td><td>09.05</td><td>Autodromo Internazionale Enzo e Dino Ferrari</td></tr>
+          <tr><td>Round 4</td><td>16.05</td><td>Interlagos</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Race Rules &mdash; SKF LMU Euro Clash</h3>
+    <ul class="bullets">
+      <li>Qualification: Private</li>
+      <li>Setup: Open</li>
+      <li>Tyre Warmers: Yes</li>
+      <li>Track Limits: 4</li>
+      <li>Assists: off (but Clutch Assist ok)</li>
+      <li>Tyres: 8 pcs</li>
+    </ul>
+
+    <h3>Race Schedule</h3>
+    <ul class="bullets">
+      <li>18:00 CEST &mdash; Practice (120 min)</li>
+      <li>20:00 CEST &mdash; Qualifying (10 min)</li>
+      <li>20:10+ CEST &mdash; Race (40 min)</li>
+      <li>20:55+ CEST &mdash; Post-race wrap-up, interviews with winners and podium finishers</li>
+      <li>21:00+ CEST &mdash; Publication of preliminary results</li>
+      <li>21:30+ CEST &mdash; Protest window opens</li>
+    </ul>
+
+    <ol class="rules" start="4">
+      <li>Round dates and times may be changed by the Race Directorate, with participants notified at least 48 hours in advance.</li>
+      <li>Preliminary results are published on TheSimGrid.</li>
+      <li>Official results are published within 24 hours on TheSimGrid unless protests are submitted on website.</li>
+      <li>Protest window opens at 21:30 CEST and lasts 24 hours. If protests occur, official results are published within 24 hours after the stewards&rsquo; decision.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 4 -->
+  <app-card [animated]="true" class="reg-section" id="participation">
+    <h2>4. Participation in the Championship</h2>
+    <ol class="rules">
+      <li>
+        Participants must meet the following requirements:
+        <ul class="bullets">
+          <li>Minimum age 16 (in special cases, age may be lowered after an interview and skill assessment)</li>
+          <li>Stable internet connection</li>
+          <li>Ownership of Le Mans Ultimate</li>
+          <li>Availability of the championship cars and tracks</li>
+          <li>Only steering wheels and gamepads are allowed as controls</li>
+        </ul>
+      </li>
+      <li>Using a keyboard to control the car is prohibited.</li>
+      <li>Maximum number of participants: 38 drivers.</li>
+      <li>Drivers must use their real first and last names in Latin letters, matching their Le Mans Ultimate registration.</li>
+      <li>Registration and participation under multiple names are prohibited.</li>
+      <li>Participants are fully responsible for their actions, inactions, and the equipment used.</li>
+      <li>Drivers must follow all instructions from the Organizer during the championship.</li>
+      <li>Drivers may use driving assists allowed by the server settings and adjust them if permitted by the simulator.</li>
+      <li>Drivers have the right to submit protests.</li>
+      <li>Drivers must compete in the car declared during registration.</li>
+      <li>Using an undeclared car will result in losing all previous championship points.</li>
+      <li>A round officially starts when a driver reaches their starting position.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 5 -->
+  <app-card [animated]="true" class="reg-section" id="registration">
+    <h2>5. Driver Registration</h2>
+    <ol class="rules">
+      <li>Registration links are published on all SKF Racing Hub resources.</li>
+      <li>The list of championship participants is available in the corresponding section on TheSimGrid.</li>
+      <li>Drivers wishing to participate must fill out an application form. Applications are submitted via TheSimGrid.</li>
+      <li>Entry fee: 0 UAH (free of charge).</li>
+      <li>All participants must join the SKF Racing Hub Discord.</li>
+      <li>Driver registration closes at 17:00 CEST on 25 April 2026.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 6 -->
+  <app-card [animated]="true" class="reg-section" id="cars">
+    <h2>6. Cars and Classes</h2>
+    <ol class="rules">
+      <li>The championship uses licensed GTE cars.</li>
+      <li>Drivers may use custom liveries, which can be changed during the championship, but changing the starting number is prohibited.</li>
+      <li>Drivers are responsible for the content of their custom liveries. In case of disputes or legal issues, the Organizer bears no responsibility.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 7 -->
+  <app-card [animated]="true" class="reg-section" id="scoring">
+    <h2>7. Scoring</h2>
+    <ol class="rules">
+      <li>After each championship race, the following classification is established: individual driver standings.</li>
+      <li>
+        Drivers receive points in the individual standings according to their finishing position:
+        <div class="table-wrap">
+          <table class="reg-table">
+            <thead>
+              <tr>
+                <th>Position</th>
+                <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+                <th>6</th><th>7</th><th>8</th><th>9</th><th>10</th>
+                <th>11</th><th>12</th><th>13</th><th>14</th><th>15</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Points</th>
+                <td>25</td><td>20</td><td>16</td><td>13</td><td>11</td>
+                <td>10</td><td>9</td><td>8</td><td>7</td><td>6</td>
+                <td>5</td><td>4</td><td>3</td><td>2</td><td>1</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </li>
+      <li>Additional bonus points: Fastest lap in the race: +1 point.</li>
+      <li>Points are awarded after stewards check and approve all drivers&rsquo; results, including any penalties.</li>
+      <li>Drivers with DNF/DSQ (Did Not Finish / Disqualified) receive no points.</li>
+      <li>If two or more drivers have equal points, the driver with more first-place finishes ranks higher. If first-place finishes are equal, second places are considered, and so on.</li>
+      <li>If points and positions remain equal, the driver with the better qualifying result (starting from Round 1) ranks higher.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 8 -->
+  <app-card [animated]="true" class="reg-section" id="media">
+    <h2>8. Media</h2>
+    <ol class="rules">
+      <li>
+        Races will be broadcast on the official SKF Racing Hub YouTube channel:
+        <a class="discord-link" href="https://www.youtube.com/&#64;SKFRacingHub" target="_blank" rel="noopener">youtube.com/&#64;SKFRacingHub</a>
+      </li>
+      <li>
+        SKF Racing Hub social media:
+        <ul class="bullets">
+          <li>Discord: <a class="discord-link" href="https://discord.gg/XhNsUerTFp" target="_blank" rel="noopener">discord.gg/XhNsUerTFp</a></li>
+          <li>SimGrid: <a class="discord-link" href="https://thesimgrid.com/communities/skf-racing-hub" target="_blank" rel="noopener">thesimgrid.com/communities/skf-racing-hub</a></li>
+          <li>Twitter/X: <a class="discord-link" href="https://x.com/SKF_Racing_HUB" target="_blank" rel="noopener">x.com/SKF_Racing_HUB</a></li>
+          <li>Instagram: <a class="discord-link" href="https://instagram.com/skf.racing.hub" target="_blank" rel="noopener">instagram.com/skf.racing.hub</a></li>
+          <li>TikTok: <a class="discord-link" href="https://tiktok.com/&#64;skfracinghub" target="_blank" rel="noopener">tiktok.com/&#64;skfracinghub</a></li>
+          <li>Twitch: <a class="discord-link" href="https://twitch.tv/skf_racing_hub" target="_blank" rel="noopener">twitch.tv/skf_racing_hub</a></li>
+        </ul>
+      </li>
+      <li>After each race, podium finishers must participate in an interview with the commentator. Ignoring the post-race interview may result in a warning.</li>
+      <li>SKF Racing Hub reserves the right to use all photos and videos submitted by drivers for championship participation without time restrictions.</li>
+      <li>All media rights for covering the championship belong to SKF Racing Hub, including but not limited to TV broadcasting, recording, reproduction, marketing, sponsorship, and publication.</li>
+      <li>SKF Racing Hub is responsible for publishing information about partners and/or sponsors. Drivers may provide this information to the Organizer at any time during the championship, and it will be shared across SKF&rsquo;s media channels.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 9 -->
+  <app-card [animated]="true" class="reg-section" id="awards">
+    <h2>9. Championship Standings &amp; Awards</h2>
+    <ol class="rules">
+      <li>Championship positions are determined by the total points scored by drivers in their 4 best rounds.</li>
+      <li>If fewer than half of the rounds in the calendar are completed, the championship is considered invalid.</li>
+      <li>
+        Winners in the SKF Nightfall GTE Championship individual standings are awarded the following titles:
+        <ul class="bullets">
+          <li>1st place: &ldquo;Champion SKF Nightfall GTE Championship&rdquo;</li>
+          <li>2nd place: &ldquo;Silver Medalist SKF Nightfall GTE Championship&rdquo;</li>
+          <li>3rd place: &ldquo;Bronze Medalist SKF Nightfall GTE Championship&rdquo;</li>
+        </ul>
+      </li>
+    </ol>
+  </app-card>
+</app-page>

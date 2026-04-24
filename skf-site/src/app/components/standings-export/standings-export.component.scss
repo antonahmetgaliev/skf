@@ -33,8 +33,8 @@
   h3 {
     margin: 0;
     font-family: var(--font-display);
-    font-size: 0.95rem;
-    letter-spacing: 0.12em;
+    font-size: var(--text-lg);
+    letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
   }
 }
@@ -58,6 +58,6 @@
 .export-rendering {
   text-align: center;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-md);
   margin: 0.5rem 0 0;
 }

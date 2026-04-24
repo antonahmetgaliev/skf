@@ -1,8 +1,8 @@
 """YouTube Data API service with database caching.
 
-Fetches live streams from a YouTube channel using the PlaylistItems
-API (for past broadcasts) and Search API (for upcoming), and caches
-the results to minimise API quota usage.
+Scans the channel's uploads playlist once, splits videos into
+past (completed) and upcoming (scheduled/live) streams, and caches
+both to minimise API quota usage.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from app.config import settings
 from app.services.cache import invalidate_cache_by_prefix, read_cache, read_stale_cache, write_cache
 
 _CACHE_TTL = timedelta(minutes=30)
+_CACHE_KEY = "youtube_streams"
 _YT_BASE = "https://www.googleapis.com/youtube/v3"
 _MAX_PAGE_SIZE = 50
 
@@ -38,61 +39,85 @@ class YouTubeService:
     # Public API
     # ------------------------------------------------------------------
 
-    async def get_live_streams(
-        self, *, limit: int = 10,
-    ) -> list[dict[str, Any]]:
-        """Return past completed live streams from the channel."""
-        cache_key = "youtube_live_streams"
+    async def get_past_streams(self, *, limit: int = 10) -> list[dict[str, Any]]:
+        """Return past completed live streams (newest first)."""
+        data = await self._get_cached_streams()
+        return data["past"][:limit]
 
-        cached = await read_cache(cache_key, _CACHE_TTL)
-        if cached is not None and isinstance(cached, list):
-            return cached[:limit]
+    async def get_upcoming_streams(self, *, limit: int = 10) -> list[dict[str, Any]]:
+        """Return upcoming/scheduled and currently-live streams (soonest first)."""
+        data = await self._get_cached_streams()
+        return data["upcoming"][:limit]
 
-        try:
-            videos = await self._fetch_past_streams(limit=limit)
-        except Exception:
-            logger.warning("YouTube past-streams fetch failed", exc_info=True)
-            stale = await read_stale_cache(cache_key)
-            if stale is not None and isinstance(stale, list):
-                return stale[:limit]
-            return []
-
-        await write_cache(cache_key, videos)
-        return videos[:limit]
-
-    async def get_upcoming_streams(
-        self, *, limit: int = 10,
-    ) -> list[dict[str, Any]]:
-        """Return upcoming/scheduled live streams from the channel."""
-        cache_key = "youtube_upcoming_streams"
-
-        cached = await read_cache(cache_key, _CACHE_TTL)
-        if cached is not None and isinstance(cached, list):
-            return cached[:limit]
-
-        try:
-            videos = await self._search_by_event_type("upcoming", limit=limit)
-        except Exception:
-            logger.warning("YouTube upcoming-streams fetch failed", exc_info=True)
-            stale = await read_stale_cache(cache_key)
-            if stale is not None and isinstance(stale, list):
-                return stale[:limit]
-            return []
-
-        await write_cache(cache_key, videos)
-        return videos[:limit]
+    async def invalidate_cache(self) -> None:
+        """Delete all YouTube cache entries."""
+        await invalidate_cache_by_prefix("youtube_")
 
     # ------------------------------------------------------------------
-    # Past streams via PlaylistItems + Videos detail
+    # Core: single scan → split into past + upcoming
     # ------------------------------------------------------------------
 
-    async def _fetch_past_streams(self, *, limit: int) -> list[dict[str, Any]]:
-        """Fetch all uploads, then filter to those that were live streams."""
+    async def _get_cached_streams(self) -> dict[str, list[dict[str, Any]]]:
+        """Return cached {past, upcoming} dict, refreshing if stale."""
+        cached = await read_cache(_CACHE_KEY, _CACHE_TTL)
+        if cached is not None and isinstance(cached, dict):
+            return cached
+
+        try:
+            data = await self._scan_and_split()
+        except Exception:
+            logger.warning("YouTube scan failed", exc_info=True)
+            stale = await read_stale_cache(_CACHE_KEY)
+            if stale is not None and isinstance(stale, dict):
+                return stale
+            return {"past": [], "upcoming": []}
+
+        await write_cache(_CACHE_KEY, data)
+        return data
+
+    async def _scan_and_split(self) -> dict[str, list[dict[str, Any]]]:
+        """Scan uploads once, fetch liveStreamingDetails, split results."""
+        video_ids, snippets = await self._scan_uploads()
+        if not video_ids:
+            return {"past": [], "upcoming": []}
+
+        details = await self._fetch_stream_details(video_ids)
+
+        past: list[dict[str, Any]] = []
+        upcoming: list[dict[str, Any]] = []
+
+        for vid in video_ids:
+            stream = details.get(vid)
+            if not stream:
+                continue
+
+            if stream.get("actualEndTime"):
+                # Completed stream — use actual start time as the date
+                stream_date = (
+                    stream.get("actualStartTime")
+                    or stream.get("scheduledStartTime")
+                )
+                past.append(self._build_video(vid, snippets[vid], published_at=stream_date))
+            else:
+                # Upcoming or currently live
+                scheduled = stream.get("scheduledStartTime")
+                upcoming.append(self._build_video(vid, snippets[vid], published_at=scheduled))
+
+        # Upcoming: soonest first
+        upcoming.sort(key=lambda v: v["published_at"])
+
+        return {"past": past, "upcoming": upcoming}
+
+    # ------------------------------------------------------------------
+    # YouTube API helpers
+    # ------------------------------------------------------------------
+
+    async def _scan_uploads(self) -> tuple[list[str], dict[str, dict[str, Any]]]:
+        """Paginate the channel's uploads playlist.
+        Returns (ordered video IDs newest-first, snippets keyed by ID)."""
         playlist_id = _uploads_playlist_id(settings.youtube_channel_id)
-
-        # Step 1: paginate through the uploads playlist
-        all_video_ids: list[str] = []
-        snippets_by_id: dict[str, dict[str, Any]] = {}
+        video_ids: list[str] = []
+        snippets: dict[str, dict[str, Any]] = {}
         page_token: str | None = None
 
         while True:
@@ -112,20 +137,22 @@ class YouTubeService:
             for item in data.get("items", []):
                 vid = item.get("snippet", {}).get("resourceId", {}).get("videoId")
                 if vid:
-                    all_video_ids.append(vid)
-                    snippets_by_id[vid] = item["snippet"]
+                    video_ids.append(vid)
+                    snippets[vid] = item["snippet"]
 
             page_token = data.get("nextPageToken")
             if not page_token:
                 break
 
-        if not all_video_ids:
-            return []
+        return video_ids, snippets
 
-        # Step 2: batch-fetch video details to identify *completed* live streams
-        live_video_ids: set[str] = set()
-        for i in range(0, len(all_video_ids), _MAX_PAGE_SIZE):
-            batch = all_video_ids[i : i + _MAX_PAGE_SIZE]
+    async def _fetch_stream_details(
+        self, video_ids: list[str],
+    ) -> dict[str, dict[str, Any]]:
+        """Batch-fetch liveStreamingDetails for video IDs."""
+        result: dict[str, dict[str, Any]] = {}
+        for i in range(0, len(video_ids), _MAX_PAGE_SIZE):
+            batch = video_ids[i : i + _MAX_PAGE_SIZE]
             resp = await self._client.get(
                 "/videos",
                 params={
@@ -137,115 +164,30 @@ class YouTubeService:
             resp.raise_for_status()
             for item in resp.json().get("items", []):
                 details = item.get("liveStreamingDetails")
-                # Only include streams that have actually ended;
-                # upcoming/live streams have liveStreamingDetails
-                # but no actualEndTime yet.
-                if details and details.get("actualEndTime"):
-                    live_video_ids.add(item["id"])
+                if details:
+                    result[item["id"]] = details
+        return result
 
-        # Step 3: build result list preserving upload order (newest first)
-        videos: list[dict[str, Any]] = []
-        for vid in all_video_ids:
-            if vid not in live_video_ids:
-                continue
-            snippet = snippets_by_id[vid]
-            thumbnails = snippet.get("thumbnails", {})
-            thumb = (
-                thumbnails.get("high")
-                or thumbnails.get("medium")
-                or thumbnails.get("default")
-                or {}
-            )
-            videos.append({
-                "video_id": vid,
-                "title": snippet.get("title", ""),
-                "description": snippet.get("description", ""),
-                "published_at": snippet.get("publishedAt", ""),
-                "thumbnail_url": thumb.get("url", ""),
-            })
-            if len(videos) >= limit:
-                break
-
-        return videos
-
-    # ------------------------------------------------------------------
-    # Upcoming streams via Search API
-    # ------------------------------------------------------------------
-
-    async def _search_by_event_type(
-        self, event_type: str, *, limit: int,
-    ) -> list[dict[str, Any]]:
-        resp = await self._client.get(
-            "/search",
-            params={
-                "part": "snippet",
-                "channelId": settings.youtube_channel_id,
-                "type": "video",
-                "eventType": event_type,
-                "order": "date",
-                "maxResults": limit,
-                "key": settings.youtube_api_key,
-            },
+    @staticmethod
+    def _build_video(
+        vid: str,
+        snippet: dict[str, Any],
+        published_at: str | None = None,
+    ) -> dict[str, Any]:
+        thumbnails = snippet.get("thumbnails", {})
+        thumb = (
+            thumbnails.get("high")
+            or thumbnails.get("medium")
+            or thumbnails.get("default")
+            or {}
         )
-        resp.raise_for_status()
-
-        items = resp.json().get("items", [])
-        if not items:
-            return []
-
-        # Collect video IDs and snippets from search results
-        video_ids: list[str] = []
-        snippets_by_id: dict[str, dict[str, Any]] = {}
-        for item in items:
-            vid = item.get("id", {}).get("videoId", "")
-            if vid:
-                video_ids.append(vid)
-                snippets_by_id[vid] = item.get("snippet", {})
-
-        # Fetch scheduledStartTime from liveStreamingDetails
-        scheduled_times: dict[str, str] = {}
-        if video_ids:
-            detail_resp = await self._client.get(
-                "/videos",
-                params={
-                    "part": "liveStreamingDetails",
-                    "id": ",".join(video_ids),
-                    "key": settings.youtube_api_key,
-                },
-            )
-            detail_resp.raise_for_status()
-            for item in detail_resp.json().get("items", []):
-                details = item.get("liveStreamingDetails", {})
-                scheduled = details.get("scheduledStartTime", "")
-                if scheduled:
-                    scheduled_times[item["id"]] = scheduled
-
-        videos: list[dict[str, Any]] = []
-        for vid in video_ids:
-            snippet = snippets_by_id[vid]
-            thumbnails = snippet.get("thumbnails", {})
-            thumb = (
-                thumbnails.get("high")
-                or thumbnails.get("medium")
-                or thumbnails.get("default")
-                or {}
-            )
-            videos.append({
-                "video_id": vid,
-                "title": snippet.get("title", ""),
-                "description": snippet.get("description", ""),
-                "published_at": scheduled_times.get(vid, snippet.get("publishedAt", "")),
-                "thumbnail_url": thumb.get("url", ""),
-            })
-        return videos
-
-    # ------------------------------------------------------------------
-    # Cache management
-    # ------------------------------------------------------------------
-
-    async def invalidate_cache(self) -> None:
-        """Delete all YouTube cache entries."""
-        await invalidate_cache_by_prefix("youtube_")
+        return {
+            "video_id": vid,
+            "title": snippet.get("title", ""),
+            "description": snippet.get("description", ""),
+            "published_at": published_at or snippet.get("publishedAt", ""),
+            "thumbnail_url": thumb.get("url", ""),
+        }
 
 
 youtube_service = YouTubeService()

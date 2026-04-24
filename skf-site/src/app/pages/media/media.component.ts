@@ -56,7 +56,7 @@ export class MediaComponent {
     this.loading.set(true);
     try {
       const [past, upcoming] = await Promise.all([
-        firstValueFrom(this.mediaApi.getLiveStreams(200)),
+        firstValueFrom(this.mediaApi.getPastStreams(200)),
         firstValueFrom(this.mediaApi.getUpcomingStreams(50)),
       ]);
       this.allPastVideos.set(past);

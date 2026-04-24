@@ -28,6 +28,18 @@ class CustomChampionship(Base):
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
+    community_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("communities.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    game_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("games.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -38,6 +50,11 @@ class CustomChampionship(Base):
         lazy="selectin",
         order_by="CustomRace.sort_order",
     )
+    community: Mapped["Community | None"] = relationship(
+        back_populates="championships",
+        lazy="selectin",
+    )
+    game_rel: Mapped["Game | None"] = relationship(lazy="selectin")
 
 
 class CustomRace(Base):

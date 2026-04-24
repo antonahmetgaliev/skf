@@ -1,18 +1,18 @@
-import { NgClass } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { AlertComponent } from '../../components/alert/alert.component';
-import { BadgeComponent } from '../../components/badge/badge.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
+import { ToggleComponent } from '../../components/toggle/toggle.component';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
   CalendarApiService,
   CalendarEvent,
-  CalendarEventType,
+  Community,
 } from '../../services/calendar-api.service';
 import { toLocalDateStr } from '../../utils/date';
 
@@ -21,20 +21,44 @@ interface CalendarDay {
   isCurrentMonth: boolean;
   isToday: boolean;
   events: CalendarEvent[];
+  communityColors: string[];
 }
 
+interface YearMonthGroup {
+  month: number;
+  label: string;
+  events: CalendarEvent[];
+}
+
+interface YearCommunityColumn {
+  id: string;
+  name: string;
+  color: string;
+  months: YearMonthGroup[];
+}
+
+type ViewMode = 'month' | 'year';
+
+const SKF_COLOR = '#f5bf24'; // gold
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const VIEW_TABS: { key: string; label: string }[] = [
+  { key: 'month', label: 'Month' },
+  { key: 'year', label: 'Year' },
+];
 
 @Component({
   selector: 'app-calendar',
-  imports: [NgClass, RouterLink, AlertComponent, BadgeComponent, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent],
+  imports: [FormsModule, RouterLink, AlertComponent, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
+
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
 })
-export class CalendarComponent {
+export class CalendarComponent implements OnInit {
   private readonly calendarApi = inject(CalendarApiService);
 
   readonly weekDays = WEEK_DAYS;
+  readonly viewTabs = VIEW_TABS;
+  readonly viewMode = signal<ViewMode>('month');
   readonly currentYear = signal(new Date().getFullYear());
   readonly currentMonth = signal(new Date().getMonth() + 1); // 1-based
   readonly events = signal<CalendarEvent[]>([]);
@@ -42,17 +66,35 @@ export class CalendarComponent {
   readonly selectedDay = signal<number | null>(null);
   readonly errorMessage = signal('');
 
+  // Year view state
+  readonly yearEvents = signal<CalendarEvent[]>([]);
+  readonly yearLoading = signal(false);
+  readonly yearError = signal('');
+
+  // Filters
+  readonly communities = signal<Community[]>([]);
+  readonly selectedCommunityIds = signal<Set<string>>(new Set());
+  readonly filtersOpen = signal(false);
+  readonly selectedSimulator = signal<string | null>(null);
+  readonly selectedCarClass = signal<string | null>(null);
+
   readonly monthLabel = computed(() => {
     const d = new Date(this.currentYear(), this.currentMonth() - 1, 1);
     return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
   });
 
+  // Filtered events for month view
+  readonly filteredEvents = computed(() => this.applyFilters(this.events()));
+
+  // Filtered events for year view
+  readonly filteredYearEvents = computed(() => this.applyFilters(this.yearEvents()));
+
   readonly scheduledEvents = computed(() =>
-    this.events().filter((e) => e.startDate || e.endDate || e.races.some((r) => r.date)),
+    this.filteredEvents().filter((e) => e.startDate || e.endDate || e.races.some((r) => r.date)),
   );
 
   readonly unscheduledEvents = computed(() =>
-    this.events().filter((e) => !e.startDate && !e.endDate && !e.races.some((r) => r.date)),
+    this.filteredEvents().filter((e) => !e.startDate && !e.endDate && !e.races.some((r) => r.date)),
   );
 
   readonly calendarGrid = computed<CalendarDay[][]>(() => {
@@ -64,7 +106,7 @@ export class CalendarComponent {
     if (day === null) return [];
     const year = this.currentYear();
     const month = this.currentMonth();
-    return this.events().filter((e) => this.eventFallsOnDay(e, year, month, day));
+    return this.filteredEvents().filter((e) => this.eventFallsOnDay(e, year, month, day));
   });
 
   readonly selectedDayLabel = computed(() => {
@@ -79,7 +121,70 @@ export class CalendarComponent {
     });
   });
 
-  constructor() {
+  readonly yearLabel = computed(() => String(this.currentYear()));
+
+  readonly yearEventsByMonth = computed<YearMonthGroup[]>(() => {
+    const events = this.filteredYearEvents();
+    const year = this.currentYear();
+    const groups: YearMonthGroup[] = [];
+
+    for (let m = 1; m <= 12; m++) {
+      const monthEvents = events.filter((e) => this.eventFallsInMonth(e, year, m));
+      if (monthEvents.length === 0) continue;
+      const label = new Date(year, m - 1, 1).toLocaleString('en-US', { month: 'long' });
+      groups.push({ month: m, label, events: monthEvents });
+    }
+    return groups;
+  });
+
+  readonly yearCommunityColumns = computed<YearCommunityColumn[]>(() => {
+    const events = this.filteredYearEvents();
+    const year = this.currentYear();
+    const communities = this.communities();
+
+    // Build community map: SKF first, then custom communities
+    const columnDefs: { id: string; name: string; color: string }[] = [
+      { id: 'skf', name: 'SKF', color: SKF_COLOR },
+      ...communities.map((c) => ({ id: c.id, name: c.name, color: c.color ?? SKF_COLOR })),
+    ];
+
+    const columns: YearCommunityColumn[] = [];
+
+    for (const def of columnDefs) {
+      const communityEvents = events.filter((e) =>
+        def.id === 'skf' ? !e.communityId : e.communityId === def.id,
+      );
+      if (communityEvents.length === 0) continue;
+
+      const months: YearMonthGroup[] = [];
+      for (let m = 1; m <= 12; m++) {
+        const monthEvents = communityEvents.filter((e) => this.eventFallsInMonth(e, year, m));
+        if (monthEvents.length === 0) continue;
+        const label = new Date(year, m - 1, 1).toLocaleString('en-US', { month: 'short' });
+        months.push({ month: m, label, events: monthEvents });
+      }
+
+      columns.push({ id: def.id, name: def.name, color: def.color, months });
+    }
+
+    return columns;
+  });
+
+
+  readonly availableSimulators = computed(() => {
+    const all = this.viewMode() === 'year' ? this.yearEvents() : this.events();
+    const sims = new Set(all.map((e) => e.game).filter(Boolean));
+    return [...sims].sort();
+  });
+
+  readonly availableCarClasses = computed(() => {
+    const all = this.viewMode() === 'year' ? this.yearEvents() : this.events();
+    const classes = new Set(all.map((e) => e.carClass).filter((c): c is string => !!c));
+    return [...classes].sort();
+  });
+
+  ngOnInit(): void {
+    this.loadCommunities();
     this.loadEvents();
   }
 
@@ -111,8 +216,29 @@ export class CalendarComponent {
     this.selectedDay.set(this.selectedDay() === day ? null : day);
   }
 
-  getEventTypeLabel(type: CalendarEventType): string {
-    return type.charAt(0).toUpperCase() + type.slice(1);
+  setViewMode(mode: string): void {
+    this.viewMode.set(mode as ViewMode);
+    if (mode === 'year') {
+      this.loadYearEvents();
+    }
+  }
+
+  navigateYear(delta: number): void {
+    this.currentYear.set(this.currentYear() + delta);
+    if (this.viewMode() === 'year') {
+      this.loadYearEvents();
+    } else {
+      this.loadEvents();
+    }
+  }
+
+  sortedRaces(races: CalendarEvent['races']): CalendarEvent['races'] {
+    return [...races].sort((a, b) => {
+      if (!a.date && !b.date) return 0;
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    });
   }
 
   formatRaceDate(isoDate: string): string {
@@ -133,7 +259,70 @@ export class CalendarComponent {
     return filtered.length > 0 ? filtered : event.races;
   }
 
+  // ── Filter methods ──
+
+  toggleCommunity(id: string | null): void {
+    if (id === null) {
+      // "All" — clear selection
+      this.selectedCommunityIds.set(new Set());
+      return;
+    }
+    const current = new Set(this.selectedCommunityIds());
+    if (current.has(id)) {
+      current.delete(id);
+    } else {
+      current.add(id);
+    }
+    this.selectedCommunityIds.set(current);
+  }
+
+  isCommunitySelected(id: string): boolean {
+    return this.selectedCommunityIds().has(id);
+  }
+
+  toggleFilters(): void {
+    this.filtersOpen.update((v) => !v);
+  }
+
+  clearFilters(): void {
+    this.selectedSimulator.set(null);
+    this.selectedCarClass.set(null);
+  }
+
+  hasActiveFilters(): boolean {
+    return this.selectedSimulator() !== null || this.selectedCarClass() !== null;
+  }
+
+
+  getCommunityColor(event: CalendarEvent): string {
+    return event.communityColor ?? SKF_COLOR;
+  }
+
   // ── Private ──
+
+  private async loadCommunities(): Promise<void> {
+    try {
+      const data = await firstValueFrom(this.calendarApi.getCommunities());
+      this.communities.set(data);
+    } catch {
+      // Communities are non-critical; calendar still works without them
+    }
+  }
+
+  private async loadYearEvents(): Promise<void> {
+    this.yearLoading.set(true);
+    this.yearError.set('');
+    try {
+      const data = await firstValueFrom(
+        this.calendarApi.getYearEvents(this.currentYear()),
+      );
+      this.yearEvents.set(data);
+    } catch {
+      this.yearError.set('Failed to load calendar events.');
+    } finally {
+      this.yearLoading.set(false);
+    }
+  }
 
   private async loadEvents(): Promise<void> {
     this.loading.set(true);
@@ -148,6 +337,54 @@ export class CalendarComponent {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  tileBackground(day: CalendarDay): string | null {
+    if (day.communityColors.length === 0) return null;
+
+    const opacity = 0.35;
+    if (day.communityColors.length === 1) {
+      return this.hexToRgba(day.communityColors[0], opacity);
+    }
+
+    // Multiple communities: vertical stripes
+    const stops: string[] = [];
+    const step = 100 / day.communityColors.length;
+    for (let i = 0; i < day.communityColors.length; i++) {
+      const color = this.hexToRgba(day.communityColors[i], opacity);
+      stops.push(`${color} ${step * i}%`, `${color} ${step * (i + 1)}%`);
+    }
+    return `linear-gradient(to right, ${stops.join(', ')})`;
+  }
+
+  private hexToRgba(hex: string, alpha: number): string {
+    const h = hex.replace('#', '');
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  private applyFilters(events: CalendarEvent[]): CalendarEvent[] {
+    const communityIds = this.selectedCommunityIds();
+    const simulator = this.selectedSimulator();
+    const carClass = this.selectedCarClass();
+
+    return events.filter((e) => {
+      // Community filter
+      if (communityIds.size > 0) {
+        const eventCommunityKey = e.communityId ?? 'skf';
+        if (!communityIds.has(eventCommunityKey)) return false;
+      }
+
+      // Simulator filter
+      if (simulator && e.game !== simulator) return false;
+
+      // Car class filter
+      if (carClass && e.carClass !== carClass) return false;
+
+      return true;
+    });
   }
 
   private buildGrid(year: number, month: number, events: CalendarEvent[]): CalendarDay[][] {
@@ -172,16 +409,24 @@ export class CalendarComponent {
         isCurrentMonth: false,
         isToday: false,
         events: [],
+        communityColors: [],
       });
     }
 
     // Current month days
     for (let d = 1; d <= daysInMonth; d++) {
+      const dayEvents = events.filter((e) => this.eventFallsOnDay(e, year, month, d));
+      // Collect unique community colors for this day
+      const colorSet = new Set<string>();
+      for (const e of dayEvents) {
+        colorSet.add(e.communityColor ?? SKF_COLOR);
+      }
       cells.push({
         dayNumber: d,
         isCurrentMonth: true,
         isToday: isCurrentMonthToday && today.getDate() === d,
-        events: events.filter((e) => this.eventFallsOnDay(e, year, month, d)),
+        events: dayEvents,
+        communityColors: [...colorSet],
       });
     }
 
@@ -194,6 +439,7 @@ export class CalendarComponent {
           isCurrentMonth: false,
           isToday: false,
           events: [],
+          communityColors: [],
         });
       }
     }
@@ -226,6 +472,29 @@ export class CalendarComponent {
       if (event.startDate && toLocalDateStr(event.startDate) === dayStr) return true;
       if (event.endDate && toLocalDateStr(event.endDate) === dayStr) return true;
     }
+
+    return false;
+  }
+
+  private eventFallsInMonth(event: CalendarEvent, year: number, month: number): boolean {
+    const prefix = `${year}-${String(month).padStart(2, '0')}`;
+
+    for (const race of event.races) {
+      if (race.date && toLocalDateStr(race.date).startsWith(prefix)) {
+        return true;
+      }
+    }
+
+    // Check start/end date range overlap with month
+    const monthStart = new Date(year, month - 1, 1);
+    const monthEnd = new Date(year, month, 0, 23, 59, 59);
+
+    const start = event.startDate ? new Date(event.startDate) : null;
+    const end = event.endDate ? new Date(event.endDate) : null;
+
+    if (start && end) return start <= monthEnd && end >= monthStart;
+    if (start) return start >= monthStart && start <= monthEnd;
+    if (end) return end >= monthStart && end <= monthEnd;
 
     return false;
   }

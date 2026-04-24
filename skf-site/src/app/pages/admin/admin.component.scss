@@ -20,9 +20,9 @@
 }
 
 .meta {
-  font-size: 0.8rem;
+  font-size: var(--text-base);
   text-transform: uppercase;
-  letter-spacing: 0.18em;
+  letter-spacing: var(--tracking-widest);
   color: var(--muted);
 }
 
@@ -76,15 +76,15 @@
 
 .user-row h3 {
   margin: 0 0 0.15rem;
-  font-size: 1rem;
-  letter-spacing: 0.04em;
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tight);
   text-transform: uppercase;
 }
 
 .user-meta {
   margin: 0;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: var(--text-base);
 }
 
 .user-controls {
@@ -100,7 +100,7 @@
 
 .control-group select {
   padding: 0.4rem 0.65rem;
-  font-size: 0.8rem;
+  font-size: var(--text-base);
   border-radius: 10px;
   text-transform: capitalize;
 }
@@ -118,16 +118,16 @@
   color: var(--danger);
   padding: 0.15rem 0.55rem;
   border-radius: 6px;
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--tracking-wide);
 }
 
 .last-login {
   grid-column: 1 / -1;
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--muted);
 }
 
@@ -140,15 +140,15 @@
 
 .section-title {
   margin: 0 0 0.4rem;
-  font-size: 1rem;
-  letter-spacing: 0.04em;
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tight);
   text-transform: uppercase;
 }
 
 .section-description {
   margin: 0 0 1rem;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-md);
   line-height: 1.5;
 }
 
@@ -159,7 +159,7 @@
 }
 
 .cache-message {
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   color: var(--muted);
 }
 

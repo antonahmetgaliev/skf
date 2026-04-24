@@ -13,6 +13,9 @@ import { SkfHistoryComponent } from './pages/skf-history/skf-history.component';
 import { CalendarComponent } from './pages/calendar/calendar.component';
 import { MediaComponent } from './pages/media/media.component';
 import { RegulationsComponent } from './pages/regulations/regulations.component';
+import { RegulationsIracingLeagueComponent } from './pages/regulations/iracing-league/iracing-league.component';
+import { RegulationsNightfallGteComponent } from './pages/regulations/nightfall-gte/nightfall-gte.component';
+import { RegulationsThunderTrucksComponent } from './pages/regulations/thunder-trucks/thunder-trucks.component';
 
 export const appRoutes: Routes = [
   { path: '', component: HomeVisitComponent, title: 'Home | SKF Racing Hub' },
@@ -24,7 +27,10 @@ export const appRoutes: Routes = [
   { path: 'skf-history', component: SkfHistoryComponent, title: 'SKF History | SKF Racing Hub' },
   { path: 'race-results', component: RaceResultsComponent, title: 'Race Results | SKF Racing Hub' },
   { path: 'calendar', component: CalendarComponent, title: 'Calendar | SKF Racing Hub' },
-  { path: 'regulations', component: RegulationsComponent, title: 'Regulations | SKF Racing Hub' },
+  { path: 'regulations', component: RegulationsComponent, title: 'General Regulations | SKF Racing Hub' },
+  { path: 'regulations/iracing-league', component: RegulationsIracingLeagueComponent, title: 'SKF iRacing League Regulations | SKF Racing Hub' },
+  { path: 'regulations/nightfall-gte', component: RegulationsNightfallGteComponent, title: 'SKF Nightfall GTE Championship Regulations | SKF Racing Hub' },
+  { path: 'regulations/thunder-trucks', component: RegulationsThunderTrucksComponent, title: 'SKF Thunder Truck Series Regulations | SKF Racing Hub' },
   { path: 'media', component: MediaComponent, title: 'Media | SKF Racing Hub' },
   { path: 'profile', component: ProfileComponent, title: 'Profile | SKF Racing Hub' },
   { path: 'drivers', component: DriversListComponent, title: 'Drivers | SKF Racing Hub' },

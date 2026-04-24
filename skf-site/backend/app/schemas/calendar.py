@@ -20,6 +20,50 @@ class CalendarEventType(str, Enum):
     FUTURE = "future"
 
 
+# ── Community CRUD schemas ───────────────────────────────────────────────────
+
+class CommunityCreate(CamelModel):
+    name: str = Field(min_length=1, max_length=200)
+    color: str | None = Field(default=None, max_length=20)
+    discord_url: str | None = Field(default=None, max_length=500)
+
+
+class CommunityUpdate(CamelModel):
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    color: str | None = Field(default=None, max_length=20)
+    discord_url: str | None = Field(default=None, max_length=500)
+    is_visible: bool | None = None
+
+
+class CommunityOut(CamelModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    color: str | None
+    discord_url: str | None
+    is_visible: bool
+    created_at: datetime
+
+
+# ── Game CRUD schemas ────────────────────────────────────────────────────────
+
+class GameCreate(CamelModel):
+    name: str = Field(min_length=1, max_length=100)
+
+
+class GameUpdate(CamelModel):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+
+
+class GameOut(CamelModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    created_at: datetime
+
+
 # ── Custom race CRUD schemas ────────────────────────────────────────────────
 
 class CustomRaceCreate(CamelModel):
@@ -50,6 +94,8 @@ class CustomChampionshipCreate(CamelModel):
     game: str = Field(min_length=1, max_length=100)
     car_class: str | None = Field(default=None, max_length=100)
     description: str | None = None
+    community_id: uuid.UUID | None = None
+    game_id: uuid.UUID | None = None
     races: list[CustomRaceCreate] = []
 
 
@@ -59,6 +105,8 @@ class CustomChampionshipUpdate(CamelModel):
     car_class: str | None = Field(default=None, max_length=100)
     description: str | None = None
     is_visible: bool | None = None
+    community_id: uuid.UUID | None = None
+    game_id: uuid.UUID | None = None
 
 
 class CustomChampionshipOut(CamelModel):
@@ -72,6 +120,9 @@ class CustomChampionshipOut(CamelModel):
     is_visible: bool
     races: list[CustomRaceOut]
     created_by_user_id: uuid.UUID | None
+    community_id: uuid.UUID | None
+    game_id: uuid.UUID | None
+    game_name: str | None = None
     created_at: datetime
 
 
@@ -98,4 +149,7 @@ class CalendarEvent(CamelModel):
     image: str | None = None
     simgrid_championship_id: int | None = None
     custom_championship_id: str | None = None
+    community_id: str | None = None
+    community_name: str | None = None
+    community_color: str | None = None
     races: list[CalendarRace] = []

@@ -9,14 +9,11 @@ import {
   StandingEntry,
   StandingRace,
 } from './simgrid-api.service';
-import { CustomChampionshipOut } from './calendar-api.service';
 
 export interface ChampionshipEntry {
-  key: string; // unique: 'sg-123' or 'custom-uuid'
-  source: 'simgrid' | 'custom';
+  key: string; // 'sg-123'
   name: string;
-  simgridItem?: ChampionshipListItem;
-  customItem?: CustomChampionshipOut;
+  simgridItem: ChampionshipListItem;
 }
 
 export interface RaceResultRow {
@@ -52,8 +49,7 @@ export class ChampionshipService {
   }
 
   getStatusOrder(entry: ChampionshipEntry): number {
-    if (entry.source === 'custom') return -1;
-    const item = entry.simgridItem!;
+    const item = entry.simgridItem;
     const today = new Date().toISOString().slice(0, 10);
     if (item.startDate && item.startDate.slice(0, 10) > today) return 1;
     if (item.eventCompleted) return 3;
@@ -64,7 +60,6 @@ export class ChampionshipService {
   }
 
   getStatusClass(entry: ChampionshipEntry): string {
-    if (entry.source === 'custom') return 'championship--custom';
     const order = this.getStatusOrder(entry);
     if (order === 0) return 'championship--active';
     if (order === 1) return 'championship--future';
@@ -72,8 +67,7 @@ export class ChampionshipService {
     return '';
   }
 
-  getStatusLabel(entry: ChampionshipEntry, isAdmin: boolean): string | null {
-    if (entry.source === 'custom') return isAdmin ? 'Custom' : null;
+  getStatusLabel(entry: ChampionshipEntry): string | null {
     const order = this.getStatusOrder(entry);
     if (order === 0) return 'Active';
     if (order === 1) return 'Upcoming';
@@ -149,8 +143,14 @@ export class ChampionshipService {
     return race.ended || race.resultsAvailable ? 'completed' : 'upcoming';
   }
 
-  hasRaceResults(race: ChampionshipRace, races: StandingRace[]): boolean {
-    return races.some((r) => r.id === race.id);
+  hasRaceResults(race: ChampionshipRace, races: StandingRace[], standings: StandingEntry[]): boolean {
+    if (!races.some((r) => r.id === race.id)) return false;
+    const raceIndex = races.findIndex((r) => r.id === race.id);
+    return standings.some((e) =>
+      e.raceResults.some(
+        (rr) => (rr.raceId !== null && rr.raceId === race.id) || rr.raceIndex === raceIndex,
+      ),
+    );
   }
 
   getRaceLabel(index: number): string {

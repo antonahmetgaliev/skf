@@ -112,7 +112,9 @@ async def get_races(championship_id: int):
     """Return all races for a championship (including future ones)."""
     try:
         items = await simgrid_service.get_races(championship_id)
-        return [ChampionshipRace(**r) for r in items]
+        races = [ChampionshipRace(**r) for r in items]
+        races.sort(key=lambda r: r.starts_at or "")
+        return races
     except Exception:
         logger.warning("Failed to fetch races for championship %s", championship_id, exc_info=True)
         raise HTTPException(

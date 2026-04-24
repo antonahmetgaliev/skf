@@ -23,16 +23,16 @@
 h2 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1rem;
-  letter-spacing: 0.16em;
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
 }
 
 .section-title {
   margin: 0 0 0.45rem;
   font-family: var(--font-display);
-  font-size: 0.9rem;
-  letter-spacing: 0.14em;
+  font-size: var(--text-lg);
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
 }
 
@@ -84,16 +84,6 @@ h2 {
   }
 }
 
-.championship-button.championship--custom {
-  border-color: rgba(168, 130, 50, 0.45);
-  border-style: dashed;
-
-  .championship-status-tag {
-    background: rgba(168, 130, 50, 0.15);
-    color: #a88232;
-  }
-}
-
 .championship-button.championship--finished {
   opacity: 0.45;
 
@@ -114,16 +104,16 @@ h2 {
 }
 
 .championship-id {
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--muted);
 }
 
 .championship-status-tag {
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-normal);
   text-transform: uppercase;
   padding: 0.1rem 0.4rem;
   border-radius: 999px;
@@ -171,7 +161,7 @@ h2 {
 .meta {
   margin: 0.2rem 0 0;
   color: var(--muted);
-  font-size: 0.84rem;
+  font-size: var(--text-base);
 }
 
 .table-wrap {
@@ -192,14 +182,14 @@ td {
   padding: 0.55rem 0.65rem;
   text-align: left;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 0.84rem;
+  font-size: var(--text-base);
 }
 
 th {
   font-family: var(--font-display);
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   color: var(--ink-soft);
   background: rgba(243, 180, 25, 0.1);
 }
@@ -296,9 +286,9 @@ tbody tr:hover {
 
 .race-round {
   font-family: var(--font-display);
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-normal);
   color: var(--gold-deep);
   min-width: 2.2rem;
 }
@@ -311,12 +301,12 @@ tbody tr:hover {
 
 .race-card-name {
   font-weight: 600;
-  font-size: 0.86rem;
+  font-size: var(--text-md);
   color: var(--ink);
 }
 
 .race-card-date {
-  font-size: 0.74rem;
+  font-size: var(--text-sm);
   color: var(--muted);
 }
 
@@ -328,7 +318,7 @@ tbody tr:hover {
 
 
 .race-expand-icon {
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   color: var(--muted);
   transition: transform 0.2s ease;
 
@@ -364,9 +354,9 @@ tbody tr:hover {
   padding: 0.3rem 0.75rem;
   background: rgba(40, 36, 30, 0.75);
   cursor: pointer;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--tracking-normal);
   text-transform: uppercase;
   transition: border-color 0.15s ease, background 0.15s ease;
   color: var(--ink-soft);
@@ -392,10 +382,10 @@ tbody tr:hover {
 .class-badge {
   display: inline-block;
   padding: 0.15em 0.5em;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-normal);
   border-radius: 4px;
   border: 1px solid var(--class-color, rgba(255, 255, 255, 0.2));
   color: var(--class-color, var(--ink-soft));
@@ -433,6 +423,48 @@ $class-palette: #f3b419, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
   .details-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .championship-banner {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .race-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .race-card-info {
+    width: 100%;
+  }
+
+  .race-card-status {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .class-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 0.25rem;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .class-tab {
+    flex-shrink: 0;
+  }
+
+  .details-actions {
+    flex-wrap: wrap;
   }
 }
 
@@ -480,8 +512,8 @@ $class-palette: #f3b419, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
 .export-modal-header h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 0.92rem;
-  letter-spacing: 0.12em;
+  font-size: var(--text-lg);
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
 }
 
@@ -523,9 +555,9 @@ $class-palette: #f3b419, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
   display: flex;
   align-items: center;
   gap: 0.4em;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--ink-soft);
 }
@@ -535,7 +567,7 @@ $class-palette: #f3b419, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
   padding: 0.3rem 0.45rem;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   font-weight: 600;
   text-align: center;
   background: var(--surface);
@@ -555,10 +587,10 @@ $class-palette: #f3b419, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
 
 .giveaway-count {
   margin: 0 0 0.55rem;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--muted);
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-normal);
 }
 
 .giveaway-random-row {
@@ -580,15 +612,15 @@ $class-palette: #f3b419, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
 }
 
 .giveaway-winner-label {
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   color: var(--gold-deep);
 }
 
 .giveaway-winner-name {
-  font-size: 1.05rem;
+  font-size: var(--text-xl);
   font-weight: 700;
   color: var(--ink);
 }
@@ -616,21 +648,21 @@ $class-palette: #f3b419, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
 
 .giveaway-rank {
   font-weight: 800;
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   color: var(--gold-deep);
   text-align: center;
 }
 
 .giveaway-name {
   font-weight: 600;
-  font-size: 0.84rem;
+  font-size: var(--text-base);
   color: var(--ink);
 }
 
 .giveaway-races {
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-normal);
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -649,8 +681,8 @@ $class-palette: #f3b419, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
   h4 {
     margin: 0;
     font-family: var(--font-display);
-    font-size: 0.82rem;
-    letter-spacing: 0.14em;
+    font-size: var(--text-base);
+    letter-spacing: var(--tracking-wider);
     text-transform: uppercase;
   }
 }
@@ -681,7 +713,7 @@ $class-palette: #f3b419, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 999px;
   padding: 0.35rem 0.85rem;
-  font-size: 0.74rem;
-  letter-spacing: 0.08em;
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-normal);
   text-transform: uppercase;
 }

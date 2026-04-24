@@ -6,24 +6,11 @@
   padding: 3rem 0;
 }
 
-.eyebrow {
-  margin: 0 0 0.15rem;
-  font-size: 0.68rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--gold-deep);
-
-  &.center {
-    text-align: center;
-  }
-}
-
 .section-title {
   text-align: center;
   font-family: var(--font-display);
-  font-size: clamp(1.3rem, 2.5vw, 2rem);
-  letter-spacing: 0.04em;
+  font-size: var(--heading-xl);
+  letter-spacing: var(--tracking-tight);
   text-transform: uppercase;
   color: var(--ink);
   margin: 0.5rem 0 2rem;
@@ -68,7 +55,7 @@
 }
 
 .broadcast-title {
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   font-weight: 700;
   color: var(--ink);
   margin: 0 0 0.3rem;
@@ -80,9 +67,9 @@
 }
 
 .broadcast-date {
-  font-size: 0.65rem;
+  font-size: var(--text-2xs);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-wide);
   color: var(--muted);
 }
 

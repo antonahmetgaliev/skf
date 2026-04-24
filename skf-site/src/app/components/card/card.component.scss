@@ -18,6 +18,13 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@media (max-width: 640px) {
+  :host {
+    padding: 1rem;
+    border-radius: 16px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   :host.animated {
     animation: none;

@@ -1,4 +1,4 @@
-"""Calendar router – CRUD for custom championships/races + merged calendar endpoint."""
+"""Calendar router – CRUD for communities, games, custom championships/races + merged calendar endpoint."""
 
 from __future__ import annotations
 
@@ -15,12 +15,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import require_admin
 from app.database import get_db
 from app.models.active_championship import ActiveChampionship
+from app.models.community import Community
 from app.models.custom_championship import CustomChampionship, CustomRace
 from app.models.user import User
 from app.schemas.calendar import (
     CalendarEvent,
     CalendarEventType,
     CalendarRace,
+    CommunityCreate,
+    CommunityOut,
+    CommunityUpdate,
     CustomChampionshipCreate,
     CustomChampionshipOut,
     CustomChampionshipUpdate,
@@ -86,19 +90,149 @@ async def _get_championship_or_404(
     return champ
 
 
+def _champ_to_out(champ: CustomChampionship) -> CustomChampionshipOut:
+    """Convert a CustomChampionship ORM object to output schema with game_name."""
+    data = CustomChampionshipOut.model_validate(champ)
+    if champ.game_rel is not None:
+        data.game_name = champ.game_rel.name
+    return data
+
+
+# ── Community CRUD ───────────────────────────────────────────────────────────
+
+
+@router.get("/communities", response_model=list[CommunityOut])
+async def list_communities(
+    db: AsyncSession = Depends(get_db),
+):
+    """Public endpoint – returns visible communities for calendar filters."""
+    result = await db.execute(
+        select(Community)
+        .where(Community.is_visible.is_(True))
+        .order_by(Community.name)
+    )
+    return result.scalars().all()
+
+
+@router.post(
+    "/communities",
+    response_model=CommunityOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_community(
+    body: CommunityCreate,
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    community = Community(
+        name=body.name.strip(),
+        color=body.color.strip() if body.color else None,
+        discord_url=body.discord_url.strip() if body.discord_url else None,
+    )
+    db.add(community)
+    await db.commit()
+    await db.refresh(community)
+    return community
+
+
+@router.patch("/communities/{community_id}", response_model=CommunityOut)
+async def update_community(
+    community_id: uuid.UUID,
+    body: CommunityUpdate,
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Community).where(Community.id == community_id)
+    )
+    community = result.scalar_one_or_none()
+    if community is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Community not found."
+        )
+    update_data = body.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        if isinstance(value, str):
+            value = value.strip()
+        setattr(community, field, value)
+    await db.commit()
+    await db.refresh(community)
+    return community
+
+
+@router.delete(
+    "/communities/{community_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_community(
+    community_id: uuid.UUID,
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Community).where(Community.id == community_id)
+    )
+    community = result.scalar_one_or_none()
+    if community is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Community not found."
+        )
+    await db.delete(community)
+    await db.commit()
+
+
+# ── Simulators & Car Classes (from SimGrid API) ─────────────────────────────
+
+
+@router.get("/simulators", response_model=list[str])
+async def list_simulators():
+    """Return simulator/game names from SimGrid."""
+    try:
+        games = await simgrid_service.get_games()
+        return sorted(
+            g["name"] for g in games if isinstance(g, dict) and g.get("name")
+        )
+    except Exception:
+        return []
+
+
+@router.get("/car-classes", response_model=list[str])
+async def list_car_classes(
+    game_id: int | None = Query(None, alias="gameId"),
+):
+    """Return car class names from SimGrid, optionally filtered by game."""
+    try:
+        classes = await simgrid_service.get_car_classes(game_id)
+        return sorted(
+            c["name"]
+            for c in classes
+            if isinstance(c, dict) and c.get("name") and c["name"] != "All"
+        )
+    except Exception:
+        return []
+
+
 # ── Merged calendar endpoint ─────────────────────────────────────────────────
 
 
 @router.get("/events", response_model=list[CalendarEvent])
 async def get_calendar_events(
     year: int = Query(..., ge=2020, le=2100),
-    month: int = Query(..., ge=1, le=12),
+    month: int | None = Query(None, ge=1, le=12),
     db: AsyncSession = Depends(get_db),
 ):
-    """Return merged SimGrid + custom championship events for the given month."""
-    _, days_in_month = monthrange(year, month)
-    month_start = datetime(year, month, 1, tzinfo=timezone.utc)
-    month_end = datetime(year, month, days_in_month, 23, 59, 59, tzinfo=timezone.utc)
+    """Return merged SimGrid + custom championship events for the given month (or full year).
+
+    Always includes all visible communities' championships alongside SKF events.
+    Filtering by community/game/class is done on the frontend.
+    """
+    if month is not None:
+        _, days_in_month = monthrange(year, month)
+        range_start = datetime(year, month, 1, tzinfo=timezone.utc)
+        range_end = datetime(year, month, days_in_month, 23, 59, 59, tzinfo=timezone.utc)
+    else:
+        range_start = datetime(year, 1, 1, tzinfo=timezone.utc)
+        range_end = datetime(year, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
 
     events: list[CalendarEvent] = []
 
@@ -196,7 +330,7 @@ async def get_calendar_events(
 
         # Dateless championships are included (unscheduled) — skip month filter
         has_any_date = start is not None or end is not None or any(r.date for r in races)
-        if has_any_date and not _overlaps_month(start, end, races, month_start, month_end):
+        if has_any_date and not _overlaps_month(start, end, races, range_start, range_end):
             continue
 
         detail = detail_caches.get(champ.id, {})
@@ -214,7 +348,7 @@ async def get_calendar_events(
             races=races,
         ))
 
-    # ── Custom championships ──
+    # ── Custom championships (SKF + all communities) ──
     custom_champs_result = await db.execute(
         select(CustomChampionship).where(CustomChampionship.is_visible.is_(True))
     )
@@ -233,15 +367,26 @@ async def get_calendar_events(
         ]
 
         # Check overlap
-        if not _overlaps_month(earliest, latest, custom_races, month_start, month_end):
+        if not _overlaps_month(earliest, latest, custom_races, range_start, range_end):
             # Still include if championship has no races with dates (show as dateless)
             if race_dates:
                 continue
 
+        # Resolve community metadata
+        community = champ.community
+        community_id = str(community.id) if community else None
+        community_name = community.name if community else None
+        community_color = community.color if community else None
+
+        # Use game name from Game relation if available, fall back to game string field
+        game_name = champ.game
+        if champ.game_rel is not None:
+            game_name = champ.game_rel.name
+
         events.append(CalendarEvent(
             id=str(champ.id),
             name=champ.name,
-            game=champ.game,
+            game=game_name,
             car_class=champ.car_class,
             description=champ.description,
             start_date=earliest.isoformat() if earliest else None,
@@ -249,6 +394,9 @@ async def get_calendar_events(
             event_type=CalendarEventType.FUTURE,
             source="custom",
             custom_championship_id=str(champ.id),
+            community_id=community_id,
+            community_name=community_name,
+            community_color=community_color,
             races=custom_races,
         ))
 
@@ -286,13 +434,15 @@ def _overlaps_month(
 
 @router.get("/custom-championships", response_model=list[CustomChampionshipOut])
 async def list_custom_championships(
+    community_id: uuid.UUID | None = Query(None, alias="communityId"),
     _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(CustomChampionship).order_by(CustomChampionship.created_at.desc())
-    )
-    return result.scalars().all()
+    query = select(CustomChampionship).order_by(CustomChampionship.created_at.desc())
+    if community_id is not None:
+        query = query.where(CustomChampionship.community_id == community_id)
+    result = await db.execute(query)
+    return [_champ_to_out(c) for c in result.scalars().all()]
 
 
 @router.post(
@@ -310,6 +460,8 @@ async def create_custom_championship(
         game=body.game.strip(),
         car_class=body.car_class.strip() if body.car_class else None,
         description=body.description,
+        community_id=body.community_id,
+        game_id=body.game_id,
         created_by_user_id=_.id,
     )
     for idx, race_data in enumerate(body.races):
@@ -323,7 +475,7 @@ async def create_custom_championship(
     db.add(champ)
     await db.commit()
     await db.refresh(champ)
-    return champ
+    return _champ_to_out(champ)
 
 
 @router.patch(
@@ -344,7 +496,7 @@ async def update_custom_championship(
         setattr(champ, field, value)
     await db.commit()
     await db.refresh(champ)
-    return champ
+    return _champ_to_out(champ)
 
 
 @router.delete(

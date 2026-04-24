@@ -10,10 +10,13 @@ import { TabsComponent } from '../../components/tabs/tabs.component';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService, AuthUser, ROLES, Role } from '../../services/auth.service';
+import { AdminCalendarTabComponent } from './admin-calendar-tab/admin-calendar-tab.component';
+
+type AdminTab = 'users' | 'site' | 'calendar';
 
 @Component({
   selector: 'app-admin',
-  imports: [FormsModule, DatePipe, BtnComponent, CardComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
+  imports: [FormsModule, DatePipe, AdminCalendarTabComponent, BtnComponent, CardComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',
 })
@@ -21,7 +24,7 @@ export class AdminComponent implements OnInit {
   readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
 
-  readonly activeTab = signal<'users' | 'site'>('users');
+  readonly activeTab = signal<AdminTab>('users');
   readonly users = signal<AuthUser[]>([]);
   readonly filter = signal('');
   readonly loading = signal(false);
@@ -32,7 +35,7 @@ export class AdminComponent implements OnInit {
     this.loadUsers();
   }
 
-  setActiveTab(tab: 'users' | 'site'): void {
+  setActiveTab(tab: AdminTab): void {
     this.activeTab.set(tab);
   }
 

@@ -1,0 +1,328 @@
+<app-page>
+  <app-page-intro
+    title="SKF iRacing League"
+    subtitle="Individual Regulations &mdash; 2026 Season 2. Ignition League &amp; Challenger League."
+  />
+
+  <!-- Section 1 -->
+  <app-card [animated]="true" class="reg-section" id="general-info">
+    <h2>1. General Information</h2>
+    <ol class="rules">
+      <li>This regulation may be amended or supplemented by the Responsible Officials, taking into account the wishes and comments of the drivers during breaks between championships.</li>
+      <li>No changes to the regulation are allowed during the championship. The SKF Racing Hub General Regulations apply, which every participant must read and comply with.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 2 -->
+  <app-card [animated]="true" class="reg-section" id="organization">
+    <h2>2. Championship Organization</h2>
+    <ol class="rules">
+      <li>The championship (hereinafter &mdash; the Championship) is held on the iRacing.com Race Simulation simulator (PC version) using the governing documents (Individual Regulations and Driving Rules). The panel of stewards consists of Arsen Petrosian and Andriy Vorona.</li>
+      <li>
+        The official championship announcement board is maintained:
+        <ul class="bullets">
+          <li>on the organizer&rsquo;s Discord;</li>
+          <li>on SKF Racing Hub social media.</li>
+        </ul>
+      </li>
+      <li>Current championship information is published on all official SKF Racing Hub resources.</li>
+      <li>All drivers and responsible persons must follow impartial reporting rules and must not distort race results.</li>
+      <li>Disputes are resolved through submission of protests.</li>
+      <li>Championship stewarding is conducted offline, with all incidents and protests reviewed.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 3 -->
+  <app-card [animated]="true" class="reg-section" id="league-division">
+    <h2>3. League Division</h2>
+    <ol class="rules">
+      <li>The championship is divided into two leagues: SKF iRacing Ignition League and SKF iRacing Challenger League.</li>
+      <li>
+        League assignment is based on iRacing iRating (ELO) with a threshold of 1700 iRating.
+        <ul class="bullets">
+          <li><strong>Ignition League</strong> &mdash; only drivers with iRating below 1700 are allowed. Organizers manually verify participants in the lower league. Drivers are not eligible to participate if their iRating exceeds 1700 at the time of registration, or if their iRating has exceeded 2000 at any point within the past 12 months.</li>
+          <li><strong>Challenger League</strong> &mdash; access to the server is granted to drivers with iRating of 1700 or higher and a license level not lower than B. This restriction is enforced technically on the iRacing server. Drivers who do not meet the requirements will not be able to connect to the server.</li>
+        </ul>
+      </li>
+    </ol>
+  </app-card>
+
+  <!-- Section 4 -->
+  <app-card [animated]="true" class="reg-section" id="prize-fund">
+    <h2>4. Prize Fund</h2>
+    <ol class="rules">
+      <li>The prize fund is provided by the championship partners &mdash; DE2UA.</li>
+      <li>The total prize fund for the SKF iRacing Ignition League is 192 USD.</li>
+      <li>The total prize fund for the SKF iRacing Challenger League is from 240 USD.</li>
+      <li>
+        The Ignition League prize fund will be distributed among the top 3 drivers in the individual standings:
+        <ul class="bullets">
+          <li>P1 &mdash; 80 USD (or equivalent to 5 individual tracks in the iRacing.com Race Simulation store)</li>
+          <li>P2 &mdash; 64 USD (or equivalent to 4 individual tracks)</li>
+          <li>P3 &mdash; 48 USD (or equivalent to 3 individual tracks)</li>
+        </ul>
+      </li>
+      <li>
+        The Challenger League prize fund will be distributed among the top drivers in the individual standings:
+        <div class="table-wrap">
+          <table class="reg-table">
+            <thead>
+              <tr>
+                <th>Position</th>
+                <th>GT3</th>
+                <th>Dallara P217</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>P1</td><td>20%</td><td>20%</td></tr>
+              <tr><td>P2</td><td>12.5%</td><td>12.5%</td></tr>
+              <tr><td>P3</td><td>7.5%</td><td>7.5%</td></tr>
+              <tr><td>P4</td><td>5%</td><td>5%</td></tr>
+              <tr><td>P5</td><td>5%</td><td>5%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </li>
+      <li>Percentages are calculated from the total prize pool.</li>
+      <li>The total prize fund of the championship may be increased through additional voluntary contributions from participants and other interested parties.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 5 -->
+  <app-card [animated]="true" class="reg-section" id="championship">
+    <h2>5. Championship</h2>
+    <ol class="rules">
+      <li>Each championship round is conducted according to the approved calendar in the individual standings.</li>
+      <li>The championship consists of five rounds.</li>
+      <li>Only the results of the four best rounds for each driver are counted in the final individual standings.</li>
+      <li>
+        The date and track for each round are specified in the calendar, which is prepared by the Organizer and published on the Organizer&rsquo;s Discord in the <code>#iracing-2026-calendar</code> channel and on social media.
+      </li>
+    </ol>
+
+    <h3>Calendar</h3>
+    <div class="table-wrap">
+      <table class="reg-table">
+        <thead>
+          <tr>
+            <th>Round</th>
+            <th>Date</th>
+            <th>Ignition League</th>
+            <th>Challenger League</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Round 1</td><td>21.04</td><td>Okayama International Circuit &mdash; Full Course</td><td>Long Beach Street Circuit</td></tr>
+          <tr><td>Round 2</td><td>28.04</td><td>Virginia International Raceway &mdash; North Course</td><td>Autodromo Internazionale Enzo e Dino Ferrari &mdash; Grand Prix</td></tr>
+          <tr><td>Round 3</td><td>05.05</td><td>Oulton Park Circuit &mdash; Fosters</td><td>WeatherTech Raceway at Laguna Seca &mdash; Full Course</td></tr>
+          <tr><td>Round 4</td><td>12.05</td><td>Oulton Park Circuit &mdash; International</td><td>Circuit de Spa-Francorchamps &mdash; Grand Prix Pits</td></tr>
+          <tr><td>Round 5</td><td>19.05</td><td>Circuit de L&eacute;denon</td><td>Road Atlanta &mdash; Full Course</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Race Rules &mdash; Ignition League</h3>
+    <ul class="bullets">
+      <li>Fast Repairs: 1</li>
+      <li>Setup: Fixed</li>
+      <li>DT Penalties: None</li>
+      <li>Disqualification: 17 incident points</li>
+      <li>Qualifying Scrutiny: Permissive</li>
+      <li>Assistants: Allow all driving aids</li>
+      <li>Start: Standing</li>
+    </ul>
+
+    <h3>Race Rules &mdash; Challenger League</h3>
+    <ul class="bullets">
+      <li>Fast Repairs: 1</li>
+      <li>Setup: Open</li>
+      <li>DT Penalties: 17 incident points</li>
+      <li>Disqualification: 25 incident points</li>
+      <li>Qualifying Scrutiny: Strict</li>
+      <li>Assistants: Disabled (but Clutch Assist OK)</li>
+      <li>Start: Rolling</li>
+    </ul>
+
+    <h3>Race Schedule &mdash; Ignition League</h3>
+    <ul class="bullets">
+      <li>18:00 CEST &mdash; Practice (45 min)</li>
+      <li>18:45 CEST &mdash; Qualifying (10 min | 3 laps)</li>
+      <li>18:55+ CEST &mdash; Race: Heat 1 (12 min) + Warmup (5 min) + Race 2 (20 min)</li>
+      <li>19:35+ CEST &mdash; Post-race wrap-up, interviews with winners and podium finishers</li>
+      <li>20:00+ CEST &mdash; Publication of preliminary results</li>
+      <li>21:30+ CEST &mdash; Protest window opens</li>
+    </ul>
+
+    <h4>Reverse Grid for Race 2</h4>
+    <ul class="bullets">
+      <li>10 drivers &rarr; top 5 reversed</li>
+      <li>15 drivers &rarr; top 10 reversed</li>
+      <li>20+ drivers &rarr; top 15 reversed</li>
+      <li>Remaining drivers start according to Heat 1 finish</li>
+    </ul>
+
+    <h3>Race Schedule &mdash; Challenger League</h3>
+    <ul class="bullets">
+      <li>18:00 CEST &mdash; Practice (120 min)</li>
+      <li>20:00 CEST &mdash; Qualifying (10 min | 3 laps)</li>
+      <li>20:10+ CEST &mdash; Race (45 min)</li>
+      <li>20:55+ CEST &mdash; Post-race wrap-up, interviews with winners and podium finishers</li>
+      <li>21:15+ CEST &mdash; Publication of preliminary results</li>
+      <li>21:30+ CEST &mdash; Protest window opens</li>
+    </ul>
+
+    <ol class="rules" start="5">
+      <li>Weather conditions during the race follow the official iRacing.com schedule.</li>
+      <li>Round dates and times may be changed by the Race Directorate, with participants notified at least 48 hours in advance.</li>
+      <li>Preliminary results are published on TheSimGrid.</li>
+      <li>Official results are published within 24 hours on TheSimGrid unless protests are submitted on website.</li>
+      <li>Protest window opens at 21:30 CET and lasts 24 hours. If protests occur, official results are published within 24 hours after the stewards&rsquo; decision.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 6 -->
+  <app-card [animated]="true" class="reg-section" id="participation">
+    <h2>6. Participation in the Championship</h2>
+    <ol class="rules">
+      <li>
+        Participants must meet the following requirements:
+        <ul class="bullets">
+          <li>Minimum age 16 (in special cases, age may be lowered after an interview and skill assessment)</li>
+          <li>Stable internet connection</li>
+          <li>Ownership of iRacing.com Race Simulation</li>
+          <li>Availability of the championship cars and tracks</li>
+          <li>Only steering wheels and gamepads are allowed as controls</li>
+        </ul>
+      </li>
+      <li>Using a keyboard to control the car is prohibited.</li>
+      <li>Maximum number of participants: 30 drivers for Ignition League and 60 drivers (20 Dallara P217 and 40 GT3) for Challenger League.</li>
+      <li>Drivers must use their real first and last names in Latin letters, matching their iRacing registration.</li>
+      <li>Registration and participation under multiple names are prohibited.</li>
+      <li>Participants are fully responsible for their actions, inactions, and the equipment used.</li>
+      <li>Drivers must follow all instructions from the Organizer during the championship.</li>
+      <li>Drivers may use driving assists allowed by the server settings and adjust them if permitted by the simulator.</li>
+      <li>Drivers have the right to submit protests.</li>
+      <li>In-game driver rating affects participation and is considered during registration.</li>
+      <li>A round officially starts when a driver reaches their starting position.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 7 -->
+  <app-card [animated]="true" class="reg-section" id="registration">
+    <h2>7. Driver Registration</h2>
+    <ol class="rules">
+      <li>Registration links are published on all SKF Racing Hub resources.</li>
+      <li>The list of championship participants is available in the corresponding section on TheSimGrid.</li>
+      <li>Drivers wishing to participate must fill out an application form. Applications are submitted via TheSimGrid.</li>
+      <li>Entry fee: 0 UAH (free of charge).</li>
+      <li>All participants must join the SKF Racing Hub Discord.</li>
+      <li>Driver registration closes at 17:00 CET on 21 April 2026.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 8 -->
+  <app-card [animated]="true" class="reg-section" id="cars">
+    <h2>8. Cars and Classes</h2>
+    <ol class="rules">
+      <li>The championship uses the Global Mazda MX-5 for the Ignition League and licensed GT3 cars and Dallara P217 for the Challenger League.</li>
+      <li>Drivers may use custom liveries, which can be changed during the championship, but changing the starting number is prohibited.</li>
+      <li>Drivers are responsible for the content of their custom liveries. In case of disputes or legal issues, the Organizer bears no responsibility.</li>
+      <li>Car change is allowed only under the condition that all previously earned points from earlier rounds are forfeited.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 9 -->
+  <app-card [animated]="true" class="reg-section" id="bop">
+    <h2>9. Balance of Performance</h2>
+    <ol class="rules">
+      <li>The championship uses Balance of Performance (BoP) according to the official schedule set by iRacing.com Race Simulation.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 10 -->
+  <app-card [animated]="true" class="reg-section" id="scoring">
+    <h2>10. Scoring</h2>
+    <ol class="rules">
+      <li>After each championship race, the following classification is established: individual driver standings.</li>
+      <li>
+        Drivers receive points in the individual standings according to their finishing position:
+        <div class="table-wrap">
+          <table class="reg-table">
+            <thead>
+              <tr>
+                <th>Position</th>
+                <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+                <th>6</th><th>7</th><th>8</th><th>9</th><th>10</th>
+                <th>11</th><th>12</th><th>13</th><th>14</th><th>15</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Points</th>
+                <td>25</td><td>20</td><td>16</td><td>13</td><td>11</td>
+                <td>10</td><td>9</td><td>8</td><td>7</td><td>6</td>
+                <td>5</td><td>4</td><td>3</td><td>2</td><td>1</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </li>
+      <li>Additional bonus points: Fastest lap in the race: +1 point.</li>
+      <li>Points are awarded after stewards check and approve all drivers&rsquo; results, including any penalties.</li>
+      <li>Drivers with DNF/DSQ (Did Not Finish / Disqualified) receive no points.</li>
+      <li>If two or more drivers have equal points, the driver with more first-place finishes ranks higher. If first-place finishes are equal, second places are considered, and so on.</li>
+      <li>If points and positions remain equal, the driver with the better qualifying result (starting from Round 1) ranks higher.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 11 -->
+  <app-card [animated]="true" class="reg-section" id="media">
+    <h2>11. Media</h2>
+    <ol class="rules">
+      <li>
+        Races will be broadcast on the official SKF Racing Hub YouTube channel:
+        <a class="discord-link" href="https://www.youtube.com/&#64;SKFRacingHub" target="_blank" rel="noopener">youtube.com/&#64;SKFRacingHub</a>
+      </li>
+      <li>
+        SKF Racing Hub social media:
+        <ul class="bullets">
+          <li>Discord: <a class="discord-link" href="https://discord.gg/XhNsUerTFp" target="_blank" rel="noopener">discord.gg/XhNsUerTFp</a></li>
+          <li>SimGrid: <a class="discord-link" href="https://thesimgrid.com/communities/skf-racing-hub" target="_blank" rel="noopener">thesimgrid.com/communities/skf-racing-hub</a></li>
+          <li>Twitter/X: <a class="discord-link" href="https://x.com/SKF_Racing_HUB" target="_blank" rel="noopener">x.com/SKF_Racing_HUB</a></li>
+          <li>Instagram: <a class="discord-link" href="https://instagram.com/skf.racing.hub" target="_blank" rel="noopener">instagram.com/skf.racing.hub</a></li>
+          <li>TikTok: <a class="discord-link" href="https://tiktok.com/&#64;skfracinghub" target="_blank" rel="noopener">tiktok.com/&#64;skfracinghub</a></li>
+          <li>Twitch: <a class="discord-link" href="https://twitch.tv/skf_racing_hub" target="_blank" rel="noopener">twitch.tv/skf_racing_hub</a></li>
+        </ul>
+      </li>
+      <li>After each race, podium finishers must participate in an interview with the commentator. Ignoring the post-race interview may result in a warning.</li>
+      <li>SKF Racing Hub reserves the right to use all photos and videos submitted by drivers for championship participation without time restrictions.</li>
+      <li>All media rights for covering the championship belong to SKF Racing Hub, including but not limited to TV broadcasting, recording, reproduction, marketing, sponsorship, and publication.</li>
+      <li>SKF Racing Hub is responsible for publishing information about partners and/or sponsors. Drivers may provide this information to the Organizer at any time during the championship, and it will be shared across SKF&rsquo;s media channels.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 12 -->
+  <app-card [animated]="true" class="reg-section" id="awards">
+    <h2>12. Championship Standings &amp; Awards</h2>
+    <ol class="rules">
+      <li>Championship positions are determined by the total points scored by drivers in their four best rounds.</li>
+      <li>If fewer than half of the rounds in the calendar are completed, the championship is considered invalid.</li>
+      <li>
+        Winners in the SKF iRacing Ignition League individual standings are awarded the following titles:
+        <ul class="bullets">
+          <li>1st place: &ldquo;Champion SKF iRacing Ignition League 2026 S2&rdquo;</li>
+          <li>2nd place: &ldquo;Silver Medalist SKF iRacing Ignition League 2026 S2&rdquo;</li>
+          <li>3rd place: &ldquo;Bronze Medalist SKF iRacing Ignition League 2026 S2&rdquo;</li>
+        </ul>
+      </li>
+      <li>
+        Winners in the SKF iRacing Challenger League individual standings are awarded the following titles:
+        <ul class="bullets">
+          <li>1st place: &ldquo;Champion SKF iRacing Challenger League 2026 S2&rdquo;</li>
+          <li>2nd place: &ldquo;Silver Medalist SKF iRacing Challenger League 2026 S2&rdquo;</li>
+          <li>3rd place: &ldquo;Bronze Medalist SKF iRacing Challenger League 2026 S2&rdquo;</li>
+        </ul>
+      </li>
+    </ol>
+  </app-card>
+</app-page>

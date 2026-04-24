@@ -1,0 +1,207 @@
+<!-- Communities section -->
+<app-card [animated]="true">
+  <h3 class="section-title">Communities</h3>
+  <p class="section-description">
+    Each community has its own championships that appear in the global calendar.
+  </p>
+
+  @if (communitiesLoading()) {
+    <app-spinner />
+  } @else {
+    <!-- Community form -->
+    <div class="community-form">
+      <app-form-field label="Name" fieldId="communityName">
+        <input
+          id="communityName"
+          type="text"
+          placeholder="Community name"
+          [ngModel]="communityForm().name"
+          (ngModelChange)="updateCommunityField('name', $event)"
+          autocomplete="off"
+        />
+      </app-form-field>
+      <app-form-field label="Color" fieldId="communityColor">
+        <input
+          id="communityColor"
+          type="color"
+          [ngModel]="communityForm().color"
+          (ngModelChange)="updateCommunityField('color', $event)"
+        />
+      </app-form-field>
+      <app-form-field label="Discord URL" fieldId="communityDiscord">
+        <input
+          id="communityDiscord"
+          type="url"
+          placeholder="https://discord.gg/..."
+          [ngModel]="communityForm().discordUrl"
+          (ngModelChange)="updateCommunityField('discordUrl', $event)"
+          autocomplete="off"
+        />
+      </app-form-field>
+      <div class="community-form-actions">
+        <app-btn variant="primary" size="sm" (click)="saveCommunity()">
+          {{ editingCommunityId() ? 'Update' : 'Add Community' }}
+        </app-btn>
+        @if (editingCommunityId()) {
+          <app-btn variant="ghost" size="sm" (click)="resetCommunityForm()">Cancel</app-btn>
+        }
+      </div>
+    </div>
+
+    <!-- Community list -->
+    <div class="community-list">
+      @for (c of communities(); track c.id) {
+        <article
+          class="community-row"
+          [class.selected]="selectedCommunity()?.id === c.id"
+        >
+          <div class="community-identity" (click)="selectCommunity(c)">
+            <span class="community-color-swatch" [style.background]="c.color"></span>
+            <div>
+              <h4 class="community-name">{{ c.name }}</h4>
+              @if (c.discordUrl) {
+                <a class="community-discord" [href]="c.discordUrl" target="_blank" (click)="$event.stopPropagation()">Discord</a>
+              }
+            </div>
+          </div>
+          <div class="action-buttons">
+            <app-btn variant="ghost" size="sm" (click)="editCommunity(c)">Edit</app-btn>
+            <app-btn variant="danger" size="sm" (click)="deleteCommunity(c)">Delete</app-btn>
+          </div>
+        </article>
+      }
+      @if (communities().length === 0) {
+        <p class="empty">No communities yet.</p>
+      }
+    </div>
+  }
+</app-card>
+
+<!-- Championships for selected community -->
+@if (selectedCommunity(); as community) {
+  <app-card [animated]="true">
+    <h3 class="section-title">
+      <span class="community-color-swatch" [style.background]="community.color"></span>
+      {{ community.name }} — Championships
+    </h3>
+
+    <!-- Championship form -->
+    <div class="champ-form">
+      <app-form-field label="Name" fieldId="champName">
+        <input
+          id="champName"
+          type="text"
+          placeholder="Championship name"
+          [ngModel]="champForm().name"
+          (ngModelChange)="updateChampField('name', $event)"
+          autocomplete="off"
+        />
+      </app-form-field>
+      <app-form-field label="Simulator" fieldId="champSimulator">
+        <select
+          id="champSimulator"
+          [ngModel]="champForm().game"
+          (ngModelChange)="updateChampField('game', $event)"
+        >
+          <option [ngValue]="''">— Select simulator —</option>
+          @for (sim of simulators(); track sim) {
+            <option [ngValue]="sim">{{ sim }}</option>
+          }
+        </select>
+      </app-form-field>
+      <app-form-field label="Car Class" fieldId="champCarClass">
+        <input
+          id="champCarClass"
+          type="text"
+          placeholder="e.g. GT3, LMP2"
+          [ngModel]="champForm().carClass"
+          (ngModelChange)="updateChampField('carClass', $event)"
+          autocomplete="off"
+        />
+      </app-form-field>
+      <app-form-field label="Description" fieldId="champDesc">
+        <input
+          id="champDesc"
+          type="text"
+          placeholder="Optional description"
+          [ngModel]="champForm().description"
+          (ngModelChange)="updateChampField('description', $event)"
+          autocomplete="off"
+        />
+      </app-form-field>
+      <div class="champ-form-actions">
+        <app-btn variant="primary" size="sm" (click)="saveChampionship()">
+          {{ editingChampId() ? 'Update' : 'Add Championship' }}
+        </app-btn>
+        @if (editingChampId()) {
+          <app-btn variant="ghost" size="sm" (click)="resetChampForm()">Cancel</app-btn>
+        }
+      </div>
+    </div>
+
+    @if (champsLoading()) {
+      <app-spinner />
+    } @else {
+      <!-- Championship list -->
+      @for (champ of communityChampionships(); track champ.id) {
+        <div class="champ-item">
+          <div class="champ-header">
+            <div>
+              <h4 class="champ-name">{{ champ.name }}</h4>
+              <p class="champ-meta">
+                {{ champ.game }}
+                @if (champ.carClass) { · {{ champ.carClass }} }
+              </p>
+            </div>
+            <div class="action-buttons">
+              <app-btn variant="ghost" size="sm" (click)="editChampionship(champ)">Edit</app-btn>
+              <app-btn variant="danger" size="sm" (click)="deleteChampionship(champ)">Delete</app-btn>
+            </div>
+          </div>
+
+          <!-- Races -->
+          <div class="race-list">
+            @for (race of champ.races; track race.id) {
+              <div class="race-row">
+                <span class="race-info">
+                  @if (race.track) { {{ race.track }} }
+                  @if (race.date) {
+                    <span class="race-date-text">{{ race.date | date:'mediumDate' }}</span>
+                  }
+                  @if (!race.track && !race.date) { Round {{ race.sortOrder + 1 }} }
+                </span>
+                <app-btn variant="danger" size="sm" (click)="deleteRace(champ, race.id)">x</app-btn>
+              </div>
+            }
+          </div>
+
+          <!-- Add race form -->
+          <div class="add-race-row">
+            <app-form-field label="Track" fieldId="raceTrack_{{ champ.id }}">
+              <input
+                id="raceTrack_{{ champ.id }}"
+                type="text"
+                placeholder="Track name"
+                [ngModel]="raceForm().track"
+                (ngModelChange)="updateRaceField('track', $event)"
+                autocomplete="off"
+              />
+            </app-form-field>
+            <app-form-field label="Date" fieldId="raceDate_{{ champ.id }}">
+              <input
+                id="raceDate_{{ champ.id }}"
+                type="datetime-local"
+                [ngModel]="raceForm().date"
+                (ngModelChange)="updateRaceField('date', $event)"
+              />
+            </app-form-field>
+            <app-btn variant="primary" size="sm" (click)="addRace(champ)">Add Race</app-btn>
+          </div>
+        </div>
+      }
+      @if (communityChampionships().length === 0) {
+        <p class="empty">No championships yet for this community.</p>
+      }
+    }
+  </app-card>
+}

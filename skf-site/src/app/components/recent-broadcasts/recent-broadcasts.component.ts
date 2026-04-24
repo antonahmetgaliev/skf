@@ -32,7 +32,7 @@ export class RecentBroadcastsComponent {
 
   private async loadStreams(): Promise<void> {
     try {
-      const data = await firstValueFrom(this.mediaApi.getLiveStreams(4));
+      const data = await firstValueFrom(this.mediaApi.getPastStreams(4));
       this.streams.set(data);
     } catch {
       // silently fail — section just won't show

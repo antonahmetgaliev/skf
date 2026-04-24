@@ -2,7 +2,7 @@
   <app-page-intro title="Admin" subtitle="Manage users and site settings." />
 
   <app-tabs
-    [tabs]="[{key: 'users', label: 'Users'}, {key: 'site', label: 'Site'}]"
+    [tabs]="[{key: 'users', label: 'Users'}, {key: 'site', label: 'Site'}, {key: 'calendar', label: 'Calendar'}]"
     [activeTab]="activeTab()"
     (tabChange)="setActiveTab($any($event))"
   />
@@ -113,5 +113,9 @@
         }
       </div>
     </app-card>
+  }
+
+  @if (activeTab() === 'calendar') {
+    <app-admin-calendar-tab />
   }
 </app-page>

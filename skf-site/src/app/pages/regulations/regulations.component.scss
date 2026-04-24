@@ -21,8 +21,8 @@ h2 {
   margin: 0 0 1rem;
   font-family: var(--font-display);
   text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  letter-spacing: var(--tracking-widest);
+  font-size: var(--heading-lg);
   color: var(--ink);
 }
 
@@ -30,8 +30,8 @@ h3 {
   margin: 1.25rem 0 0.6rem;
   font-family: var(--font-display);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+  letter-spacing: var(--tracking-wide);
+  font-size: var(--heading-md);
   color: var(--ink-soft);
 }
 
@@ -39,8 +39,8 @@ h4 {
   margin: 1rem 0 0.5rem;
   font-family: var(--font-display);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: clamp(0.85rem, 1.4vw, 0.95rem);
+  letter-spacing: var(--tracking-wide);
+  font-size: var(--heading-sm);
   color: var(--muted);
 }
 
@@ -53,7 +53,7 @@ h4 {
   gap: 0.5rem;
   line-height: 1.65;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: var(--text-lg);
 }
 
 .rules.sub {
@@ -83,7 +83,7 @@ h4 {
   gap: 0.35rem;
   line-height: 1.65;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: var(--text-lg);
 }
 
 .penalty-tiers li::marker,
@@ -94,8 +94,87 @@ h4 {
 .tier-intro {
   margin: 0 0 0.5rem;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: var(--text-lg);
   line-height: 1.65;
+}
+
+// ── Plain bullet lists ──────────────────────────────────────────
+
+.bullets {
+  list-style: disc;
+  margin: 0.5rem 0 0;
+  padding-left: 1.4rem;
+  display: grid;
+  gap: 0.35rem;
+  line-height: 1.65;
+  color: var(--muted);
+  font-size: var(--text-lg);
+}
+
+.bullets li::marker {
+  color: var(--gold);
+}
+
+// ── Reg tables (calendars, scoring, prizes) ─────────────────────
+
+.table-wrap {
+  overflow-x: auto;
+  margin: 0.75rem 0 0.25rem;
+  border: 1px solid var(--card-border, rgba(243, 180, 25, 0.25));
+  border-radius: 10px;
+}
+
+.reg-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-lg);
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.02);
+
+  th,
+  td {
+    padding: 0.55rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(243, 180, 25, 0.15);
+    white-space: nowrap;
+  }
+
+  th {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    font-size: var(--text-sm);
+    color: var(--gold);
+    background: rgba(243, 180, 25, 0.08);
+  }
+
+  tbody th {
+    background: rgba(243, 180, 25, 0.05);
+    color: var(--ink-soft);
+  }
+
+  tbody tr:last-child th,
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.reg-table.compact {
+  font-size: var(--text-base);
+
+  th,
+  td {
+    padding: 0.35rem 0.5rem;
+  }
+}
+
+code {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+  background: rgba(243, 180, 25, 0.1);
+  color: var(--gold);
+  padding: 0 0.3rem;
+  border-radius: 4px;
+  font-size: 0.85em;
 }
 
 // ── Discord Link ─────────────────────────────────────────────────
@@ -137,4 +216,3 @@ h4 {
     padding-left: 1.2rem;
   }
 }
-

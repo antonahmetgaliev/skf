@@ -5,9 +5,9 @@
 
 .form-field__label {
   display: block;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--ink-soft);
   margin-bottom: 0.3rem;
@@ -15,7 +15,7 @@
 
 .form-field__error {
   margin: 0.25rem 0 0;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   color: var(--danger);
   font-weight: 600;
 }
@@ -32,7 +32,7 @@
     border: 1px solid var(--border-subtle);
     background: var(--surface);
     color: var(--ink);
-    font-size: 0.875rem;
+    font-size: var(--text-md);
     font-family: inherit;
     box-sizing: border-box;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;

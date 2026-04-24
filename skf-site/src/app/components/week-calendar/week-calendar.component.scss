@@ -6,24 +6,11 @@
   padding: 2rem 0 3rem;
 }
 
-.eyebrow {
-  margin: 0 0 0.15rem;
-  font-size: 0.68rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--gold-deep);
-
-  &.center {
-    text-align: center;
-  }
-}
-
 .section-title {
   text-align: center;
   font-family: var(--font-display);
-  font-size: clamp(1.3rem, 2.5vw, 2rem);
-  letter-spacing: 0.04em;
+  font-size: var(--heading-xl);
+  letter-spacing: var(--tracking-tight);
   text-transform: uppercase;
   color: var(--ink);
   margin: 0.5rem 0 2rem;
@@ -38,12 +25,20 @@
 /* ── Grid layout ── */
 .schedule-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 3fr 2fr;
   gap: 1rem;
 
-  &.champs-only {
-    grid-template-columns: 1fr 1fr;
+  &.no-today {
+    grid-template-columns: 1fr;
+    max-width: 700px;
+    margin-inline: auto;
   }
+}
+
+.sidebar-panels {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 /* ── Panels ── */
@@ -60,9 +55,9 @@
   align-items: center;
   gap: 0.5rem;
   font-family: var(--font-display);
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: 1rem;
@@ -93,6 +88,12 @@
   );
 }
 
+.today-races-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+
 .race-card--today {
   text-align: center;
   padding: 1.5rem 1rem;
@@ -102,14 +103,13 @@
     rgba(243, 180, 25, 0.06) 0%,
     transparent 100%
   );
-  margin-bottom: 0.75rem;
 }
 
 .race-badge {
   display: inline-block;
-  font-size: 0.62rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
   color: var(--text-on-gold);
   background: linear-gradient(135deg, var(--gold), var(--gold-deep));
@@ -120,21 +120,21 @@
 
 .race-name {
   font-family: var(--font-display);
-  font-size: 1.4rem;
-  letter-spacing: 0.04em;
+  font-size: var(--heading-xl);
+  letter-spacing: var(--tracking-tight);
   text-transform: uppercase;
   color: var(--ink);
   margin: 0 0 0.3rem;
 }
 
 .race-track {
-  font-size: 0.88rem;
+  font-size: var(--text-md);
   color: var(--muted);
   margin: 0 0 0.15rem;
 }
 
 .race-time {
-  font-size: 0.85rem;
+  font-size: var(--text-md);
   font-weight: 600;
   color: var(--gold-deep);
   margin: 0;
@@ -142,9 +142,9 @@
 
 /* ── Today broadcasts ── */
 .sub-label {
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--muted);
   margin: 0 0 0.6rem;
@@ -154,6 +154,12 @@
   margin-top: 0.5rem;
   padding-top: 0.75rem;
   border-top: 1px dashed var(--separator);
+}
+
+.broadcasts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.35rem;
 }
 
 .broadcast-item {
@@ -180,7 +186,7 @@
 }
 
 .broadcast-title {
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   font-weight: 500;
   color: var(--ink);
   display: -webkit-box;
@@ -221,14 +227,14 @@
 }
 
 .week-race-day {
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--tracking-normal);
   color: var(--gold-deep);
 }
 
 .week-race-time {
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 
@@ -240,7 +246,7 @@
 }
 
 .week-race-champ {
-  font-size: 0.88rem;
+  font-size: var(--text-md);
   font-weight: 600;
   color: var(--ink);
   white-space: nowrap;
@@ -249,7 +255,7 @@
 }
 
 .week-race-track {
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
@@ -296,7 +302,7 @@
 }
 
 .champ-name {
-  font-size: 0.88rem;
+  font-size: var(--text-md);
   font-weight: 600;
   color: var(--ink);
   white-space: nowrap;
@@ -305,7 +311,7 @@
 }
 
 .champ-meta {
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 
@@ -334,9 +340,9 @@
 }
 
 .progress-label {
-  font-size: 0.62rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-tight);
   color: var(--muted);
   white-space: nowrap;
 }
@@ -350,7 +356,7 @@
 }
 
 .champ-next {
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   color: var(--muted);
   white-space: nowrap;
 }
@@ -398,17 +404,17 @@
 }
 
 .next-race-countdown {
-  font-size: 0.65rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   color: var(--gold);
 }
 
 .next-race-name {
   font-family: var(--font-display);
-  font-size: 1rem;
-  letter-spacing: 0.03em;
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tight);
   text-transform: uppercase;
   color: var(--ink);
   margin: 0;
@@ -418,13 +424,13 @@
 }
 
 .next-race-track {
-  font-size: 0.8rem;
+  font-size: var(--text-base);
   color: var(--muted);
   margin: 0;
 }
 
 .next-race-date {
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--gold-deep);
   margin: 0;
@@ -434,7 +440,7 @@
 .empty-hint {
   text-align: center;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-md);
   padding: 1rem 0;
 }
 
@@ -446,7 +452,73 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .schedule-grid {
+  .schedule-grid,
+  .schedule-grid.no-today {
     grid-template-columns: 1fr;
+  }
+
+  .sidebar-panels {
+    grid-column: 1;
+  }
+
+  .schedule {
+    padding: 1.5rem 0 2rem;
+  }
+
+  .schedule-panel {
+    border-radius: 14px;
+  }
+
+  .champ-name {
+    white-space: normal;
+  }
+
+  .next-race-name {
+    white-space: normal;
+  }
+
+  .week-race-champ {
+    white-space: normal;
+  }
+
+  .week-race-track {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 640px) {
+  .schedule-panel {
+    padding: 1rem;
+  }
+
+  .week-race-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+
+  .week-race-date {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .champ-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .champ-status {
+    align-items: flex-start;
+  }
+
+  .next-race-card {
+    flex-direction: column;
+  }
+
+  .next-race-image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
   }
 }

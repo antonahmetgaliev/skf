@@ -13,8 +13,8 @@
 .sidebar-heading {
   margin: 0 0 0.85rem;
   font-family: var(--font-display);
-  font-size: 1rem;
-  letter-spacing: 0.16em;
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   color: var(--ink);
 }
@@ -54,7 +54,7 @@
 
 .window-item-name {
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: var(--text-md);
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
@@ -62,7 +62,7 @@
 }
 
 .window-item-race {
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
@@ -101,14 +101,14 @@
 .detail-title {
   margin: 0 0 0.2rem;
   font-family: var(--font-display);
-  font-size: 1.3rem;
-  letter-spacing: 0.06em;
+  font-size: var(--heading-xl);
+  letter-spacing: var(--tracking-normal);
   text-transform: uppercase;
   color: var(--ink);
 }
 
 .detail-race {
-  font-size: 0.9rem;
+  font-size: var(--text-lg);
   color: var(--muted);
   display: block;
 }
@@ -121,7 +121,7 @@
 }
 
 .detail-closes {
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--muted);
 }
 
@@ -142,9 +142,9 @@
 }
 
 .incident-count {
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--tracking-wide);
   color: var(--muted);
   font-weight: 600;
 }
@@ -176,9 +176,9 @@
 }
 
 .incident-source {
-  font-size: 0.65rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-normal);
   text-transform: uppercase;
   padding: 0.15rem 0.4rem;
   border-radius: 4px;
@@ -212,13 +212,13 @@
 .incident-num {
   color: var(--muted);
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: var(--text-base);
   min-width: 2rem;
 }
 
 .incident-drivers {
   font-weight: 600;
-  font-size: 0.88rem;
+  font-size: var(--text-md);
   color: var(--ink);
   flex: 1;
   min-width: 0;
@@ -228,7 +228,7 @@
 
 .incident-session,
 .incident-time {
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--muted);
   white-space: nowrap;
 }
@@ -238,7 +238,7 @@
 }
 
 .incident-chevron {
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--muted);
   transition: transform 0.2s ease;
   flex-shrink: 0;
@@ -261,9 +261,9 @@
 .label-eyebrow {
   display: block;
   margin-bottom: 0.3rem;
-  font-size: 0.65rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
-  letter-spacing: 0.15em;
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -297,7 +297,7 @@
 
 .driver-name {
   font-weight: 600;
-  font-size: 0.88rem;
+  font-size: var(--text-md);
   color: var(--ink);
 }
 
@@ -310,7 +310,7 @@
   padding: 0.35rem 0.5rem;
   border-radius: 6px;
   background: rgba(243, 180, 25, 0.05);
-  font-size: 0.82rem;
+  font-size: var(--text-base);
 }
 
 .resolution-verdict {
@@ -321,7 +321,7 @@
 .resolution-bwp {
   color: var(--gold-deep);
   font-weight: 700;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
 }
 
 // ── Judge inline resolve form ─────────────────────────────────────────────
@@ -349,7 +349,7 @@
     border-radius: 6px;
     background: rgba(0, 0, 0, 0.3);
     color: var(--ink);
-    font-size: 0.82rem;
+    font-size: var(--text-base);
     font-family: inherit;
 
     &::placeholder {
@@ -369,7 +369,7 @@
 
 .resolve-error {
   margin: 0.3rem 0 0;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--danger);
 }
 
@@ -395,7 +395,7 @@
     border-radius: 6px;
     background: rgba(0, 0, 0, 0.3);
     color: var(--ink);
-    font-size: 0.82rem;
+    font-size: var(--text-base);
     font-family: inherit;
 
     &::placeholder {
@@ -414,7 +414,7 @@
 }
 
 .incident-filed {
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 
@@ -423,13 +423,13 @@
   background: none;
   border: none;
   padding: 0;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   font-weight: 700;
   cursor: pointer;
   color: var(--gold-deep);
   text-decoration: underline;
   font-family: inherit;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-tight);
 
   &:hover {
     opacity: 0.75;
@@ -487,15 +487,15 @@
 .resolution-heading {
   margin: 0 0 0.6rem;
   font-family: var(--font-display);
-  font-size: 0.85rem;
-  letter-spacing: 0.14em;
+  font-size: var(--text-md);
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   color: var(--gold-deep);
 }
 
 .no-resolution {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   color: var(--muted);
   font-style: italic;
 }
@@ -509,13 +509,13 @@
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 0.6rem;
-  font-size: 0.8rem;
+  font-size: var(--text-base);
 
   th {
     text-align: left;
-    font-size: 0.65rem;
+    font-size: var(--text-2xs);
     font-weight: 700;
-    letter-spacing: 0.15em;
+    letter-spacing: var(--tracking-wider);
     text-transform: uppercase;
     color: var(--muted);
     padding: 0.25rem 0.4rem;
@@ -541,7 +541,7 @@
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.3);
   color: var(--ink);
-  font-size: 0.8rem;
+  font-size: var(--text-base);
   font-family: inherit;
   width: 100%;
 
@@ -564,6 +564,56 @@
   color: var(--muted);
 }
 
+@media (max-width: 640px) {
+  .incident-card-header {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .incident-drivers {
+    white-space: normal;
+    flex-basis: 100%;
+    order: -1;
+  }
+
+  .incident-session,
+  .incident-time {
+    font-size: var(--text-xs);
+  }
+
+  .resolve-fields {
+    flex-direction: column;
+  }
+
+  .resolve-field--verdict {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .incident-resolve-footer {
+    flex-direction: column;
+  }
+
+  .resolve-field--description {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .detail-header {
+    flex-direction: column;
+  }
+
+  .detail-actions {
+    width: 100%;
+  }
+
+  .incidents-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
 .discord-preview {
   white-space: pre-wrap;
   word-break: break-word;
@@ -572,7 +622,7 @@
   border-radius: 8px;
   padding: 1rem;
   color: var(--ink);
-  font-size: 0.85rem;
+  font-size: var(--text-md);
   font-family: inherit;
   max-height: 60vh;
   overflow-y: auto;

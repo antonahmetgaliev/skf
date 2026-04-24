@@ -1,5 +1,6 @@
 :host {
   display: block;
   min-height: 100vh;
-  padding: clamp(1.25rem, 2.5vw, 3rem);
+  padding: clamp(0.75rem, 2.5vw, 3rem);
+  overflow-x: hidden;
 }

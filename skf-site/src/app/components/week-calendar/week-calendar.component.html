@@ -5,9 +5,9 @@
   @if (loading()) {
     <div class="loader"><app-spinner /></div>
   } @else {
-    <div class="schedule-grid" [class.champs-only]="!hasWeekContent()">
+    <div class="schedule-grid" [class.no-today]="!hasTodayContent()">
 
-      <!-- ── Today's races + broadcasts ── -->
+      <!-- ── Today's races + broadcasts (hero) ── -->
       @if (hasTodayContent()) {
         <div class="schedule-panel today-panel">
           <div class="panel-label">
@@ -16,129 +16,136 @@
           </div>
 
           @if (todayRaces().length > 0) {
-            @for (race of todayRaces(); track race.championshipName) {
-              <app-card class="race-card race-card--today" [animated]="true">
-                <span class="race-badge">Race Day</span>
-                <h3 class="race-name">{{ race.championshipName }}</h3>
-                @if (race.track) {
-                  <p class="race-track">{{ race.track }}</p>
-                }
-                @if (race.time) {
-                  <p class="race-time">{{ race.time }}</p>
-                }
-              </app-card>
-            }
+            <div class="today-races-grid">
+              @for (race of todayRaces(); track race.championshipName) {
+                <app-card class="race-card race-card--today" [animated]="true">
+                  <span class="race-badge">Race Day</span>
+                  <h3 class="race-name">{{ race.championshipName }}</h3>
+                  @if (race.track) {
+                    <p class="race-track">{{ race.track }}</p>
+                  }
+                  @if (race.time) {
+                    <p class="race-time">{{ race.time }}</p>
+                  }
+                </app-card>
+              }
+            </div>
           }
 
           @if (todayBroadcasts().length > 0) {
             <div class="today-broadcasts">
               <p class="sub-label">Live / Recent Broadcasts</p>
-              @for (stream of todayBroadcasts(); track stream.videoId) {
+              <div class="broadcasts-grid">
+                @for (stream of todayBroadcasts(); track stream.videoId) {
+                  <a
+                    class="broadcast-item"
+                    [href]="'https://www.youtube.com/watch?v=' + stream.videoId"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    @if (stream.thumbnailUrl) {
+                      <img
+                        class="broadcast-thumb"
+                        [src]="stream.thumbnailUrl"
+                        [alt]="stream.title"
+                        loading="lazy"
+                      />
+                    }
+                    <span class="broadcast-title">{{ stream.title }}</span>
+                  </a>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── Sidebar panels ── -->
+      <div class="sidebar-panels">
+        <!-- ── This week's races ── -->
+        @if (hasWeekContent()) {
+          <div class="schedule-panel week-panel">
+            <div class="panel-label">This Week</div>
+
+            @if (weekRaces().length > 0) {
+              <div class="week-races">
+                @for (race of weekRaces(); track race.championshipName + race.date) {
+                  <div class="week-race-row">
+                    <div class="week-race-date">
+                      <span class="week-race-day">{{ formatDate(race.date) }}</span>
+                      @if (race.time) {
+                        <span class="week-race-time">{{ race.time }}</span>
+                      }
+                    </div>
+                    <div class="week-race-info">
+                      <span class="week-race-champ">{{ race.championshipName }}</span>
+                      @if (race.track) {
+                        <span class="week-race-track">{{ race.track }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="empty-hint">No more races this week</p>
+            }
+          </div>
+        }
+
+        <!-- ── Championships ── -->
+        @if (championships().length > 0) {
+          <div class="schedule-panel champs-panel" [class.champs-full]="!hasWeekContent()">
+            <div class="panel-label">Championships</div>
+
+            <div class="champs-list">
+              @for (champ of championships(); track champ.id) {
                 <a
-                  class="broadcast-item"
-                  [href]="'https://www.youtube.com/watch?v=' + stream.videoId"
-                  target="_blank"
-                  rel="noopener"
+                  class="champ-row"
+                  routerLink="/championships"
+                  [queryParams]="champQueryParams(champ)"
                 >
-                  @if (stream.thumbnailUrl) {
+                  @if (champ.image) {
                     <img
-                      class="broadcast-thumb"
-                      [src]="stream.thumbnailUrl"
-                      [alt]="stream.title"
+                      class="champ-image"
+                      [src]="champ.image"
+                      [alt]="champ.name"
                       loading="lazy"
                     />
                   }
-                  <span class="broadcast-title">{{ stream.title }}</span>
+                  <div class="champ-info">
+                    <span class="champ-name">{{ champ.name }}</span>
+                    <span class="champ-meta">
+                      {{ champ.game }}
+                      @if (champ.carClass) {
+                        · {{ champ.carClass }}
+                      }
+                    </span>
+                    @if (champ.eventType === 'ongoing' && champ.totalRaces > 0) {
+                      <div class="champ-progress">
+                        <div class="progress-bar">
+                          <div
+                            class="progress-fill"
+                            [style.width.%]="(champ.completedRaces / champ.totalRaces) * 100"
+                          ></div>
+                        </div>
+                        <span class="progress-label">Round {{ champ.completedRaces + 1 }}/{{ champ.totalRaces }}</span>
+                      </div>
+                    }
+                  </div>
+                  <div class="champ-status">
+                    <app-badge [variant]="champ.eventType">{{ champ.eventType }}</app-badge>
+                    @if (champ.nextRaceDate) {
+                      <span class="champ-next">
+                        {{ champ.eventType === 'ongoing' ? 'Next' : 'Start' }}: {{ formatChampDate(champ.nextRaceDate) }}
+                      </span>
+                    }
+                  </div>
                 </a>
               }
             </div>
-          }
-        </div>
-      }
-
-      <!-- ── This week's races ── -->
-      @if (hasWeekContent()) {
-        <div class="schedule-panel week-panel">
-          <div class="panel-label">This Week</div>
-
-          @if (weekRaces().length > 0) {
-            <div class="week-races">
-              @for (race of weekRaces(); track race.championshipName + race.date) {
-                <div class="week-race-row">
-                  <div class="week-race-date">
-                    <span class="week-race-day">{{ formatDate(race.date) }}</span>
-                    @if (race.time) {
-                      <span class="week-race-time">{{ race.time }}</span>
-                    }
-                  </div>
-                  <div class="week-race-info">
-                    <span class="week-race-champ">{{ race.championshipName }}</span>
-                    @if (race.track) {
-                      <span class="week-race-track">{{ race.track }}</span>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="empty-hint">No more races this week</p>
-          }
-        </div>
-      }
-
-      <!-- ── Championships ── -->
-      @if (championships().length > 0) {
-        <div class="schedule-panel champs-panel" [class.champs-full]="!hasWeekContent()">
-          <div class="panel-label">Championships</div>
-
-          <div class="champs-list">
-            @for (champ of championships(); track champ.id) {
-              <a
-                class="champ-row"
-                routerLink="/championships"
-                [queryParams]="champQueryParams(champ)"
-              >
-                @if (champ.image) {
-                  <img
-                    class="champ-image"
-                    [src]="champ.image"
-                    [alt]="champ.name"
-                    loading="lazy"
-                  />
-                }
-                <div class="champ-info">
-                  <span class="champ-name">{{ champ.name }}</span>
-                  <span class="champ-meta">
-                    {{ champ.game }}
-                    @if (champ.carClass) {
-                      · {{ champ.carClass }}
-                    }
-                  </span>
-                  @if (champ.eventType === 'ongoing' && champ.totalRaces > 0) {
-                    <div class="champ-progress">
-                      <div class="progress-bar">
-                        <div
-                          class="progress-fill"
-                          [style.width.%]="(champ.completedRaces / champ.totalRaces) * 100"
-                        ></div>
-                      </div>
-                      <span class="progress-label">Round {{ champ.completedRaces + 1 }}/{{ champ.totalRaces }}</span>
-                    </div>
-                  }
-                </div>
-                <div class="champ-status">
-                  <app-badge [variant]="champ.eventType">{{ champ.eventType }}</app-badge>
-                  @if (champ.nextRaceDate) {
-                    <span class="champ-next">
-                      {{ champ.eventType === 'ongoing' ? 'Next' : 'Start' }}: {{ formatChampDate(champ.nextRaceDate) }}
-                    </span>
-                  }
-                </div>
-              </a>
-            }
           </div>
-        </div>
-      }
+        }
+      </div>
 
       <!-- ── Next race card (shown when no races this week) ── -->
       @if (!hasWeekContent() && nextRace(); as next) {
