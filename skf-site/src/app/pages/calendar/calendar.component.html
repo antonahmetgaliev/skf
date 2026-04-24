@@ -63,7 +63,7 @@
             (ngModelChange)="selectedSimulator.set($event || null)"
           >
             <option [ngValue]="null">All simulators</option>
-            @for (sim of simulators(); track sim) {
+            @for (sim of availableSimulators(); track sim) {
               <option [ngValue]="sim">{{ sim }}</option>
             }
           </select>
@@ -78,7 +78,7 @@
             (ngModelChange)="selectedCarClass.set($event || null)"
           >
             <option [ngValue]="null">All classes</option>
-            @for (c of carClasses(); track c) {
+            @for (c of availableCarClasses(); track c) {
               <option [ngValue]="c">{{ c }}</option>
             }
           </select>
