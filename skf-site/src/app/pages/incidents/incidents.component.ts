@@ -362,7 +362,7 @@ export class IncidentsComponent implements OnInit {
   // ── Helpers ───────────────────────────────────────────────────────
 
   driverNames(incident: Incident): string {
-    return incident.drivers.map((d) => d.driverName).join(' vs ');
+    return incident.drivers.map((d) => d.driverName).join(', ');
   }
 
   driverStatusBadge(driver: IncidentDriver): { variant: BadgeVariant; label: string } {

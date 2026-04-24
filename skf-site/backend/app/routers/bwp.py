@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import require_admin
+from app.auth import require_admin, require_judge
 from app.database import get_db
 from app.models.bwp import BwpPoint, Driver, PenaltyClearance, PenaltyRule
 from app.models.user import User
@@ -17,6 +17,7 @@ from app.schemas.bwp import (
     BwpPointOut,
     DriverBrief,
     DriverCreate,
+    DriverUpdate,
     DriverOut,
     PenaltyClearanceOut,
     PenaltyRuleCreate,
@@ -93,6 +94,34 @@ async def delete_driver(
     driver = await _get_driver_or_404(driver_id, db)
     await db.delete(driver)
     await db.commit()
+
+
+@router.patch("/drivers/{driver_id}", response_model=DriverOut)
+async def rename_driver(
+    driver_id: uuid.UUID,
+    body: DriverUpdate,
+    _: User = Depends(require_judge),
+    db: AsyncSession = Depends(get_db),
+):
+    driver = await _get_driver_or_404(driver_id, db)
+    new_name = body.name.strip()
+
+    existing = await db.execute(
+        select(Driver).where(
+            Driver.id != driver_id,
+            Driver.name.ilike(new_name),
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Driver name already exists.",
+        )
+
+    driver.name = new_name
+    await db.commit()
+    await db.refresh(driver)
+    return driver
 
 
 # ---------------------------------------------------------------------------

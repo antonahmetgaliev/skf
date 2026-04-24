@@ -216,6 +216,16 @@
                     >
                       {{ isExpiredHidden(driver.id) ? 'Show expired' : 'Hide expired' }}
                     </app-btn>
+                    @if (auth.isAdmin() || auth.isJudge()) {
+                    <app-btn
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      (click)="renameDriver(driver.id)"
+                    >
+                      Rename
+                    </app-btn>
+                    }
                     @if (auth.isAdmin()) {
                     <app-btn
                       variant="danger"

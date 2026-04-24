@@ -183,6 +183,33 @@ export class BwpLicenseComponent {
     });
   }
 
+  renameDriver(driverId: string): void {
+    const driver = this.drivers().find((d) => d.id === driverId);
+    if (!driver) return;
+
+    const input = window.prompt('Enter new driver name', driver.name);
+    if (input === null) return;
+
+    const nextName = input.trim();
+    if (!nextName) {
+      this.driverError = 'Driver name cannot be empty.';
+      return;
+    }
+    if (nextName === driver.name) return;
+
+    this.driverError = '';
+    this.api.updateDriver(driverId, { name: nextName }).subscribe({
+      next: (updated) => {
+        this.drivers.update((list) =>
+          list.map((d) => (d.id === driverId ? updated : d))
+        );
+      },
+      error: (err) => {
+        this.driverError = err?.error?.detail ?? 'Failed to rename driver.';
+      }
+    });
+  }
+
   // ── Points ───────────────────────────────────────────────────────
 
   addPoint(): void {

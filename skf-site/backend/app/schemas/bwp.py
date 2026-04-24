@@ -43,6 +43,10 @@ class DriverCreate(CamelModel):
     name: str = Field(min_length=1, max_length=200)
 
 
+class DriverUpdate(CamelModel):
+    name: str = Field(min_length=1, max_length=200)
+
+
 class DriverOut(CamelModel):
     model_config = ConfigDict(from_attributes=True)
 

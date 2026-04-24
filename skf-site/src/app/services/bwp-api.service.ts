@@ -48,6 +48,10 @@ export class BwpApiService {
     return this.http.post<Driver>(`${this.base}/drivers`, { name });
   }
 
+  updateDriver(driverId: string, patch: { name: string }): Observable<Driver> {
+    return this.http.patch<Driver>(`${this.base}/drivers/${driverId}`, patch);
+  }
+
   deleteDriver(driverId: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/drivers/${driverId}`);
   }
