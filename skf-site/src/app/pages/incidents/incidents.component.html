@@ -292,33 +292,37 @@
                                     placeholder="0"
                                   />
                                 </div>
+                                <button class="btn-link" type="button" (click)="toggleDescription(drv.id)">
+                                  {{ rvDescriptionShown[drv.id] ? '− note' : '+ note' }}
+                                </button>
                               </div>
+                              @if (rvDescriptionShown[drv.id]) {
+                                <div class="resolve-field resolve-field--description">
+                                  <input
+                                    type="text"
+                                    [id]="'rv-desc-' + drv.id"
+                                    [attr.list]="'desc-options-' + drv.id"
+                                    [ngModel]="rvDescriptions[drv.id]"
+                                    (ngModelChange)="rvDescriptions[drv.id] = $event"
+                                    placeholder="Choose or type description…"
+                                    autocomplete="off"
+                                  />
+                                  <datalist [id]="'desc-options-' + drv.id">
+                                    @for (opt of descriptionPresetTexts(); track opt) {
+                                      <option [value]="opt"></option>
+                                    }
+                                  </datalist>
+                                </div>
+                              }
                             </div>
                           }
                         </div>
                       }
                     </div>
 
-                    <!-- Judge: shared description + single save button per incident -->
+                    <!-- Judge: single save button per incident -->
                     @if (auth.isJudge()) {
                       <div class="incident-resolve-footer">
-                        <div class="resolve-field resolve-field--description">
-                          <label class="label-eyebrow" [for]="'rv-desc-' + inc.id">Decision description</label>
-                          <input
-                            type="text"
-                            [id]="'rv-desc-' + inc.id"
-                            [attr.list]="'desc-options-' + inc.id"
-                            [ngModel]="rvDescriptions[inc.id]"
-                            (ngModelChange)="rvDescriptions[inc.id] = $event"
-                            placeholder="Choose or type description…"
-                            autocomplete="off"
-                          />
-                          <datalist [id]="'desc-options-' + inc.id">
-                            @for (opt of descriptionPresetTexts(); track opt) {
-                              <option [value]="opt"></option>
-                            }
-                          </datalist>
-                        </div>
                         <app-btn
                           variant="accent"
                           size="sm"

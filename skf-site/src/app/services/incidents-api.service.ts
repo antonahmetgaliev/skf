@@ -84,10 +84,10 @@ export interface BulkResolveDriverItem {
   incidentDriverId: string;
   verdict: string;
   bwpPoints?: number | null;
+  description?: string | null;
 }
 
 export interface BulkResolveIncident {
-  description?: string | null;
   drivers: BulkResolveDriverItem[];
 }
 

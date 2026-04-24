@@ -58,10 +58,10 @@ class ResolveDriverItem(CamelModel):
     incident_driver_id: uuid.UUID
     verdict: str = Field(min_length=1)
     bwp_points: int | None = Field(default=None, ge=0)
+    description: str | None = Field(default=None, max_length=2000)
 
 
 class BulkResolveIncident(CamelModel):
-    description: str | None = Field(default=None, max_length=2000)
     drivers: list[ResolveDriverItem] = Field(min_length=1)
 
 

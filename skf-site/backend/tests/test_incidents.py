@@ -706,10 +706,9 @@ class TestBulkResolve:
         resp = await ac.patch(
             f"/api/incidents/{incident_id}/resolve",
             json={
-                "description": "D1 caused a collision, D2 and D3 are victims",
                 "drivers": [
-                    {"incidentDriverId": drivers[0]["id"], "verdict": "TP +5s", "bwpPoints": 2},
-                    {"incidentDriverId": drivers[1]["id"], "verdict": "NFA", "bwpPoints": 0},
+                    {"incidentDriverId": drivers[0]["id"], "verdict": "TP +5s", "bwpPoints": 2, "description": "D1 caused a collision"},
+                    {"incidentDriverId": drivers[1]["id"], "verdict": "NFA", "bwpPoints": 0, "description": "D2 is victim"},
                     {"incidentDriverId": drivers[2]["id"], "verdict": "NFA", "bwpPoints": 0},
                 ],
             },
@@ -718,10 +717,10 @@ class TestBulkResolve:
         data = resp.json()
         assert data["status"] == "resolved"
         assert len(data["drivers"]) == 3
-        # All have resolutions
-        for d in data["drivers"]:
-            assert d["resolution"] is not None
-            assert d["resolution"]["description"] == "D1 caused a collision, D2 and D3 are victims"
+        # Per-driver descriptions
+        assert data["drivers"][0]["resolution"]["description"] == "D1 caused a collision"
+        assert data["drivers"][1]["resolution"]["description"] == "D2 is victim"
+        assert data["drivers"][2]["resolution"]["description"] is None
         # First driver got TP +5s
         assert data["drivers"][0]["resolution"]["verdict"] == "TP +5s"
         assert data["drivers"][0]["resolution"]["bwpPoints"] == 2
@@ -751,12 +750,11 @@ class TestBulkResolve:
             json={"drivers": [{"incidentDriverId": drv_id, "verdict": "Warning"}]},
         )
 
-        # Update with new verdict + description
+        # Update with new verdict + description per driver
         resp = await ac.patch(
             f"/api/incidents/{inc['id']}/resolve",
             json={
-                "description": "Changed after review",
-                "drivers": [{"incidentDriverId": drv_id, "verdict": "TP +5s", "bwpPoints": 2}],
+                "drivers": [{"incidentDriverId": drv_id, "verdict": "TP +5s", "bwpPoints": 2, "description": "Changed after review"}],
             },
         )
         assert resp.status_code == 200

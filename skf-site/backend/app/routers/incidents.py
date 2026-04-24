@@ -500,7 +500,7 @@ async def bulk_resolve_incident(
         if entry.resolution is not None:
             entry.resolution.verdict = drv_payload.verdict
             entry.resolution.bwp_points = drv_payload.bwp_points
-            entry.resolution.description = payload.description
+            entry.resolution.description = drv_payload.description
             entry.resolution.judge_user_id = user.id
             entry.resolution.resolved_at = now
         else:
@@ -509,7 +509,7 @@ async def bulk_resolve_incident(
                 judge_user_id=user.id,
                 verdict=drv_payload.verdict,
                 bwp_points=drv_payload.bwp_points,
-                description=payload.description,
+                description=drv_payload.description,
             ))
 
     await db.flush()
