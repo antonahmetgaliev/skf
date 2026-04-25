@@ -34,16 +34,44 @@ async def scrape_standings(
 ) -> ChampionshipStandingsData | None:
     """Fetch and parse the HTML standings page for *championship_id*.
 
+    For multiclass championships the default page only shows the first
+    class.  We detect class-filter links and fetch each extra class
+    page, merging all entries into a single result.
+
     Returns ``None`` when the page cannot be fetched or parsed.
     """
-    url = (
+    base = (
         f"{settings.simgrid_base_url}"
         f"/championships/{championship_id}/standings"
     )
-    html = await _fetch_html(url)
+    html = await _fetch_html(base)
     if html is None:
         return None
-    return _parse_standings_html(html)
+
+    data = _parse_standings_html(html)
+    if data is None:
+        return None
+
+    # Detect additional class pages (multiclass championships)
+    extra_classes = _extract_class_filters(html)
+    for _class_name, filter_id in extra_classes:
+        cls_html = await _fetch_html(
+            f"{base}?filter_class={filter_id}&overall=0"
+        )
+        if cls_html is None:
+            continue
+        cls_data = _parse_standings_html(cls_html)
+        if cls_data is None:
+            continue
+        # Merge: add entries that aren't already present (by driver id)
+        existing_ids = {e.id for e in data.entries}
+        new_entries = [e for e in cls_data.entries if e.id not in existing_ids]
+        if new_entries:
+            data = data.model_copy(update={
+                "entries": data.entries + new_entries,
+            })
+
+    return data
 
 
 # ------------------------------------------------------------------
@@ -66,6 +94,22 @@ async def _fetch_html(url: str) -> str | None:
 # ------------------------------------------------------------------
 # HTML parsing
 # ------------------------------------------------------------------
+
+def _extract_class_filters(html: str) -> list[tuple[str, str]]:
+    """Return [(class_name, filter_id), ...] for non-default classes.
+
+    The default page already contains one class; this returns only the
+    *other* classes found in the filter dropdown.
+    """
+    matches = re.findall(
+        r'filter_class=(\d+)&(?:amp;)?overall=0"[^>]*>\s*([^<]{2,40}?)\s*</a>',
+        html, re.I,
+    )
+    if len(matches) <= 1:
+        return []
+    # The first match is the currently displayed class — skip it
+    return [(name.strip(), fid) for fid, name in matches[1:]]
+
 
 def _parse_standings_html(html: str) -> ChampionshipStandingsData | None:
     soup = BeautifulSoup(html, "html.parser")
