@@ -24,17 +24,11 @@ interface CalendarDay {
   communityColors: string[];
 }
 
-interface YearMonthGroup {
-  month: number;
-  label: string;
-  events: CalendarEvent[];
-}
-
 interface YearCommunityColumn {
   id: string;
   name: string;
   color: string;
-  months: YearMonthGroup[];
+  events: CalendarEvent[];
 }
 
 type ViewMode = 'month' | 'year';
@@ -131,47 +125,33 @@ export class CalendarComponent implements OnInit {
 
   readonly yearLabel = computed(() => String(this.currentYear()));
 
-  readonly yearEventsByMonth = computed<YearMonthGroup[]>(() => {
-    const events = this.filteredYearEvents();
-    const year = this.currentYear();
-    const groups: YearMonthGroup[] = [];
-
-    for (let m = 1; m <= 12; m++) {
-      const monthEvents = events.filter((e) => this.eventFallsInMonth(e, year, m));
-      if (monthEvents.length === 0) continue;
-      const label = new Date(year, m - 1, 1).toLocaleString('en-US', { month: 'long' });
-      groups.push({ month: m, label, events: monthEvents });
-    }
-    return groups;
-  });
-
   readonly yearCommunityColumns = computed<YearCommunityColumn[]>(() => {
     const events = this.filteredYearEvents();
-    const year = this.currentYear();
     const communities = this.communities();
 
     // Communities are returned from API with SKF first (sorted by is_skf desc, name)
-    const columnDefs = communities.map((c) => ({
-      id: c.id,
-      name: c.name,
-      color: c.color ?? DEFAULT_COLOR,
-    }));
-
     const columns: YearCommunityColumn[] = [];
 
-    for (const def of columnDefs) {
-      const communityEvents = events.filter((e) => e.communityId === def.id);
+    for (const c of communities) {
+      const communityEvents = events.filter((e) => e.communityId === c.id);
       if (communityEvents.length === 0) continue;
 
-      const months: YearMonthGroup[] = [];
-      for (let m = 1; m <= 12; m++) {
-        const monthEvents = communityEvents.filter((e) => this.eventFallsInMonth(e, year, m));
-        if (monthEvents.length === 0) continue;
-        const label = new Date(year, m - 1, 1).toLocaleString('en-US', { month: 'short' });
-        months.push({ month: m, label, events: monthEvents });
-      }
+      // Sort by earliest race date or start date
+      const sorted = [...communityEvents].sort((a, b) => {
+        const dateA = this.getEarliestDate(a);
+        const dateB = this.getEarliestDate(b);
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        return dateA.getTime() - dateB.getTime();
+      });
 
-      columns.push({ id: def.id, name: def.name, color: def.color, months });
+      columns.push({
+        id: c.id,
+        name: c.name,
+        color: c.color ?? DEFAULT_COLOR,
+        events: sorted,
+      });
     }
 
     return columns;
@@ -303,6 +283,16 @@ export class CalendarComponent implements OnInit {
 
   getCommunityColor(event: CalendarEvent): string {
     return event.communityColor ?? DEFAULT_COLOR;
+  }
+
+  private getEarliestDate(event: CalendarEvent): Date | null {
+    const dates: Date[] = [];
+    for (const race of event.races) {
+      if (race.date) dates.push(new Date(race.date));
+    }
+    if (event.startDate) dates.push(new Date(event.startDate));
+    if (dates.length === 0) return null;
+    return dates.reduce((min, d) => (d < min ? d : min));
   }
 
   // ── Private ──
@@ -482,26 +472,4 @@ export class CalendarComponent implements OnInit {
     return false;
   }
 
-  private eventFallsInMonth(event: CalendarEvent, year: number, month: number): boolean {
-    const prefix = `${year}-${String(month).padStart(2, '0')}`;
-
-    for (const race of event.races) {
-      if (race.date && toLocalDateStr(race.date).startsWith(prefix)) {
-        return true;
-      }
-    }
-
-    // Check start/end date range overlap with month
-    const monthStart = new Date(year, month - 1, 1);
-    const monthEnd = new Date(year, month, 0, 23, 59, 59);
-
-    const start = event.startDate ? new Date(event.startDate) : null;
-    const end = event.endDate ? new Date(event.endDate) : null;
-
-    if (start && end) return start <= monthEnd && end >= monthStart;
-    if (start) return start >= monthStart && start <= monthEnd;
-    if (end) return end >= monthStart && end <= monthEnd;
-
-    return false;
-  }
 }

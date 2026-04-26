@@ -432,25 +432,6 @@
   text-transform: uppercase;
 }
 
-.year-month-section {
-  margin-bottom: 1rem;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.year-month-heading {
-  margin: 0 0 0.4rem;
-  font-family: var(--font-display);
-  font-size: var(--text-sm);
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
-  color: var(--gold-deep);
-  padding-bottom: 0.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
 .year-event-list {
   display: flex;
   flex-direction: column;
