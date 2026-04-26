@@ -337,6 +337,16 @@ tbody tr:hover {
   min-width: auto;
 }
 
+.race-class-heading {
+  margin: 0.6rem 0 0.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
 // ------------------------------------------------------------------
 // Multiclass: filter tabs
 // ------------------------------------------------------------------

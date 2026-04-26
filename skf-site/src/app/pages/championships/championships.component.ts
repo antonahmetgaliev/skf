@@ -10,7 +10,7 @@ import {
   StandingRace,
 } from '../../services/simgrid-api.service';
 import { AuthService } from '../../services/auth.service';
-import { ChampionshipEntry, ChampionshipService } from '../../services/championship.service';
+import { ChampionshipEntry, ChampionshipService, RaceResultRow } from '../../services/championship.service';
 import { DataFreshnessService } from '../../services/data-freshness.service';
 import { formatDate, formatNumber } from '../../utils/format';
 import { AlertComponent } from '../../components/alert/alert.component';
@@ -106,9 +106,13 @@ export class ChampionshipsComponent {
     this.standings().some((e) => e.raceResults.length > 0),
   );
   readonly selectedClass = signal<string | null>(null);
+  readonly activeClass = computed(() => {
+    if (!this.isMulticlass()) return null;
+    return this.selectedClass() ?? this.carClasses()[0] ?? null;
+  });
   readonly visibleStandings = computed(() => {
-    const cls = this.selectedClass();
-    if (!this.isMulticlass() || cls === null) return this.standings();
+    const cls = this.activeClass();
+    if (cls === null) return this.standings();
     return this.standings().filter((e) => e.carClass === cls);
   });
 
@@ -142,7 +146,7 @@ export class ChampionshipsComponent {
   }
 
   getPosition(entry: StandingEntry, index: number): number {
-    return this.cs.getPosition(entry, index, this.isMulticlass(), this.selectedClass() !== null);
+    return this.cs.getPosition(entry, index, this.isMulticlass(), this.activeClass() !== null);
   }
 
   formatRacePosition(entry: StandingEntry, race: StandingRace, raceIndex: number): string {
@@ -171,6 +175,22 @@ export class ChampionshipsComponent {
     );
   }
 
+  getRaceResultsGrouped(race: ChampionshipRace, raceIndex: number): { carClass: string; rows: RaceResultRow[] }[] {
+    const all = this.getRaceResultsForRace(race, raceIndex);
+    if (!this.isMulticlass()) {
+      return [{ carClass: '', rows: all }];
+    }
+    const groups = new Map<string, RaceResultRow[]>();
+    for (const row of all) {
+      const cls = row.carClass || 'Other';
+      if (!groups.has(cls)) groups.set(cls, []);
+      groups.get(cls)!.push(row);
+    }
+    return this.carClasses()
+      .filter((cls) => groups.has(cls))
+      .map((cls) => ({ carClass: cls, rows: groups.get(cls)! }));
+  }
+
   getClassIndex(carClass: string): number {
     return this.carClasses().indexOf(carClass);
   }
@@ -179,7 +199,7 @@ export class ChampionshipsComponent {
     const idx = this.getClassIndex(cls);
     return {
       'class-tab': true,
-      active: this.selectedClass() === cls,
+      active: this.activeClass() === cls,
       [`class-color-${idx}`]: true,
     };
   }

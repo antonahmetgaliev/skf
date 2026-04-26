@@ -98,12 +98,6 @@
         @if (activeTab() === 'standings') {
           @if (isMulticlass()) {
             <div class="class-tabs">
-              <button
-                class="class-tab"
-                type="button"
-                [class.active]="selectedClass() === null"
-                (click)="selectedClass.set(null)"
-              >All</button>
               @for (cls of carClasses(); track cls) {
                 <button
                   type="button"
@@ -115,10 +109,10 @@
           }
 
           <h3 class="section-title">
-            @if (isMulticlass() && selectedClass(); as cls) {
-              {{ cls }} class standings
+            @if (activeClass(); as cls) {
+              {{ cls }} standings
             } @else {
-              Overall standings
+              Standings
             }
           </h3>
           <div class="table-wrap">
@@ -218,32 +212,39 @@
 
                   @if (expandedRaceIndex() === raceIndex && hasRaceResults(race)) {
                     <div class="race-results-panel">
-                      <div class="table-wrap">
-                        <table class="standings-table race-results-table">
-                          <thead>
-                            <tr>
-                              <th>Pos</th>
-                              <th>Driver</th>
-                              <th>Car</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @for (result of getRaceResultsForRace(race, raceIndex); track result.displayName; let i = $index) {
+                      @for (group of getRaceResultsGrouped(race, raceIndex); track group.carClass) {
+                        @if (isMulticlass()) {
+                          <h4 class="race-class-heading">
+                            <span class="class-badge" [ngClass]="'class-color-' + getClassIndex(group.carClass)">{{ group.carClass }}</span>
+                          </h4>
+                        }
+                        <div class="table-wrap">
+                          <table class="standings-table race-results-table">
+                            <thead>
                               <tr>
-                                <td>{{ result.dns ? 'DNS' : (result.position ?? '-') }}</td>
-                                <td class="driver-cell">
-                                  @if (result.driverUuid) {
-                                    <a [routerLink]="['/drivers', result.driverUuid]" class="driver-link">{{ result.displayName }}</a>
-                                  } @else {
-                                    {{ result.displayName }}
-                                  }
-                                </td>
-                                <td>{{ result.car || '-' }}</td>
+                                <th>Pos</th>
+                                <th>Driver</th>
+                                <th>Car</th>
                               </tr>
-                            }
-                          </tbody>
-                        </table>
-                      </div>
+                            </thead>
+                            <tbody>
+                              @for (result of group.rows; track result.displayName; let i = $index) {
+                                <tr>
+                                  <td>{{ result.dns ? 'DNS' : (result.position ?? '-') }}</td>
+                                  <td class="driver-cell">
+                                    @if (result.driverUuid) {
+                                      <a [routerLink]="['/drivers', result.driverUuid]" class="driver-link">{{ result.displayName }}</a>
+                                    } @else {
+                                      {{ result.displayName }}
+                                    }
+                                  </td>
+                                  <td>{{ result.car || '-' }}</td>
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                      }
                     </div>
                   }
                 </div>
