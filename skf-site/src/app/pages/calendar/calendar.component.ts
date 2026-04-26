@@ -339,27 +339,18 @@ export class CalendarComponent implements OnInit {
   tileBackground(day: CalendarDay): string | null {
     if (day.communityColors.length === 0) return null;
 
-    const opacity = 0.55;
     if (day.communityColors.length === 1) {
-      return this.hexToRgba(day.communityColors[0], opacity);
+      return day.communityColors[0];
     }
 
     // Multiple communities: vertical stripes
     const stops: string[] = [];
     const step = 100 / day.communityColors.length;
     for (let i = 0; i < day.communityColors.length; i++) {
-      const color = this.hexToRgba(day.communityColors[i], opacity);
+      const color = day.communityColors[i];
       stops.push(`${color} ${step * i}%`, `${color} ${step * (i + 1)}%`);
     }
     return `linear-gradient(to right, ${stops.join(', ')})`;
-  }
-
-  private hexToRgba(hex: string, alpha: number): string {
-    const h = hex.replace('#', '');
-    const r = parseInt(h.substring(0, 2), 16);
-    const g = parseInt(h.substring(2, 4), 16);
-    const b = parseInt(h.substring(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
   private applyFilters(events: CalendarEvent[]): CalendarEvent[] {

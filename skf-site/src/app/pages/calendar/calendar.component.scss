@@ -232,8 +232,11 @@
   &.has-events:not(.other-month) {
     cursor: pointer;
 
-    .day-number {
+    .day-number,
+    .event-count {
       font-weight: 700;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7), 0 0 6px rgba(0, 0, 0, 0.5);
+      color: #fff;
     }
   }
 }
