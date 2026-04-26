@@ -86,12 +86,15 @@ export class IncidentsComponent implements OnInit {
   // ── Per-driver resolve state (keyed by incidentDriverId) ──────────
   rvVerdicts: Record<string, string> = {};
   rvBwpPoints: Record<string, number | null> = {};
-  rvDescriptions: Record<string, string> = {};
-  rvDescriptionShown: Record<string, boolean> = {};
 
   // ── Per-incident resolve state (keyed by incidentId) ──────────────
+  rvDescriptions: Record<string, string> = {};
   rvIncSubmitting: Record<string, boolean> = {};
   rvIncError: Record<string, string> = {};
+
+  // ── Add driver state (keyed by incidentId) ─────────────────────────
+  addDriverName: Record<string, string> = {};
+  addDriverShown: Record<string, boolean> = {};
 
   private judgeDataLoaded = false;
   private adminDataLoaded = false;
@@ -307,17 +310,11 @@ export class IncidentsComponent implements OnInit {
       if (this.rvVerdicts[driver.id] === undefined) {
         this.rvVerdicts[driver.id] = driver.resolution?.verdict ?? '';
         this.rvBwpPoints[driver.id] = driver.resolution?.bwpPoints ?? null;
-        const existingDesc = driver.resolution?.description ?? '';
-        this.rvDescriptions[driver.id] = existingDesc;
-        this.rvDescriptionShown[driver.id] = !!existingDesc;
       }
     }
-  }
-
-  toggleDescription(driverId: string): void {
-    this.rvDescriptionShown[driverId] = !this.rvDescriptionShown[driverId];
-    if (!this.rvDescriptionShown[driverId]) {
-      this.rvDescriptions[driverId] = '';
+    if (this.rvDescriptions[incident.id] === undefined) {
+      const existing = incident.drivers.find(d => d.resolution?.description)?.resolution?.description;
+      this.rvDescriptions[incident.id] = existing ?? '';
     }
   }
 
@@ -333,7 +330,6 @@ export class IncidentsComponent implements OnInit {
       incidentDriverId: d.id,
       verdict: (this.rvVerdicts[d.id] ?? '').trim(),
       bwpPoints: this.rvBwpPoints[d.id],
-      description: this.rvDescriptions[d.id]?.trim() || undefined,
     }));
     const missing = drivers.filter(d => !d.verdict);
     if (missing.length > 0) {
@@ -344,14 +340,16 @@ export class IncidentsComponent implements OnInit {
     this.rvIncError[incident.id] = '';
     try {
       await firstValueFrom(
-        this.incidentsApi.bulkResolveIncident(incident.id, { drivers })
+        this.incidentsApi.bulkResolveIncident(incident.id, {
+          description: this.rvDescriptions[incident.id]?.trim() || undefined,
+          drivers,
+        })
       );
       for (const d of incident.drivers) {
         delete this.rvVerdicts[d.id];
         delete this.rvBwpPoints[d.id];
-        delete this.rvDescriptions[d.id];
-        delete this.rvDescriptionShown[d.id];
       }
+      delete this.rvDescriptions[incident.id];
       const windowId = this.windowDetail()?.id;
       if (windowId) await this.selectWindow(windowId, true);
     } catch {
@@ -359,6 +357,38 @@ export class IncidentsComponent implements OnInit {
     } finally {
       this.rvIncSubmitting[incident.id] = false;
     }
+  }
+
+  // ── Publish / Duplicate / Add-Remove Driver ────────────────────────
+
+  async publishIncident(incidentId: string): Promise<void> {
+    await firstValueFrom(this.incidentsApi.publishIncident(incidentId));
+    const windowId = this.windowDetail()?.id;
+    if (windowId) await this.selectWindow(windowId, true);
+  }
+
+  async duplicateIncident(incidentId: string): Promise<void> {
+    await firstValueFrom(this.incidentsApi.duplicateIncident(incidentId));
+    const windowId = this.windowDetail()?.id;
+    if (windowId) await this.selectWindow(windowId, true);
+  }
+
+  async addIncidentDriver(incidentId: string): Promise<void> {
+    const name = (this.addDriverName[incidentId] ?? '').trim();
+    if (!name) return;
+    await firstValueFrom(this.incidentsApi.addDriverToIncident(incidentId, name));
+    this.addDriverName[incidentId] = '';
+    this.addDriverShown[incidentId] = false;
+    // Clear resolve state for this incident so initResolveFields re-runs
+    const windowId = this.windowDetail()?.id;
+    if (windowId) await this.selectWindow(windowId, true);
+  }
+
+  async removeIncidentDriver(incidentDriverId: string): Promise<void> {
+    if (!confirm('Remove this driver from the incident?')) return;
+    await firstValueFrom(this.incidentsApi.removeDriverFromIncident(incidentDriverId));
+    const windowId = this.windowDetail()?.id;
+    if (windowId) await this.selectWindow(windowId, true);
   }
 
   // ── Apply / Discard BWP ────────────────────────────────────────────

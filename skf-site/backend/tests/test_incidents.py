@@ -706,9 +706,10 @@ class TestBulkResolve:
         resp = await ac.patch(
             f"/api/incidents/{incident_id}/resolve",
             json={
+                "description": "D1 caused a collision, D2 and D3 are victims",
                 "drivers": [
-                    {"incidentDriverId": drivers[0]["id"], "verdict": "TP +5s", "bwpPoints": 2, "description": "D1 caused a collision"},
-                    {"incidentDriverId": drivers[1]["id"], "verdict": "NFA", "bwpPoints": 0, "description": "D2 is victim"},
+                    {"incidentDriverId": drivers[0]["id"], "verdict": "TP +5s", "bwpPoints": 2},
+                    {"incidentDriverId": drivers[1]["id"], "verdict": "NFA", "bwpPoints": 0},
                     {"incidentDriverId": drivers[2]["id"], "verdict": "NFA", "bwpPoints": 0},
                 ],
             },
@@ -717,10 +718,10 @@ class TestBulkResolve:
         data = resp.json()
         assert data["status"] == "resolved"
         assert len(data["drivers"]) == 3
-        # Per-driver descriptions
-        assert data["drivers"][0]["resolution"]["description"] == "D1 caused a collision"
-        assert data["drivers"][1]["resolution"]["description"] == "D2 is victim"
-        assert data["drivers"][2]["resolution"]["description"] is None
+        # All drivers share the same description
+        for d in data["drivers"]:
+            assert d["resolution"] is not None
+            assert d["resolution"]["description"] == "D1 caused a collision, D2 and D3 are victims"
         # First driver got TP +5s
         assert data["drivers"][0]["resolution"]["verdict"] == "TP +5s"
         assert data["drivers"][0]["resolution"]["bwpPoints"] == 2
@@ -750,11 +751,12 @@ class TestBulkResolve:
             json={"drivers": [{"incidentDriverId": drv_id, "verdict": "Warning"}]},
         )
 
-        # Update with new verdict + description per driver
+        # Update with new verdict + description
         resp = await ac.patch(
             f"/api/incidents/{inc['id']}/resolve",
             json={
-                "drivers": [{"incidentDriverId": drv_id, "verdict": "TP +5s", "bwpPoints": 2, "description": "Changed after review"}],
+                "description": "Changed after review",
+                "drivers": [{"incidentDriverId": drv_id, "verdict": "TP +5s", "bwpPoints": 2}],
             },
         )
         assert resp.status_code == 200
@@ -834,3 +836,206 @@ class TestDescriptionPresets:
             json={"text": "Unauthorized"},
         )
         assert resp.status_code in (401, 403)
+
+
+# =====================================================================
+# Publish / hide incidents
+# =====================================================================
+
+WINDOWS_URL = "/api/incidents/windows"
+
+
+class TestPublishIncident:
+    @pytest.mark.anyio
+    async def test_ingested_incidents_hidden_from_public(self, shared_client: AsyncClient):
+        """Incidents ingested via /ingest start unpublished; public can't see them."""
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        # Create window so ingest can attach to it
+        w_resp = await ac.post(WINDOWS_URL, json={"raceName": "Pub Test", "intervalHours": 48})
+        window_id = w_resp.json()["id"]
+
+        # Ingest an incident (token auth, so bypass normal auth)
+        from app.main import app
+        from app.auth import require_api_token
+        app.dependency_overrides[require_api_token] = lambda: None
+        resp = await ac.post(
+            "/api/incidents/ingest",
+            json={
+                "raceId": 9999,
+                "championshipId": 1,
+                "incidents": [
+                    {"time": "00:05:00", "drivers": ["Driver A", "Driver B"]},
+                ],
+            },
+        )
+        del app.dependency_overrides[require_api_token]
+        assert resp.status_code == 201
+        ingest_window_id = resp.json()["id"]
+        inc_id = resp.json()["incidents"][0]["id"]
+        assert resp.json()["incidents"][0]["isPublished"] is False
+
+        # Public (no auth) cannot see it
+        from app.auth import get_current_user, get_current_user_optional
+        app.dependency_overrides[get_current_user] = lambda: None
+        app.dependency_overrides[get_current_user_optional] = lambda: None
+        pub_resp = await ac.get(f"{WINDOWS_URL}/{ingest_window_id}")
+        assert pub_resp.status_code == 200
+        assert pub_resp.json()["incidents"] == []
+
+        # Restore auth
+        _set_auth_user(ac._judge_user)
+
+        # Judge can still see it
+        judge_resp = await ac.get(f"{WINDOWS_URL}/{ingest_window_id}")
+        assert len(judge_resp.json()["incidents"]) == 1
+
+        # Judge publishes it
+        pub = await ac.post(f"/api/incidents/{inc_id}/publish")
+        assert pub.status_code == 200
+        assert pub.json()["isPublished"] is True
+
+        # Now public can see it
+        app.dependency_overrides[get_current_user] = lambda: None
+        app.dependency_overrides[get_current_user_optional] = lambda: None
+        after_pub = await ac.get(f"{WINDOWS_URL}/{ingest_window_id}")
+        assert len(after_pub.json()["incidents"]) == 1
+
+        # Restore auth
+        _set_auth_user(ac._admin_user)
+
+    @pytest.mark.anyio
+    async def test_filed_incidents_published_by_default(self, shared_client: AsyncClient):
+        """Manually filed incidents start published."""
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        w_resp = await ac.post(WINDOWS_URL, json={"raceName": "Filed Pub", "intervalHours": 48})
+        window_id = w_resp.json()["id"]
+        inc_resp = await ac.post(
+            f"{WINDOWS_URL}/{window_id}/incidents",
+            json={"drivers": ["Driver X", "Driver Y"]},
+        )
+        assert inc_resp.status_code == 201
+        assert inc_resp.json()["isPublished"] is True
+
+
+# =====================================================================
+# Duplicate incident
+# =====================================================================
+
+class TestDuplicateIncident:
+    @pytest.mark.anyio
+    async def test_duplicate_creates_new_incident(self, shared_client: AsyncClient):
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        w_resp = await ac.post(WINDOWS_URL, json={"raceName": "Dup Test", "intervalHours": 48})
+        window_id = w_resp.json()["id"]
+        inc_resp = await ac.post(
+            f"{WINDOWS_URL}/{window_id}/incidents",
+            json={"drivers": ["Alpha", "Beta"], "time": "00:10:00"},
+        )
+        inc_id = inc_resp.json()["id"]
+
+        _set_auth_user(ac._judge_user)
+        dup = await ac.post(f"/api/incidents/{inc_id}/duplicate")
+        assert dup.status_code == 201
+        dup_data = dup.json()
+        assert dup_data["id"] != inc_id
+        assert dup_data["windowId"] == window_id
+        driver_names = [d["driverName"] for d in dup_data["drivers"]]
+        assert "Alpha" in driver_names
+        assert "Beta" in driver_names
+
+    @pytest.mark.anyio
+    async def test_duplicate_requires_judge(self, shared_client: AsyncClient):
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        w_resp = await ac.post(WINDOWS_URL, json={"raceName": "Dup Auth", "intervalHours": 48})
+        window_id = w_resp.json()["id"]
+        inc_resp = await ac.post(
+            f"{WINDOWS_URL}/{window_id}/incidents",
+            json={"drivers": ["D1"]},
+        )
+        inc_id = inc_resp.json()["id"]
+
+        # Temporarily set no auth
+        from app.auth import get_current_user, get_current_user_optional
+        from app.main import app
+        from fastapi import HTTPException as FHE, status as fs
+        app.dependency_overrides[get_current_user] = lambda: (_ for _ in ()).throw(FHE(status_code=fs.HTTP_401_UNAUTHORIZED, detail="Not authenticated."))
+        app.dependency_overrides[get_current_user_optional] = lambda: None
+        resp = await ac.post(f"/api/incidents/{inc_id}/duplicate")
+        assert resp.status_code in (401, 403)
+        # Restore
+        _set_auth_user(ac._admin_user)
+
+
+# =====================================================================
+# Add / remove driver from incident
+# =====================================================================
+
+class TestAddRemoveDriver:
+    @pytest.mark.anyio
+    async def test_add_driver(self, shared_client: AsyncClient):
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        w_resp = await ac.post(WINDOWS_URL, json={"raceName": "AddDrv Test", "intervalHours": 48})
+        window_id = w_resp.json()["id"]
+        inc_resp = await ac.post(
+            f"{WINDOWS_URL}/{window_id}/incidents",
+            json={"drivers": ["D1", "D2"]},
+        )
+        inc_id = inc_resp.json()["id"]
+
+        _set_auth_user(ac._judge_user)
+        add_resp = await ac.post(
+            f"/api/incidents/{inc_id}/drivers",
+            json={"driverName": "D3"},
+        )
+        assert add_resp.status_code == 201
+        driver_names = [d["driverName"] for d in add_resp.json()["drivers"]]
+        assert "D3" in driver_names
+        assert len(driver_names) == 3
+
+    @pytest.mark.anyio
+    async def test_remove_driver(self, shared_client: AsyncClient):
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        w_resp = await ac.post(WINDOWS_URL, json={"raceName": "RemDrv Test", "intervalHours": 48})
+        window_id = w_resp.json()["id"]
+        inc_resp = await ac.post(
+            f"{WINDOWS_URL}/{window_id}/incidents",
+            json={"drivers": ["D1", "D2", "D3"]},
+        )
+        inc_id = inc_resp.json()["id"]
+        drv_id = inc_resp.json()["drivers"][2]["id"]  # D3
+
+        _set_auth_user(ac._judge_user)
+        del_resp = await ac.delete(f"/api/incidents/drivers/{drv_id}")
+        assert del_resp.status_code == 204
+
+        # Verify only 2 drivers remain
+        w = await ac.get(f"{WINDOWS_URL}/{window_id}")
+        inc = next(i for i in w.json()["incidents"] if i["id"] == inc_id)
+        assert len(inc["drivers"]) == 2
+
+    @pytest.mark.anyio
+    async def test_add_driver_requires_judge(self, shared_client: AsyncClient):
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        w_resp = await ac.post(WINDOWS_URL, json={"raceName": "Auth Test", "intervalHours": 48})
+        window_id = w_resp.json()["id"]
+        inc_resp = await ac.post(
+            f"{WINDOWS_URL}/{window_id}/incidents",
+            json={"drivers": ["D1"]},
+        )
+        inc_id = inc_resp.json()["id"]
+
+        from app.auth import get_current_user, get_current_user_optional
+        from app.main import app
+        from fastapi import HTTPException as FHE, status as fs
+        app.dependency_overrides[get_current_user] = lambda: (_ for _ in ()).throw(FHE(status_code=fs.HTTP_401_UNAUTHORIZED, detail="Not authenticated."))
+        app.dependency_overrides[get_current_user_optional] = lambda: None
+        resp = await ac.post(f"/api/incidents/{inc_id}/drivers", json={"driverName": "D2"})
+        assert resp.status_code in (401, 403)
+        _set_auth_user(ac._admin_user)

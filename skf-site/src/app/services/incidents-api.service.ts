@@ -34,6 +34,7 @@ export interface Incident {
   description: string | null;
   source: string;
   status: string;
+  isPublished: boolean;
   createdAt: string;
   drivers: IncidentDriver[];
 }
@@ -84,10 +85,10 @@ export interface BulkResolveDriverItem {
   incidentDriverId: string;
   verdict: string;
   bwpPoints?: number | null;
-  description?: string | null;
 }
 
 export interface BulkResolveIncident {
+  description?: string | null;
   drivers: BulkResolveDriverItem[];
 }
 
@@ -158,6 +159,22 @@ export class IncidentsApiService {
       `${this.base}/windows/${windowId}/incidents`,
       payload
     );
+  }
+
+  duplicateIncident(incidentId: string): Observable<Incident> {
+    return this.http.post<Incident>(`${this.base}/${incidentId}/duplicate`, {});
+  }
+
+  publishIncident(incidentId: string): Observable<Incident> {
+    return this.http.post<Incident>(`${this.base}/${incidentId}/publish`, {});
+  }
+
+  addDriverToIncident(incidentId: string, driverName: string): Observable<Incident> {
+    return this.http.post<Incident>(`${this.base}/${incidentId}/drivers`, { driverName });
+  }
+
+  removeDriverFromIncident(incidentDriverId: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/drivers/${incidentDriverId}`);
   }
 
   resolveDriver(incidentDriverId: string, payload: ResolveDriverIncident): Observable<IncidentDriver> {

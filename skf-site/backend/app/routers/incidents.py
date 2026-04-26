@@ -22,6 +22,7 @@ from app.models.user import User
 from app.schemas.incidents import (
     BulkResolveIncident,
     IncidentBatchCreate,
+    IncidentDriverAdd,
     IncidentFileCreate,
     IncidentOut,
     IncidentDriverOut,
@@ -286,6 +287,7 @@ async def ingest_incidents(
             session_name=inc_data.session_name,
             time=inc_data.time,
             source="ingested",
+            is_published=False,
         )
         db.add(incident)
         await db.flush()
@@ -349,8 +351,18 @@ async def create_window(
 async def get_window(
     window_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
 ):
-    return await _get_window_or_404(window_id, db)
+    window = await _get_window_or_404(window_id, db)
+    # Non-judges only see published incidents
+    is_judge = (
+        current_user is not None
+        and current_user.role is not None
+        and current_user.role.name in ("racing_judge", "admin", "super_admin")
+    )
+    if not is_judge:
+        window.incidents = [inc for inc in window.incidents if inc.is_published]
+    return window
 
 
 @router.patch("/windows/{window_id}", response_model=IncidentWindowOut)
@@ -430,6 +442,114 @@ async def file_incident(
     return result.scalar_one()
 
 
+# ── Duplicate incident ──────────────────────────────────────────────────────
+
+@router.post(
+    "/{incident_id}/duplicate",
+    response_model=IncidentOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def duplicate_incident(
+    incident_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_judge),
+):
+    result = await db.execute(
+        select(Incident)
+        .options(selectinload(Incident.drivers))
+        .where(Incident.id == incident_id)
+    )
+    src = result.scalar_one_or_none()
+    if src is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found.")
+
+    new_inc = Incident(
+        window_id=src.window_id,
+        reporter_user_id=user.id,
+        session_name=src.session_name,
+        time=src.time,
+        lap=src.lap,
+        corner=src.corner,
+        description=src.description,
+        source=src.source,
+        is_published=src.is_published,
+    )
+    db.add(new_inc)
+    await db.flush()
+
+    for drv in src.drivers:
+        db.add(IncidentDriver(
+            incident_id=new_inc.id,
+            driver_name=drv.driver_name,
+            driver_id=drv.driver_id,
+            sort_order=drv.sort_order,
+        ))
+
+    await db.commit()
+
+    result = await db.execute(
+        select(Incident)
+        .options(selectinload(Incident.drivers).selectinload(IncidentDriver.resolution))
+        .where(Incident.id == new_inc.id)
+    )
+    return result.scalar_one()
+
+
+# ── Add / remove driver from incident ──────────────────────────────────────
+
+@router.post(
+    "/{incident_id}/drivers",
+    response_model=IncidentOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def add_driver_to_incident(
+    incident_id: uuid.UUID,
+    payload: IncidentDriverAdd,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_judge),
+):
+    result = await db.execute(
+        select(Incident)
+        .options(selectinload(Incident.drivers).selectinload(IncidentDriver.resolution))
+        .where(Incident.id == incident_id)
+    )
+    incident = result.scalar_one_or_none()
+    if incident is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found.")
+
+    max_order = max((d.sort_order for d in incident.drivers), default=-1)
+    driver_id = await _match_driver(payload.driver_name, db)
+    db.add(IncidentDriver(
+        incident_id=incident.id,
+        driver_name=payload.driver_name.strip(),
+        driver_id=driver_id,
+        sort_order=max_order + 1,
+    ))
+    await db.commit()
+    db.expire(incident)  # expire_on_commit=False means we must force a fresh reload
+
+    result = await db.execute(
+        select(Incident)
+        .options(selectinload(Incident.drivers).selectinload(IncidentDriver.resolution))
+        .where(Incident.id == incident_id)
+    )
+    return result.scalar_one()
+
+
+@router.delete(
+    "/drivers/{incident_driver_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def remove_driver_from_incident(
+    incident_driver_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_judge),
+):
+    entry = await _get_incident_driver_or_404(incident_driver_id, db)
+    await db.delete(entry)
+    await db.commit()
+
+
 # ── Per-driver resolve ──────────────────────────────────────────────────────
 
 @router.patch(
@@ -500,7 +620,7 @@ async def bulk_resolve_incident(
         if entry.resolution is not None:
             entry.resolution.verdict = drv_payload.verdict
             entry.resolution.bwp_points = drv_payload.bwp_points
-            entry.resolution.description = drv_payload.description
+            entry.resolution.description = payload.description
             entry.resolution.judge_user_id = user.id
             entry.resolution.resolved_at = now
         else:
@@ -509,7 +629,7 @@ async def bulk_resolve_incident(
                 judge_user_id=user.id,
                 verdict=drv_payload.verdict,
                 bwp_points=drv_payload.bwp_points,
-                description=drv_payload.description,
+                description=payload.description,
             ))
 
     await db.flush()
@@ -523,6 +643,31 @@ async def bulk_resolve_incident(
         .where(Incident.id == incident_id)
     )
     return result.scalar_one()
+
+
+# ── Publish incident ──────────────────────────────────────────────────────────
+
+@router.post(
+    "/{incident_id}/publish",
+    response_model=IncidentOut,
+)
+async def publish_incident(
+    incident_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_judge),
+):
+    result = await db.execute(
+        select(Incident)
+        .options(selectinload(Incident.drivers).selectinload(IncidentDriver.resolution))
+        .where(Incident.id == incident_id)
+    )
+    incident = result.scalar_one_or_none()
+    if incident is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found.")
+    incident.is_published = True
+    await db.commit()
+    await db.refresh(incident)
+    return incident
 
 
 # ── BWP apply / discard ─────────────────────────────────────────────────────

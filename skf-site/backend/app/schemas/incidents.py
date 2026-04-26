@@ -47,6 +47,10 @@ class IncidentFileCreate(CamelModel):
     drivers: list[str] = Field(min_length=1)
 
 
+class IncidentDriverAdd(CamelModel):
+    driver_name: str = Field(min_length=1, max_length=200)
+
+
 # ── Per-driver resolve ──────────────────────────────────────────────────────
 
 class ResolveDriverIncident(CamelModel):
@@ -58,10 +62,10 @@ class ResolveDriverItem(CamelModel):
     incident_driver_id: uuid.UUID
     verdict: str = Field(min_length=1)
     bwp_points: int | None = Field(default=None, ge=0)
-    description: str | None = Field(default=None, max_length=2000)
 
 
 class BulkResolveIncident(CamelModel):
+    description: str | None = Field(default=None, max_length=2000)
     drivers: list[ResolveDriverItem] = Field(min_length=1)
 
 
@@ -142,6 +146,7 @@ class IncidentOut(CamelModel):
     description: str | None
     source: str
     status: str
+    is_published: bool
     created_at: datetime
     drivers: list[IncidentDriverOut] = []
 
