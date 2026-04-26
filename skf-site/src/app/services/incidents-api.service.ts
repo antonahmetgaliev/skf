@@ -161,6 +161,10 @@ export class IncidentsApiService {
     );
   }
 
+  publishAllIncidents(windowId: string): Observable<IncidentWindowOut> {
+    return this.http.post<IncidentWindowOut>(`${this.base}/windows/${windowId}/publish-all`, {});
+  }
+
   duplicateIncident(incidentId: string): Observable<Incident> {
     return this.http.post<Incident>(`${this.base}/${incidentId}/duplicate`, {});
   }

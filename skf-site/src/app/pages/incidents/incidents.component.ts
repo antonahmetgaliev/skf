@@ -361,6 +361,15 @@ export class IncidentsComponent implements OnInit {
 
   // ── Publish / Duplicate / Add-Remove Driver ────────────────────────
 
+  hasUnpublished(w: IncidentWindowOut): boolean {
+    return w.incidents.some(inc => !inc.isPublished);
+  }
+
+  async publishAllIncidents(windowId: string): Promise<void> {
+    await firstValueFrom(this.incidentsApi.publishAllIncidents(windowId));
+    await this.selectWindow(windowId, true);
+  }
+
   async publishIncident(incidentId: string): Promise<void> {
     await firstValueFrom(this.incidentsApi.publishIncident(incidentId));
     const windowId = this.windowDetail()?.id;

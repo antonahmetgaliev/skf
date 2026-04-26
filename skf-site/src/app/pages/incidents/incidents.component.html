@@ -182,6 +182,11 @@
               Copy for Discord
             </app-btn>
           }
+          @if (auth.isJudge() && w.incidents.length > 0 && hasUnpublished(w)) {
+            <app-btn variant="accent" size="sm" (click)="publishAllIncidents(w.id)">
+              Publish All
+            </app-btn>
+          }
           @if (w.isOpen) {
             <app-btn variant="accent" size="sm" (click)="openNewIncidentModal()">
               + File Incident

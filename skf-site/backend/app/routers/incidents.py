@@ -645,6 +645,34 @@ async def bulk_resolve_incident(
     return result.scalar_one()
 
 
+# ── Publish all incidents in a window ────────────────────────────────────────
+
+@router.post(
+    "/windows/{window_id}/publish-all",
+    response_model=IncidentWindowOut,
+)
+async def publish_all_incidents(
+    window_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_judge),
+):
+    window = await _get_window_or_404(window_id, db)
+    for incident in window.incidents:
+        incident.is_published = True
+    await db.commit()
+    db.expire(window)
+    result = await db.execute(
+        select(IncidentWindow)
+        .options(
+            selectinload(IncidentWindow.incidents)
+            .selectinload(Incident.drivers)
+            .selectinload(IncidentDriver.resolution)
+        )
+        .where(IncidentWindow.id == window_id)
+    )
+    return result.scalar_one()
+
+
 # ── Publish incident ──────────────────────────────────────────────────────────
 
 @router.post(
