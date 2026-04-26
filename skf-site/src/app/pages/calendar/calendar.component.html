@@ -89,7 +89,9 @@
         <app-card class="calendar-card">
           <!-- Header with navigation -->
           <div class="calendar-header">
-            <app-btn variant="ghost" size="sm" (click)="navigateMonth(-1)">&larr; Prev</app-btn>
+            @if (canGoBack()) {
+              <app-btn variant="ghost" size="sm" (click)="navigateMonth(-1)">&larr; Prev</app-btn>
+            }
             <h2 class="month-label">{{ monthLabel() }}</h2>
             <div class="header-actions">
               <app-btn variant="ghost" size="sm" (click)="goToToday()">Today</app-btn>
@@ -121,7 +123,7 @@
                   >
                     <span class="day-number">{{ day.dayNumber }}</span>
                     @if (day.events.length > 1 && day.isCurrentMonth) {
-                      <span class="event-count">{{ day.events.length }}</span>
+                      <span class="event-count">{{ day.events.length }} events</span>
                     }
                   </div>
                 }

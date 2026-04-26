@@ -83,6 +83,14 @@ export class CalendarComponent implements OnInit {
     return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
   });
 
+  readonly canGoBack = computed(() => {
+    const now = new Date();
+    return (
+      this.currentYear() > now.getFullYear() ||
+      (this.currentYear() === now.getFullYear() && this.currentMonth() > now.getMonth() + 1)
+    );
+  });
+
   // Filtered events for month view
   readonly filteredEvents = computed(() => this.applyFilters(this.events()));
 
@@ -341,7 +349,7 @@ export class CalendarComponent implements OnInit {
   tileBackground(day: CalendarDay): string | null {
     if (day.communityColors.length === 0) return null;
 
-    const opacity = 0.35;
+    const opacity = 0.55;
     if (day.communityColors.length === 1) {
       return this.hexToRgba(day.communityColors[0], opacity);
     }
