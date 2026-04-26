@@ -28,6 +28,7 @@ interface YearCommunityColumn {
   id: string;
   name: string;
   color: string;
+  discordUrl: string | null;
   events: CalendarEvent[];
 }
 
@@ -150,6 +151,7 @@ export class CalendarComponent implements OnInit {
         id: c.id,
         name: c.name,
         color: c.color ?? DEFAULT_COLOR,
+        discordUrl: c.discordUrl,
         events: sorted,
       });
     }
@@ -283,6 +285,12 @@ export class CalendarComponent implements OnInit {
 
   getCommunityColor(event: CalendarEvent): string {
     return event.communityColor ?? DEFAULT_COLOR;
+  }
+
+  getCommunityDiscordUrl(event: CalendarEvent): string | null {
+    if (!event.communityId) return null;
+    const community = this.communities().find((c) => c.id === event.communityId);
+    return community?.discordUrl ?? null;
   }
 
   private getEarliestDate(event: CalendarEvent): Date | null {

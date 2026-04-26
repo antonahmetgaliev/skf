@@ -433,6 +433,23 @@
   font-size: var(--text-lg);
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
+  flex: 1;
+}
+
+.discord-link {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink-soft);
+  transition: color 0.15s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    color: #5865f2;
+  }
+
+  &--small {
+    color: var(--muted);
+  }
 }
 
 .year-event-list {
