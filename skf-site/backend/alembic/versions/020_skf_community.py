@@ -1,7 +1,7 @@
 """Add is_skf flag to communities and seed SKF community.
 
-Revision ID: 019
-Revises: 018
+Revision ID: 020
+Revises: 019
 """
 
 import uuid
@@ -9,8 +9,8 @@ import uuid
 from alembic import op
 import sqlalchemy as sa
 
-revision = "019"
-down_revision = "018"
+revision = "020"
+down_revision = "019"
 branch_labels = None
 depends_on = None
 
@@ -27,12 +27,8 @@ def upgrade() -> None:
     op.execute(
         sa.text(
             "INSERT INTO communities (id, name, color, is_skf) "
-            "VALUES (:id, :name, :color, true) "
+            f"VALUES ('{SKF_ID}'::uuid, 'SKF', '#f5bf24', true) "
             "ON CONFLICT (id) DO NOTHING"
-        ).bindparams(
-            id=str(SKF_ID),
-            name="SKF",
-            color="#f5bf24",
         )
     )
 
