@@ -26,29 +26,20 @@
   gap: 0.5rem;
 }
 
-// Communities
+// Toolbar (add buttons above lists)
 
-.community-form {
-  margin-bottom: 1rem;
-  padding: 0.75rem;
-  border-radius: 12px;
-  background: rgba(40, 36, 30, 0.4);
+.section-toolbar {
   display: flex;
-  align-items: flex-end;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
 
-  > app-form-field {
-    flex: 1;
-    min-width: 150px;
-    margin-bottom: 0;
-  }
+// Modal form layout
 
-  // Color field should be a small square, not stretch
-  > app-form-field:nth-child(2) {
-    flex: 0 0 auto;
-    min-width: auto;
-  }
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 
   input[type="color"] {
     width: 2.75rem;
@@ -59,11 +50,7 @@
   }
 }
 
-.community-form-actions {
-  display: flex;
-  gap: 0.5rem;
-  padding-bottom: 0.5rem; // align with form-field's margin-bottom
-}
+// Communities
 
 .community-list {
   display: flex;
@@ -151,29 +138,6 @@
 
 // Championships
 
-.champ-form {
-  margin-bottom: 1rem;
-  padding: 0.75rem;
-  border-radius: 12px;
-  background: rgba(40, 36, 30, 0.4);
-  display: flex;
-  align-items: flex-end;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-
-  > app-form-field {
-    flex: 1;
-    min-width: 150px;
-    margin-bottom: 0;
-  }
-}
-
-.champ-form-actions {
-  display: flex;
-  gap: 0.5rem;
-  padding-bottom: 0.5rem;
-}
-
 .champ-item {
   padding: 0.75rem;
   border-radius: 12px;
@@ -230,19 +194,3 @@
   margin-left: 0.4rem;
 }
 
-.add-race-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-
-  app-form-field {
-    flex: 1;
-    min-width: 140px;
-    margin-bottom: 0;
-  }
-
-  app-btn {
-    margin-bottom: 0.5rem;
-  }
-}

@@ -8,44 +8,8 @@
   @if (communitiesLoading()) {
     <app-spinner />
   } @else {
-    <!-- Community form -->
-    <div class="community-form">
-      <app-form-field label="Name" fieldId="communityName">
-        <input
-          id="communityName"
-          type="text"
-          placeholder="Community name"
-          [ngModel]="communityForm().name"
-          (ngModelChange)="updateCommunityField('name', $event)"
-          autocomplete="off"
-        />
-      </app-form-field>
-      <app-form-field label="Color" fieldId="communityColor">
-        <input
-          id="communityColor"
-          type="color"
-          [ngModel]="communityForm().color"
-          (ngModelChange)="updateCommunityField('color', $event)"
-        />
-      </app-form-field>
-      <app-form-field label="Discord URL" fieldId="communityDiscord">
-        <input
-          id="communityDiscord"
-          type="url"
-          placeholder="https://discord.gg/..."
-          [ngModel]="communityForm().discordUrl"
-          (ngModelChange)="updateCommunityField('discordUrl', $event)"
-          autocomplete="off"
-        />
-      </app-form-field>
-      <div class="community-form-actions">
-        <app-btn variant="primary" size="sm" (click)="saveCommunity()">
-          {{ editingCommunityId() ? 'Update' : 'Add Community' }}
-        </app-btn>
-        @if (editingCommunityId()) {
-          <app-btn variant="ghost" size="sm" (click)="resetCommunityForm()">Cancel</app-btn>
-        }
-      </div>
+    <div class="section-toolbar">
+      <app-btn variant="primary" size="sm" (click)="openCommunityModal()">Add Community</app-btn>
     </div>
 
     <!-- Community list -->
@@ -142,58 +106,8 @@
       {{ community.name }} — Custom Championships
     </h3>
 
-    <!-- Championship form -->
-    <div class="champ-form">
-      <app-form-field label="Name" fieldId="champName">
-        <input
-          id="champName"
-          type="text"
-          placeholder="Championship name"
-          [ngModel]="champForm().name"
-          (ngModelChange)="updateChampField('name', $event)"
-          autocomplete="off"
-        />
-      </app-form-field>
-      <app-form-field label="Simulator" fieldId="champSimulator">
-        <select
-          id="champSimulator"
-          [ngModel]="champForm().game"
-          (ngModelChange)="updateChampField('game', $event)"
-        >
-          <option [ngValue]="''">— Select simulator —</option>
-          @for (sim of simulators(); track sim) {
-            <option [ngValue]="sim">{{ sim }}</option>
-          }
-        </select>
-      </app-form-field>
-      <app-form-field label="Car Class" fieldId="champCarClass">
-        <input
-          id="champCarClass"
-          type="text"
-          placeholder="e.g. GT3, LMP2"
-          [ngModel]="champForm().carClass"
-          (ngModelChange)="updateChampField('carClass', $event)"
-          autocomplete="off"
-        />
-      </app-form-field>
-      <app-form-field label="Description" fieldId="champDesc">
-        <input
-          id="champDesc"
-          type="text"
-          placeholder="Optional description"
-          [ngModel]="champForm().description"
-          (ngModelChange)="updateChampField('description', $event)"
-          autocomplete="off"
-        />
-      </app-form-field>
-      <div class="champ-form-actions">
-        <app-btn variant="primary" size="sm" (click)="saveChampionship()">
-          {{ editingChampId() ? 'Update' : 'Add Championship' }}
-        </app-btn>
-        @if (editingChampId()) {
-          <app-btn variant="ghost" size="sm" (click)="resetChampForm()">Cancel</app-btn>
-        }
-      </div>
+    <div class="section-toolbar">
+      <app-btn variant="primary" size="sm" (click)="openChampModal()">Add Championship</app-btn>
     </div>
 
     @if (champsLoading()) {
@@ -232,28 +146,7 @@
             }
           </div>
 
-          <!-- Add race form -->
-          <div class="add-race-row">
-            <app-form-field label="Track" fieldId="raceTrack_{{ champ.id }}">
-              <input
-                id="raceTrack_{{ champ.id }}"
-                type="text"
-                placeholder="Track name"
-                [ngModel]="raceForm().track"
-                (ngModelChange)="updateRaceField('track', $event)"
-                autocomplete="off"
-              />
-            </app-form-field>
-            <app-form-field label="Date" fieldId="raceDate_{{ champ.id }}">
-              <input
-                id="raceDate_{{ champ.id }}"
-                type="datetime-local"
-                [ngModel]="raceForm().date"
-                (ngModelChange)="updateRaceField('date', $event)"
-              />
-            </app-form-field>
-            <app-btn variant="primary" size="sm" (click)="addRace(champ)">Add Race</app-btn>
-          </div>
+          <app-btn variant="ghost" size="sm" (click)="openRaceModal(champ)">+ Add Race</app-btn>
         </div>
       }
       @if (communityChampionships().length === 0) {
@@ -262,3 +155,135 @@
     }
   </app-card>
 }
+
+<!-- Community Modal -->
+<app-modal
+  [title]="editingCommunityId() ? 'Edit Community' : 'Add Community'"
+  width="md"
+  [(open)]="communityModalOpen"
+>
+  <div class="modal-form">
+    <app-form-field label="Name" fieldId="communityName">
+      <input
+        id="communityName"
+        type="text"
+        placeholder="Community name"
+        [ngModel]="communityForm().name"
+        (ngModelChange)="updateCommunityField('name', $event)"
+        autocomplete="off"
+      />
+    </app-form-field>
+    <app-form-field label="Color" fieldId="communityColor">
+      <input
+        id="communityColor"
+        type="color"
+        [ngModel]="communityForm().color"
+        (ngModelChange)="updateCommunityField('color', $event)"
+      />
+    </app-form-field>
+    <app-form-field label="Discord URL" fieldId="communityDiscord">
+      <input
+        id="communityDiscord"
+        type="url"
+        placeholder="https://discord.gg/..."
+        [ngModel]="communityForm().discordUrl"
+        (ngModelChange)="updateCommunityField('discordUrl', $event)"
+        autocomplete="off"
+      />
+    </app-form-field>
+  </div>
+  <div modal-footer>
+    <app-btn variant="ghost" size="sm" (click)="communityModalOpen.set(false)">Cancel</app-btn>
+    <app-btn variant="primary" size="sm" (click)="saveCommunity()">
+      {{ editingCommunityId() ? 'Update' : 'Add' }}
+    </app-btn>
+  </div>
+</app-modal>
+
+<!-- Championship Modal -->
+<app-modal
+  [title]="editingChampId() ? 'Edit Championship' : 'Add Championship'"
+  width="md"
+  [(open)]="champModalOpen"
+>
+  <div class="modal-form">
+    <app-form-field label="Name" fieldId="champName">
+      <input
+        id="champName"
+        type="text"
+        placeholder="Championship name"
+        [ngModel]="champForm().name"
+        (ngModelChange)="updateChampField('name', $event)"
+        autocomplete="off"
+      />
+    </app-form-field>
+    <app-form-field label="Simulator" fieldId="champSimulator">
+      <select
+        id="champSimulator"
+        [ngModel]="champForm().game"
+        (ngModelChange)="updateChampField('game', $event)"
+      >
+        <option [ngValue]="''">— Select simulator —</option>
+        @for (sim of simulators(); track sim) {
+          <option [ngValue]="sim">{{ sim }}</option>
+        }
+      </select>
+    </app-form-field>
+    <app-form-field label="Car Class" fieldId="champCarClass">
+      <input
+        id="champCarClass"
+        type="text"
+        placeholder="e.g. GT3, LMP2"
+        [ngModel]="champForm().carClass"
+        (ngModelChange)="updateChampField('carClass', $event)"
+        autocomplete="off"
+      />
+    </app-form-field>
+    <app-form-field label="Description" fieldId="champDesc">
+      <input
+        id="champDesc"
+        type="text"
+        placeholder="Optional description"
+        [ngModel]="champForm().description"
+        (ngModelChange)="updateChampField('description', $event)"
+        autocomplete="off"
+      />
+    </app-form-field>
+  </div>
+  <div modal-footer>
+    <app-btn variant="ghost" size="sm" (click)="champModalOpen.set(false)">Cancel</app-btn>
+    <app-btn variant="primary" size="sm" (click)="saveChampionship()">
+      {{ editingChampId() ? 'Update' : 'Add' }}
+    </app-btn>
+  </div>
+</app-modal>
+
+<!-- Race Modal -->
+<app-modal title="Add Race" width="sm" [(open)]="raceModalOpen">
+  <div class="modal-form">
+    <app-form-field label="Track" fieldId="raceTrack">
+      <input
+        id="raceTrack"
+        type="text"
+        placeholder="Track name"
+        [ngModel]="raceForm().track"
+        (ngModelChange)="updateRaceField('track', $event)"
+        autocomplete="off"
+      />
+    </app-form-field>
+    <app-form-field label="Date" fieldId="raceDate">
+      <input
+        id="raceDate"
+        type="datetime-local"
+        [ngModel]="raceForm().date"
+        (ngModelChange)="updateRaceField('date', $event)"
+      />
+    </app-form-field>
+  </div>
+  <div modal-footer>
+    <app-btn variant="ghost" size="sm" (click)="raceModalOpen.set(false)">Cancel</app-btn>
+    @if (raceChampionship(); as champ) {
+      <app-btn variant="primary" size="sm" (click)="addRace(champ)">Add</app-btn>
+    }
+  </div>
+</app-modal>

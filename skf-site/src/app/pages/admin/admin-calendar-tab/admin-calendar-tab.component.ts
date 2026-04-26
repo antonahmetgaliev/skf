@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { BtnComponent } from '../../../components/btn/btn.component';
 import { CardComponent } from '../../../components/card/card.component';
 import { FormFieldComponent } from '../../../components/form-field/form-field.component';
+import { ModalComponent } from '../../../components/modal/modal.component';
 import { SpinnerComponent } from '../../../components/spinner/spinner.component';
 import {
   CalendarApiService,
@@ -21,7 +22,7 @@ import {
 
 @Component({
   selector: 'app-admin-calendar-tab',
-  imports: [FormsModule, DatePipe, BtnComponent, CardComponent, FormFieldComponent, SpinnerComponent],
+  imports: [FormsModule, DatePipe, BtnComponent, CardComponent, FormFieldComponent, ModalComponent, SpinnerComponent],
   templateUrl: './admin-calendar-tab.component.html',
   styleUrl: './admin-calendar-tab.component.scss',
 })
@@ -50,6 +51,11 @@ export class AdminCalendarTabComponent implements OnInit {
   readonly editingChampId = signal<string | null>(null);
 
   readonly raceForm = signal<{ track: string | null; date: string | null }>({ track: null, date: null });
+  readonly raceChampionship = signal<CustomChampionshipOut | null>(null);
+
+  readonly communityModalOpen = signal(false);
+  readonly champModalOpen = signal(false);
+  readonly raceModalOpen = signal(false);
 
   updateCommunityField(field: keyof CommunityCreate, value: string | null): void {
     this.communityForm.update((f) => ({ ...f, [field]: value }));
@@ -87,6 +93,11 @@ export class AdminCalendarTabComponent implements OnInit {
     });
   }
 
+  openCommunityModal(): void {
+    this.resetCommunityForm();
+    this.communityModalOpen.set(true);
+  }
+
   resetCommunityForm(): void {
     this.communityForm.set({ name: '', color: '#f5bf24', discordUrl: null });
     this.editingCommunityId.set(null);
@@ -95,6 +106,7 @@ export class AdminCalendarTabComponent implements OnInit {
   editCommunity(c: Community): void {
     this.editingCommunityId.set(c.id);
     this.communityForm.set({ name: c.name, color: c.color, discordUrl: c.discordUrl });
+    this.communityModalOpen.set(true);
   }
 
   saveCommunity(): void {
@@ -111,6 +123,7 @@ export class AdminCalendarTabComponent implements OnInit {
         next: (updated) => {
           this.communities.update((list) => list.map((c) => c.id === updated.id ? updated : c));
           this.resetCommunityForm();
+          this.communityModalOpen.set(false);
         },
       });
     } else {
@@ -122,6 +135,7 @@ export class AdminCalendarTabComponent implements OnInit {
         next: (created) => {
           this.communities.update((list) => [...list, created]);
           this.resetCommunityForm();
+          this.communityModalOpen.set(false);
         },
       });
     }
@@ -169,6 +183,11 @@ export class AdminCalendarTabComponent implements OnInit {
     });
   }
 
+  openChampModal(): void {
+    this.resetChampForm();
+    this.champModalOpen.set(true);
+  }
+
   resetChampForm(): void {
     this.champForm.set({ name: '', game: '', carClass: null, description: null });
     this.editingChampId.set(null);
@@ -190,6 +209,7 @@ export class AdminCalendarTabComponent implements OnInit {
         next: (updated) => {
           this.communityChampionships.update((list) => list.map((c) => c.id === updated.id ? updated : c));
           this.resetChampForm();
+          this.champModalOpen.set(false);
         },
       });
     } else {
@@ -206,6 +226,7 @@ export class AdminCalendarTabComponent implements OnInit {
         next: (created) => {
           this.communityChampionships.update((list) => [...list, created]);
           this.resetChampForm();
+          this.champModalOpen.set(false);
         },
       });
     }
@@ -219,6 +240,7 @@ export class AdminCalendarTabComponent implements OnInit {
       carClass: champ.carClass,
       description: champ.description,
     });
+    this.champModalOpen.set(true);
   }
 
   deleteChampionship(champ: CustomChampionshipOut): void {
@@ -228,6 +250,12 @@ export class AdminCalendarTabComponent implements OnInit {
   }
 
   // -- Races --
+
+  openRaceModal(champ: CustomChampionshipOut): void {
+    this.raceChampionship.set(champ);
+    this.raceForm.set({ track: null, date: null });
+    this.raceModalOpen.set(true);
+  }
 
   addRace(champ: CustomChampionshipOut): void {
     const form = this.raceForm();
@@ -241,6 +269,7 @@ export class AdminCalendarTabComponent implements OnInit {
           list.map((c) => c.id === champ.id ? { ...c, races: [...c.races, race] } : c)
         );
         this.raceForm.set({ track: null, date: null });
+        this.raceModalOpen.set(false);
       },
     });
   }
