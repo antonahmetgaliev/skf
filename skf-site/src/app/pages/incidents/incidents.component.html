@@ -263,6 +263,28 @@
                   <span class="incident-chevron" [class.incident-chevron--open]="expandedIncidentId() === inc.id">▸</span>
                 </div>
 
+                <!-- BWP strip: always visible for admins, shows pending/applied BWP per driver -->
+                @if (auth.isAdmin() && inc.status === 'resolved') {
+                  @let bwpDrvs = bwpResolvedDrivers(inc);
+                  @if (bwpDrvs.length > 0) {
+                    <div class="bwp-strip">
+                      @for (drv of bwpDrvs; track drv.id) {
+                        <div class="bwp-strip-row">
+                          <span class="bwp-strip-name">{{ drv.driverName }}</span>
+                          <span class="bwp-strip-verdict">{{ drv.resolution!.verdict }}</span>
+                          <span class="bwp-strip-pts">{{ drv.resolution!.bwpPoints }} BWP</span>
+                          @if (!drv.resolution!.bwpApplied) {
+                            <button class="btn-link btn-link--bwp" type="button" (click)="applyDriverBwp(drv.id); $event.stopPropagation()">Apply BWP</button>
+                          } @else {
+                            <app-badge variant="applied">Applied</app-badge>
+                            <button class="btn-link btn-link--danger" type="button" (click)="discardDriverBwp(drv.id); $event.stopPropagation()">Discard</button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                }
+
                 @if (expandedIncidentId() === inc.id) {
                   <div class="incident-card-body">
                     @if (inc.description) {

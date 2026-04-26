@@ -57,6 +57,20 @@ export class IncidentsComponent implements OnInit {
   readonly availableRaces = signal<StandingRace[]>([]);
   readonly loadingRaces = signal(false);
 
+  // ── Window groups ─────────────────────────────────────────────────
+  private readonly RECENT_DAYS = 14;
+  readonly openWindows = computed(() =>
+    this.windows().filter(w => w.isOpen)
+  );
+  readonly recentClosedWindows = computed(() => {
+    const cutoff = Date.now() - this.RECENT_DAYS * 24 * 60 * 60 * 1000;
+    return this.windows().filter(w => !w.isOpen && new Date(w.closesAt).getTime() >= cutoff);
+  });
+  readonly oldClosedWindows = computed(() => {
+    const cutoff = Date.now() - this.RECENT_DAYS * 24 * 60 * 60 * 1000;
+    return this.windows().filter(w => !w.isOpen && new Date(w.closesAt).getTime() < cutoff);
+  });
+
   // ── Modal visibility ──────────────────────────────────────────────
   readonly showNewWindowModal = signal(false);
   readonly showNewIncidentModal = signal(false);
@@ -426,6 +440,11 @@ export class IncidentsComponent implements OnInit {
 
   driverNames(incident: Incident): string {
     return incident.drivers.map((d) => d.driverName).join(', ');
+  }
+
+  /** Returns drivers that have a resolution with BWP points (for the always-visible BWP strip). */
+  bwpResolvedDrivers(incident: Incident): IncidentDriver[] {
+    return incident.drivers.filter(d => d.resolution && d.resolution.bwpPoints);
   }
 
   driverStatusBadge(driver: IncidentDriver): { variant: BadgeVariant; label: string } {

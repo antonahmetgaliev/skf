@@ -302,6 +302,40 @@
   word-break: break-word;
 }
 
+// ── BWP strip (always visible, admin only) ──────────────────────────────
+.bwp-strip {
+  padding: 0.45rem 0.85rem;
+  border-top: 1px solid rgba(243, 180, 25, 0.18);
+  background: rgba(243, 180, 25, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.bwp-strip-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-size: var(--text-sm);
+}
+
+.bwp-strip-name {
+  font-weight: 600;
+  color: var(--ink);
+  min-width: 8rem;
+}
+
+.bwp-strip-verdict {
+  color: var(--muted);
+  flex: 1;
+}
+
+.bwp-strip-pts {
+  color: var(--gold-deep);
+  font-weight: 700;
+}
+
 // ── Driver rows (per-driver within expanded card) ─────────────────────────
 .driver-rows {
   display: flex;
