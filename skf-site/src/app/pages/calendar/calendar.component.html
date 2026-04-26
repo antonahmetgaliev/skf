@@ -31,13 +31,6 @@
       [class.active]="selectedCommunityIds().size === 0"
       (click)="toggleCommunity(null)"
     >All</button>
-    <button
-      type="button"
-      class="community-chip"
-      [class.active]="isCommunitySelected('skf')"
-      [style.--chip-color]="'#f5bf24'"
-      (click)="toggleCommunity('skf')"
-    >SKF</button>
     @for (c of communities(); track c.id) {
       <button
         type="button"

@@ -66,7 +66,9 @@
           </div>
           <div class="action-buttons">
             <app-btn variant="ghost" size="sm" (click)="editCommunity(c)">Edit</app-btn>
-            <app-btn variant="danger" size="sm" (click)="deleteCommunity(c)">Delete</app-btn>
+            @if (!c.isSkf) {
+              <app-btn variant="danger" size="sm" (click)="deleteCommunity(c)">Delete</app-btn>
+            }
           </div>
         </article>
       }
@@ -77,12 +79,67 @@
   }
 </app-card>
 
+<!-- SimGrid championships (SKF community only) -->
+@if (selectedCommunity(); as community) {
+  @if (community.isSkf) {
+    <app-card [animated]="true">
+      <h3 class="section-title">
+        <span class="community-color-swatch" [style.background]="community.color"></span>
+        {{ community.name }} — SimGrid Championships
+      </h3>
+      <p class="section-description">
+        Activate SimGrid championships to show them on the SKF calendar.
+      </p>
+
+      @if (simgridLoading()) {
+        <app-spinner />
+      } @else {
+        @if (activeSimgridChampionships.length > 0) {
+          <h4 class="subsection-title">Active</h4>
+          @for (champ of activeSimgridChampionships; track champ.id) {
+            <div class="champ-item champ-item--simgrid">
+              <div class="champ-header">
+                <div>
+                  <h4 class="champ-name">{{ champ.name }}</h4>
+                  <p class="champ-meta">
+                    SimGrid #{{ champ.id }}
+                    @if (champ.startDate) { · {{ champ.startDate | date:'mediumDate' }} }
+                  </p>
+                </div>
+                <app-btn variant="danger" size="sm" (click)="toggleSimgridActive(champ.id)">Deactivate</app-btn>
+              </div>
+            </div>
+          }
+        }
+
+        @if (inactiveSimgridChampionships.length > 0) {
+          <h4 class="subsection-title">Available</h4>
+          @for (champ of inactiveSimgridChampionships; track champ.id) {
+            <div class="champ-item champ-item--simgrid champ-item--inactive">
+              <div class="champ-header">
+                <div>
+                  <h4 class="champ-name">{{ champ.name }}</h4>
+                  <p class="champ-meta">
+                    SimGrid #{{ champ.id }}
+                    @if (champ.startDate) { · {{ champ.startDate | date:'mediumDate' }} }
+                  </p>
+                </div>
+                <app-btn variant="primary" size="sm" (click)="toggleSimgridActive(champ.id)">Activate</app-btn>
+              </div>
+            </div>
+          }
+        }
+      }
+    </app-card>
+  }
+}
+
 <!-- Championships for selected community -->
 @if (selectedCommunity(); as community) {
   <app-card [animated]="true">
     <h3 class="section-title">
       <span class="community-color-swatch" [style.background]="community.color"></span>
-      {{ community.name }} — Championships
+      {{ community.name }} — Custom Championships
     </h3>
 
     <!-- Championship form -->

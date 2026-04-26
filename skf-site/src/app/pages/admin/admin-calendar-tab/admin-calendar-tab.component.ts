@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { BtnComponent } from '../../../components/btn/btn.component';
 import { CardComponent } from '../../../components/card/card.component';
 import { FormFieldComponent } from '../../../components/form-field/form-field.component';
@@ -13,6 +14,10 @@ import {
   CustomChampionshipOut,
   CustomRaceCreate,
 } from '../../../services/calendar-api.service';
+import {
+  ChampionshipListItem,
+  SimgridApiService,
+} from '../../../services/simgrid-api.service';
 
 @Component({
   selector: 'app-admin-calendar-tab',
@@ -22,6 +27,7 @@ import {
 })
 export class AdminCalendarTabComponent implements OnInit {
   private readonly calendarApi = inject(CalendarApiService);
+  private readonly simgridApi = inject(SimgridApiService);
 
   readonly communities = signal<Community[]>([]);
   readonly simulators = signal<string[]>([]);
@@ -29,6 +35,11 @@ export class AdminCalendarTabComponent implements OnInit {
   readonly selectedCommunity = signal<Community | null>(null);
   readonly communityChampionships = signal<CustomChampionshipOut[]>([]);
   readonly champsLoading = signal(false);
+
+  // SimGrid championships (shown when SKF community is selected)
+  readonly simgridChampionships = signal<ChampionshipListItem[]>([]);
+  readonly activeChampionshipIds = signal<Set<number>>(new Set());
+  readonly simgridLoading = signal(false);
 
   readonly communityForm = signal<CommunityCreate>({ name: '', color: '#f5bf24', discordUrl: null });
   readonly editingCommunityId = signal<string | null>(null);
@@ -132,11 +143,17 @@ export class AdminCalendarTabComponent implements OnInit {
     if (this.selectedCommunity()?.id === c.id) {
       this.selectedCommunity.set(null);
       this.communityChampionships.set([]);
+      this.simgridChampionships.set([]);
       return;
     }
     this.selectedCommunity.set(c);
     this.loadCommunityChampionships(c.id);
     this.resetChampForm();
+    if (c.isSkf) {
+      this.loadSimgridChampionships();
+    } else {
+      this.simgridChampionships.set([]);
+    }
   }
 
   // -- Championships (per community) --
@@ -236,5 +253,48 @@ export class AdminCalendarTabComponent implements OnInit {
         );
       },
     });
+  }
+
+  // -- SimGrid championships (SKF community) --
+
+  async loadSimgridChampionships(): Promise<void> {
+    this.simgridLoading.set(true);
+    try {
+      const [champs, activeIds] = await Promise.all([
+        firstValueFrom(this.simgridApi.getChampionships()),
+        firstValueFrom(this.simgridApi.getActiveChampionships()),
+      ]);
+      this.simgridChampionships.set(champs);
+      this.activeChampionshipIds.set(new Set(activeIds));
+    } catch {
+      // non-critical
+    } finally {
+      this.simgridLoading.set(false);
+    }
+  }
+
+  isSimgridActive(id: number): boolean {
+    return this.activeChampionshipIds().has(id);
+  }
+
+  get activeSimgridChampionships(): ChampionshipListItem[] {
+    return this.simgridChampionships().filter((c) => this.activeChampionshipIds().has(c.id));
+  }
+
+  get inactiveSimgridChampionships(): ChampionshipListItem[] {
+    return this.simgridChampionships().filter((c) => !this.activeChampionshipIds().has(c.id));
+  }
+
+  async toggleSimgridActive(id: number): Promise<void> {
+    const ids = this.activeChampionshipIds();
+    if (ids.has(id)) {
+      await firstValueFrom(this.simgridApi.removeActiveChampionship(id));
+      const next = new Set(ids);
+      next.delete(id);
+      this.activeChampionshipIds.set(next);
+    } else {
+      await firstValueFrom(this.simgridApi.addActiveChampionship(id));
+      this.activeChampionshipIds.set(new Set([...ids, id]));
+    }
   }
 }

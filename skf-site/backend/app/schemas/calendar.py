@@ -43,6 +43,7 @@ class CommunityOut(CamelModel):
     color: str | None
     discord_url: str | None
     is_visible: bool
+    is_skf: bool
     created_at: datetime
 
 

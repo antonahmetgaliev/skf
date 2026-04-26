@@ -39,7 +39,7 @@ interface YearCommunityColumn {
 
 type ViewMode = 'month' | 'year';
 
-const SKF_COLOR = '#f5bf24'; // gold
+const DEFAULT_COLOR = '#f5bf24'; // gold fallback
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const VIEW_TABS: { key: string; label: string }[] = [
   { key: 'month', label: 'Month' },
@@ -142,18 +142,17 @@ export class CalendarComponent implements OnInit {
     const year = this.currentYear();
     const communities = this.communities();
 
-    // Build community map: SKF first, then custom communities
-    const columnDefs: { id: string; name: string; color: string }[] = [
-      { id: 'skf', name: 'SKF', color: SKF_COLOR },
-      ...communities.map((c) => ({ id: c.id, name: c.name, color: c.color ?? SKF_COLOR })),
-    ];
+    // Communities are returned from API with SKF first (sorted by is_skf desc, name)
+    const columnDefs = communities.map((c) => ({
+      id: c.id,
+      name: c.name,
+      color: c.color ?? DEFAULT_COLOR,
+    }));
 
     const columns: YearCommunityColumn[] = [];
 
     for (const def of columnDefs) {
-      const communityEvents = events.filter((e) =>
-        def.id === 'skf' ? !e.communityId : e.communityId === def.id,
-      );
+      const communityEvents = events.filter((e) => e.communityId === def.id);
       if (communityEvents.length === 0) continue;
 
       const months: YearMonthGroup[] = [];
@@ -295,7 +294,7 @@ export class CalendarComponent implements OnInit {
 
 
   getCommunityColor(event: CalendarEvent): string {
-    return event.communityColor ?? SKF_COLOR;
+    return event.communityColor ?? DEFAULT_COLOR;
   }
 
   // ── Private ──
@@ -373,8 +372,7 @@ export class CalendarComponent implements OnInit {
     return events.filter((e) => {
       // Community filter
       if (communityIds.size > 0) {
-        const eventCommunityKey = e.communityId ?? 'skf';
-        if (!communityIds.has(eventCommunityKey)) return false;
+        if (!e.communityId || !communityIds.has(e.communityId)) return false;
       }
 
       // Simulator filter
@@ -419,7 +417,7 @@ export class CalendarComponent implements OnInit {
       // Collect unique community colors for this day
       const colorSet = new Set<string>();
       for (const e of dayEvents) {
-        colorSet.add(e.communityColor ?? SKF_COLOR);
+        colorSet.add(e.communityColor ?? DEFAULT_COLOR);
       }
       cells.push({
         dayNumber: d,

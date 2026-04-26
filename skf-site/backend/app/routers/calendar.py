@@ -105,11 +105,14 @@ def _champ_to_out(champ: CustomChampionship) -> CustomChampionshipOut:
 async def list_communities(
     db: AsyncSession = Depends(get_db),
 ):
-    """Public endpoint – returns visible communities for calendar filters."""
+    """Public endpoint – returns visible communities for calendar filters.
+
+    SKF community is always returned first.
+    """
     result = await db.execute(
         select(Community)
         .where(Community.is_visible.is_(True))
-        .order_by(Community.name)
+        .order_by(Community.is_skf.desc(), Community.name)
     )
     return result.scalars().all()
 
@@ -177,6 +180,11 @@ async def delete_community(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Community not found."
         )
+    if community.is_skf:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The SKF community cannot be deleted.",
+        )
     await db.delete(community)
     await db.commit()
 
@@ -235,6 +243,15 @@ async def get_calendar_events(
         range_end = datetime(year, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
 
     events: list[CalendarEvent] = []
+
+    # ── Resolve SKF community for tagging SimGrid events ──
+    skf_result = await db.execute(
+        select(Community).where(Community.is_skf.is_(True)).limit(1)
+    )
+    skf_community = skf_result.scalar_one_or_none()
+    skf_id = str(skf_community.id) if skf_community else None
+    skf_name = skf_community.name if skf_community else None
+    skf_color = skf_community.color if skf_community else None
 
     # ── SimGrid championships (active only) ──
     active_result = await db.execute(select(ActiveChampionship.simgrid_id))
@@ -345,6 +362,9 @@ async def get_calendar_events(
             event_type=event_type,
             source="simgrid",
             simgrid_championship_id=champ.id,
+            community_id=skf_id,
+            community_name=skf_name,
+            community_color=skf_color,
             races=races,
         ))
 

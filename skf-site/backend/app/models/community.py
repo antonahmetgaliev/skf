@@ -22,6 +22,7 @@ class Community(Base):
     color: Mapped[str | None] = mapped_column(String(20), nullable=True)
     discord_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_visible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    is_skf: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

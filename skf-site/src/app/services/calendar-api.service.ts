@@ -85,6 +85,7 @@ export interface Community {
   color: string | null;
   discordUrl: string | null;
   isVisible: boolean;
+  isSkf: boolean;
   createdAt: string;
 }
 
