@@ -345,6 +345,9 @@
                               @if (drv.resolution.bwpPoints !== null) {
                                 <span class="resolution-bwp">{{ drv.resolution.bwpPoints }} BWP</span>
                               }
+                              @if (drv.resolution.description) {
+                                <span class="resolution-description">{{ drv.resolution.description }}</span>
+                              }
                               @if (auth.isAdmin() && drv.resolution.bwpPoints) {
                                 @if (!drv.resolution.bwpApplied) {
                                   <button class="btn-link btn-link--bwp" type="button" (click)="applyDriverBwp(drv.id)">Apply BWP</button>

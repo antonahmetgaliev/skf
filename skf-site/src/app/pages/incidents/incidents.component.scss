@@ -440,6 +440,12 @@
   font-size: var(--text-sm);
 }
 
+.resolution-description {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-style: italic;
+}
+
 // ── Judge inline resolve form ─────────────────────────────────────────────
 .driver-resolve-form {
   margin-top: 0.5rem;
