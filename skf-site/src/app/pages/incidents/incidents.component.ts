@@ -58,7 +58,7 @@ export class IncidentsComponent implements OnInit {
   readonly loadingRaces = signal(false);
 
   // ── Window groups ─────────────────────────────────────────────────
-  private readonly RECENT_DAYS = 14;
+  private readonly RECENT_DAYS = 7;
   readonly openWindows = computed(() =>
     this.windows().filter(w => w.isOpen)
   );

@@ -19,28 +19,45 @@
         <app-empty>No incident windows yet.</app-empty>
       } @else {
         <ul class="window-list">
-          @for (w of windows(); track w.id) {
-            <li
-              class="window-item"
+          @for (w of openWindows(); track w.id) {
+            <li class="window-item window-item--open"
               [class.window-item--active]="windowDetail()?.id === w.id"
-              [class.window-item--open]="w.isOpen"
-              (click)="selectWindow(w.id)"
-            >
+              (click)="selectWindow(w.id)">
               <div class="window-item-name">{{ w.raceName }}</div>
-              @if (w.championshipName) {
-                <div class="window-item-race">{{ w.championshipName }}</div>
-              }
-              @if (w.date) {
-                <div class="window-item-race">{{ w.date }}</div>
-              }
+              @if (w.championshipName) { <div class="window-item-race">{{ w.championshipName }}</div> }
+              @if (w.date) { <div class="window-item-race">{{ w.date }}</div> }
               <div class="window-item-meta">
-                @if (w.isOpen) {
-                  <app-badge variant="open">OPEN · {{ closesIn(w.closesAt) }}</app-badge>
-                } @else {
-                  <app-badge variant="closed">CLOSED</app-badge>
-                }
+                <app-badge variant="open">OPEN · {{ closesIn(w.closesAt) }}</app-badge>
               </div>
             </li>
+          }
+          @if (recentClosedWindows().length > 0) {
+            @if (openWindows().length > 0) {
+              <li class="window-group-label">Recent</li>
+            }
+            @for (w of recentClosedWindows(); track w.id) {
+              <li class="window-item"
+                [class.window-item--active]="windowDetail()?.id === w.id"
+                (click)="selectWindow(w.id)">
+                <div class="window-item-name">{{ w.raceName }}</div>
+                @if (w.championshipName) { <div class="window-item-race">{{ w.championshipName }}</div> }
+                @if (w.date) { <div class="window-item-race">{{ w.date }}</div> }
+                <div class="window-item-meta"><app-badge variant="closed">CLOSED</app-badge></div>
+              </li>
+            }
+          }
+          @if (oldClosedWindows().length > 0) {
+            <li class="window-group-label window-group-label--old">Archived</li>
+            @for (w of oldClosedWindows(); track w.id) {
+              <li class="window-item window-item--old"
+                [class.window-item--active]="windowDetail()?.id === w.id"
+                (click)="selectWindow(w.id)">
+                <div class="window-item-name">{{ w.raceName }}</div>
+                @if (w.championshipName) { <div class="window-item-race">{{ w.championshipName }}</div> }
+                @if (w.date) { <div class="window-item-race">{{ w.date }}</div> }
+                <div class="window-item-meta"><app-badge variant="closed">CLOSED</app-badge></div>
+              </li>
+            }
           }
         </ul>
       }
@@ -144,30 +161,44 @@
           } @else if (windows().length === 0) {
             <app-empty>No incident windows yet.</app-empty>
           } @else {
-            <ul class="window-list window-list--grid">
-              @for (w of windows(); track w.id) {
-                <li
-                  class="window-item"
-                  [class.window-item--open]="w.isOpen"
-                  (click)="selectWindow(w.id)"
-                >
-                  <div class="window-item-name">{{ w.raceName }}</div>
-                  @if (w.championshipName) {
-                    <div class="window-item-race">{{ w.championshipName }}</div>
-                  }
-                  @if (w.date) {
-                    <div class="window-item-race">{{ w.date }}</div>
-                  }
-                  <div class="window-item-meta">
-                    @if (w.isOpen) {
-                      <app-badge variant="open">OPEN · {{ closesIn(w.closesAt) }}</app-badge>
-                    } @else {
-                      <app-badge variant="closed">CLOSED</app-badge>
-                    }
-                  </div>
-                </li>
-              }
-            </ul>
+            @if (openWindows().length > 0) {
+              <ul class="window-list window-list--grid">
+                @for (w of openWindows(); track w.id) {
+                  <li class="window-item window-item--open" (click)="selectWindow(w.id)">
+                    <div class="window-item-name">{{ w.raceName }}</div>
+                    @if (w.championshipName) { <div class="window-item-race">{{ w.championshipName }}</div> }
+                    @if (w.date) { <div class="window-item-race">{{ w.date }}</div> }
+                    <div class="window-item-meta"><app-badge variant="open">OPEN · {{ closesIn(w.closesAt) }}</app-badge></div>
+                  </li>
+                }
+              </ul>
+            }
+            @if (recentClosedWindows().length > 0) {
+              <p class="window-group-label" [class.window-group-label--spaced]="openWindows().length > 0">Recent</p>
+              <ul class="window-list window-list--grid">
+                @for (w of recentClosedWindows(); track w.id) {
+                  <li class="window-item" (click)="selectWindow(w.id)">
+                    <div class="window-item-name">{{ w.raceName }}</div>
+                    @if (w.championshipName) { <div class="window-item-race">{{ w.championshipName }}</div> }
+                    @if (w.date) { <div class="window-item-race">{{ w.date }}</div> }
+                    <div class="window-item-meta"><app-badge variant="closed">CLOSED</app-badge></div>
+                  </li>
+                }
+              </ul>
+            }
+            @if (oldClosedWindows().length > 0) {
+              <p class="window-group-label window-group-label--old window-group-label--spaced">Archived</p>
+              <ul class="window-list window-list--grid">
+                @for (w of oldClosedWindows(); track w.id) {
+                  <li class="window-item window-item--old" (click)="selectWindow(w.id)">
+                    <div class="window-item-name">{{ w.raceName }}</div>
+                    @if (w.championshipName) { <div class="window-item-race">{{ w.championshipName }}</div> }
+                    @if (w.date) { <div class="window-item-race">{{ w.date }}</div> }
+                    <div class="window-item-meta"><app-badge variant="closed">CLOSED</app-badge></div>
+                  </li>
+                }
+              </ul>
+            }
           }
         </div>
       } @else if (loadingDetail()) {
