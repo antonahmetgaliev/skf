@@ -153,7 +153,7 @@ async def update_community(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Community not found."
         )
-    update_data = body.model_dump(exclude_unset=True)
+    update_data = body.model_dump(exclude_unset=True, by_alias=False)
     for field, value in update_data.items():
         if isinstance(value, str):
             value = value.strip()
@@ -509,7 +509,7 @@ async def update_custom_championship(
     db: AsyncSession = Depends(get_db),
 ):
     champ = await _get_championship_or_404(champ_id, db)
-    update_data = body.model_dump(exclude_unset=True)
+    update_data = body.model_dump(exclude_unset=True, by_alias=False)
     for field, value in update_data.items():
         if isinstance(value, str):
             value = value.strip()
@@ -584,7 +584,7 @@ async def update_race(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Race not found."
         )
-    update_data = body.model_dump(exclude_unset=True)
+    update_data = body.model_dump(exclude_unset=True, by_alias=False)
     for field, value in update_data.items():
         if isinstance(value, str):
             value = value.strip()
