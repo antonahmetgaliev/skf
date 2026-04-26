@@ -7,9 +7,9 @@
     }
   </app-page-intro>
 
-  <div class="incidents-layout">
+  <div class="incidents-layout" [class.incidents-layout--no-selection]="!windowDetail() && !loadingDetail()">
     <!-- Windows sidebar -->
-    <aside>
+    <aside [class.incidents-layout__aside--hidden]="!windowDetail() && !loadingDetail()">
     <app-card>
       <h2 class="sidebar-heading">Race Windows</h2>
 
@@ -137,8 +137,38 @@
     <section>
     <app-card>
       @if (!windowDetail() && !loadingDetail()) {
-        <div class="empty-detail">
-          <p>Select a window to view its incidents.</p>
+        <div class="window-picker-centered">
+          <h2 class="sidebar-heading">Race Windows</h2>
+          @if (loadingWindows()) {
+            <app-spinner />
+          } @else if (windows().length === 0) {
+            <app-empty>No incident windows yet.</app-empty>
+          } @else {
+            <ul class="window-list window-list--grid">
+              @for (w of windows(); track w.id) {
+                <li
+                  class="window-item"
+                  [class.window-item--open]="w.isOpen"
+                  (click)="selectWindow(w.id)"
+                >
+                  <div class="window-item-name">{{ w.raceName }}</div>
+                  @if (w.championshipName) {
+                    <div class="window-item-race">{{ w.championshipName }}</div>
+                  }
+                  @if (w.date) {
+                    <div class="window-item-race">{{ w.date }}</div>
+                  }
+                  <div class="window-item-meta">
+                    @if (w.isOpen) {
+                      <app-badge variant="open">OPEN · {{ closesIn(w.closesAt) }}</app-badge>
+                    } @else {
+                      <app-badge variant="closed">CLOSED</app-badge>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          }
         </div>
       } @else if (loadingDetail()) {
         <app-spinner />

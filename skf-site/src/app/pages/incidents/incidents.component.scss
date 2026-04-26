@@ -8,6 +8,35 @@
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
+
+  &--no-selection {
+    grid-template-columns: minmax(0, 1fr);
+
+    aside {
+      display: none;
+    }
+  }
+}
+
+.incidents-layout__aside--hidden {
+  display: none;
+}
+
+// ── Centered window picker (no selection state) ───────────────────────────
+.window-picker-centered {
+  padding: 0.5rem 0;
+
+  .sidebar-heading {
+    text-align: center;
+    margin-bottom: 1.25rem;
+  }
+}
+
+.window-list--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+  flex-direction: unset;
 }
 
 .sidebar-heading {
