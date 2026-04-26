@@ -124,10 +124,10 @@
                     @if (day.isCurrentMonth && day.events.length > 0) {
                       <div class="cell-events">
                         @for (event of day.events; track event.id) {
-                          <span
+                          <div
                             class="cell-event-label"
-                            [style.background]="event.communityColor || '#555'"
-                          >{{ event.name }}</span>
+                            [style.--band-color]="event.communityColor || '#555'"
+                          ><span>{{ event.name }}</span></div>
                         }
                       </div>
                     }

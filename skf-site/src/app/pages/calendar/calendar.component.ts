@@ -23,6 +23,11 @@ interface CalendarDay {
   events: CalendarEvent[];
 }
 
+interface EventGroup {
+  color: string;
+  events: CalendarEvent[];
+}
+
 interface YearCommunityColumn {
   id: string;
   name: string;
@@ -284,6 +289,20 @@ export class CalendarComponent implements OnInit {
 
   getCommunityColor(event: CalendarEvent): string {
     return event.communityColor ?? DEFAULT_COLOR;
+  }
+
+  groupEventsByColor(events: CalendarEvent[]): EventGroup[] {
+    const map = new Map<string, CalendarEvent[]>();
+    for (const e of events) {
+      const color = e.communityColor || DEFAULT_COLOR;
+      const list = map.get(color);
+      if (list) {
+        list.push(e);
+      } else {
+        map.set(color, [e]);
+      }
+    }
+    return [...map.entries()].map(([color, evts]) => ({ color, events: evts }));
   }
 
   getCommunityDiscordUrl(event: CalendarEvent): string | null {

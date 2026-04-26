@@ -261,12 +261,23 @@
   font-size: var(--text-2xs);
   font-weight: 600;
   line-height: 1;
-  padding: 0.15rem 0.35rem;
+  padding: 3px;
   border-radius: 4px;
-  color: var(--text-on-gold);
+  background: var(--band-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  // Dark inner for text contrast
+  span {
+    display: block;
+    padding: 0.1rem 0.25rem;
+    border-radius: 2px;
+    background: rgba(0, 0, 0, 0.55);
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 // ── Community badge on event cards ──────────────────────────────────────────
