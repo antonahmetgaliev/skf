@@ -284,12 +284,26 @@
   min-width: 2rem;
 }
 
+.incident-header-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.incident-header-desc {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .incident-drivers {
   font-weight: 600;
   font-size: var(--text-md);
   color: var(--ink);
-  flex: 1;
-  min-width: 0;
   white-space: normal;
   line-height: 1.2;
 }

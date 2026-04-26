@@ -271,7 +271,12 @@
                   @if (!inc.isPublished) {
                     <app-badge variant="pending">Hidden</app-badge>
                   }
-                  <span class="incident-drivers">{{ driverNames(inc) }}</span>
+                  <div class="incident-header-main">
+                    <span class="incident-drivers">{{ driverNames(inc) }}</span>
+                    @if (inc.description && expandedIncidentId() !== inc.id) {
+                      <span class="incident-header-desc">{{ inc.description }}</span>
+                    }
+                  </div>
                   @if (inc.sessionName) {
                     <span class="incident-session">{{ inc.sessionName }}</span>
                   }
