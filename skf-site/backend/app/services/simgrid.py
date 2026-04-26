@@ -2,7 +2,9 @@
 
 Moves the API key and all parsing logic to the backend so the frontend
 never touches SimGrid directly.  Responses are cached in the database
-for 10 minutes to avoid hammering the SimGrid API.
+to avoid hammering the SimGrid API.  Standings are scraped from the
+HTML page (see ``simgrid_scraper``) since the REST API no longer
+populates ``partial_standings``.
 """
 
 from __future__ import annotations
@@ -15,17 +17,15 @@ import httpx
 
 from app.config import settings
 from app.middleware import mark_stale
+from app.services.simgrid_scraper import scrape_standings
 from app.schemas.championship import (
     ChampionshipDetails,
     ChampionshipListItem,
     ChampionshipPodium,
     ChampionshipStandingsData,
     DriverChampionshipResult,
-    DriverRaceResult,
     ParticipatingUser,
     PodiumEntry,
-    StandingEntry,
-    StandingRace,
 )
 from app.services.cache import (
     invalidate_cache_by_keys,
@@ -37,7 +37,8 @@ from app.services.cache import (
 )
 
 _TTL_STATIC = timedelta(days=1)     # championships list, details, races
-_TTL_LIVE = timedelta(minutes=10)   # standings, participants
+_TTL_LIVE = timedelta(minutes=10)   # participants
+_TTL_SCRAPE = timedelta(hours=1)    # standings (HTML scraping is heavier)
 logger = logging.getLogger(__name__)
 
 
@@ -100,21 +101,20 @@ class SimgridService:
         self, championship_id: int,
     ) -> ChampionshipStandingsData:
         key = f"standings_{championship_id}"
-        cached = await read_cache(key, _TTL_LIVE)
+        cached = await read_cache(key, _TTL_SCRAPE)
         if cached is not None:
             return ChampionshipStandingsData(**cached)
 
         try:
-            resp = await self._client.get(
-                f"/api/v1/championships/{championship_id}/standings"
-            )
-            resp.raise_for_status()
-            data = self._parse_standings(resp.json())
+            data = await scrape_standings(championship_id)
+            if data is None:
+                raise RuntimeError("Scraping returned no data")
+            data = await self._enrich_races(championship_id, data)
             await write_cache(key, data.model_dump())
             return data
-        except httpx.HTTPStatusError:
+        except Exception:
             logger.warning(
-                "SimGrid API error for %s, attempting stale cache fallback",
+                "Scraping failed for %s, attempting stale cache fallback",
                 key, exc_info=True,
             )
             stale = await read_stale_cache(key)
@@ -122,6 +122,38 @@ class SimgridService:
                 mark_stale()
                 return ChampionshipStandingsData(**stale)
             raise
+
+    async def _enrich_races(
+        self,
+        championship_id: int,
+        data: ChampionshipStandingsData,
+    ) -> ChampionshipStandingsData:
+        """Fill race metadata (display_name, starts_at, ended) from the API."""
+        try:
+            api_races = await self.get_races(championship_id)
+            lookup = {r["id"]: r for r in api_races if isinstance(r, dict)}
+            enriched = []
+            for race in data.races:
+                info = lookup.get(race.id, {})
+                enriched.append(race.model_copy(update={
+                    "display_name": (
+                        info.get("display_name")
+                        or info.get("race_name")
+                        or race.display_name
+                    ),
+                    "starts_at": info.get("starts_at") or race.starts_at,
+                    "results_available": info.get(
+                        "results_available", race.results_available,
+                    ),
+                    "ended": info.get("ended", race.ended),
+                }))
+            return data.model_copy(update={"races": enriched})
+        except Exception:
+            logger.warning(
+                "Race enrichment failed for %d", championship_id,
+                exc_info=True,
+            )
+            return data
 
     async def get_participating_users(
         self, championship_id: int,
@@ -315,159 +347,6 @@ class SimgridService:
                 mark_stale()
                 return stale
             raise
-
-    # ------------------------------------------------------------------
-    # Standings parsing
-    # ------------------------------------------------------------------
-
-    def _parse_standings(self, payload: Any) -> ChampionshipStandingsData:
-        if not isinstance(payload, list):
-            return ChampionshipStandingsData()
-
-        races = self._parse_races(payload[1] if len(payload) > 1 else None)
-        entries_raw = (
-            payload[0]
-            if len(payload) > 0 and isinstance(payload[0], list)
-            else []
-        )
-        entries = sorted(
-            [self._parse_entry(e, races) for e in entries_raw],
-            key=lambda e: (
-                e.position if e.position is not None else float("inf"),
-                -e.score,
-                e.display_name,
-            ),
-        )
-        sorted_races = sorted(races, key=lambda r: r.starts_at or "")
-        return ChampionshipStandingsData(entries=entries, races=sorted_races)
-
-    def _parse_races(self, value: Any) -> list[StandingRace]:
-        if not isinstance(value, list):
-            return []
-        result: list[StandingRace] = []
-        for item in value:
-            if not isinstance(item, dict):
-                continue
-            result.append(
-                StandingRace(
-                    id=int(item.get("id", 0)),
-                    display_name=(
-                        item.get("display_name")
-                        or item.get("race_name")
-                        or "Race"
-                    ),
-                    starts_at=item.get("starts_at"),
-                    results_available=bool(item.get("results_available")),
-                    ended=bool(item.get("ended")),
-                )
-            )
-        return result
-
-    def _parse_entry(
-        self, raw: dict[str, Any], races: list[StandingRace]
-    ) -> StandingEntry:
-        partial = raw.get("partial_standings")
-        if not isinstance(partial, list) or not partial:
-            partial = raw.get("overall_partial_standings")
-
-        participant = raw.get("participant") or {}
-        champ_class = raw.get("championship_car_class") or {}
-        car_class = (
-            raw.get("class")
-            or raw.get("car_class")
-            or raw.get("category")
-            or (
-                champ_class.get("display_name")
-                if isinstance(champ_class, dict)
-                else None
-            )
-            or ""
-        )
-
-        points = self._num(raw.get("championship_points"), 0.0)
-        penalties = self._num(raw.get("championship_penalties"), 0.0)
-        score = self._num(raw.get("championship_score"), 0.0)
-
-        return StandingEntry(
-            id=int(raw.get("user_id") or raw.get("id") or 0),
-            position=self._opt_int(raw.get("position_cache")),
-            display_name=raw.get("display_name") or "Unknown driver",
-            country_code=participant.get("country_code") or "",
-            car=raw.get("car") or "",
-            car_class=car_class,
-            points=points,
-            penalties=penalties,
-            score=score,
-            race_results=self._parse_race_results(partial, races),
-        )
-
-    def _parse_race_results(
-        self, value: Any, races: list[StandingRace]
-    ) -> list[DriverRaceResult]:
-        if not isinstance(value, list):
-            return []
-        results: list[DriverRaceResult] = []
-        for idx, item in enumerate(value):
-            race_id = races[idx].id if idx < len(races) else None
-
-            if isinstance(item, (int, float)):
-                results.append(
-                    DriverRaceResult(
-                        race_id=race_id,
-                        race_index=idx,
-                        position=int(item) if item == item else None,
-                    )
-                )
-                continue
-
-            if not isinstance(item, dict):
-                results.append(
-                    DriverRaceResult(race_id=race_id, race_index=idx)
-                )
-                continue
-
-            pts = item.get("points") or item.get("championship_points")
-            pos = item.get("position") or item.get("position_cache")
-            rid = item.get("race_id") or item.get("id")
-            if rid is None:
-                rid = race_id
-
-            results.append(
-                DriverRaceResult(
-                    race_id=self._opt_int(rid),
-                    race_index=idx,
-                    points=self._opt_num(pts),
-                    position=self._opt_int(pos),
-                )
-            )
-        return results
-
-    # ------------------------------------------------------------------
-    # Tiny conversion helpers
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def _opt_int(value: Any) -> int | None:
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return None
-
-    @staticmethod
-    def _num(value: Any, default: float) -> float:
-        try:
-            v = float(value)
-            return v if v == v else default
-        except (TypeError, ValueError):
-            return default
-
-    @staticmethod
-    def _opt_num(value: Any) -> float | None:
-        try:
-            v = float(value)
-            return v if v == v else None
-        except (TypeError, ValueError):
-            return None
 
     # ------------------------------------------------------------------
     # Cache management

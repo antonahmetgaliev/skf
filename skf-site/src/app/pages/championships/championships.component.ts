@@ -10,7 +10,7 @@ import {
   StandingRace,
 } from '../../services/simgrid-api.service';
 import { AuthService } from '../../services/auth.service';
-import { ChampionshipEntry, ChampionshipService } from '../../services/championship.service';
+import { ChampionshipEntry, ChampionshipService, RaceResultRow } from '../../services/championship.service';
 import { DataFreshnessService } from '../../services/data-freshness.service';
 import { formatDate, formatNumber } from '../../utils/format';
 import { AlertComponent } from '../../components/alert/alert.component';
@@ -106,9 +106,13 @@ export class ChampionshipsComponent {
     this.standings().some((e) => e.raceResults.length > 0),
   );
   readonly selectedClass = signal<string | null>(null);
+  readonly activeClass = computed(() => {
+    if (!this.isMulticlass()) return null;
+    return this.selectedClass() ?? this.carClasses()[0] ?? null;
+  });
   readonly visibleStandings = computed(() => {
-    const cls = this.selectedClass();
-    if (!this.isMulticlass() || cls === null) return this.standings();
+    const cls = this.activeClass();
+    if (cls === null) return this.standings();
     return this.standings().filter((e) => e.carClass === cls);
   });
 
@@ -142,7 +146,7 @@ export class ChampionshipsComponent {
   }
 
   getPosition(entry: StandingEntry, index: number): number {
-    return this.cs.getPosition(entry, index, this.isMulticlass(), this.selectedClass() !== null);
+    return this.cs.getPosition(entry, index, this.isMulticlass(), this.activeClass() !== null);
   }
 
   formatRacePosition(entry: StandingEntry, race: StandingRace, raceIndex: number): string {
@@ -171,6 +175,28 @@ export class ChampionshipsComponent {
     );
   }
 
+  readonly selectedRaceClass = signal<string | null>(null);
+  readonly activeRaceClass = computed(() => {
+    if (!this.isMulticlass()) return null;
+    return this.selectedRaceClass() ?? this.carClasses()[0] ?? null;
+  });
+
+  getVisibleRaceResults(race: ChampionshipRace, raceIndex: number): RaceResultRow[] {
+    const all = this.getRaceResultsForRace(race, raceIndex);
+    const cls = this.activeRaceClass();
+    if (cls === null) return all;
+    return all.filter((r) => r.carClass === cls);
+  }
+
+  getRaceClassTabClasses(cls: string): Record<string, boolean> {
+    const idx = this.getClassIndex(cls);
+    return {
+      'class-tab': true,
+      active: this.activeRaceClass() === cls,
+      [`class-color-${idx}`]: true,
+    };
+  }
+
   getClassIndex(carClass: string): number {
     return this.carClasses().indexOf(carClass);
   }
@@ -179,7 +205,7 @@ export class ChampionshipsComponent {
     const idx = this.getClassIndex(cls);
     return {
       'class-tab': true,
-      active: this.selectedClass() === cls,
+      active: this.activeClass() === cls,
       [`class-color-${idx}`]: true,
     };
   }

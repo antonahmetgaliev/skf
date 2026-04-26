@@ -98,12 +98,6 @@
         @if (activeTab() === 'standings') {
           @if (isMulticlass()) {
             <div class="class-tabs">
-              <button
-                class="class-tab"
-                type="button"
-                [class.active]="selectedClass() === null"
-                (click)="selectedClass.set(null)"
-              >All</button>
               @for (cls of carClasses(); track cls) {
                 <button
                   type="button"
@@ -115,10 +109,10 @@
           }
 
           <h3 class="section-title">
-            @if (isMulticlass() && selectedClass(); as cls) {
-              {{ cls }} class standings
+            @if (activeClass(); as cls) {
+              {{ cls }} standings
             } @else {
-              Overall standings
+              Standings
             }
           </h3>
           <div class="table-wrap">
@@ -218,6 +212,17 @@
 
                   @if (expandedRaceIndex() === raceIndex && hasRaceResults(race)) {
                     <div class="race-results-panel">
+                      @if (isMulticlass()) {
+                        <div class="class-tabs class-tabs-sm">
+                          @for (cls of carClasses(); track cls) {
+                            <button
+                              type="button"
+                              [ngClass]="getRaceClassTabClasses(cls)"
+                              (click)="selectedRaceClass.set(cls)"
+                            >{{ cls }}</button>
+                          }
+                        </div>
+                      }
                       <div class="table-wrap">
                         <table class="standings-table race-results-table">
                           <thead>
@@ -228,7 +233,7 @@
                             </tr>
                           </thead>
                           <tbody>
-                            @for (result of getRaceResultsForRace(race, raceIndex); track result.displayName; let i = $index) {
+                            @for (result of getVisibleRaceResults(race, raceIndex); track result.displayName; let i = $index) {
                               <tr>
                                 <td>{{ result.dns ? 'DNS' : (result.position ?? '-') }}</td>
                                 <td class="driver-cell">
