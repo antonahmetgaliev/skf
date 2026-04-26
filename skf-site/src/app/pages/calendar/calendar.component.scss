@@ -233,11 +233,10 @@
 
   &.has-events:not(.other-month) {
     cursor: pointer;
+    background: rgba(243, 180, 25, 0.08);
 
     .day-number {
       font-weight: 700;
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7), 0 0 6px rgba(0, 0, 0, 0.5);
-      color: #fff;
     }
   }
 }
@@ -264,8 +263,7 @@
   line-height: 1;
   padding: 0.15rem 0.35rem;
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
+  color: var(--text-on-gold);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

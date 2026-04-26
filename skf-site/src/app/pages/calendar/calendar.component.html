@@ -118,14 +118,16 @@
                     [class.today]="day.isToday"
                     [class.selected]="selectedDay() === day.dayNumber && day.isCurrentMonth"
                     [class.has-events]="day.events.length > 0 && day.isCurrentMonth"
-                    [style.background]="day.isCurrentMonth ? tileBackground(day) : null"
                     (click)="day.isCurrentMonth ? selectDay(day.dayNumber) : null"
                   >
                     <span class="day-number">{{ day.dayNumber }}</span>
                     @if (day.isCurrentMonth && day.events.length > 0) {
                       <div class="cell-events">
                         @for (event of day.events; track event.id) {
-                          <span class="cell-event-label">{{ event.name }}</span>
+                          <span
+                            class="cell-event-label"
+                            [style.background]="event.communityColor || '#555'"
+                          >{{ event.name }}</span>
                         }
                       </div>
                     }

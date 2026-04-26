@@ -21,7 +21,6 @@ interface CalendarDay {
   isCurrentMonth: boolean;
   isToday: boolean;
   events: CalendarEvent[];
-  communityColors: string[];
 }
 
 interface YearCommunityColumn {
@@ -344,22 +343,6 @@ export class CalendarComponent implements OnInit {
     }
   }
 
-  tileBackground(day: CalendarDay): string | null {
-    if (day.communityColors.length === 0) return null;
-
-    if (day.communityColors.length === 1) {
-      return day.communityColors[0];
-    }
-
-    // Multiple communities: vertical stripes
-    const stops: string[] = [];
-    const step = 100 / day.communityColors.length;
-    for (let i = 0; i < day.communityColors.length; i++) {
-      const color = day.communityColors[i];
-      stops.push(`${color} ${step * i}%`, `${color} ${step * (i + 1)}%`);
-    }
-    return `linear-gradient(to right, ${stops.join(', ')})`;
-  }
 
   private applyFilters(events: CalendarEvent[]): CalendarEvent[] {
     const communityIds = this.selectedCommunityIds();
@@ -404,24 +387,17 @@ export class CalendarComponent implements OnInit {
         isCurrentMonth: false,
         isToday: false,
         events: [],
-        communityColors: [],
       });
     }
 
     // Current month days
     for (let d = 1; d <= daysInMonth; d++) {
       const dayEvents = events.filter((e) => this.eventFallsOnDay(e, year, month, d));
-      // Collect unique community colors for this day
-      const colorSet = new Set<string>();
-      for (const e of dayEvents) {
-        colorSet.add(e.communityColor ?? DEFAULT_COLOR);
-      }
       cells.push({
         dayNumber: d,
         isCurrentMonth: true,
         isToday: isCurrentMonthToday && today.getDate() === d,
         events: dayEvents,
-        communityColors: [...colorSet],
       });
     }
 
@@ -434,7 +410,6 @@ export class CalendarComponent implements OnInit {
           isCurrentMonth: false,
           isToday: false,
           events: [],
-          communityColors: [],
         });
       }
     }
