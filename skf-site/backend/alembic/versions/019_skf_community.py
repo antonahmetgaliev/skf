@@ -23,11 +23,12 @@ def upgrade() -> None:
         sa.Column("is_skf", sa.Boolean(), nullable=False, server_default=sa.text("false")),
     )
 
-    # Seed the predefined SKF community
+    # Seed the predefined SKF community (ON CONFLICT for idempotency)
     op.execute(
         sa.text(
             "INSERT INTO communities (id, name, color, is_skf) "
-            "VALUES (:id, :name, :color, true)"
+            "VALUES (:id, :name, :color, true) "
+            "ON CONFLICT (id) DO NOTHING"
         ).bindparams(
             id=str(SKF_ID),
             name="SKF",
