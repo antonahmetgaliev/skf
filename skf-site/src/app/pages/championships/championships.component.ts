@@ -175,20 +175,26 @@ export class ChampionshipsComponent {
     );
   }
 
-  getRaceResultsGrouped(race: ChampionshipRace, raceIndex: number): { carClass: string; rows: RaceResultRow[] }[] {
+  readonly selectedRaceClass = signal<string | null>(null);
+  readonly activeRaceClass = computed(() => {
+    if (!this.isMulticlass()) return null;
+    return this.selectedRaceClass() ?? this.carClasses()[0] ?? null;
+  });
+
+  getVisibleRaceResults(race: ChampionshipRace, raceIndex: number): RaceResultRow[] {
     const all = this.getRaceResultsForRace(race, raceIndex);
-    if (!this.isMulticlass()) {
-      return [{ carClass: '', rows: all }];
-    }
-    const groups = new Map<string, RaceResultRow[]>();
-    for (const row of all) {
-      const cls = row.carClass || 'Other';
-      if (!groups.has(cls)) groups.set(cls, []);
-      groups.get(cls)!.push(row);
-    }
-    return this.carClasses()
-      .filter((cls) => groups.has(cls))
-      .map((cls) => ({ carClass: cls, rows: groups.get(cls)! }));
+    const cls = this.activeRaceClass();
+    if (cls === null) return all;
+    return all.filter((r) => r.carClass === cls);
+  }
+
+  getRaceClassTabClasses(cls: string): Record<string, boolean> {
+    const idx = this.getClassIndex(cls);
+    return {
+      'class-tab': true,
+      active: this.activeRaceClass() === cls,
+      [`class-color-${idx}`]: true,
+    };
   }
 
   getClassIndex(carClass: string): number {

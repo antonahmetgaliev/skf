@@ -212,39 +212,43 @@
 
                   @if (expandedRaceIndex() === raceIndex && hasRaceResults(race)) {
                     <div class="race-results-panel">
-                      @for (group of getRaceResultsGrouped(race, raceIndex); track group.carClass) {
-                        @if (isMulticlass()) {
-                          <h4 class="race-class-heading">
-                            <span class="class-badge" [ngClass]="'class-color-' + getClassIndex(group.carClass)">{{ group.carClass }}</span>
-                          </h4>
-                        }
-                        <div class="table-wrap">
-                          <table class="standings-table race-results-table">
-                            <thead>
-                              <tr>
-                                <th>Pos</th>
-                                <th>Driver</th>
-                                <th>Car</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              @for (result of group.rows; track result.displayName; let i = $index) {
-                                <tr>
-                                  <td>{{ result.dns ? 'DNS' : (result.position ?? '-') }}</td>
-                                  <td class="driver-cell">
-                                    @if (result.driverUuid) {
-                                      <a [routerLink]="['/drivers', result.driverUuid]" class="driver-link">{{ result.displayName }}</a>
-                                    } @else {
-                                      {{ result.displayName }}
-                                    }
-                                  </td>
-                                  <td>{{ result.car || '-' }}</td>
-                                </tr>
-                              }
-                            </tbody>
-                          </table>
+                      @if (isMulticlass()) {
+                        <div class="class-tabs class-tabs-sm">
+                          @for (cls of carClasses(); track cls) {
+                            <button
+                              type="button"
+                              [ngClass]="getRaceClassTabClasses(cls)"
+                              (click)="selectedRaceClass.set(cls)"
+                            >{{ cls }}</button>
+                          }
                         </div>
                       }
+                      <div class="table-wrap">
+                        <table class="standings-table race-results-table">
+                          <thead>
+                            <tr>
+                              <th>Pos</th>
+                              <th>Driver</th>
+                              <th>Car</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (result of getVisibleRaceResults(race, raceIndex); track result.displayName; let i = $index) {
+                              <tr>
+                                <td>{{ result.dns ? 'DNS' : (result.position ?? '-') }}</td>
+                                <td class="driver-cell">
+                                  @if (result.driverUuid) {
+                                    <a [routerLink]="['/drivers', result.driverUuid]" class="driver-link">{{ result.displayName }}</a>
+                                  } @else {
+                                    {{ result.displayName }}
+                                  }
+                                </td>
+                                <td>{{ result.car || '-' }}</td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   }
                 </div>
