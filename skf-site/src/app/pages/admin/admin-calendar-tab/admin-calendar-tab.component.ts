@@ -69,6 +69,18 @@ export class AdminCalendarTabComponent implements OnInit {
     this.raceForm.update((f) => ({ ...f, [field]: value }));
   }
 
+  /** Append the browser's local timezone offset to a naive datetime-local string. */
+  private withLocalTzOffset(date: string | null): string | null {
+    if (!date) return null;
+    const parts = date.split(':');
+    const base = parts.length >= 3 ? date : `${date}:00`;
+    const offset = new Date().getTimezoneOffset();
+    const sign = offset <= 0 ? '+' : '-';
+    const absH = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+    const absM = String(Math.abs(offset) % 60).padStart(2, '0');
+    return `${base}${sign}${absH}:${absM}`;
+  }
+
   ngOnInit(): void {
     this.loadCommunities();
     this.loadSimulators();
@@ -261,7 +273,7 @@ export class AdminCalendarTabComponent implements OnInit {
     const form = this.raceForm();
     const payload: CustomRaceCreate = {
       track: form.track?.trim() || null,
-      date: form.date || null,
+      date: this.withLocalTzOffset(form.date),
     };
     this.calendarApi.addRace(champ.id, payload).subscribe({
       next: (race) => {
