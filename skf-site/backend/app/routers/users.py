@@ -8,8 +8,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from pydantic import BaseModel as PydanticBaseModel
-
 from app.auth import require_admin, require_role, get_managed_community_ids
 from app.database import get_db
 from app.models.community_manager import CommunityManager
@@ -145,7 +143,10 @@ async def force_logout(
 # ── Community manager assignments ──────────────────────────────────────────
 
 
-class ManagedCommunitiesUpdate(PydanticBaseModel):
+from app.schemas.championship import CamelModel
+
+
+class ManagedCommunitiesUpdate(CamelModel):
     community_ids: list[uuid.UUID]
 
 
