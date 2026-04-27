@@ -192,11 +192,13 @@
                       @if (event.races.length > 0) {
                         <div class="event-races event-races--column">
                           @for (race of sortedRaces(event.races); track $index) {
-                            <span class="race-pill">
-                              @if (race.name) { {{ race.name }} }
-                              @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }
+                            <span class="race-pill race-pill--stacked">
+                              <span class="race-pill-label">
+                                @if (race.name) { {{ race.name }} }
+                                @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }
+                              </span>
                               @if (race.date) {
-                                <span class="race-date">{{ formatRaceDate(race.date) }}</span>
+                                <span class="race-pill-date">{{ formatRaceDate(race.date) }}</span>
                               }
                             </span>
                           }

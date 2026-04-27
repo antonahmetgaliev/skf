@@ -262,6 +262,13 @@
   text-overflow: ellipsis;
 }
 
+.week-race-community {
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
 /* ── Championships ── */
 .champs-list {
   display: grid;

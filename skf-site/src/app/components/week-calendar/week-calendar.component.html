@@ -82,6 +82,9 @@
                       @if (race.track) {
                         <span class="week-race-track">{{ race.track }}</span>
                       }
+                      @if (race.communityName) {
+                        <span class="week-race-community" [style.color]="race.communityColor">{{ race.communityName }}</span>
+                      }
                     </div>
                   </div>
                 }
