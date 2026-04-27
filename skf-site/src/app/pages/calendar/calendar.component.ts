@@ -352,8 +352,8 @@ export class CalendarComponent implements OnInit {
     return [];
   });
   readonly simulators = signal<string[]>([]);
-  readonly champForm = signal<{ name: string; game: string; carClass: string | null; description: string | null }>({
-    name: '', game: '', carClass: null, description: null,
+  readonly champForm = signal<{ name: string; game: string; carClass: string | null; description: string | null; races: { track: string; date: string }[] }>({
+    name: '', game: '', carClass: null, description: null, races: [],
   });
   readonly editingChampId = signal<string | null>(null);
   readonly champCommunityId = signal<string | null>(null);
@@ -372,7 +372,7 @@ export class CalendarComponent implements OnInit {
   }
 
   openAddChampionship(communityId: string): void {
-    this.champForm.set({ name: '', game: '', carClass: null, description: null });
+    this.champForm.set({ name: '', game: '', carClass: null, description: null, races: [] });
     this.editingChampId.set(null);
     this.champCommunityId.set(communityId);
     this.champModalOpen.set(true);
@@ -389,6 +389,7 @@ export class CalendarComponent implements OnInit {
       game: event.game,
       carClass: event.carClass,
       description: event.description,
+      races: [],
     });
     this.champModalOpen.set(true);
     if (this.simulators().length === 0) {
@@ -423,7 +424,12 @@ export class CalendarComponent implements OnInit {
         gameId: null,
         carClass: form.carClass?.trim() || null,
         description: form.description?.trim() || null,
-        races: [],
+        races: form.races
+          .filter((r) => r.track.trim() || r.date)
+          .map((r) => ({
+            track: r.track.trim() || null,
+            date: this.withLocalTzOffset(r.date || null),
+          })),
       };
       this.calendarApi.createCustomChampionship(payload).subscribe({
         next: () => {
@@ -451,6 +457,33 @@ export class CalendarComponent implements OnInit {
 
   updateChampField(field: 'name' | 'game' | 'carClass' | 'description', value: string | null): void {
     this.champForm.update((f) => ({ ...f, [field]: value }));
+  }
+
+  addRaceRow(): void {
+    this.champForm.update((f) => ({ ...f, races: [...f.races, { track: '', date: '' }] }));
+  }
+
+  updateRaceRow(index: number, field: 'track' | 'date', value: string): void {
+    this.champForm.update((f) => {
+      const races = [...f.races];
+      races[index] = { ...races[index], [field]: value };
+      return { ...f, races };
+    });
+  }
+
+  removeRaceRow(index: number): void {
+    this.champForm.update((f) => ({ ...f, races: f.races.filter((_, i) => i !== index) }));
+  }
+
+  private withLocalTzOffset(date: string | null): string | null {
+    if (!date) return null;
+    const parts = date.split(':');
+    const base = parts.length >= 3 ? date : `${date}:00`;
+    const offset = new Date().getTimezoneOffset();
+    const sign = offset <= 0 ? '+' : '-';
+    const absH = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+    const absM = String(Math.abs(offset) % 60).padStart(2, '0');
+    return `${base}${sign}${absH}:${absM}`;
   }
 
   private getEarliestDate(event: CalendarEvent): Date | null {

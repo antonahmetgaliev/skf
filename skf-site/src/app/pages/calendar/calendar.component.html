@@ -1,5 +1,15 @@
 <app-page>
-  <app-page-intro title="Season Calendar" />
+  <app-page-intro title="Season Calendar">
+    @if (managedCommunities().length > 0) {
+      <div class="manage-actions">
+        @for (mc of managedCommunities(); track mc.id) {
+          <app-btn variant="accent" size="sm" (click)="openAddChampionship(mc.id)">
+            + Add Championship{{ managedCommunities().length > 1 ? ' to ' + mc.name : '' }}
+          </app-btn>
+        }
+      </div>
+    }
+  </app-page-intro>
 
   <app-toggle
     [options]="viewTabs"
@@ -41,17 +51,6 @@
       >{{ c.name }}</button>
     }
   </div>
-
-  <!-- ── Community management (community managers / admins) ── -->
-  @if (managedCommunities().length > 0) {
-    <div class="manage-bar">
-      @for (mc of managedCommunities(); track mc.id) {
-        <app-btn variant="accent" size="sm" (click)="openAddChampionship(mc.id)">
-          + Add Championship to {{ mc.name }}
-        </app-btn>
-      }
-    </div>
-  }
 
   <!-- ── Layout: sidebar + calendar ── -->
   <div class="calendar-layout">
@@ -344,6 +343,32 @@
           autocomplete="off"
         />
       </app-form-field>
+
+      @if (!editingChampId()) {
+        <div class="races-section">
+          <div class="races-header">
+            <span class="races-label">Races</span>
+            <app-btn variant="ghost" size="sm" (click)="addRaceRow()">+ Add Race</app-btn>
+          </div>
+          @for (race of champForm().races; track $index) {
+            <div class="race-row-form">
+              <input
+                type="text"
+                placeholder="Track name"
+                [ngModel]="race.track"
+                (ngModelChange)="updateRaceRow($index, 'track', $event)"
+                autocomplete="off"
+              />
+              <input
+                type="datetime-local"
+                [ngModel]="race.date"
+                (ngModelChange)="updateRaceRow($index, 'date', $event)"
+              />
+              <app-btn variant="danger" size="sm" (click)="removeRaceRow($index)">x</app-btn>
+            </div>
+          }
+        </div>
+      }
     </div>
     <div modal-footer>
       <app-btn variant="ghost" size="sm" (click)="champModalOpen.set(false)">Cancel</app-btn>

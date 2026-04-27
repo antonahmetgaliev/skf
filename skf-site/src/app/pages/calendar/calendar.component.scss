@@ -2,12 +2,12 @@
   display: block;
 }
 
-// ── Management bar ──────────────────────────────────────────────────────────
-.manage-bar {
+// ── Management ──────────────────────────────────────────────────────────────
+.manage-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  margin-top: 0.75rem;
 }
 
 .event-manage-actions {
@@ -20,6 +20,42 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+}
+
+.races-section {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.races-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.races-label {
+  font-size: var(--text-md);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--muted);
+}
+
+.race-row-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+
+  input[type="text"] {
+    flex: 1;
+  }
+
+  input[type="datetime-local"] {
+    flex: 1;
+  }
 }
 
 // ���─ Community filter chips ─────────────────────────────────────────────────
