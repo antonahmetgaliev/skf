@@ -45,6 +45,7 @@ type ViewMode = 'month' | 'year';
 
 const DEFAULT_COLOR = '#f5bf24'; // gold fallback
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WEEK_DAYS_SHORT = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const VIEW_TABS: { key: string; label: string }[] = [
   { key: 'month', label: 'Month' },
   { key: 'year', label: 'Year' },
@@ -62,6 +63,7 @@ export class CalendarComponent implements OnInit {
   readonly auth = inject(AuthService);
 
   readonly weekDays = WEEK_DAYS;
+  readonly weekDaysShort = WEEK_DAYS_SHORT;
   readonly viewTabs = VIEW_TABS;
   readonly viewMode = signal<ViewMode>('month');
   readonly currentYear = signal(new Date().getFullYear());

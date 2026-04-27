@@ -278,6 +278,11 @@
   font-weight: 700;
 }
 
+.weekday-short {
+  display: none;
+}
+
+
 .calendar-cell {
   padding: 0.4rem 0.5rem;
   background: rgba(40, 36, 30, 0.8);
@@ -687,6 +692,8 @@
 
 
 // ── Responsive ──────────────────────────────────────────────────────────────
+
+// Tablet / small laptop
 @media (max-width: 768px) {
   .calendar-layout {
     flex-direction: column;
@@ -735,5 +742,115 @@
 
   .year-columns {
     grid-template-columns: 1fr;
+  }
+
+  // Hide event text, show colored dots instead
+  .cell-event-label {
+    font-size: 0;
+    padding: 0;
+    border-radius: 50%;
+    width: 6px;
+    height: 6px;
+    flex-shrink: 0;
+
+    span {
+      display: none;
+    }
+  }
+
+  .cell-events {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 0.2rem;
+  }
+}
+
+// Mobile
+@media (max-width: 480px) {
+  .community-filters {
+    gap: 0.35rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .community-chip {
+    padding: 0.25rem 0.55rem;
+    font-size: var(--text-2xs);
+  }
+
+  .filter-toggle-btn {
+    padding: 0.25rem 0.55rem;
+    font-size: var(--text-2xs);
+  }
+
+  .calendar-grid {
+    min-height: calc(100vh - 340px);
+  }
+
+  .calendar-cell {
+    padding: 0.15rem;
+    min-height: 2.75rem;
+  }
+
+  .day-number {
+    font-size: var(--text-2xs);
+  }
+
+  .weekday-full {
+    display: none;
+  }
+
+  .weekday-short {
+    display: inline;
+  }
+
+  .calendar-weekday {
+    padding: 0.25rem 0.15rem;
+    font-size: var(--text-2xs);
+  }
+
+  .month-label {
+    font-size: var(--text-xl);
+  }
+
+  .cell-event-label {
+    width: 5px;
+    height: 5px;
+  }
+
+  .sidebar-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .sidebar-body {
+    padding: 0.75rem 1rem;
+  }
+
+  .event-card {
+    padding: 0.6rem;
+  }
+
+  .event-name {
+    font-size: var(--text-base);
+  }
+
+  .manage-actions {
+    flex-direction: column;
+
+    app-btn {
+      width: 100%;
+    }
+  }
+
+  .race-row-form {
+    flex-wrap: wrap;
+
+    input[type="text"] {
+      flex: 1 1 100%;
+    }
+
+    input[type="datetime-local"] {
+      flex: 1 1 auto;
+    }
   }
 }

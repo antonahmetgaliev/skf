@@ -101,8 +101,11 @@
           } @else {
             <!-- Calendar grid -->
             <div class="calendar-grid">
-              @for (dayName of weekDays; track dayName) {
-                <div class="calendar-weekday">{{ dayName }}</div>
+              @for (dayName of weekDays; track $index) {
+                <div class="calendar-weekday">
+                  <span class="weekday-full">{{ dayName }}</span>
+                  <span class="weekday-short">{{ weekDaysShort[$index] }}</span>
+                </div>
               }
 
               @for (week of calendarGrid(); track $index) {
