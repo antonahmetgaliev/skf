@@ -24,6 +24,7 @@ class UserOut(CamelModel):
     created_at: datetime
     last_login_at: datetime | None = None
     driver_id: uuid.UUID | None = None
+    managed_community_ids: list[str] = []
 
 
 class UserUpdate(CamelModel):

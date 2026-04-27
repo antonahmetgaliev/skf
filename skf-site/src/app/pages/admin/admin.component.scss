@@ -136,6 +136,40 @@
   color: var(--muted);
 }
 
+// Community manager assignments
+
+.community-assignments {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.community-assign-label {
+  font-size: var(--text-base);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  font-weight: 700;
+}
+
+.community-check {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--text-base);
+  cursor: pointer;
+}
+
+.community-color-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 // Site section
 
 .section-title {

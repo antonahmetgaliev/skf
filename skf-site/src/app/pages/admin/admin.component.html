@@ -60,6 +60,24 @@
                   </app-form-field>
                 </div>
 
+                @if (user.role === 'community_manager') {
+                  <div class="control-group community-assignments">
+                    <label class="community-assign-label">Communities:</label>
+                    @for (c of allCommunities(); track c.id) {
+                      <label class="community-check">
+                        <input
+                          type="checkbox"
+                          [checked]="isCommunityAssigned(user, c.id)"
+                          (change)="toggleCommunityAssignment(user, c.id)"
+                          [disabled]="!canEdit(user)"
+                        />
+                        <span class="community-color-dot" [style.background]="c.color"></span>
+                        {{ c.name }}
+                      </label>
+                    }
+                  </div>
+                }
+
                 <div class="action-buttons">
                   @if (canEdit(user) && user.role !== 'super_admin') {
                     <app-btn

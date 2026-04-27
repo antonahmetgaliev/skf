@@ -10,6 +10,7 @@ import { TabsComponent } from '../../components/tabs/tabs.component';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService, AuthUser, ROLES, Role } from '../../services/auth.service';
+import { CalendarApiService, Community } from '../../services/calendar-api.service';
 import { AdminCalendarTabComponent } from './admin-calendar-tab/admin-calendar-tab.component';
 
 type AdminTab = 'users' | 'site' | 'calendar';
@@ -23,6 +24,7 @@ type AdminTab = 'users' | 'site' | 'calendar';
 export class AdminComponent implements OnInit {
   readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
+  private readonly calendarApi = inject(CalendarApiService);
 
   readonly activeTab = signal<AdminTab>('users');
   readonly users = signal<AuthUser[]>([]);
@@ -31,8 +33,17 @@ export class AdminComponent implements OnInit {
   readonly clearingCache = signal(false);
   readonly cacheMessage = signal('');
 
+  readonly allCommunities = signal<Community[]>([]);
+
   ngOnInit(): void {
     this.loadUsers();
+    this.loadAllCommunities();
+  }
+
+  private loadAllCommunities(): void {
+    this.calendarApi.getCommunitiesAdmin().subscribe({
+      next: (data) => this.allCommunities.set(data),
+    });
   }
 
   setActiveTab(tab: AdminTab): void {
@@ -103,9 +114,29 @@ export class AdminComponent implements OnInit {
 
   availableRoles(): Role[] {
     if (this.auth.isSuperAdmin()) {
-      return [ROLES.DRIVER, ROLES.JUDGE, ROLES.ADMIN, ROLES.SUPER_ADMIN];
+      return [ROLES.DRIVER, ROLES.JUDGE, ROLES.COMMUNITY_MANAGER, ROLES.ADMIN, ROLES.SUPER_ADMIN];
     }
-    return [ROLES.DRIVER, ROLES.JUDGE, ROLES.ADMIN];
+    return [ROLES.DRIVER, ROLES.JUDGE, ROLES.COMMUNITY_MANAGER, ROLES.ADMIN];
+  }
+
+  isCommunityAssigned(user: AuthUser, communityId: string): boolean {
+    return user.managedCommunityIds?.includes(communityId) ?? false;
+  }
+
+  toggleCommunityAssignment(user: AuthUser, communityId: string): void {
+    const current = user.managedCommunityIds ?? [];
+    const next = current.includes(communityId)
+      ? current.filter((id) => id !== communityId)
+      : [...current, communityId];
+    this.http
+      .put<string[]>(`/api/users/${user.id}/managed-communities`, { communityIds: next })
+      .subscribe({
+        next: (ids) => {
+          this.users.update((list) =>
+            list.map((u) => (u.id === user.id ? { ...u, managedCommunityIds: ids } : u))
+          );
+        },
+      });
   }
 
   // -- Site --

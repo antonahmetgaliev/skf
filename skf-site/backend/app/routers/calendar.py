@@ -12,7 +12,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import require_admin
+from app.auth import (
+    check_community_access,
+    get_managed_community_ids,
+    is_admin,
+    require_admin,
+    require_admin_or_community_manager,
+)
 from app.database import get_db
 from app.models.active_championship import ActiveChampionship
 from app.models.community import Community
@@ -142,9 +148,10 @@ async def create_community(
 async def update_community(
     community_id: uuid.UUID,
     body: CommunityUpdate,
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
+    await check_community_access(user, community_id, db)
     result = await db.execute(
         select(Community).where(Community.id == community_id)
     )
@@ -187,6 +194,26 @@ async def delete_community(
         )
     await db.delete(community)
     await db.commit()
+
+
+@router.get("/communities/admin", response_model=list[CommunityOut])
+async def list_communities_admin(
+    user: User = Depends(require_admin_or_community_manager),
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin endpoint – returns all communities for admins, only managed communities for community managers."""
+    if is_admin(user):
+        result = await db.execute(
+            select(Community).order_by(Community.is_skf.desc(), Community.name)
+        )
+    else:
+        managed_ids = await get_managed_community_ids(user, db)
+        result = await db.execute(
+            select(Community)
+            .where(Community.id.in_(managed_ids))
+            .order_by(Community.name)
+        )
+    return result.scalars().all()
 
 
 # ── Simulators & Car Classes (from SimGrid API) ─────────────────────────────
@@ -455,12 +482,16 @@ def _overlaps_month(
 @router.get("/custom-championships", response_model=list[CustomChampionshipOut])
 async def list_custom_championships(
     community_id: uuid.UUID | None = Query(None, alias="communityId"),
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
     query = select(CustomChampionship).order_by(CustomChampionship.created_at.desc())
     if community_id is not None:
+        await check_community_access(user, community_id, db)
         query = query.where(CustomChampionship.community_id == community_id)
+    elif not is_admin(user):
+        managed_ids = await get_managed_community_ids(user, db)
+        query = query.where(CustomChampionship.community_id.in_(managed_ids))
     result = await db.execute(query)
     return [_champ_to_out(c) for c in result.scalars().all()]
 
@@ -472,9 +503,11 @@ async def list_custom_championships(
 )
 async def create_custom_championship(
     body: CustomChampionshipCreate,
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
+    if body.community_id:
+        await check_community_access(user, body.community_id, db)
     champ = CustomChampionship(
         name=body.name.strip(),
         game=body.game.strip(),
@@ -482,7 +515,7 @@ async def create_custom_championship(
         description=body.description,
         community_id=body.community_id,
         game_id=body.game_id,
-        created_by_user_id=_.id,
+        created_by_user_id=user.id,
     )
     for idx, race_data in enumerate(body.races):
         champ.races.append(
@@ -505,10 +538,12 @@ async def create_custom_championship(
 async def update_custom_championship(
     champ_id: uuid.UUID,
     body: CustomChampionshipUpdate,
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
     champ = await _get_championship_or_404(champ_id, db)
+    if champ.community_id:
+        await check_community_access(user, champ.community_id, db)
     update_data = body.model_dump(exclude_unset=True, by_alias=False)
     for field, value in update_data.items():
         if isinstance(value, str):
@@ -525,10 +560,12 @@ async def update_custom_championship(
 )
 async def delete_custom_championship(
     champ_id: uuid.UUID,
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
     champ = await _get_championship_or_404(champ_id, db)
+    if champ.community_id:
+        await check_community_access(user, champ.community_id, db)
     await db.delete(champ)
     await db.commit()
 
@@ -544,10 +581,12 @@ async def delete_custom_championship(
 async def add_race(
     champ_id: uuid.UUID,
     body: CustomRaceCreate,
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
     champ = await _get_championship_or_404(champ_id, db)
+    if champ.community_id:
+        await check_community_access(user, champ.community_id, db)
     max_order = max((r.sort_order for r in champ.races), default=-1)
     race = CustomRace(
         championship_id=champ.id,
@@ -569,10 +608,12 @@ async def update_race(
     champ_id: uuid.UUID,
     race_id: uuid.UUID,
     body: CustomRaceUpdate,
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
-    await _get_championship_or_404(champ_id, db)
+    champ = await _get_championship_or_404(champ_id, db)
+    if champ.community_id:
+        await check_community_access(user, champ.community_id, db)
     result = await db.execute(
         select(CustomRace).where(
             CustomRace.id == race_id,
@@ -601,10 +642,12 @@ async def update_race(
 async def delete_race(
     champ_id: uuid.UUID,
     race_id: uuid.UUID,
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
-    await _get_championship_or_404(champ_id, db)
+    champ = await _get_championship_or_404(champ_id, db)
+    if champ.community_id:
+        await check_community_access(user, champ.community_id, db)
     result = await db.execute(
         select(CustomRace).where(
             CustomRace.id == race_id,

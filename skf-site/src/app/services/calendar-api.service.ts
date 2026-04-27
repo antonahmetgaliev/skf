@@ -128,6 +128,10 @@ export class CalendarApiService {
     return this.http.get<Community[]>(`${this.base}/communities`);
   }
 
+  getCommunitiesAdmin(): Observable<Community[]> {
+    return this.http.get<Community[]>(`${this.base}/communities/admin`);
+  }
+
   createCommunity(payload: CommunityCreate): Observable<Community> {
     return this.http.post<Community>(`${this.base}/communities`, payload);
   }
