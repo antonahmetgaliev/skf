@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertComponent } from '../../components/alert/alert.component';
@@ -16,10 +17,9 @@ import {
   CalendarEvent,
   Community,
   CustomChampionshipCreate,
-  CustomRaceOut,
 } from '../../services/calendar-api.service';
 import { AuthService } from '../../services/auth.service';
-import { toLocalDateStr } from '../../utils/date';
+import { toLocalDateStr, withLocalTzOffset } from '../../utils/date';
 
 interface CalendarDay {
   dayNumber: number;
@@ -53,7 +53,7 @@ const VIEW_TABS: { key: string; label: string }[] = [
 
 @Component({
   selector: 'app-calendar',
-  imports: [FormsModule, RouterLink, AlertComponent, BtnComponent, CardComponent, FormFieldComponent, ModalComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
+  imports: [NgTemplateOutlet, FormsModule, RouterLink, AlertComponent, BtnComponent, CardComponent, FormFieldComponent, ModalComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
 
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
@@ -194,11 +194,13 @@ export class CalendarComponent implements OnInit {
   });
 
 
+  private managedCommunitiesLoaded = false;
+
   constructor() {
-    // React to user loading — fetch managed communities when user becomes available
     effect(() => {
       const user = this.auth.user();
-      if (user?.role === 'community_manager') {
+      if (user?.role === 'community_manager' && !this.managedCommunitiesLoaded) {
+        this.managedCommunitiesLoaded = true;
         this.loadManagedCommunities();
       }
     });
@@ -340,7 +342,7 @@ export class CalendarComponent implements OnInit {
 
   // ── Community management (year view) ──
 
-  readonly allCommunitiesAdmin = signal<Community[]>([]);
+  readonly fetchedManagedCommunities = signal<Community[]>([]);
   readonly managedCommunities = computed<Community[]>(() => {
     const user = this.auth.user();
     if (!user) return [];
@@ -352,7 +354,7 @@ export class CalendarComponent implements OnInit {
     }
     // Real community manager — show assigned communities
     if (user.role === 'community_manager') {
-      return this.allCommunitiesAdmin();
+      return this.fetchedManagedCommunities();
     }
     return [];
   });
@@ -363,7 +365,6 @@ export class CalendarComponent implements OnInit {
   readonly editingChampId = signal<string | null>(null);
   readonly champCommunityId = signal<string | null>(null);
   readonly champModalOpen = signal(false);
-  private originalRaceIds: string[] = [];
 
   canManageCommunity(communityId: string | null): boolean {
     const user = this.auth.user();
@@ -388,6 +389,7 @@ export class CalendarComponent implements OnInit {
   }
 
   editChampionship(event: CalendarEvent): void {
+    if (!event.customChampionshipId) return;
     this.editingChampId.set(event.customChampionshipId);
     this.champCommunityId.set(event.communityId);
     this.champForm.set({
@@ -397,28 +399,22 @@ export class CalendarComponent implements OnInit {
       description: event.description,
       races: [],
     });
-    this.originalRaceIds = [];
     this.champModalOpen.set(true);
     if (this.simulators().length === 0) {
       this.calendarApi.getSimulators().subscribe({ next: (d) => this.simulators.set(d) });
     }
-    // Load full championship to get races with IDs
-    if (event.communityId) {
-      this.calendarApi.getCustomChampionships(event.communityId).subscribe({
-        next: (champs) => {
-          const champ = champs.find((c) => c.id === event.customChampionshipId);
-          if (champ) {
-            const races = champ.races.map((r) => ({
-              id: r.id,
-              track: r.track ?? '',
-              date: r.date ? r.date.slice(0, 16) : '',
-            }));
-            this.originalRaceIds = champ.races.map((r) => r.id);
-            this.champForm.update((f) => ({ ...f, races }));
-          }
-        },
-      });
-    }
+    this.calendarApi.getCustomChampionship(event.customChampionshipId).subscribe({
+      next: (champ) => {
+        this.champForm.update((f) => ({
+          ...f,
+          races: champ.races.map((r) => ({
+            id: r.id,
+            track: r.track ?? '',
+            date: r.date ? r.date.slice(0, 16) : '',
+          })),
+        }));
+      },
+    });
   }
 
   saveChampionship(): void {
@@ -434,31 +430,18 @@ export class CalendarComponent implements OnInit {
         description: form.description?.trim() || null,
       }).subscribe({
         next: () => {
-          // Reconcile races: delete removed, update existing, add new
-          const currentIds = form.races.filter((r) => r.id).map((r) => r.id!);
-          const toDelete = this.originalRaceIds.filter((id) => !currentIds.includes(id));
-          const toUpdate = form.races.filter((r) => r.id);
-          const toAdd = form.races.filter((r) => !r.id && (r.track.trim() || r.date));
-
-          const ops: Promise<unknown>[] = [];
-          for (const id of toDelete) {
-            ops.push(firstValueFrom(this.calendarApi.deleteRace(editId, id)));
-          }
-          for (const r of toUpdate) {
-            ops.push(firstValueFrom(this.calendarApi.updateRace(editId, r.id!, {
+          const racesToSync = form.races
+            .filter((r) => r.id || r.track.trim() || r.date)
+            .map((r) => ({
+              id: r.id,
               track: r.track.trim() || null,
-              date: this.withLocalTzOffset(r.date || null),
-            })));
-          }
-          for (const r of toAdd) {
-            ops.push(firstValueFrom(this.calendarApi.addRace(editId, {
-              track: r.track.trim() || null,
-              date: this.withLocalTzOffset(r.date || null),
-            })));
-          }
-          Promise.all(ops).finally(() => {
-            this.champModalOpen.set(false);
-            this.reloadCalendar();
+              date: withLocalTzOffset(r.date || null),
+            }));
+          this.calendarApi.syncRaces(editId, racesToSync).subscribe({
+            next: () => {
+              this.champModalOpen.set(false);
+              this.reloadCalendar();
+            },
           });
         },
       });
@@ -476,7 +459,7 @@ export class CalendarComponent implements OnInit {
           .filter((r) => r.track.trim() || r.date)
           .map((r) => ({
             track: r.track.trim() || null,
-            date: this.withLocalTzOffset(r.date || null),
+            date: withLocalTzOffset(r.date || null),
           })),
       };
       this.calendarApi.createCustomChampionship(payload).subscribe({
@@ -497,9 +480,10 @@ export class CalendarComponent implements OnInit {
   }
 
   private reloadCalendar(): void {
-    this.loadEvents();
     if (this.viewMode() === 'year') {
       this.loadYearEvents();
+    } else {
+      this.loadEvents();
     }
   }
 
@@ -521,17 +505,6 @@ export class CalendarComponent implements OnInit {
 
   removeRaceRow(index: number): void {
     this.champForm.update((f) => ({ ...f, races: f.races.filter((_, i) => i !== index) }));
-  }
-
-  private withLocalTzOffset(date: string | null): string | null {
-    if (!date) return null;
-    const parts = date.split(':');
-    const base = parts.length >= 3 ? date : `${date}:00`;
-    const offset = new Date().getTimezoneOffset();
-    const sign = offset <= 0 ? '+' : '-';
-    const absH = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
-    const absM = String(Math.abs(offset) % 60).padStart(2, '0');
-    return `${base}${sign}${absH}:${absM}`;
   }
 
   private getEarliestDate(event: CalendarEvent): Date | null {
@@ -558,13 +531,13 @@ export class CalendarComponent implements OnInit {
   private async loadManagedCommunities(): Promise<void> {
     try {
       const data = await firstValueFrom(this.calendarApi.getCommunitiesAdmin());
-      this.allCommunitiesAdmin.set(data);
+      this.fetchedManagedCommunities.set(data);
     } catch {
       // non-critical
     }
   }
 
-  async loadYearEvents(): Promise<void> {
+  private async loadYearEvents(): Promise<void> {
     this.yearLoading.set(true);
     this.yearError.set('');
     try {

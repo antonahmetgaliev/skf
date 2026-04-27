@@ -36,6 +36,7 @@ from app.schemas.calendar import (
     CustomChampionshipUpdate,
     CustomRaceCreate,
     CustomRaceOut,
+    CustomRaceSync,
     CustomRaceUpdate,
 )
 from app.services.simgrid import simgrid_service
@@ -496,6 +497,18 @@ async def list_custom_championships(
     return [_champ_to_out(c) for c in result.scalars().all()]
 
 
+@router.get("/custom-championships/{champ_id}", response_model=CustomChampionshipOut)
+async def get_custom_championship(
+    champ_id: uuid.UUID,
+    user: User = Depends(require_admin_or_community_manager),
+    db: AsyncSession = Depends(get_db),
+):
+    champ = await _get_championship_or_404(champ_id, db)
+    if champ.community_id:
+        await check_community_access(user, champ.community_id, db)
+    return _champ_to_out(champ)
+
+
 @router.post(
     "/custom-championships",
     response_model=CustomChampionshipOut,
@@ -661,3 +674,46 @@ async def delete_race(
         )
     await db.delete(race)
     await db.commit()
+
+
+@router.put(
+    "/custom-championships/{champ_id}/races",
+    response_model=list[CustomRaceOut],
+)
+async def sync_races(
+    champ_id: uuid.UUID,
+    body: list[CustomRaceSync],
+    user: User = Depends(require_admin_or_community_manager),
+    db: AsyncSession = Depends(get_db),
+):
+    """Replace the full race list for a championship in a single request."""
+    champ = await _get_championship_or_404(champ_id, db)
+    if champ.community_id:
+        await check_community_access(user, champ.community_id, db)
+
+    incoming_ids = {r.id for r in body if r.id is not None}
+    existing = {r.id: r for r in champ.races}
+
+    # Delete races not in the incoming list
+    for rid, race in existing.items():
+        if rid not in incoming_ids:
+            await db.delete(race)
+
+    # Update existing / add new
+    for idx, item in enumerate(body):
+        if item.id and item.id in existing:
+            race = existing[item.id]
+            race.track = item.track.strip() if item.track else None
+            race.date = item.date
+            race.sort_order = idx
+        else:
+            db.add(CustomRace(
+                championship_id=champ.id,
+                track=item.track.strip() if item.track else None,
+                date=item.date,
+                sort_order=idx,
+            ))
+
+    await db.commit()
+    await db.refresh(champ)
+    return champ.races

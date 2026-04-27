@@ -78,6 +78,13 @@ class CustomRaceUpdate(CamelModel):
     sort_order: int | None = None
 
 
+class CustomRaceSync(CamelModel):
+    """Used for batch race sync — id present means update, absent means create."""
+    id: uuid.UUID | None = None
+    date: datetime | None = None
+    track: str | None = Field(default=None, max_length=200)
+
+
 class CustomRaceOut(CamelModel):
     model_config = ConfigDict(from_attributes=True)
 

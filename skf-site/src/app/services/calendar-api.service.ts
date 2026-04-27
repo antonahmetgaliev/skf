@@ -34,6 +34,12 @@ export interface CustomRaceCreate {
   track: string | null;
 }
 
+export interface CustomRaceSync {
+  id?: string;
+  date: string | null;
+  track: string | null;
+}
+
 export interface CustomRaceOut {
   id: string;
   date: string | null;
@@ -156,6 +162,10 @@ export class CalendarApiService {
 
   // ── Custom Championships ──
 
+  getCustomChampionship(id: string): Observable<CustomChampionshipOut> {
+    return this.http.get<CustomChampionshipOut>(`${this.base}/custom-championships/${id}`);
+  }
+
   getCustomChampionships(communityId?: string): Observable<CustomChampionshipOut[]> {
     const params: Record<string, string> = {};
     if (communityId) {
@@ -205,6 +215,13 @@ export class CalendarApiService {
   deleteRace(champId: string, raceId: string): Observable<void> {
     return this.http.delete<void>(
       `${this.base}/custom-championships/${champId}/races/${raceId}`,
+    );
+  }
+
+  syncRaces(champId: string, races: CustomRaceSync[]): Observable<CustomRaceOut[]> {
+    return this.http.put<CustomRaceOut[]>(
+      `${this.base}/custom-championships/${champId}/races`,
+      races,
     );
   }
 }
