@@ -289,6 +289,12 @@
             @if (event.simgridChampionshipId) {
               <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>
             }
+            @if (event.source === 'custom' && canManageCommunity(event.communityId)) {
+              <div class="event-manage-actions">
+                <app-btn variant="ghost" size="sm" (click)="editChampionship(event)">Edit</app-btn>
+                <app-btn variant="danger" size="sm" (click)="deleteChampionship(event)">Delete</app-btn>
+              </div>
+            }
           </div>
         }
       </div>
