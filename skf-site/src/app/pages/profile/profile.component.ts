@@ -10,11 +10,10 @@ import { PageLayoutComponent } from '../../components/page-layout/page-layout.co
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { AuthService } from '../../services/auth.service';
 import { DriverChampionshipResult, DriverPublic, LinkCandidate, ProfileApiService } from '../../services/profile-api.service';
-import { CommunityManageComponent } from './community-manage/community-manage.component';
 
 @Component({
   selector: 'app-profile',
-  imports: [DatePipe, DecimalPipe, FormsModule, BadgeComponent, BtnComponent, CardComponent, CommunityManageComponent, FormFieldComponent, ModalComponent, PageLayoutComponent, SpinnerComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, BadgeComponent, BtnComponent, CardComponent, FormFieldComponent, ModalComponent, PageLayoutComponent, SpinnerComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
 })

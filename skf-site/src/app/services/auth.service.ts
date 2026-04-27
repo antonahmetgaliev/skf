@@ -86,11 +86,17 @@ export class AuthService {
   /** Racing judge capability — admin+ inherit it implicitly. */
   readonly isJudge = computed(() => this.hasCapability(ROLES.JUDGE));
 
-  /** True when the real role is community_manager. */
-  readonly isCommunityManager = computed(() => this.user()?.role === ROLES.COMMUNITY_MANAGER);
+  /** True when the effective role is community_manager (respects viewAs). */
+  readonly isCommunityManager = computed(() => this.effectiveRole() === ROLES.COMMUNITY_MANAGER);
 
   /** True when the user can access the admin panel (admin+ or community manager). */
   readonly canAccessAdmin = computed(() => this.isAdmin() || this.isCommunityManager());
+
+  /**
+   * When an admin previews as community_manager, this holds the community ID they're impersonating.
+   * null = no override.
+   */
+  readonly viewAsCommunityId = signal<string | null>(null);
 
   /** True when the effective role's rank meets or exceeds `min`. */
   private hasRankAtLeast(min: Role): boolean {

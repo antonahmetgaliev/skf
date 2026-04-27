@@ -3,6 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { AlertComponent } from '../../components/alert/alert.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
+import { FormFieldComponent } from '../../components/form-field/form-field.component';
+import { ModalComponent } from '../../components/modal/modal.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
@@ -13,7 +15,9 @@ import {
   CalendarApiService,
   CalendarEvent,
   Community,
+  CustomChampionshipCreate,
 } from '../../services/calendar-api.service';
+import { AuthService } from '../../services/auth.service';
 import { toLocalDateStr } from '../../utils/date';
 
 interface CalendarDay {
@@ -47,13 +51,14 @@ const VIEW_TABS: { key: string; label: string }[] = [
 
 @Component({
   selector: 'app-calendar',
-  imports: [FormsModule, RouterLink, AlertComponent, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
+  imports: [FormsModule, RouterLink, AlertComponent, BtnComponent, CardComponent, FormFieldComponent, ModalComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
 
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
 })
 export class CalendarComponent implements OnInit {
   private readonly calendarApi = inject(CalendarApiService);
+  readonly auth = inject(AuthService);
 
   readonly weekDays = WEEK_DAYS;
   readonly viewTabs = VIEW_TABS;
@@ -133,9 +138,11 @@ export class CalendarComponent implements OnInit {
   readonly yearCommunityColumns = computed<YearCommunityColumn[]>(() => {
     const events = this.filteredYearEvents();
     const communities = this.communities();
+    const managedCommunities = this.managedCommunities();
 
     // Communities are returned from API with SKF first (sorted by is_skf desc, name)
     const columns: YearCommunityColumn[] = [];
+    const addedIds = new Set<string>();
 
     for (const c of communities) {
       const communityEvents = events.filter((e) => e.communityId === c.id);
@@ -158,6 +165,20 @@ export class CalendarComponent implements OnInit {
         discordUrl: c.discordUrl,
         events: sorted,
       });
+      addedIds.add(c.id);
+    }
+
+    // Add empty columns for managed communities with no events
+    for (const mc of managedCommunities) {
+      if (!addedIds.has(mc.id)) {
+        columns.push({
+          id: mc.id,
+          name: mc.name,
+          color: mc.color ?? DEFAULT_COLOR,
+          discordUrl: mc.discordUrl,
+          events: [],
+        });
+      }
     }
 
     return columns;
@@ -179,6 +200,7 @@ export class CalendarComponent implements OnInit {
   ngOnInit(): void {
     this.loadCommunities();
     this.loadEvents();
+    this.loadManagedCommunities();
   }
 
   navigateMonth(delta: number): void {
@@ -311,6 +333,126 @@ export class CalendarComponent implements OnInit {
     return community?.discordUrl ?? null;
   }
 
+  // ── Community management (year view) ──
+
+  readonly allCommunitiesAdmin = signal<Community[]>([]);
+  readonly managedCommunities = computed<Community[]>(() => {
+    const user = this.auth.user();
+    if (!user) return [];
+    // Admin viewing as community_manager — show only the selected community
+    if (this.auth.isRealAdmin() && this.auth.isCommunityManager()) {
+      const viewId = this.auth.viewAsCommunityId();
+      if (!viewId) return [];
+      return this.communities().filter((c) => c.id === viewId);
+    }
+    // Real community manager — show assigned communities
+    if (user.role === 'community_manager') {
+      return this.allCommunitiesAdmin();
+    }
+    return [];
+  });
+  readonly simulators = signal<string[]>([]);
+  readonly champForm = signal<{ name: string; game: string; carClass: string | null; description: string | null }>({
+    name: '', game: '', carClass: null, description: null,
+  });
+  readonly editingChampId = signal<string | null>(null);
+  readonly champCommunityId = signal<string | null>(null);
+  readonly champModalOpen = signal(false);
+
+  canManageCommunity(communityId: string | null): boolean {
+    if (!communityId) return false;
+    const user = this.auth.user();
+    if (!user) return false;
+    // Admin viewing as community_manager — check viewAsCommunityId
+    if (this.auth.isRealAdmin() && this.auth.isCommunityManager()) {
+      return this.auth.viewAsCommunityId() === communityId;
+    }
+    if (this.auth.isAdmin()) return true;
+    return user.role === 'community_manager' && (user.managedCommunityIds?.includes(communityId) ?? false);
+  }
+
+  openAddChampionship(communityId: string): void {
+    this.champForm.set({ name: '', game: '', carClass: null, description: null });
+    this.editingChampId.set(null);
+    this.champCommunityId.set(communityId);
+    this.champModalOpen.set(true);
+    if (this.simulators().length === 0) {
+      this.calendarApi.getSimulators().subscribe({ next: (d) => this.simulators.set(d) });
+    }
+  }
+
+  editChampionship(event: CalendarEvent): void {
+    this.editingChampId.set(event.customChampionshipId);
+    this.champCommunityId.set(event.communityId);
+    this.champForm.set({
+      name: event.name,
+      game: event.game,
+      carClass: event.carClass,
+      description: event.description,
+    });
+    this.champModalOpen.set(true);
+    if (this.simulators().length === 0) {
+      this.calendarApi.getSimulators().subscribe({ next: (d) => this.simulators.set(d) });
+    }
+  }
+
+  saveChampionship(): void {
+    const form = this.champForm();
+    if (!form.name.trim() || !form.game.trim()) return;
+
+    const editId = this.editingChampId();
+    if (editId) {
+      this.calendarApi.updateCustomChampionship(editId, {
+        name: form.name.trim(),
+        game: form.game.trim(),
+        carClass: form.carClass?.trim() || null,
+        description: form.description?.trim() || null,
+      }).subscribe({
+        next: () => {
+          this.champModalOpen.set(false);
+          this.reloadCalendar();
+        },
+      });
+    } else {
+      const communityId = this.champCommunityId();
+      if (!communityId) return;
+      const payload: CustomChampionshipCreate = {
+        name: form.name.trim(),
+        game: form.game.trim(),
+        communityId,
+        gameId: null,
+        carClass: form.carClass?.trim() || null,
+        description: form.description?.trim() || null,
+        races: [],
+      };
+      this.calendarApi.createCustomChampionship(payload).subscribe({
+        next: () => {
+          this.champModalOpen.set(false);
+          this.reloadCalendar();
+        },
+      });
+    }
+  }
+
+  deleteChampionship(event: CalendarEvent): void {
+    if (!event.customChampionshipId) return;
+    if (!window.confirm(`Delete "${event.name}"?`)) return;
+    this.calendarApi.deleteCustomChampionship(event.customChampionshipId).subscribe({
+      next: () => this.reloadCalendar(),
+    });
+  }
+
+  private reloadCalendar(): void {
+    this.loadEvents();
+    if (this.viewMode() === 'year') {
+      this.loadYearEvents();
+    }
+  }
+
+  updateChampField(field: 'name' | 'game' | 'carClass' | 'description', value: string | null): void {
+    this.champForm.update((f) => ({ ...f, [field]: value }));
+  }
+
   private getEarliestDate(event: CalendarEvent): Date | null {
     const dates: Date[] = [];
     for (const race of event.races) {
@@ -332,7 +474,18 @@ export class CalendarComponent implements OnInit {
     }
   }
 
-  private async loadYearEvents(): Promise<void> {
+  private async loadManagedCommunities(): Promise<void> {
+    const user = this.auth.user();
+    if (user?.role !== 'community_manager') return;
+    try {
+      const data = await firstValueFrom(this.calendarApi.getCommunitiesAdmin());
+      this.allCommunitiesAdmin.set(data);
+    } catch {
+      // non-critical
+    }
+  }
+
+  async loadYearEvents(): Promise<void> {
     this.yearLoading.set(true);
     this.yearError.set('');
     try {

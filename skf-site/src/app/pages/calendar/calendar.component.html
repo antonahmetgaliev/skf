@@ -42,6 +42,17 @@
     }
   </div>
 
+  <!-- ── Community management (community managers / admins) ── -->
+  @if (managedCommunities().length > 0) {
+    <div class="manage-bar">
+      @for (mc of managedCommunities(); track mc.id) {
+        <app-btn variant="accent" size="sm" (click)="openAddChampionship(mc.id)">
+          + Add Championship to {{ mc.name }}
+        </app-btn>
+      }
+    </div>
+  }
+
   <!-- ── Layout: sidebar + calendar ── -->
   <div class="calendar-layout">
     <!-- Collapsible filter sidebar -->
@@ -207,6 +218,12 @@
                       @if (event.simgridChampionshipId) {
                         <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>
                       }
+                      @if (event.source === 'custom' && canManageCommunity(event.communityId)) {
+                        <div class="event-manage-actions">
+                          <app-btn variant="ghost" size="sm" (click)="editChampionship(event)">Edit</app-btn>
+                          <app-btn variant="danger" size="sm" (click)="deleteChampionship(event)">Delete</app-btn>
+                        </div>
+                      }
                     </div>
                   }
                 </div>
@@ -278,4 +295,61 @@
       </div>
     </aside>
   }
+  <!-- ── Championship Modal ── -->
+  <app-modal
+    [title]="editingChampId() ? 'Edit Championship' : 'Add Championship'"
+    width="md"
+    [(open)]="champModalOpen"
+  >
+    <div class="modal-form">
+      <app-form-field label="Name" fieldId="calChampName">
+        <input
+          id="calChampName"
+          type="text"
+          placeholder="Championship name"
+          [ngModel]="champForm().name"
+          (ngModelChange)="updateChampField('name', $event)"
+          autocomplete="off"
+        />
+      </app-form-field>
+      <app-form-field label="Simulator" fieldId="calChampSim">
+        <select
+          id="calChampSim"
+          [ngModel]="champForm().game"
+          (ngModelChange)="updateChampField('game', $event)"
+        >
+          <option [ngValue]="''">— Select simulator —</option>
+          @for (sim of simulators(); track sim) {
+            <option [ngValue]="sim">{{ sim }}</option>
+          }
+        </select>
+      </app-form-field>
+      <app-form-field label="Car Class" fieldId="calChampClass">
+        <input
+          id="calChampClass"
+          type="text"
+          placeholder="e.g. GT3, LMP2"
+          [ngModel]="champForm().carClass"
+          (ngModelChange)="updateChampField('carClass', $event)"
+          autocomplete="off"
+        />
+      </app-form-field>
+      <app-form-field label="Description" fieldId="calChampDesc">
+        <input
+          id="calChampDesc"
+          type="text"
+          placeholder="Optional description"
+          [ngModel]="champForm().description"
+          (ngModelChange)="updateChampField('description', $event)"
+          autocomplete="off"
+        />
+      </app-form-field>
+    </div>
+    <div modal-footer>
+      <app-btn variant="ghost" size="sm" (click)="champModalOpen.set(false)">Cancel</app-btn>
+      <app-btn variant="primary" size="sm" (click)="saveChampionship()">
+        {{ editingChampId() ? 'Update' : 'Add' }}
+      </app-btn>
+    </div>
+  </app-modal>
 </app-page>
