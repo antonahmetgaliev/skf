@@ -119,24 +119,18 @@ export class AdminComponent implements OnInit {
     return [ROLES.DRIVER, ROLES.JUDGE, ROLES.COMMUNITY_MANAGER, ROLES.ADMIN];
   }
 
-  isCommunityAssigned(user: AuthUser, communityId: string): boolean {
-    return user.managedCommunityIds?.includes(communityId) ?? false;
+  getAssignedCommunityId(user: AuthUser): string {
+    return user.managedCommunityIds?.[0] ?? '';
   }
 
-  toggleCommunityAssignment(user: AuthUser, communityId: string, communityName: string): void {
-    const current = user.managedCommunityIds ?? [];
-    const removing = current.includes(communityId);
-    const action = removing ? 'Remove' : 'Assign';
-    if (!window.confirm(`${action} "${communityName}" for ${user.displayName}?`)) return;
-    const next = removing
-      ? current.filter((id) => id !== communityId)
-      : [...current, communityId];
+  assignCommunity(user: AuthUser, communityId: string): void {
+    const ids = communityId ? [communityId] : [];
     this.http
-      .put<string[]>(`/api/users/${user.id}/managed-communities`, { communityIds: next })
+      .put<string[]>(`/api/users/${user.id}/managed-communities`, { communityIds: ids })
       .subscribe({
-        next: (ids) => {
+        next: (result) => {
           this.users.update((list) =>
-            list.map((u) => (u.id === user.id ? { ...u, managedCommunityIds: ids } : u))
+            list.map((u) => (u.id === user.id ? { ...u, managedCommunityIds: result } : u))
           );
         },
       });

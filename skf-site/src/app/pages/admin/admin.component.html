@@ -46,37 +46,38 @@
               </div>
 
               <div class="user-controls">
-                <div class="control-group">
-                  <app-form-field label="Role">
-                    <select
-                              [ngModel]="user.role"
-                      (ngModelChange)="changeRole(user, $event)"
-                      [disabled]="!canEdit(user)"
-                    >
-                      @for (role of availableRoles(); track role) {
-                        <option [value]="role">{{ role.replace('_', ' ') }}</option>
-                      }
-                    </select>
-                  </app-form-field>
-                </div>
-
-                @if (user.role === 'community_manager') {
-                  <div class="control-group community-assignments">
-                    <label class="community-assign-label">Communities:</label>
-                    @for (c of allCommunities(); track c.id) {
-                      <label class="community-check">
-                        <input
-                          type="checkbox"
-                          [checked]="isCommunityAssigned(user, c.id)"
-                          (click)="$event.preventDefault(); toggleCommunityAssignment(user, c.id, c.name)"
-                          [disabled]="!canEdit(user)"
-                        />
-                        <span class="community-color-dot" [style.background]="c.color"></span>
-                        {{ c.name }}
-                      </label>
-                    }
+                <div class="control-groups">
+                  <div class="control-group">
+                    <app-form-field label="Role">
+                      <select
+                        [ngModel]="user.role"
+                        (ngModelChange)="changeRole(user, $event)"
+                        [disabled]="!canEdit(user)"
+                      >
+                        @for (role of availableRoles(); track role) {
+                          <option [value]="role">{{ role.replace('_', ' ') }}</option>
+                        }
+                      </select>
+                    </app-form-field>
                   </div>
-                }
+
+                  @if (user.role === 'community_manager') {
+                    <div class="control-group">
+                      <app-form-field label="Community">
+                        <select
+                          [ngModel]="getAssignedCommunityId(user)"
+                          (ngModelChange)="assignCommunity(user, $event)"
+                          [disabled]="!canEdit(user)"
+                        >
+                          <option value="">— None —</option>
+                          @for (c of allCommunities(); track c.id) {
+                            <option [value]="c.id">{{ c.name }}</option>
+                          }
+                        </select>
+                      </app-form-field>
+                    </div>
+                  }
+                </div>
 
                 <div class="action-buttons">
                   @if (canEdit(user) && user.role !== 'super_admin') {
