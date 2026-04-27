@@ -425,14 +425,21 @@ export class CalendarComponent implements OnInit {
         description: form.description?.trim() || null,
       }).subscribe({
         next: () => {
-          // Reconcile races: delete removed, add new
+          // Reconcile races: delete removed, update existing, add new
           const currentIds = form.races.filter((r) => r.id).map((r) => r.id!);
           const toDelete = this.originalRaceIds.filter((id) => !currentIds.includes(id));
+          const toUpdate = form.races.filter((r) => r.id);
           const toAdd = form.races.filter((r) => !r.id && (r.track.trim() || r.date));
 
           const ops: Promise<unknown>[] = [];
           for (const id of toDelete) {
             ops.push(firstValueFrom(this.calendarApi.deleteRace(editId, id)));
+          }
+          for (const r of toUpdate) {
+            ops.push(firstValueFrom(this.calendarApi.updateRace(editId, r.id!, {
+              track: r.track.trim() || null,
+              date: this.withLocalTzOffset(r.date || null),
+            })));
           }
           for (const r of toAdd) {
             ops.push(firstValueFrom(this.calendarApi.addRace(editId, {
