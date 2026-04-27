@@ -344,31 +344,29 @@
         />
       </app-form-field>
 
-      @if (!editingChampId()) {
-        <div class="races-section">
-          <div class="races-header">
-            <span class="races-label">Races</span>
-            <app-btn variant="ghost" size="sm" (click)="addRaceRow()">+ Add Race</app-btn>
-          </div>
-          @for (race of champForm().races; track $index) {
-            <div class="race-row-form">
-              <input
-                type="text"
-                placeholder="Track name"
-                [ngModel]="race.track"
-                (ngModelChange)="updateRaceRow($index, 'track', $event)"
-                autocomplete="off"
-              />
-              <input
-                type="datetime-local"
-                [ngModel]="race.date"
-                (ngModelChange)="updateRaceRow($index, 'date', $event)"
-              />
-              <app-btn variant="danger" size="sm" (click)="removeRaceRow($index)">x</app-btn>
-            </div>
-          }
+      <div class="races-section">
+        <div class="races-header">
+          <span class="races-label">Races</span>
+          <app-btn variant="ghost" size="sm" (click)="addRaceRow()">+ Add Race</app-btn>
         </div>
-      }
+        @for (race of champForm().races; track $index) {
+          <div class="race-row-form">
+            <input
+              type="text"
+              placeholder="Track name"
+              [ngModel]="race.track"
+              (ngModelChange)="updateRaceRow($index, 'track', $event)"
+              autocomplete="off"
+            />
+            <input
+              type="datetime-local"
+              [ngModel]="race.date"
+              (ngModelChange)="updateRaceRow($index, 'date', $event)"
+            />
+            <app-btn variant="danger" size="sm" (click)="removeRaceRow($index)">x</app-btn>
+          </div>
+        }
+      </div>
     </div>
     <div modal-footer>
       <app-btn variant="ghost" size="sm" (click)="champModalOpen.set(false)">Cancel</app-btn>

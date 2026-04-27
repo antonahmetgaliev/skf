@@ -16,6 +16,7 @@ import {
   CalendarEvent,
   Community,
   CustomChampionshipCreate,
+  CustomRaceOut,
 } from '../../services/calendar-api.service';
 import { AuthService } from '../../services/auth.service';
 import { toLocalDateStr } from '../../utils/date';
@@ -352,12 +353,13 @@ export class CalendarComponent implements OnInit {
     return [];
   });
   readonly simulators = signal<string[]>([]);
-  readonly champForm = signal<{ name: string; game: string; carClass: string | null; description: string | null; races: { track: string; date: string }[] }>({
+  readonly champForm = signal<{ name: string; game: string; carClass: string | null; description: string | null; races: { id?: string; track: string; date: string }[] }>({
     name: '', game: '', carClass: null, description: null, races: [],
   });
   readonly editingChampId = signal<string | null>(null);
   readonly champCommunityId = signal<string | null>(null);
   readonly champModalOpen = signal(false);
+  private originalRaceIds: string[] = [];
 
   canManageCommunity(communityId: string | null): boolean {
     if (!communityId) return false;
@@ -391,9 +393,27 @@ export class CalendarComponent implements OnInit {
       description: event.description,
       races: [],
     });
+    this.originalRaceIds = [];
     this.champModalOpen.set(true);
     if (this.simulators().length === 0) {
       this.calendarApi.getSimulators().subscribe({ next: (d) => this.simulators.set(d) });
+    }
+    // Load full championship to get races with IDs
+    if (event.communityId) {
+      this.calendarApi.getCustomChampionships(event.communityId).subscribe({
+        next: (champs) => {
+          const champ = champs.find((c) => c.id === event.customChampionshipId);
+          if (champ) {
+            const races = champ.races.map((r) => ({
+              id: r.id,
+              track: r.track ?? '',
+              date: r.date ? r.date.slice(0, 16) : '',
+            }));
+            this.originalRaceIds = champ.races.map((r) => r.id);
+            this.champForm.update((f) => ({ ...f, races }));
+          }
+        },
+      });
     }
   }
 
@@ -410,8 +430,25 @@ export class CalendarComponent implements OnInit {
         description: form.description?.trim() || null,
       }).subscribe({
         next: () => {
-          this.champModalOpen.set(false);
-          this.reloadCalendar();
+          // Reconcile races: delete removed, add new
+          const currentIds = form.races.filter((r) => r.id).map((r) => r.id!);
+          const toDelete = this.originalRaceIds.filter((id) => !currentIds.includes(id));
+          const toAdd = form.races.filter((r) => !r.id && (r.track.trim() || r.date));
+
+          const ops: Promise<unknown>[] = [];
+          for (const id of toDelete) {
+            ops.push(firstValueFrom(this.calendarApi.deleteRace(editId, id)));
+          }
+          for (const r of toAdd) {
+            ops.push(firstValueFrom(this.calendarApi.addRace(editId, {
+              track: r.track.trim() || null,
+              date: this.withLocalTzOffset(r.date || null),
+            })));
+          }
+          Promise.all(ops).finally(() => {
+            this.champModalOpen.set(false);
+            this.reloadCalendar();
+          });
         },
       });
     } else {
