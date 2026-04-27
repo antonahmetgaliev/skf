@@ -362,14 +362,14 @@ export class CalendarComponent implements OnInit {
   private originalRaceIds: string[] = [];
 
   canManageCommunity(communityId: string | null): boolean {
-    if (!communityId) return false;
     const user = this.auth.user();
     if (!user) return false;
     // Admin viewing as community_manager — check viewAsCommunityId
     if (this.auth.isRealAdmin() && this.auth.isCommunityManager()) {
-      return this.auth.viewAsCommunityId() === communityId;
+      return communityId ? this.auth.viewAsCommunityId() === communityId : false;
     }
     if (this.auth.isAdmin()) return true;
+    if (!communityId) return false;
     return user.role === 'community_manager' && (user.managedCommunityIds?.includes(communityId) ?? false);
   }
 
