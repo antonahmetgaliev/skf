@@ -123,9 +123,12 @@ export class AdminComponent implements OnInit {
     return user.managedCommunityIds?.includes(communityId) ?? false;
   }
 
-  toggleCommunityAssignment(user: AuthUser, communityId: string): void {
+  toggleCommunityAssignment(user: AuthUser, communityId: string, communityName: string): void {
     const current = user.managedCommunityIds ?? [];
-    const next = current.includes(communityId)
+    const removing = current.includes(communityId);
+    const action = removing ? 'Remove' : 'Assign';
+    if (!window.confirm(`${action} "${communityName}" for ${user.displayName}?`)) return;
+    const next = removing
       ? current.filter((id) => id !== communityId)
       : [...current, communityId];
     this.http

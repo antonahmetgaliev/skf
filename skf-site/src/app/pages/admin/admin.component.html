@@ -68,7 +68,7 @@
                         <input
                           type="checkbox"
                           [checked]="isCommunityAssigned(user, c.id)"
-                          (change)="toggleCommunityAssignment(user, c.id)"
+                          (click)="$event.preventDefault(); toggleCommunityAssignment(user, c.id, c.name)"
                           [disabled]="!canEdit(user)"
                         />
                         <span class="community-color-dot" [style.background]="c.color"></span>
