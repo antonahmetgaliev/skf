@@ -81,7 +81,6 @@ export class CalendarComponent implements OnInit {
   readonly selectedCommunityIds = signal<Set<string>>(new Set());
   readonly filtersOpen = signal(false);
   readonly selectedSimulator = signal<string | null>(null);
-  readonly selectedCarClass = signal<string | null>(null);
 
   readonly monthLabel = computed(() => {
     const d = new Date(this.currentYear(), this.currentMonth() - 1, 1);
@@ -192,11 +191,6 @@ export class CalendarComponent implements OnInit {
     return [...sims].sort();
   });
 
-  readonly availableCarClasses = computed(() => {
-    const all = this.viewMode() === 'year' ? this.yearEvents() : this.events();
-    const classes = new Set(all.map((e) => e.carClass).filter((c): c is string => !!c));
-    return [...classes].sort();
-  });
 
   ngOnInit(): void {
     this.loadCommunities();
@@ -302,11 +296,10 @@ export class CalendarComponent implements OnInit {
 
   clearFilters(): void {
     this.selectedSimulator.set(null);
-    this.selectedCarClass.set(null);
   }
 
   hasActiveFilters(): boolean {
-    return this.selectedSimulator() !== null || this.selectedCarClass() !== null;
+    return this.selectedSimulator() !== null;
   }
 
 
@@ -589,7 +582,6 @@ export class CalendarComponent implements OnInit {
   private applyFilters(events: CalendarEvent[]): CalendarEvent[] {
     const communityIds = this.selectedCommunityIds();
     const simulator = this.selectedSimulator();
-    const carClass = this.selectedCarClass();
 
     return events.filter((e) => {
       // Community filter
@@ -599,9 +591,6 @@ export class CalendarComponent implements OnInit {
 
       // Simulator filter
       if (simulator && e.game !== simulator) return false;
-
-      // Car class filter
-      if (carClass && e.carClass !== carClass) return false;
 
       return true;
     });

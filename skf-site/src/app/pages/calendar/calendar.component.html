@@ -72,21 +72,6 @@
           </select>
         </div>
 
-        <div class="filter-section">
-          <label class="filter-label" for="classFilter">Car Class</label>
-          <select
-            id="classFilter"
-            class="filter-select"
-            [ngModel]="selectedCarClass()"
-            (ngModelChange)="selectedCarClass.set($event || null)"
-          >
-            <option [ngValue]="null">All classes</option>
-            @for (c of availableCarClasses(); track c) {
-              <option [ngValue]="c">{{ c }}</option>
-            }
-          </select>
-        </div>
-
         @if (hasActiveFilters()) {
           <app-btn variant="ghost" size="sm" (click)="clearFilters()">Clear filters</app-btn>
         }
