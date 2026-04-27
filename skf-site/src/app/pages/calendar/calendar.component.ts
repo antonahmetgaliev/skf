@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertComponent } from '../../components/alert/alert.component';
 import { BtnComponent } from '../../components/btn/btn.component';
@@ -194,10 +194,19 @@ export class CalendarComponent implements OnInit {
   });
 
 
+  constructor() {
+    // React to user loading — fetch managed communities when user becomes available
+    effect(() => {
+      const user = this.auth.user();
+      if (user?.role === 'community_manager') {
+        this.loadManagedCommunities();
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.loadCommunities();
     this.loadEvents();
-    this.loadManagedCommunities();
   }
 
   navigateMonth(delta: number): void {
@@ -547,8 +556,6 @@ export class CalendarComponent implements OnInit {
   }
 
   private async loadManagedCommunities(): Promise<void> {
-    const user = this.auth.user();
-    if (user?.role !== 'community_manager') return;
     try {
       const data = await firstValueFrom(this.calendarApi.getCommunitiesAdmin());
       this.allCommunitiesAdmin.set(data);
