@@ -8,16 +8,6 @@
 </ng-template>
 
 <app-page>
-  @if (managedCommunities().length > 0) {
-    <div class="manage-actions">
-      @for (mc of managedCommunities(); track mc.id) {
-        <app-btn variant="accent" size="sm" (click)="openAddChampionship(mc.id)">
-          + Add Championship{{ managedCommunities().length > 1 ? ' to ' + mc.name : '' }}
-        </app-btn>
-      }
-    </div>
-  }
-
   <!-- ── Toolbar: filters + view toggle ── -->
   <div class="calendar-toolbar">
     <div class="community-filters">
@@ -53,6 +43,12 @@
         >{{ c.name }}</button>
       }
     </div>
+
+    @for (mc of managedCommunities(); track mc.id) {
+      <app-btn variant="accent" size="sm" (click)="openAddChampionship(mc.id)">
+        + Add{{ managedCommunities().length > 1 ? ' to ' + mc.name : '' }}
+      </app-btn>
+    }
 
     <app-toggle
       [options]="viewTabs"

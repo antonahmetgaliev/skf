@@ -3,13 +3,6 @@
 }
 
 // ── Management ──────────────────────────────────────────────────────────────
-.manage-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
 .event-manage-actions {
   display: flex;
   gap: 0.4rem;
@@ -873,14 +866,6 @@
 
   .event-name {
     font-size: var(--text-base);
-  }
-
-  .manage-actions {
-    flex-direction: column;
-
-    app-btn {
-      width: 100%;
-    }
   }
 
   .race-row-form {
