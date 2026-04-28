@@ -8,57 +8,57 @@
 </ng-template>
 
 <app-page>
-  <app-page-intro title="Season Calendar">
-    @if (managedCommunities().length > 0) {
-      <div class="manage-actions">
-        @for (mc of managedCommunities(); track mc.id) {
-          <app-btn variant="accent" size="sm" (click)="openAddChampionship(mc.id)">
-            + Add Championship{{ managedCommunities().length > 1 ? ' to ' + mc.name : '' }}
-          </app-btn>
-        }
-      </div>
-    }
-  </app-page-intro>
-
-  <app-toggle
-    [options]="viewTabs"
-    [activeKey]="viewMode()"
-    (keyChange)="setViewMode($event)"
-  />
-
-  <!-- ── Community filter chips ── -->
-  <div class="community-filters">
-    <button
-      type="button"
-      class="filter-toggle-btn"
-      [class.active]="filtersOpen() || hasActiveFilters()"
-      (click)="toggleFilters()"
-      title="Toggle filters"
-    >
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-        <path d="M1 2a1 1 0 011-1h12a1 1 0 01.8 1.6L10 9.3V13a1 1 0 01-.5.9l-2 1A1 1 0 016 14V9.3L1.2 2.6A1 1 0 011 2z"/>
-      </svg>
-      Filters
-      @if (hasActiveFilters()) {
-        <span class="filter-badge">!</span>
+  @if (managedCommunities().length > 0) {
+    <div class="manage-actions">
+      @for (mc of managedCommunities(); track mc.id) {
+        <app-btn variant="accent" size="sm" (click)="openAddChampionship(mc.id)">
+          + Add Championship{{ managedCommunities().length > 1 ? ' to ' + mc.name : '' }}
+        </app-btn>
       }
-    </button>
+    </div>
+  }
 
-    <button
-      type="button"
-      class="community-chip"
-      [class.active]="selectedCommunityIds().size === 0"
-      (click)="toggleCommunity(null)"
-    >All</button>
-    @for (c of communities(); track c.id) {
+  <!-- ── Toolbar: filters + view toggle ── -->
+  <div class="calendar-toolbar">
+    <div class="community-filters">
+      <button
+        type="button"
+        class="filter-toggle-btn"
+        [class.active]="filtersOpen() || hasActiveFilters()"
+        (click)="toggleFilters()"
+        title="Toggle filters"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M1 2a1 1 0 011-1h12a1 1 0 01.8 1.6L10 9.3V13a1 1 0 01-.5.9l-2 1A1 1 0 016 14V9.3L1.2 2.6A1 1 0 011 2z"/>
+        </svg>
+        Filters
+        @if (hasActiveFilters()) {
+          <span class="filter-badge">!</span>
+        }
+      </button>
+
       <button
         type="button"
         class="community-chip"
-        [class.active]="isCommunitySelected(c.id)"
-        [style.--chip-color]="c.color"
-        (click)="toggleCommunity(c.id)"
-      >{{ c.name }}</button>
-    }
+        [class.active]="selectedCommunityIds().size === 0"
+        (click)="toggleCommunity(null)"
+      >All</button>
+      @for (c of communities(); track c.id) {
+        <button
+          type="button"
+          class="community-chip"
+          [class.active]="isCommunitySelected(c.id)"
+          [style.--chip-color]="c.color"
+          (click)="toggleCommunity(c.id)"
+        >{{ c.name }}</button>
+      }
+    </div>
+
+    <app-toggle
+      [options]="viewTabs"
+      [activeKey]="viewMode()"
+      (keyChange)="setViewMode($event)"
+    />
   </div>
 
   <!-- ── Layout: sidebar + calendar ── -->

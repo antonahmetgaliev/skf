@@ -83,12 +83,26 @@
 }
 
 // ���─ Community filter chips ─────────────────────────────────────────────────
+// ── Toolbar (filters + view toggle in one row) ────────────────────────────
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+
+  app-toggle {
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+}
+
 .community-filters {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
-  margin-bottom: 0.75rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .community-chip {
@@ -169,6 +183,10 @@
   line-height: 1;
 }
 
+::ng-deep .calendar-card {
+  padding: 0.75rem;
+}
+
 // ── Calendar layout (sidebar + main) ───────────────────────────────────────
 .calendar-layout {
   display: flex;
@@ -234,7 +252,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.35rem;
   flex-wrap: wrap;
 }
 
@@ -259,7 +277,7 @@
   grid-template-columns: repeat(7, minmax(0, 1fr));
   grid-template-rows: auto;
   grid-auto-rows: 1fr;
-  min-height: calc(100vh - 260px);
+  min-height: calc(100vh - 16rem);
   gap: 1px;
   background: rgba(255, 255, 255, 0.06);
   border-radius: 12px;
@@ -312,6 +330,8 @@
   }
 
   &.today {
+    background: rgba(255, 214, 0, 0.1);
+
     .day-number {
       display: inline-flex;
       align-items: center;
@@ -331,11 +351,6 @@
 
   &.has-events:not(.other-month) {
     cursor: pointer;
-    background: rgba(255, 214, 0, 0.08);
-
-    .day-number {
-      font-weight: 700;
-    }
   }
 }
 
@@ -730,7 +745,7 @@
   }
 
   .calendar-grid {
-    min-height: calc(100vh - 300px);
+    min-height: calc(100vh - 18rem);
   }
 
   .calendar-cell {
@@ -805,7 +820,7 @@
   }
 
   .calendar-grid {
-    min-height: calc(100vh - 340px);
+    min-height: calc(100vh - 20rem);
   }
 
   .calendar-cell {
