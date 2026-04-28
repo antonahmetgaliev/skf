@@ -16,6 +16,7 @@ import { RegulationsComponent } from './pages/regulations/regulations.component'
 import { RegulationsIracingLeagueComponent } from './pages/regulations/iracing-league/iracing-league.component';
 import { RegulationsNightfallGteComponent } from './pages/regulations/nightfall-gte/nightfall-gte.component';
 import { RegulationsThunderTrucksComponent } from './pages/regulations/thunder-trucks/thunder-trucks.component';
+import { RegulationsNascarGeneralComponent } from './pages/regulations/nascar-general/nascar-general.component';
 
 export const appRoutes: Routes = [
   { path: '', component: HomeVisitComponent, title: 'Home | SKF Racing Hub' },
@@ -28,6 +29,7 @@ export const appRoutes: Routes = [
   { path: 'race-results', component: RaceResultsComponent, title: 'Race Results | SKF Racing Hub' },
   { path: 'calendar', component: CalendarComponent, title: 'Calendar | SKF Racing Hub' },
   { path: 'regulations', component: RegulationsComponent, title: 'General Regulations | SKF Racing Hub' },
+  { path: 'regulations/nascar-general', component: RegulationsNascarGeneralComponent, title: 'NASCAR General Regulations | SKF Racing Hub' },
   { path: 'regulations/iracing-league', component: RegulationsIracingLeagueComponent, title: 'SKF iRacing League Regulations | SKF Racing Hub' },
   { path: 'regulations/nightfall-gte', component: RegulationsNightfallGteComponent, title: 'SKF Nightfall GTE Championship Regulations | SKF Racing Hub' },
   { path: 'regulations/thunder-trucks', component: RegulationsThunderTrucksComponent, title: 'SKF Thunder Truck Series Regulations | SKF Racing Hub' },

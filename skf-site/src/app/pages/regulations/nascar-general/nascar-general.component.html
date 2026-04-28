@@ -1,0 +1,295 @@
+<app-page>
+  <app-page-intro
+    title="NASCAR General Regulations"
+    subtitle="Official rulebook governing all SKF Racing Hub NASCAR events, series, and leagues."
+  />
+
+  <!-- Section 1 -->
+  <app-card [animated]="true" class="reg-section" id="general">
+    <h2>1. General Regulations</h2>
+    <ol class="rules">
+      <li>These regulations apply to all official SKF Racing Hub NASCAR events (single events, series, leagues) across all simulators.</li>
+      <li>The purpose of these regulations is to ensure fair, safe, and comfortable participation for all drivers.</li>
+      <li>Participants are required to follow these regulations and the decisions of the administration/stewards.</li>
+      <li>The organizer reserves the right to make changes to the regulations with prior notification.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 2 -->
+  <app-card [animated]="true" class="reg-section" id="registration">
+    <h2>2. Participants and Registration</h2>
+    <ol class="rules">
+      <li>
+        Participation in any SKF Racing Hub event is only available to members of our Discord server.
+        All communication, briefings, and announcements are conducted exclusively there.
+        <br />
+        <a class="discord-link" href="https://discord.gg/XhNsUerTFp" target="_blank" rel="noopener">
+          discord.gg/XhNsUerTFp
+        </a>
+      </li>
+      <li>The in-game name must match the name in the registration form and on Discord. Changing the nickname during the season or event without notifying the administration is prohibited.</li>
+      <li>If a driver cannot participate in a race, they must notify the administration at least 1 hour before the start through Discord.</li>
+      <li>The administration reserves the right to deny participation to players in case of repeated rule violations, toxic behavior, or technical issues (high ping, unstable FPS, etc.).</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 3 -->
+  <app-card [animated]="true" class="reg-section" id="requirements">
+    <h2>3. Requirements</h2>
+
+    <h3>3.1. Software Requirements</h3>
+    <ol class="rules sub">
+      <li>Participants must have an active subscription or access to the relevant simulator (iRacing) and the updated version of the game.</li>
+      <li>Participants must own the car and track used in the event or series.</li>
+      <li>Attendance at the briefing in the SKF Racing Hub Discord is mandatory during official events.</li>
+    </ol>
+
+    <h3>3.2. Driver Names and Numbers</h3>
+    <ol class="rules sub">
+      <li>The in-game name must match the Discord and registration name. Offensive, obscene, or provocative names are prohibited.</li>
+      <li>Numbers are assigned on a first-come, first-served basis.</li>
+      <li>If two drivers from different classes request the same number, priority goes to the one who registered first.</li>
+      <li>Number range: 000&ndash;999.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 4 -->
+  <app-card [animated]="true" class="reg-section" id="format">
+    <h2>4. Competition Format</h2>
+    <ol class="rules">
+      <li>Event format (time, session duration, number of races, track type, car classes) is published separately for each event.</li>
+      <li>Race start procedures follow the regulations of the specific series.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 5 -->
+  <app-card [animated]="true" class="reg-section" id="on-track">
+    <h2>5. On-Track Behavior</h2>
+
+    <h3>5.1. General Rules</h3>
+    <ol class="rules sub">
+      <li>The race start time is considered the start of the Practice session preceding the Race.</li>
+      <li>Only the race director can decide on a session delay or restart.</li>
+      <li>Intentional or accidental actions that cause contact for advantage are prohibited.</li>
+      <li>Drivers must leave enough space for opponents to avoid incidents leading to loss of time, positions, or significant damage.</li>
+      <li>Unsportsmanlike behavior is punishable by penalties, including removal from the race, championship, or community.</li>
+      <li>Formation Lap: Maintain a safe distance; ghosting is disabled. Incidents during the warm-up lap will result in penalties.</li>
+    </ol>
+
+    <h3>5.2. Qualification</h3>
+    <ol class="rules sub">
+      <li>Drive alone without other cars on the track.</li>
+      <li>The goal is to set your best lap time.</li>
+    </ol>
+
+    <h3>5.3. Blue Flag</h3>
+    <ol class="rules sub">
+      <li>Blue flags are advisory in nature and do not impose a mandatory obligation. Lapped drivers are encouraged to facilitate a safe and predictable pass but are not required to yield position.</li>
+    </ol>
+
+    <h3>5.5. Race Start</h3>
+    <ol class="rules sub">
+      <li>All events begin with a formation lap to warm up the tires and brakes. Depending on the track, the formation lap may be shortened to a small section from the starting line.</li>
+      <li>
+        Penalties for the following rules will be automatically applied by the simulator:
+        <ol class="rules nested">
+          <li>Drivers out of position will receive a penalty.</li>
+          <li>The pole position driver must maintain the simulator-assigned speed until the green flag.</li>
+        </ol>
+      </li>
+      <li>Overtaking is strictly prohibited before the green flag, including on the right-hand side.</li>
+      <li>Jump starts are not allowed. Drivers must maintain a maximum gap of one car length to the vehicle ahead before the start.</li>
+    </ol>
+
+    <h3>5.6. During Race</h3>
+    <ol class="rules sub">
+      <li>Any deliberate actions that cause a caution (such as stopping on track or rejoining with a damaged vehicle) may result in disciplinary action.</li>
+      <li>There will be no yellow flag cautions during road races.</li>
+    </ol>
+
+    <h3>5.7. Race Finish</h3>
+    <ol class="rules sub">
+      <li>After crossing the finish line, either drive to the pit lane or stop safely off the racing line and return to the pits via the menu.</li>
+      <li>Race rules still apply after the finish, and penalties can be issued for violations.</li>
+    </ol>
+
+    <h3>5.8. Early Race Termination</h3>
+    <ol class="rules sub">
+      <li>
+        You may retire from the race at any time, but:
+        <ol class="rules nested">
+          <li>Safely pull off the track outside the racing line.</li>
+          <li>Return to the pits via the menu before leaving the session.</li>
+        </ol>
+      </li>
+    </ol>
+
+    <h3>5.9. Pit Stops and Strategy</h3>
+    <ol class="rules sub">
+      <li>Number of pit stops and requirements are specified separately for each event.</li>
+      <li>Blocking pit lane entry/exit is prohibited.</li>
+      <li>Entering/exiting pits must be done safely, respecting lane markings.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 6 -->
+  <app-card [animated]="true" class="reg-section" id="racing-conduct">
+    <h2>6. On-Track Behavior &mdash; Racing Conduct</h2>
+
+    <h3>6.1. General Principles</h3>
+    <ol class="rules sub">
+      <li>Overtaking Responsibility: The defending car is responsible for safe defence, and the attacking car is responsible for safe overtake.</li>
+      <li>Contacts: Drivers must make every effort to avoid any contact during side-by-side racing (see Section 9).</li>
+    </ol>
+
+    <h3>6.2. Prohibited Actions</h3>
+    <ol class="rules sub">
+      <li>Brake check (deliberate sudden braking to provoke contact).</li>
+      <li>Unsafe re-entry to the track after going off.</li>
+    </ol>
+
+    <h3>6.4. Vehicle Control</h3>
+    <ol class="rules sub">
+      <li>In case of loss of control or spin, hold the brakes until it is safe to rejoin.</li>
+      <li>Any uncontrolled rollback onto the racing line that causes an incident will be penalized severely.</li>
+    </ol>
+
+    <h3>6.5. Bump Drafting and Close Racing</h3>
+    <ol class="rules sub">
+      <li>Bump drafting is allowed, but if it results in an incident, the responsible driver may receive a penalty.</li>
+      <li>During side-by-side racing, avoid maneuvers that could cause the opponent to lose control.</li>
+    </ol>
+
+    <h3>6.6. Network-Related Situations</h3>
+    <ol class="rules sub">
+      <li>&ldquo;Netcode&rdquo; or game glitches will be reviewed separately, but in cases of doubt, decisions will favor the defending driver.</li>
+      <li>With unstable internet, maintain greater distance and avoid risky maneuvers.</li>
+    </ol>
+
+    <h3>6.7. Rejoining the Track</h3>
+    <ol class="rules sub">
+      <li>Any accident caused by unsafe rejoining will result in a penalty.</li>
+      <li>When entering the track or coming up to speed, stay on the flat apron until the straightaway and clear of traffic.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 7 -->
+  <app-card [animated]="true" class="reg-section" id="track-limits">
+    <h2>7. Track Limits</h2>
+    <ol class="rules">
+      <li>Determined by the in-game penalty system.</li>
+      <li>Exiting the pit lane only within track limits (all four wheels inside lines).</li>
+      <li>Gaining an advantage or position by cutting the track is penalized regardless of automatic in-game penalties.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 8 -->
+  <app-card [animated]="true" class="reg-section" id="incident-system">
+    <h2>8. Incident and Penalty System</h2>
+    <ol class="rules">
+      <li>All contacts, off-tracks, and pit lane violations are logged by the game and reviewed by stewards.</li>
+      <li>SKF Racing Hub uses the Behavior Warning Points (BWP) system.</li>
+      <li>
+        Penalties for Accumulated BWP:
+        <ul class="penalty-tiers">
+          <li><strong>6 points</strong> &mdash; Disqualification from the next qualifying session.</li>
+          <li><strong>9 points</strong> &mdash; Stop &amp; Go penalty (SG) in the next race.</li>
+          <li><strong>12 points</strong> &mdash; Suspension from the next race.</li>
+        </ul>
+      </li>
+      <li>
+        Validity Period of Points:
+        <ol class="rules nested">
+          <li>Points remain active for 3 months.</li>
+          <li>If the threshold for suspension is not met, points begin to expire after 3 months.</li>
+        </ol>
+      </li>
+      <li>Drivers may submit a protest regarding an incident through the official channel (Discord/form) within 24 hours after the finish.</li>
+      <li>The stewards&rsquo; decisions are final and cannot be appealed, except in cases explicitly provided for by these regulations.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 9 -->
+  <app-card [animated]="true" class="reg-section" id="penalties">
+    <h2>9. Incident Reviews and Penalties</h2>
+
+    <h3>9.1. Incident Reviews</h3>
+    <ol class="rules sub">
+      <li>Stewards review all incidents.</li>
+      <li>Drive Through (DT) or Stop &amp; Go (SG) penalties must be served within 3 laps or will convert to a time penalty.</li>
+      <li>Post-race time penalties are added to the race result if not served during the race.</li>
+      <li>Final results are published after all penalties are applied.</li>
+    </ol>
+
+    <h3>9.2. Penalty Severity Tiers</h3>
+    <p class="tier-intro">Stewards may apply additional penalties after the race depending on the severity of the incident:</p>
+    <ul class="penalty-tiers">
+      <li><strong>Warning:</strong> Warning or no further action. 0&ndash;1 BWP</li>
+      <li><strong>Incident involving 2 cars:</strong> +5 seconds penalty (1 BWP).</li>
+      <li><strong>Incident involving 3&ndash;4 cars:</strong> +10 seconds penalty (2 BWP).</li>
+      <li><strong>Incident involving 5 or more cars:</strong> +15 seconds penalty (3 BWP).</li>
+      <li><strong>Reckless driving / intentional contact / deliberate wrecking:</strong> Drive-Through (DT) penalty or +30 seconds (at the stewards&rsquo; discretion) &mdash; 5&ndash;10 BWP.</li>
+    </ul>
+
+    <h3>9.3. Filing Protests and Appeals</h3>
+    <ol class="rules sub">
+      <li>Deadline: within 24 hours after the race in Discord.</li>
+      <li>You must follow the instructions provided on the website &mdash; <a class="discord-link" href="https://skfracinghub.com/incidents">skfracinghub.com/incidents</a>.</li>
+      <li>At least two stewards must review the incident.</li>
+      <li>A protest can be filed even by a driver who was not directly involved in the incident.</li>
+      <li>Using other channels or direct messages for appeals is prohibited and may result in rejection of the complaint or an additional penalty.</li>
+      <li>Protests submitted after the deadline will not be considered.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 10 -->
+  <app-card [animated]="true" class="reg-section" id="communication">
+    <h2>10. Communication and Discipline</h2>
+    <ol class="rules">
+      <li>Any offensive behavior, toxicity, or provocation in chat or voice channels is prohibited.</li>
+      <li>Push-to-talk or a muted microphone is mandatory during sessions unless in an emergency.</li>
+      <li>Administrators may remove participants for severe violations.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 11 -->
+  <app-card [animated]="true" class="reg-section" id="force-majeure">
+    <h2>11. Force Majeure</h2>
+    <ol class="rules">
+      <li>In case of server issues, the organizer may delay or restart the session.</li>
+      <li>Drivers disconnected may rejoin unless prohibited by the format.</li>
+      <li>If most participants disconnect, the session may be restarted or results taken from the incident moment.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 12 -->
+  <app-card [animated]="true" class="reg-section" id="final">
+    <h2>12. Final Provisions</h2>
+    <ol class="rules">
+      <li>Participation in events implies automatic agreement with these regulations.</li>
+      <li>Any issues not covered by the regulations will be resolved at the discretion of the administration.</li>
+    </ol>
+  </app-card>
+
+  <!-- Section 13 - Driving Recommendations -->
+  <app-card [animated]="true" class="reg-section" id="recommendations">
+    <h2>13. Driving Recommendations</h2>
+    <p class="tier-intro">This section of the regulations is advisory in nature and does not impose a mandatory obligation.</p>
+
+    <h3>13.1. Holding the Line</h3>
+    <p>The core principle of oval racing is maintaining a stable and predictable line throughout the lap, especially during overtaking. If you move to the inside, do not drift up toward the wall unless you are certain the car alongside will yield the space. Conversely, if you are running the outside line &mdash; particularly in three-wide situations &mdash; you are expected to move toward the wall as you normally would when running alone.</p>
+
+    <h3>13.2. Pacing</h3>
+    <p>Immediately after a yellow flag is deployed, drivers must lift off the throttle and/or brake in a safe and controlled manner to avoid further incidents. If the caution is not in your immediate vicinity and no evasive action is required, reduce speed gradually to allow nearby drivers to react accordingly.</p>
+    <p>If you are involved in an incident and your car has spun or left the racing surface, you must ensure that your rejoin does not impede any drivers already pacing. If traffic is approaching, hold your brakes and wait until all uninvolved cars have passed.</p>
+    <p>When rejoining from the apron or grass, you must first align your car with the direction of the track while still off the racing surface, and only then rejoin. Rejoining parallel to oncoming traffic is strictly prohibited.</p>
+    <p>Once your car is safe to continue, you must immediately catch up to the pace car and the field.</p>
+    <p>The golden rule for restoring race order is: <strong>First catch up, then swap positions.</strong></p>
+    <p>Do not wait for other drivers to pass while the field is moving, as this may cause further disruption and lead to larger incidents.</p>
+
+    <h3>13.3. Pit Lane Rules</h3>
+    <p>Real-world pit lane rules apply. During yellow flag pit cycles, drivers are strictly prohibited from cutting the apron or passing through other drivers&rsquo; pit boxes while entering or exiting their stall.</p>
+    <p>When entering the pit lane, all cars must form a single-file line, bumper-to-bumper, on the far right side. Moving left is only permitted when the spotter announces a countdown of &ldquo;5&rdquo; seconds to your pit stall.</p>
+    <p>Any driver who deliberately shortens the distance to their pit box or drives through more than five pit boxes on entry will be subject to disciplinary action.</p>
+  </app-card>
+</app-page>

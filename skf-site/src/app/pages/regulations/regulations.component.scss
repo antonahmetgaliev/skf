@@ -91,11 +91,16 @@ h4 {
   color: var(--gold);
 }
 
-.tier-intro {
+.tier-intro,
+.reg-section p {
   margin: 0 0 0.5rem;
   color: var(--muted);
   font-size: var(--text-lg);
   line-height: 1.65;
+}
+
+.reg-section p + p {
+  margin-top: 0.75rem;
 }
 
 // ── Plain bullet lists ──────────────────────────────────────────
@@ -195,7 +200,7 @@ code {
 
 // ── Animation delays ─────────────────────────────────────────────
 
-@for $i from 1 through 12 {
+@for $i from 1 through 14 {
   .reg-section:nth-child(#{$i + 1}) {
     animation-delay: #{$i * 0.05}s;
   }

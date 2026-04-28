@@ -1,6 +1,6 @@
 <app-page>
   <app-page-intro
-    title="SKF Thunder Trucks Series"
+    title="SKF Thunder Trucks Series Season 2"
     subtitle="Individual Regulations &mdash; NASCAR Trucks online championship on iRacing."
   />
 
@@ -9,7 +9,7 @@
     <h2>1. General Information</h2>
     <ol class="rules">
       <li>This regulation may be amended or supplemented by the Responsible Officials, taking into account the wishes and comments of the drivers during breaks between championships.</li>
-      <li>No changes to the regulation are allowed during the championship. The SKF Racing Hub General Regulations apply, which every participant must read and comply with.</li>
+      <li>No changes to the regulation are allowed during the championship. The <a class="discord-link" routerLink="/regulations/nascar-general">SKF Racing Hub NASCAR General Regulations</a> apply, which every participant must read and comply with.</li>
     </ol>
   </app-card>
 
@@ -17,7 +17,7 @@
   <app-card [animated]="true" class="reg-section" id="organization">
     <h2>2. Championship Organization</h2>
     <ol class="rules">
-      <li>The championship (hereinafter &mdash; the Championship) is held on the iRacing.com Race Simulation simulator (PC version) using the governing documents (Individual Regulations and Driving Rules).</li>
+      <li>The championship (hereinafter &mdash; the Championship) is held on the iRacing.com Race Simulation simulator (PC version) using the governing documents (Individual Regulations and Driving Rules). The panel of stewards consists of Andrii Shumarin, Dmytro Kotsiuk and Kyrylo Taran.</li>
       <li>
         The official championship announcement board is maintained:
         <ul class="bullets">
@@ -27,7 +27,9 @@
       </li>
       <li>Current championship information is published on all official SKF Racing Hub resources.</li>
       <li>All drivers and responsible persons must follow impartial reporting rules and must not distort race results.</li>
-      <li>Disputes are resolved through voting.</li>
+      <li>Disputes are resolved through submission of protests.</li>
+      <li>Championship stewarding is conducted offline, with all incidents and protests reviewed.</li>
+      <li>The protest window will remain open for 24 hours after the race and will be available on this website &mdash; <a class="discord-link" href="https://skfracinghub.com/incidents">skfracinghub.com/incidents</a>.</li>
     </ol>
   </app-card>
 
@@ -36,8 +38,8 @@
     <h2>3. Championship</h2>
     <ol class="rules">
       <li>Each championship round is conducted according to the approved calendar in the individual standings.</li>
-      <li>The championship consists of six rounds.</li>
-      <li>Only the results of the five best rounds for each driver are counted in the final individual standings.</li>
+      <li>The championship consists of eight rounds.</li>
+      <li>Only the results of the seven best rounds for each driver are counted in the final individual standings.</li>
       <li>
         The date and track for each round are specified in the calendar, which is prepared by the Organizer and published on the Organizer&rsquo;s Discord in the <code>#iracing-2026-calendar</code> channel and on social media.
       </li>
@@ -55,12 +57,14 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td>Round 1</td><td>20.03</td><td>Daytona International Speedway &mdash; Oval</td><td>50L</td></tr>
-          <tr><td>Round 2</td><td>27.03</td><td>Texas Motor Speedway &mdash; Oval</td><td>80L</td></tr>
-          <tr><td>Round 3</td><td>03.04</td><td>Charlotte Motor Speedway &mdash; Oval</td><td>80L</td></tr>
-          <tr><td>Round 4</td><td>10.04</td><td>Iowa Speedway &mdash; Oval</td><td>120L</td></tr>
-          <tr><td>Round 5</td><td>17.04</td><td>Las Vegas Motor Speedway &mdash; Oval</td><td>80L</td></tr>
-          <tr><td>Round 6</td><td>24.04</td><td>EchoPark Speedway (Atlanta) &mdash; Oval</td><td>80L</td></tr>
+          <tr><td>Round 1</td><td>15.05</td><td>Watkins Glen International &mdash; Cup</td><td>38</td></tr>
+          <tr><td>Round 2</td><td>22.05</td><td>Charlotte Motor Speedway &mdash; Oval</td><td>100</td></tr>
+          <tr><td>Round 3</td><td>29.05</td><td>Nashville Superspeedway</td><td>100</td></tr>
+          <tr><td>Round 4</td><td>05.06</td><td>Michigan International Speedway</td><td>75</td></tr>
+          <tr><td>Round 5</td><td>19.06</td><td>Iowa Speedway &mdash; Oval</td><td>150</td></tr>
+          <tr><td>Round 6</td><td>26.06</td><td>Las Vegas Motor Speedway &mdash; Oval</td><td>100</td></tr>
+          <tr><td>Round 7</td><td>03.07</td><td>[Legacy] Phoenix Raceway</td><td>112</td></tr>
+          <tr><td>Round 8</td><td>10.07</td><td>Talladega Superspeedway</td><td>62</td></tr>
         </tbody>
       </table>
     </div>
@@ -69,46 +73,34 @@
     <ul class="bullets">
       <li>Fast Repairs: 1</li>
       <li>Setup: Fixed</li>
-      <li>Tyres: 2</li>
+      <li>Additional tyres: 3</li>
       <li>DT Penalties: 17 incident points</li>
       <li>Disqualification: 25 incident points</li>
-      <li>Green / White / Checkered: 1</li>
-      <li>Automatic Full Course Yellow: on</li>
-      <li>Lucky Dog: on</li>
+      <li>Green / White / Checkered: 15</li>
+      <li>Automatic Full Course Yellow: on (except Round 1)</li>
+      <li>Lucky Dog: on (except Round 1)</li>
       <li>Assistants: Disabled (but Clutch Assist OK)</li>
       <li>Start: Rolling</li>
     </ul>
 
     <h3>Race Schedule</h3>
     <ul class="bullets">
-      <li>18:00 CET &mdash; Practice (60 min)</li>
-      <li>19:00 CET &mdash; Qualifying (5 min | 2 laps)</li>
-      <li>19:05+ CET &mdash; Race (45 min)</li>
-      <li>20:30+ CET &mdash; Post-race wrap-up</li>
-      <li>20:45+ CET &mdash; Publication of preliminary results</li>
+      <li>18:00 CEST &mdash; Practice (60 min)</li>
+      <li>19:00 CEST &mdash; Qualifying (5 min | 2 laps)</li>
+      <li>19:05+ CEST &mdash; Race</li>
+      <li>20:05+ CEST &mdash; Post-race wrap-up</li>
+      <li>20:45+ CEST &mdash; Publication of preliminary results</li>
     </ul>
 
-    <ol class="rules" start="5">
+    <ol class="rules" start="8">
       <li>Round dates and times may be changed by the Race Directorate, with participants notified at least 48 hours in advance.</li>
       <li>Preliminary results are published on TheSimGrid.</li>
     </ol>
   </app-card>
 
   <!-- Section 4 -->
-  <app-card [animated]="true" class="reg-section" id="penalties">
-    <h2>4. Penalties &amp; Stewarding Procedure</h2>
-    <ol class="rules">
-      <li>Incident involving 2 cars &mdash; +5 seconds penalty (1 BWP).</li>
-      <li>Incident involving 3&ndash;4 cars &mdash; +10 seconds penalty (2 BWP).</li>
-      <li>Incident involving 5 or more cars &mdash; +15 seconds penalty (2 BWP).</li>
-      <li>In case of reckless driving, intentional contact, or deliberate wrecking &mdash; a Drive-Through (DT) penalty or +30 seconds will be applied (at the stewards&rsquo; discretion) &mdash; 5&ndash;10 BWP.</li>
-      <li>Stewarding Procedure: Incidents will be reviewed through post-race voting in the Discord channel <code>#voting</code>. Decisions are made by majority vote of the eligible voters.</li>
-    </ol>
-  </app-card>
-
-  <!-- Section 5 -->
   <app-card [animated]="true" class="reg-section" id="participation">
-    <h2>5. Participation in the Championship</h2>
+    <h2>4. Participation in the Championship</h2>
     <ol class="rules">
       <li>
         Participants must meet the following requirements:
@@ -135,22 +127,21 @@
     </ol>
   </app-card>
 
-  <!-- Section 6 -->
+  <!-- Section 5 -->
   <app-card [animated]="true" class="reg-section" id="registration">
-    <h2>6. Driver Registration</h2>
+    <h2>5. Driver Registration</h2>
     <ol class="rules">
       <li>Registration links are published on all SKF Racing Hub resources.</li>
       <li>The list of championship participants is available in the corresponding section on TheSimGrid.</li>
       <li>Drivers wishing to participate must fill out an application form. Applications are submitted via TheSimGrid.</li>
       <li>Entry fee: 0 UAH (free of charge).</li>
       <li>All participants must join the SKF Racing Hub Discord.</li>
-      <li>Driver registration closes at 17:00 CET on 24 April 2026.</li>
     </ol>
   </app-card>
 
-  <!-- Section 7 -->
+  <!-- Section 6 -->
   <app-card [animated]="true" class="reg-section" id="cars">
-    <h2>7. Cars and Classes</h2>
+    <h2>6. Cars and Classes</h2>
     <ol class="rules">
       <li>The championship uses the NASCAR Trucks.</li>
       <li>Drivers may use custom liveries, which can be changed during the championship, but changing the starting number is prohibited.</li>
@@ -159,9 +150,9 @@
     </ol>
   </app-card>
 
-  <!-- Section 8 -->
+  <!-- Section 7 -->
   <app-card [animated]="true" class="reg-section" id="scoring">
-    <h2>8. Scoring</h2>
+    <h2>7. Scoring</h2>
     <ol class="rules">
       <li>After each championship race, the following classification is established: individual driver standings.</li>
       <li>
@@ -200,38 +191,15 @@
     </ol>
   </app-card>
 
-  <!-- Section 9 -->
+  <!-- Section 8 -->
   <app-card [animated]="true" class="reg-section" id="prize-fund">
-    <h2>9. Prize Fund</h2>
-    <p class="tier-intro">
-      The tournament prize fund consists of guaranteed payouts and incentive rewards provided in the form of the monetary equivalent of content in iRacing (base price of 1 content item = 16 USD).
-    </p>
-
-    <h3>9.1. Main Championship Prizes</h3>
-    <ol class="rules sub">
-      <li><strong>Overall Championship Winner:</strong> Receives a guaranteed reward equivalent to 1 content item (16 USD).</li>
-      <li><strong>Active Participants Draw:</strong> Among drivers who complete at least 50% of the race distance in 4 out of 6 championship rounds, 3 content items (3 &times; 16 USD) will be raffled. The winners of the draw will be determined using a randomizer after the final round of the championship.</li>
-    </ol>
-
-    <h3>9.2. Race Win Prizes</h3>
-    <p class="tier-intro">
-      An additional reward is established for winning each individual race: 1 content item (16 USD) awarded to each race winner of any round.
-    </p>
-    <ol class="rules sub">
-      <li>
-        To be eligible for the race win payout, the driver must meet the following criteria:
-        <ul class="bullets">
-          <li><strong>Clean Racing:</strong> The driver must not be found responsible for any incident during the race (according to post-race voting decisions).</li>
-          <li><strong>Team Restriction:</strong> Members of SKF Racing Hub are not eligible for this specific prize.</li>
-        </ul>
-      </li>
-      <li>If the race winner does not meet these two conditions, the prize will be transferred to the next eligible participant.</li>
-    </ol>
+    <h2>8. Prize Fund</h2>
+    <p class="tier-intro">Information will soon be published.</p>
   </app-card>
 
-  <!-- Section 10 -->
+  <!-- Section 9 -->
   <app-card [animated]="true" class="reg-section" id="media">
-    <h2>10. Media</h2>
+    <h2>9. Media</h2>
     <ol class="rules">
       <li>
         Races will be broadcast on the official SKF Racing Hub YouTube channel:
@@ -255,18 +223,18 @@
     </ol>
   </app-card>
 
-  <!-- Section 11 -->
+  <!-- Section 10 -->
   <app-card [animated]="true" class="reg-section" id="awards">
-    <h2>11. Championship Standings &amp; Awards</h2>
+    <h2>10. Championship Standings &amp; Awards</h2>
     <ol class="rules">
-      <li>Championship positions are determined by the total points scored by drivers in their best rounds.</li>
+      <li>Championship positions are determined by the total points scored by drivers in their seven best rounds.</li>
       <li>If fewer than half of the rounds in the calendar are completed, the championship is considered invalid.</li>
       <li>
-        Winners in the SKF Thunder Trucks Series individual standings are awarded the following titles:
+        Winners in the SKF Thunder Trucks Series Season 2 individual standings are awarded the following titles:
         <ul class="bullets">
-          <li>1st place: &ldquo;Champion SKF Thunder Trucks Series&rdquo;</li>
-          <li>2nd place: &ldquo;Silver Medalist SKF Thunder Trucks Series&rdquo;</li>
-          <li>3rd place: &ldquo;Bronze Medalist SKF Thunder Trucks Series&rdquo;</li>
+          <li>1st place: &ldquo;Champion SKF Thunder Trucks Series Season 2&rdquo;</li>
+          <li>2nd place: &ldquo;Silver Medalist SKF Thunder Trucks Series Season 2&rdquo;</li>
+          <li>3rd place: &ldquo;Bronze Medalist SKF Thunder Trucks Series Season 2&rdquo;</li>
         </ul>
       </li>
     </ol>
