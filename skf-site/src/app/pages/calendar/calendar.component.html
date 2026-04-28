@@ -234,51 +234,58 @@
       <div class="sidebar-body">
         @for (event of selectedDayEvents(); track event.id) {
           <div class="event-card">
-            <div class="event-card-header">
-              @if (event.communityName) {
-                <span
-                  class="community-badge"
-                  [style.background]="event.communityColor"
-                >{{ event.communityName }}</span>
-                @if (getCommunityDiscordUrl(event); as discordUrl) {
-                  <a class="discord-link discord-link--small" [href]="discordUrl" target="_blank" rel="noopener" title="Join Discord">
-                    <svg width="16" height="12" viewBox="0 0 71 55" fill="currentColor">
-                      <path d="M60.1 4.9A58.5 58.5 0 0045.4.2a.2.2 0 00-.2.1 40.8 40.8 0 00-1.8 3.7 54 54 0 00-16.2 0A37.4 37.4 0 0025.4.3a.2.2 0 00-.2-.1A58.4 58.4 0 0010.5 4.9a.2.2 0 00-.1.1C1.5 18.7-.9 32.2.3 45.5v.2a58.9 58.9 0 0017.7 9a.2.2 0 00.3-.1 42.1 42.1 0 003.6-5.9.2.2 0 00-.1-.3 38.8 38.8 0 01-5.5-2.7.2.2 0 01 0-.4l1.1-.9a.2.2 0 01.2 0 42 42 0 0035.6 0 .2.2 0 01.2 0l1.1.9a.2.2 0 010 .4 36.4 36.4 0 01-5.5 2.7.2.2 0 00-.1.3 47.3 47.3 0 003.6 5.9.2.2 0 00.3.1 58.7 58.7 0 0017.7-9 .2.2 0 00.1-.2c1.4-15.1-2.4-28.2-10.1-39.8a.2.2 0 00-.1-.1zM23.7 37.3c-3.4 0-6.3-3.2-6.3-7s2.8-7 6.3-7 6.4 3.1 6.3 7-2.8 7-6.3 7zm23.2 0c-3.4 0-6.3-3.2-6.3-7s2.8-7 6.3-7 6.4 3.1 6.3 7-2.8 7-6.3 7z"/>
-                    </svg>
-                  </a>
-                }
-              }
-              @if (event.game) {
-                <span class="event-simulator">{{ event.game }}</span>
-              }
-            </div>
             @if (event.image) {
               <img class="event-thumbnail" [src]="event.image" [alt]="event.name" />
             }
-            <h4 class="event-name">{{ event.name }}</h4>
-            @if (event.carClass) {
-              <span class="event-car-class">{{ event.carClass }}</span>
-            }
-            @if (event.description) {
-              <p class="event-description">{{ event.description }}</p>
-            }
-            @if (event.races.length > 0) {
-              <div class="event-races event-races--column">
-                @for (race of getRacesForSelectedDay(event); track $index) {
-                  <span class="race-pill">
-                    @if (race.name) { {{ race.name }} }
-                    @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }
-                    @if (race.date) {
-                      <span class="race-date">{{ formatRaceDate(race.date, race.endDate) }}</span>
-                    }
-                  </span>
+            <div class="event-card-inner">
+              <div class="event-card-header">
+                @if (event.communityName) {
+                  <span
+                    class="community-badge"
+                    [style.background]="event.communityColor"
+                  >{{ event.communityName }}</span>
+                }
+                @if (event.game) {
+                  <span class="event-simulator-badge" [style.--sim-color]="getSimulatorColor(event.game)">{{ event.game }}</span>
                 }
               </div>
-            }
-            @if (event.simgridChampionshipId) {
-              <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>
-            }
-            <ng-container *ngTemplateOutlet="manageActions; context: { $implicit: event }" />
+              <h4 class="event-name">{{ event.name }}</h4>
+              @if (event.carClass) {
+                <span class="event-car-class">{{ event.carClass }}</span>
+              }
+              @if (event.description) {
+                <p class="event-description">{{ event.description }}</p>
+              }
+              @if (event.races.length > 0) {
+                <div class="event-races event-races--column">
+                  @for (race of getRacesForSelectedDay(event); track $index) {
+                    <span class="race-pill race-pill--stacked">
+                      <span class="race-pill-label">
+                        @if (race.name) { {{ race.name }} }
+                        @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }
+                      </span>
+                      @if (race.date) {
+                        <span class="race-pill-date">{{ formatRaceDate(race.date, race.endDate) }}</span>
+                      }
+                    </span>
+                  }
+                </div>
+              }
+              <div class="event-card-actions">
+                @if (event.simgridChampionshipId) {
+                  <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>
+                }
+                @if (event.communityName && getCommunityDiscordUrl(event); as discordUrl) {
+                  <a class="discord-btn" [href]="discordUrl" target="_blank" rel="noopener">
+                    <svg width="16" height="12" viewBox="0 0 71 55" fill="currentColor">
+                      <path d="M60.1 4.9A58.5 58.5 0 0045.4.2a.2.2 0 00-.2.1 40.8 40.8 0 00-1.8 3.7 54 54 0 00-16.2 0A37.4 37.4 0 0025.4.3a.2.2 0 00-.2-.1A58.4 58.4 0 0010.5 4.9a.2.2 0 00-.1.1C1.5 18.7-.9 32.2.3 45.5v.2a58.9 58.9 0 0017.7 9a.2.2 0 00.3-.1 42.1 42.1 0 003.6-5.9.2.2 0 00-.1-.3 38.8 38.8 0 01-5.5-2.7.2.2 0 01 0-.4l1.1-.9a.2.2 0 01.2 0 42 42 0 0035.6 0 .2.2 0 01.2 0l1.1.9a.2.2 0 010 .4 36.4 36.4 0 01-5.5 2.7.2.2 0 00-.1.3 47.3 47.3 0 003.6 5.9.2.2 0 00.3.1 58.7 58.7 0 0017.7-9 .2.2 0 00.1-.2c1.4-15.1-2.4-28.2-10.1-39.8a.2.2 0 00-.1-.1zM23.7 37.3c-3.4 0-6.3-3.2-6.3-7s2.8-7 6.3-7 6.4 3.1 6.3 7-2.8 7-6.3 7zm23.2 0c-3.4 0-6.3-3.2-6.3-7s2.8-7 6.3-7 6.4 3.1 6.3 7-2.8 7-6.3 7z"/>
+                    </svg>
+                    Join Discord
+                  </a>
+                }
+              </div>
+              <ng-container *ngTemplateOutlet="manageActions; context: { $implicit: event }" />
+            </div>
           </div>
         }
       </div>

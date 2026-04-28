@@ -575,6 +575,23 @@ export class CalendarComponent implements OnInit {
   }
 
 
+  private static readonly SIM_COLORS: Record<string, string> = {
+    'iracing': '#0153db',
+    'assetto corsa competizione': '#d4132a',
+    'assetto corsa': '#d4132a',
+    'le mans ultimate': '#004d99',
+    'rfactor 2': '#e87722',
+    'automobilista 2': '#2dbe60',
+    'rennsport': '#8b5cf6',
+    'forza motorsport': '#107c10',
+    'gran turismo': '#003791',
+    'ea sports wrc': '#00a2e8',
+  };
+
+  getSimulatorColor(game: string): string {
+    return CalendarComponent.SIM_COLORS[game.toLowerCase()] ?? '#6b7280';
+  }
+
   private applyFilters(events: CalendarEvent[]): CalendarEvent[] {
     const communityIds = this.selectedCommunityIds();
     const simulator = this.selectedSimulator();
