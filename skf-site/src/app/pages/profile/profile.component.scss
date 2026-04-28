@@ -24,7 +24,7 @@
   height: 80px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid rgba(243, 180, 25, 0.5);
+  border: 3px solid rgba(255, 214, 0, 0.5);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 
@@ -69,7 +69,7 @@
 }
 
 .role-badge[data-role='admin'] {
-  background: rgba(243, 180, 25, 0.2);
+  background: rgba(255, 214, 0, 0.2);
   color: var(--gold-deep);
 }
 
@@ -176,7 +176,7 @@
   height: 72px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(243, 180, 25, 0.4);
+  border: 2px solid rgba(255, 214, 0, 0.4);
   display: block;
 }
 
@@ -391,7 +391,7 @@
   font-weight: 700;
   padding: 0.1rem 0.4rem;
   border-radius: 999px;
-  background: rgba(243, 180, 25, 0.18);
+  background: rgba(255, 214, 0, 0.18);
   color: var(--gold-deep);
   text-transform: uppercase;
   letter-spacing: var(--tracking-normal);

@@ -44,7 +44,7 @@ interface YearCommunityColumn {
 
 type ViewMode = 'month' | 'year';
 
-const DEFAULT_COLOR = '#f5bf24'; // gold fallback
+const DEFAULT_COLOR = '#ffd600'; // gold fallback
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const WEEK_DAYS_SHORT = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const VIEW_TABS: { key: string; label: string }[] = [

@@ -51,7 +51,7 @@ export class AdminCalendarTabComponent implements OnInit {
   readonly activeChampionshipIds = signal<Set<number>>(new Set());
   readonly simgridLoading = signal(false);
 
-  readonly communityForm = signal<CommunityCreate>({ name: '', color: '#f5bf24', discordUrl: null });
+  readonly communityForm = signal<CommunityCreate>({ name: '', color: '#ffd600', discordUrl: null });
   readonly editingCommunityId = signal<string | null>(null);
 
   readonly champForm = signal<{ name: string; game: string; carClass: string | null; description: string | null }>({
@@ -109,7 +109,7 @@ export class AdminCalendarTabComponent implements OnInit {
   }
 
   resetCommunityForm(): void {
-    this.communityForm.set({ name: '', color: '#f5bf24', discordUrl: null });
+    this.communityForm.set({ name: '', color: '#ffd600', discordUrl: null });
     this.editingCommunityId.set(null);
   }
 

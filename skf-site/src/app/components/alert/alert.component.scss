@@ -10,8 +10,8 @@
 :host(.alert--info),
 :host(.alert--warning) {
   color: var(--gold);
-  background: rgba(243, 180, 25, 0.2);
-  border: 1px solid rgba(243, 180, 25, 0.45);
+  background: rgba(255, 214, 0, 0.2);
+  border: 1px solid rgba(255, 214, 0, 0.45);
 }
 
 :host(.alert--error) {
