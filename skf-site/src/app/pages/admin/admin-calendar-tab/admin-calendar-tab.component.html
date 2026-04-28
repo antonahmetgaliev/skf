@@ -1,3 +1,45 @@
+<!-- DOTD Polls section -->
+<app-card [animated]="true">
+  <h3 class="section-title">Driver of the Day Polls</h3>
+  <p class="section-description">
+    Create and manage DOTD polls for active championships.
+  </p>
+
+  <div class="section-toolbar">
+    <app-btn variant="primary" size="sm" (click)="openDotdModal()">Create Poll</app-btn>
+  </div>
+
+  @if (dotdLoading()) {
+    <app-spinner />
+  } @else {
+    @if (dotdPolls().length === 0) {
+      <p class="empty">No active polls.</p>
+    }
+    @for (poll of dotdPolls(); track poll.id) {
+      <div class="dotd-poll-row">
+        <div class="dotd-poll-info">
+          <h4 class="dotd-poll-name">{{ poll.championshipName }}</h4>
+          <p class="dotd-poll-meta">
+            @if (poll.raceName) { {{ poll.raceName }} · }
+            {{ poll.totalVotes }} vote{{ poll.totalVotes !== 1 ? 's' : '' }}
+            @if (poll.isOpen) {
+              · <span class="dotd-live">LIVE</span>
+            } @else {
+              · Closed
+            }
+          </p>
+        </div>
+        <div class="action-buttons">
+          @if (poll.isOpen) {
+            <app-btn variant="danger" size="sm" (click)="closeDotdPoll(poll.id)">Close</app-btn>
+          }
+          <app-btn variant="ghost" size="sm" (click)="deleteDotdPoll(poll.id)">Delete</app-btn>
+        </div>
+      </div>
+    }
+  }
+</app-card>
+
 <!-- Communities section -->
 <app-card [animated]="true">
   <h3 class="section-title">Communities</h3>
@@ -8,44 +50,8 @@
   @if (communitiesLoading()) {
     <app-spinner />
   } @else {
-    <!-- Community form -->
-    <div class="community-form">
-      <app-form-field label="Name" fieldId="communityName">
-        <input
-          id="communityName"
-          type="text"
-          placeholder="Community name"
-          [ngModel]="communityForm().name"
-          (ngModelChange)="updateCommunityField('name', $event)"
-          autocomplete="off"
-        />
-      </app-form-field>
-      <app-form-field label="Color" fieldId="communityColor">
-        <input
-          id="communityColor"
-          type="color"
-          [ngModel]="communityForm().color"
-          (ngModelChange)="updateCommunityField('color', $event)"
-        />
-      </app-form-field>
-      <app-form-field label="Discord URL" fieldId="communityDiscord">
-        <input
-          id="communityDiscord"
-          type="url"
-          placeholder="https://discord.gg/..."
-          [ngModel]="communityForm().discordUrl"
-          (ngModelChange)="updateCommunityField('discordUrl', $event)"
-          autocomplete="off"
-        />
-      </app-form-field>
-      <div class="community-form-actions">
-        <app-btn variant="primary" size="sm" (click)="saveCommunity()">
-          {{ editingCommunityId() ? 'Update' : 'Add Community' }}
-        </app-btn>
-        @if (editingCommunityId()) {
-          <app-btn variant="ghost" size="sm" (click)="resetCommunityForm()">Cancel</app-btn>
-        }
-      </div>
+    <div class="section-toolbar">
+      <app-btn variant="primary" size="sm" (click)="openCommunityModal()">Add Community</app-btn>
     </div>
 
     <!-- Community list -->
@@ -66,7 +72,9 @@
           </div>
           <div class="action-buttons">
             <app-btn variant="ghost" size="sm" (click)="editCommunity(c)">Edit</app-btn>
-            <app-btn variant="danger" size="sm" (click)="deleteCommunity(c)">Delete</app-btn>
+            @if (!c.isSkf) {
+              <app-btn variant="danger" size="sm" (click)="deleteCommunity(c)">Delete</app-btn>
+            }
           </div>
         </article>
       }
@@ -77,66 +85,71 @@
   }
 </app-card>
 
+<!-- SimGrid championships (SKF community only) -->
+@if (selectedCommunity(); as community) {
+  @if (community.isSkf) {
+    <app-card [animated]="true">
+      <h3 class="section-title">
+        <span class="community-color-swatch" [style.background]="community.color"></span>
+        {{ community.name }} — SimGrid Championships
+      </h3>
+      <p class="section-description">
+        Activate SimGrid championships to show them on the SKF calendar.
+      </p>
+
+      @if (simgridLoading()) {
+        <app-spinner />
+      } @else {
+        @if (activeSimgridChampionships.length > 0) {
+          <h4 class="subsection-title">Active</h4>
+          @for (champ of activeSimgridChampionships; track champ.id) {
+            <div class="champ-item champ-item--simgrid">
+              <div class="champ-header">
+                <div>
+                  <h4 class="champ-name">{{ champ.name }}</h4>
+                  <p class="champ-meta">
+                    SimGrid #{{ champ.id }}
+                    @if (champ.startDate) { · {{ champ.startDate | date:'mediumDate' }} }
+                  </p>
+                </div>
+                <app-btn variant="danger" size="sm" (click)="toggleSimgridActive(champ.id)">Deactivate</app-btn>
+              </div>
+            </div>
+          }
+        }
+
+        @if (inactiveSimgridChampionships.length > 0) {
+          <h4 class="subsection-title">Available</h4>
+          @for (champ of inactiveSimgridChampionships; track champ.id) {
+            <div class="champ-item champ-item--simgrid champ-item--inactive">
+              <div class="champ-header">
+                <div>
+                  <h4 class="champ-name">{{ champ.name }}</h4>
+                  <p class="champ-meta">
+                    SimGrid #{{ champ.id }}
+                    @if (champ.startDate) { · {{ champ.startDate | date:'mediumDate' }} }
+                  </p>
+                </div>
+                <app-btn variant="primary" size="sm" (click)="toggleSimgridActive(champ.id)">Activate</app-btn>
+              </div>
+            </div>
+          }
+        }
+      }
+    </app-card>
+  }
+}
+
 <!-- Championships for selected community -->
 @if (selectedCommunity(); as community) {
   <app-card [animated]="true">
     <h3 class="section-title">
       <span class="community-color-swatch" [style.background]="community.color"></span>
-      {{ community.name }} — Championships
+      {{ community.name }} — Custom Championships
     </h3>
 
-    <!-- Championship form -->
-    <div class="champ-form">
-      <app-form-field label="Name" fieldId="champName">
-        <input
-          id="champName"
-          type="text"
-          placeholder="Championship name"
-          [ngModel]="champForm().name"
-          (ngModelChange)="updateChampField('name', $event)"
-          autocomplete="off"
-        />
-      </app-form-field>
-      <app-form-field label="Simulator" fieldId="champSimulator">
-        <select
-          id="champSimulator"
-          [ngModel]="champForm().game"
-          (ngModelChange)="updateChampField('game', $event)"
-        >
-          <option [ngValue]="''">— Select simulator —</option>
-          @for (sim of simulators(); track sim) {
-            <option [ngValue]="sim">{{ sim }}</option>
-          }
-        </select>
-      </app-form-field>
-      <app-form-field label="Car Class" fieldId="champCarClass">
-        <input
-          id="champCarClass"
-          type="text"
-          placeholder="e.g. GT3, LMP2"
-          [ngModel]="champForm().carClass"
-          (ngModelChange)="updateChampField('carClass', $event)"
-          autocomplete="off"
-        />
-      </app-form-field>
-      <app-form-field label="Description" fieldId="champDesc">
-        <input
-          id="champDesc"
-          type="text"
-          placeholder="Optional description"
-          [ngModel]="champForm().description"
-          (ngModelChange)="updateChampField('description', $event)"
-          autocomplete="off"
-        />
-      </app-form-field>
-      <div class="champ-form-actions">
-        <app-btn variant="primary" size="sm" (click)="saveChampionship()">
-          {{ editingChampId() ? 'Update' : 'Add Championship' }}
-        </app-btn>
-        @if (editingChampId()) {
-          <app-btn variant="ghost" size="sm" (click)="resetChampForm()">Cancel</app-btn>
-        }
-      </div>
+    <div class="section-toolbar">
+      <app-btn variant="primary" size="sm" (click)="openChampModal()">Add Championship</app-btn>
     </div>
 
     @if (champsLoading()) {
@@ -175,28 +188,7 @@
             }
           </div>
 
-          <!-- Add race form -->
-          <div class="add-race-row">
-            <app-form-field label="Track" fieldId="raceTrack_{{ champ.id }}">
-              <input
-                id="raceTrack_{{ champ.id }}"
-                type="text"
-                placeholder="Track name"
-                [ngModel]="raceForm().track"
-                (ngModelChange)="updateRaceField('track', $event)"
-                autocomplete="off"
-              />
-            </app-form-field>
-            <app-form-field label="Date" fieldId="raceDate_{{ champ.id }}">
-              <input
-                id="raceDate_{{ champ.id }}"
-                type="datetime-local"
-                [ngModel]="raceForm().date"
-                (ngModelChange)="updateRaceField('date', $event)"
-              />
-            </app-form-field>
-            <app-btn variant="primary" size="sm" (click)="addRace(champ)">Add Race</app-btn>
-          </div>
+          <app-btn variant="ghost" size="sm" (click)="openRaceModal(champ)">+ Add Race</app-btn>
         </div>
       }
       @if (communityChampionships().length === 0) {
@@ -205,3 +197,198 @@
     }
   </app-card>
 }
+
+<!-- Community Modal -->
+<app-modal
+  [title]="editingCommunityId() ? 'Edit Community' : 'Add Community'"
+  width="md"
+  [(open)]="communityModalOpen"
+>
+  <div class="modal-form">
+    <app-form-field label="Name" fieldId="communityName">
+      <input
+        id="communityName"
+        type="text"
+        placeholder="Community name"
+        [ngModel]="communityForm().name"
+        (ngModelChange)="updateCommunityField('name', $event)"
+        autocomplete="off"
+      />
+    </app-form-field>
+    <app-form-field label="Color" fieldId="communityColor">
+      <input
+        id="communityColor"
+        type="color"
+        [ngModel]="communityForm().color"
+        (ngModelChange)="updateCommunityField('color', $event)"
+      />
+    </app-form-field>
+    <app-form-field label="Discord URL" fieldId="communityDiscord">
+      <input
+        id="communityDiscord"
+        type="url"
+        placeholder="https://discord.gg/..."
+        [ngModel]="communityForm().discordUrl"
+        (ngModelChange)="updateCommunityField('discordUrl', $event)"
+        autocomplete="off"
+      />
+    </app-form-field>
+  </div>
+  <div modal-footer>
+    <app-btn variant="ghost" size="sm" (click)="communityModalOpen.set(false)">Cancel</app-btn>
+    <app-btn variant="primary" size="sm" (click)="saveCommunity()">
+      {{ editingCommunityId() ? 'Update' : 'Add' }}
+    </app-btn>
+  </div>
+</app-modal>
+
+<!-- Championship Modal -->
+<app-modal
+  [title]="editingChampId() ? 'Edit Championship' : 'Add Championship'"
+  width="md"
+  [(open)]="champModalOpen"
+>
+  <div class="modal-form">
+    <app-form-field label="Name" fieldId="champName">
+      <input
+        id="champName"
+        type="text"
+        placeholder="Championship name"
+        [ngModel]="champForm().name"
+        (ngModelChange)="updateChampField('name', $event)"
+        autocomplete="off"
+      />
+    </app-form-field>
+    <app-form-field label="Simulator" fieldId="champSimulator">
+      <select
+        id="champSimulator"
+        [ngModel]="champForm().game"
+        (ngModelChange)="updateChampField('game', $event)"
+      >
+        <option [ngValue]="''">— Select simulator —</option>
+        @for (sim of simulators(); track sim) {
+          <option [ngValue]="sim">{{ sim }}</option>
+        }
+      </select>
+    </app-form-field>
+    <app-form-field label="Car Class" fieldId="champCarClass">
+      <input
+        id="champCarClass"
+        type="text"
+        placeholder="e.g. GT3, LMP2"
+        [ngModel]="champForm().carClass"
+        (ngModelChange)="updateChampField('carClass', $event)"
+        autocomplete="off"
+      />
+    </app-form-field>
+    <app-form-field label="Description" fieldId="champDesc">
+      <input
+        id="champDesc"
+        type="text"
+        placeholder="Optional description"
+        [ngModel]="champForm().description"
+        (ngModelChange)="updateChampField('description', $event)"
+        autocomplete="off"
+      />
+    </app-form-field>
+  </div>
+  <div modal-footer>
+    <app-btn variant="ghost" size="sm" (click)="champModalOpen.set(false)">Cancel</app-btn>
+    <app-btn variant="primary" size="sm" (click)="saveChampionship()">
+      {{ editingChampId() ? 'Update' : 'Add' }}
+    </app-btn>
+  </div>
+</app-modal>
+
+<!-- Race Modal -->
+<app-modal title="Add Race" width="sm" [(open)]="raceModalOpen">
+  <div class="modal-form">
+    <app-form-field label="Track" fieldId="raceTrack">
+      <input
+        id="raceTrack"
+        type="text"
+        placeholder="Track name"
+        [ngModel]="raceForm().track"
+        (ngModelChange)="updateRaceField('track', $event)"
+        autocomplete="off"
+      />
+    </app-form-field>
+    <app-form-field label="Date" fieldId="raceDate">
+      <input
+        id="raceDate"
+        type="datetime-local"
+        [ngModel]="raceForm().date"
+        (ngModelChange)="updateRaceField('date', $event)"
+      />
+    </app-form-field>
+  </div>
+  <div modal-footer>
+    <app-btn variant="ghost" size="sm" (click)="raceModalOpen.set(false)">Cancel</app-btn>
+    @if (raceChampionship(); as champ) {
+      <app-btn variant="primary" size="sm" (click)="addRace(champ)">Add</app-btn>
+    }
+  </div>
+</app-modal>
+
+<!-- DOTD Poll Modal -->
+<app-modal title="Create DOTD Poll" width="md" [(open)]="dotdModalOpen">
+  <div class="modal-form">
+    <app-form-field label="Championship" fieldId="dotd-champ-select">
+      <select id="dotd-champ-select"
+              [(ngModel)]="dotdSelectedChampId"
+              (ngModelChange)="onDotdChampionshipChange()">
+        <option [value]="0" disabled>Select championship...</option>
+        @for (c of dotdChampionships(); track c.id) {
+          <option [value]="c.id">{{ c.name }}</option>
+        }
+      </select>
+    </app-form-field>
+
+    @if (dotdStandings() !== null) {
+      <app-form-field label="Race (optional)" fieldId="dotd-race-select">
+        <select id="dotd-race-select"
+                [(ngModel)]="dotdSelectedRaceId"
+                (ngModelChange)="onDotdRaceChange()">
+          <option [value]="null">No specific race</option>
+          @for (r of dotdStandings()!.races; track r.id) {
+            <option [value]="r.id">{{ r.displayName }}</option>
+          }
+        </select>
+      </app-form-field>
+
+      <app-form-field label="Drivers (select at least 2)" />
+      <ul class="dotd-driver-list" role="list">
+        @for (entry of dotdStandings()!.entries; track entry.id) {
+          <li class="dotd-driver-row">
+            <label class="dotd-driver-check-label">
+              <input type="checkbox" class="dotd-driver-checkbox"
+                     [checked]="isDotdDriverSelected(entry.id)"
+                     (change)="toggleDotdDriver(entry.id)" />
+              <span class="dotd-driver-pos">#{{ entry.position ?? '?' }}</span>
+              <span class="dotd-driver-name">{{ entry.displayName }}</span>
+            </label>
+          </li>
+        }
+      </ul>
+    } @else if (dotdSelectedChampId > 0) {
+      <p class="empty">Loading standings...</p>
+    }
+
+    <app-form-field label="Closes at" fieldId="dotd-closes-at">
+      <input id="dotd-closes-at" type="datetime-local"
+             [(ngModel)]="dotdClosesAt" />
+    </app-form-field>
+
+    @if (dotdCreateError() !== null) {
+      <app-alert variant="error">{{ dotdCreateError() }}</app-alert>
+    }
+  </div>
+  <div modal-footer>
+    <app-btn variant="ghost" size="sm" (click)="dotdModalOpen.set(false)">Cancel</app-btn>
+    <app-btn variant="primary" size="sm"
+            [disabled]="dotdCreating()"
+            (click)="submitDotdPoll()">
+      {{ dotdCreating() ? 'Creating...' : 'Create Poll' }}
+    </app-btn>
+  </div>
+</app-modal>

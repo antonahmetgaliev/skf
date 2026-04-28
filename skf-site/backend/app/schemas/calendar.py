@@ -43,6 +43,7 @@ class CommunityOut(CamelModel):
     color: str | None
     discord_url: str | None
     is_visible: bool
+    is_skf: bool
     created_at: datetime
 
 
@@ -75,6 +76,13 @@ class CustomRaceUpdate(CamelModel):
     date: datetime | None = None
     track: str | None = Field(default=None, max_length=200)
     sort_order: int | None = None
+
+
+class CustomRaceSync(CamelModel):
+    """Used for batch race sync — id present means update, absent means create."""
+    id: uuid.UUID | None = None
+    date: datetime | None = None
+    track: str | None = Field(default=None, max_length=200)
 
 
 class CustomRaceOut(CamelModel):

@@ -7,6 +7,7 @@ export const ROLES = {
   DRIVER: 'driver',
   JUDGE: 'racing_judge',
   MODERATOR: 'moderator',
+  COMMUNITY_MANAGER: 'community_manager',
   ADMIN: 'admin',
   SUPER_ADMIN: 'super_admin',
 } as const;
@@ -22,6 +23,7 @@ const ROLE_RANK: Record<Role, number> = {
   [ROLES.DRIVER]: 0,
   [ROLES.JUDGE]: 0,
   [ROLES.MODERATOR]: 0,
+  [ROLES.COMMUNITY_MANAGER]: 0,
   [ROLES.ADMIN]: 1,
   [ROLES.SUPER_ADMIN]: 2,
 };
@@ -38,6 +40,7 @@ export interface AuthUser {
   createdAt: string;
   lastLoginAt: string | null;
   driverId: string | null;
+  managedCommunityIds: string[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -82,6 +85,18 @@ export class AuthService {
 
   /** Racing judge capability — admin+ inherit it implicitly. */
   readonly isJudge = computed(() => this.hasCapability(ROLES.JUDGE));
+
+  /** True when the effective role is community_manager (respects viewAs). */
+  readonly isCommunityManager = computed(() => this.effectiveRole() === ROLES.COMMUNITY_MANAGER);
+
+  /** True when the user can access the admin panel (admin+ or community manager). */
+  readonly canAccessAdmin = computed(() => this.isAdmin() || this.isCommunityManager());
+
+  /**
+   * When an admin previews as community_manager, this holds the community ID they're impersonating.
+   * null = no override.
+   */
+  readonly viewAsCommunityId = signal<string | null>(null);
 
   /** True when the effective role's rank meets or exceeds `min`. */
   private hasRankAtLeast(min: Role): boolean {

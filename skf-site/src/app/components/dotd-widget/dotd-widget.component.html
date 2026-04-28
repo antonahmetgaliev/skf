@@ -1,4 +1,4 @@
-@if (polls().length > 0 || auth.isModerator()) {
+@if (polls().length > 0) {
 <div class="dotd-bar" [class.dotd-bar--expanded]="expanded()" [class.dotd-bar--warn]="hasUnvotedOpenPoll()">
 
   <!-- ── toggle header ───────────────────────────────────────────────────── -->
@@ -15,10 +15,6 @@
 
     @if (polls().length > 0) {
       <span class="poll-count">{{ polls().length }} poll{{ polls().length !== 1 ? 's' : '' }}</span>
-    }
-
-    @if (auth.isModerator()) {
-      <app-btn variant="accent" size="xs" (click)="openCreateModal($event)">+ Create</app-btn>
     }
 
     <span class="chevron" [class.chevron--up]="expanded()" aria-hidden="true">›</span>
@@ -136,74 +132,6 @@
     </div>
   }
 
-  <!-- ── admin create modal ──────────────────────────────────────────────── -->
-  @if (showCreate() && auth.isModerator()) {
-    <div class="modal-backdrop" (click)="closeCreateModal()">
-      <div class="modal-box" (click)="$event.stopPropagation()">
-        <h2 class="modal-title">Create DOTD Poll</h2>
-
-        <!-- championship select -->
-        <app-form-field label="Championship" fieldId="champ-select">
-          <select id="champ-select"                  [(ngModel)]="selectedChampId"
-                  (ngModelChange)="onChampionshipChange()">
-            <option [value]="0" disabled>Select championship…</option>
-            @for (c of championships(); track c.id) {
-              <option [value]="c.id">{{ c.name }}</option>
-            }
-          </select>
-        </app-form-field>
-
-        <!-- race select (shown once standings loaded) -->
-        @if (standings() !== null) {
-          <app-form-field label="Race (optional)" fieldId="race-select">
-            <select id="race-select"                    [(ngModel)]="selectedRaceId"
-                    (ngModelChange)="onRaceChange()">
-              <option [value]="null">No specific race</option>
-              @for (r of standings()!.races; track r.id) {
-                <option [value]="r.id">{{ r.displayName }}</option>
-              }
-            </select>
-          </app-form-field>
-
-          <!-- driver checklist -->
-          <app-form-field label="Drivers (select ≥ 2)" />
-          <ul class="driver-list" role="list">
-            @for (entry of standings()!.entries; track entry.id) {
-              <li class="driver-row">
-                <label class="driver-check-label">
-                  <input type="checkbox" class="driver-checkbox"
-                         [checked]="isDriverSelected(entry.id)"
-                         (change)="toggleDriver(entry.id)" />
-                  <span class="driver-pos">#{{ entry.position ?? '?' }}</span>
-                  <span class="driver-name">{{ entry.displayName }}</span>
-                </label>
-              </li>
-            }
-          </ul>
-        } @else if (selectedChampId > 0) {
-          <p class="loading-standings">Loading standings…</p>
-        }
-
-        <!-- closes at -->
-        <app-form-field label="Closes at" fieldId="closes-at">
-          <input id="closes-at" type="datetime-local"                 [(ngModel)]="newClosesAt" />
-        </app-form-field>
-
-        @if (createError() !== null) {
-          <app-alert variant="error">{{ createError() }}</app-alert>
-        }
-
-        <div class="modal-actions">
-          <app-btn variant="ghost" (click)="closeCreateModal()">Cancel</app-btn>
-          <app-btn variant="accent"
-                  [disabled]="creating()"
-                  (click)="submitCreate()">
-            {{ creating() ? 'Creating…' : 'Create Poll' }}
-          </app-btn>
-        </div>
-      </div>
-    </div>
-  }
 
 </div>
 }

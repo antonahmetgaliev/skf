@@ -20,6 +20,8 @@ interface WeekRace {
   image: string | null;
   date: Date;
   simgridChampionshipId: number | null;
+  communityName: string | null;
+  communityColor: string | null;
 }
 
 interface ChampionshipSummary {
@@ -182,6 +184,8 @@ export class WeekCalendarComponent {
             image: ev.image,
             date: new Date(race.date),
             simgridChampionshipId: ev.simgridChampionshipId,
+            communityName: ev.communityName,
+            communityColor: ev.communityColor,
           });
         }
       }

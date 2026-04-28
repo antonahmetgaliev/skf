@@ -13,10 +13,10 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import SESSION_COOKIE, get_current_user, get_current_user_optional
+from app.auth import SESSION_COOKIE, get_current_user, get_current_user_optional, get_managed_community_ids
 from app.config import settings
 from app.database import get_db
-from app.models.user import Role, Session, User, ROLE_DRIVER, ROLE_SUPER_ADMIN
+from app.models.user import Role, Session, User, ROLE_DRIVER, ROLE_SUPER_ADMIN, ROLE_COMMUNITY_MANAGER
 from app.schemas.auth import AuthUrlOut, UserOut, GuildNicknameUpdate
 
 logger = logging.getLogger(__name__)
@@ -206,6 +206,11 @@ async def get_me(
 
     result = await db.execute(select(Driver).where(Driver.user_id == user.id))
     linked_driver = result.scalar_one_or_none()
+
+    managed_ids: list[str] = []
+    if user.role.name == ROLE_COMMUNITY_MANAGER:
+        managed_ids = [str(cid) for cid in await get_managed_community_ids(user, db)]
+
     return UserOut(
         id=user.id,
         discord_id=user.discord_id,
@@ -218,6 +223,7 @@ async def get_me(
         created_at=user.created_at,
         last_login_at=user.last_login_at,
         driver_id=linked_driver.id if linked_driver else None,
+        managed_community_ids=managed_ids,
     )
 
 

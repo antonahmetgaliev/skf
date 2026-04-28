@@ -93,6 +93,12 @@
   gap: 1rem;
 }
 
+.control-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
 .control-group {
   display: grid;
   gap: 0.3rem;

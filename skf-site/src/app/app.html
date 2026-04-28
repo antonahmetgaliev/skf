@@ -12,15 +12,28 @@
         id="viewAsRole"
         class="view-as-select"
         [ngModel]="auth.viewAsRole() ?? (auth.isRealSuperAdmin() ? 'super_admin' : 'admin')"
-        (ngModelChange)="auth.viewAsRole.set(($event === 'super_admin' && auth.isRealSuperAdmin()) || ($event === 'admin' && !auth.isRealSuperAdmin()) ? null : $event)"
+        (ngModelChange)="auth.viewAsCommunityId.set(null); auth.viewAsRole.set(($event === 'super_admin' && auth.isRealSuperAdmin()) || ($event === 'admin' && !auth.isRealSuperAdmin()) ? null : $event)"
       >
         @if (auth.isRealSuperAdmin()) {
           <option value="super_admin">Super Admin</option>
         }
         <option value="admin">Admin</option>
+        <option value="community_manager">Community Manager</option>
         <option value="racing_judge">Racing Judge</option>
         <option value="driver">Driver</option>
       </select>
+      @if (auth.viewAsRole() === 'community_manager') {
+        <select
+          class="view-as-select"
+          [ngModel]="auth.viewAsCommunityId()"
+          (ngModelChange)="auth.viewAsCommunityId.set($event)"
+        >
+          <option [ngValue]="null">— Select community —</option>
+          @for (c of viewAsCommunities(); track c.id) {
+            <option [value]="c.id">{{ c.name }}</option>
+          }
+        </select>
+      }
       @if (auth.viewAsRole() !== null) {
         <span class="view-as-badge">Preview mode</span>
       }

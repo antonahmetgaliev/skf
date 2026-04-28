@@ -12,7 +12,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import require_admin
+from app.auth import (
+    check_community_access,
+    get_managed_community_ids,
+    is_admin,
+    require_admin,
+    require_admin_or_community_manager,
+)
 from app.database import get_db
 from app.models.active_championship import ActiveChampionship
 from app.models.community import Community
@@ -30,6 +36,7 @@ from app.schemas.calendar import (
     CustomChampionshipUpdate,
     CustomRaceCreate,
     CustomRaceOut,
+    CustomRaceSync,
     CustomRaceUpdate,
 )
 from app.services.simgrid import simgrid_service
@@ -105,11 +112,14 @@ def _champ_to_out(champ: CustomChampionship) -> CustomChampionshipOut:
 async def list_communities(
     db: AsyncSession = Depends(get_db),
 ):
-    """Public endpoint – returns visible communities for calendar filters."""
+    """Public endpoint – returns visible communities for calendar filters.
+
+    SKF community is always returned first.
+    """
     result = await db.execute(
         select(Community)
         .where(Community.is_visible.is_(True))
-        .order_by(Community.name)
+        .order_by(Community.is_skf.desc(), Community.name)
     )
     return result.scalars().all()
 
@@ -139,9 +149,10 @@ async def create_community(
 async def update_community(
     community_id: uuid.UUID,
     body: CommunityUpdate,
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
+    await check_community_access(user, community_id, db)
     result = await db.execute(
         select(Community).where(Community.id == community_id)
     )
@@ -150,7 +161,7 @@ async def update_community(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Community not found."
         )
-    update_data = body.model_dump(exclude_unset=True)
+    update_data = body.model_dump(exclude_unset=True, by_alias=False)
     for field, value in update_data.items():
         if isinstance(value, str):
             value = value.strip()
@@ -177,8 +188,33 @@ async def delete_community(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Community not found."
         )
+    if community.is_skf:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The SKF community cannot be deleted.",
+        )
     await db.delete(community)
     await db.commit()
+
+
+@router.get("/communities/admin", response_model=list[CommunityOut])
+async def list_communities_admin(
+    user: User = Depends(require_admin_or_community_manager),
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin endpoint – returns all communities for admins, only managed communities for community managers."""
+    if is_admin(user):
+        result = await db.execute(
+            select(Community).order_by(Community.is_skf.desc(), Community.name)
+        )
+    else:
+        managed_ids = await get_managed_community_ids(user, db)
+        result = await db.execute(
+            select(Community)
+            .where(Community.id.in_(managed_ids))
+            .order_by(Community.name)
+        )
+    return result.scalars().all()
 
 
 # ── Simulators & Car Classes (from SimGrid API) ─────────────────────────────
@@ -235,6 +271,15 @@ async def get_calendar_events(
         range_end = datetime(year, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
 
     events: list[CalendarEvent] = []
+
+    # ── Resolve SKF community for tagging SimGrid events ──
+    skf_result = await db.execute(
+        select(Community).where(Community.is_skf.is_(True)).limit(1)
+    )
+    skf_community = skf_result.scalar_one_or_none()
+    skf_id = str(skf_community.id) if skf_community else None
+    skf_name = skf_community.name if skf_community else None
+    skf_color = skf_community.color if skf_community else None
 
     # ── SimGrid championships (active only) ──
     active_result = await db.execute(select(ActiveChampionship.simgrid_id))
@@ -345,6 +390,9 @@ async def get_calendar_events(
             event_type=event_type,
             source="simgrid",
             simgrid_championship_id=champ.id,
+            community_id=skf_id,
+            community_name=skf_name,
+            community_color=skf_color,
             races=races,
         ))
 
@@ -435,14 +483,30 @@ def _overlaps_month(
 @router.get("/custom-championships", response_model=list[CustomChampionshipOut])
 async def list_custom_championships(
     community_id: uuid.UUID | None = Query(None, alias="communityId"),
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
     query = select(CustomChampionship).order_by(CustomChampionship.created_at.desc())
     if community_id is not None:
+        await check_community_access(user, community_id, db)
         query = query.where(CustomChampionship.community_id == community_id)
+    elif not is_admin(user):
+        managed_ids = await get_managed_community_ids(user, db)
+        query = query.where(CustomChampionship.community_id.in_(managed_ids))
     result = await db.execute(query)
     return [_champ_to_out(c) for c in result.scalars().all()]
+
+
+@router.get("/custom-championships/{champ_id}", response_model=CustomChampionshipOut)
+async def get_custom_championship(
+    champ_id: uuid.UUID,
+    user: User = Depends(require_admin_or_community_manager),
+    db: AsyncSession = Depends(get_db),
+):
+    champ = await _get_championship_or_404(champ_id, db)
+    if champ.community_id:
+        await check_community_access(user, champ.community_id, db)
+    return _champ_to_out(champ)
 
 
 @router.post(
@@ -452,9 +516,11 @@ async def list_custom_championships(
 )
 async def create_custom_championship(
     body: CustomChampionshipCreate,
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
+    if body.community_id:
+        await check_community_access(user, body.community_id, db)
     champ = CustomChampionship(
         name=body.name.strip(),
         game=body.game.strip(),
@@ -462,7 +528,7 @@ async def create_custom_championship(
         description=body.description,
         community_id=body.community_id,
         game_id=body.game_id,
-        created_by_user_id=_.id,
+        created_by_user_id=user.id,
     )
     for idx, race_data in enumerate(body.races):
         champ.races.append(
@@ -485,11 +551,13 @@ async def create_custom_championship(
 async def update_custom_championship(
     champ_id: uuid.UUID,
     body: CustomChampionshipUpdate,
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
     champ = await _get_championship_or_404(champ_id, db)
-    update_data = body.model_dump(exclude_unset=True)
+    if champ.community_id:
+        await check_community_access(user, champ.community_id, db)
+    update_data = body.model_dump(exclude_unset=True, by_alias=False)
     for field, value in update_data.items():
         if isinstance(value, str):
             value = value.strip()
@@ -505,10 +573,12 @@ async def update_custom_championship(
 )
 async def delete_custom_championship(
     champ_id: uuid.UUID,
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
     champ = await _get_championship_or_404(champ_id, db)
+    if champ.community_id:
+        await check_community_access(user, champ.community_id, db)
     await db.delete(champ)
     await db.commit()
 
@@ -524,10 +594,12 @@ async def delete_custom_championship(
 async def add_race(
     champ_id: uuid.UUID,
     body: CustomRaceCreate,
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
     champ = await _get_championship_or_404(champ_id, db)
+    if champ.community_id:
+        await check_community_access(user, champ.community_id, db)
     max_order = max((r.sort_order for r in champ.races), default=-1)
     race = CustomRace(
         championship_id=champ.id,
@@ -549,10 +621,12 @@ async def update_race(
     champ_id: uuid.UUID,
     race_id: uuid.UUID,
     body: CustomRaceUpdate,
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
-    await _get_championship_or_404(champ_id, db)
+    champ = await _get_championship_or_404(champ_id, db)
+    if champ.community_id:
+        await check_community_access(user, champ.community_id, db)
     result = await db.execute(
         select(CustomRace).where(
             CustomRace.id == race_id,
@@ -564,7 +638,7 @@ async def update_race(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Race not found."
         )
-    update_data = body.model_dump(exclude_unset=True)
+    update_data = body.model_dump(exclude_unset=True, by_alias=False)
     for field, value in update_data.items():
         if isinstance(value, str):
             value = value.strip()
@@ -581,10 +655,12 @@ async def update_race(
 async def delete_race(
     champ_id: uuid.UUID,
     race_id: uuid.UUID,
-    _: User = Depends(require_admin),
+    user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
 ):
-    await _get_championship_or_404(champ_id, db)
+    champ = await _get_championship_or_404(champ_id, db)
+    if champ.community_id:
+        await check_community_access(user, champ.community_id, db)
     result = await db.execute(
         select(CustomRace).where(
             CustomRace.id == race_id,
@@ -598,3 +674,46 @@ async def delete_race(
         )
     await db.delete(race)
     await db.commit()
+
+
+@router.put(
+    "/custom-championships/{champ_id}/races",
+    response_model=list[CustomRaceOut],
+)
+async def sync_races(
+    champ_id: uuid.UUID,
+    body: list[CustomRaceSync],
+    user: User = Depends(require_admin_or_community_manager),
+    db: AsyncSession = Depends(get_db),
+):
+    """Replace the full race list for a championship in a single request."""
+    champ = await _get_championship_or_404(champ_id, db)
+    if champ.community_id:
+        await check_community_access(user, champ.community_id, db)
+
+    incoming_ids = {r.id for r in body if r.id is not None}
+    existing = {r.id: r for r in champ.races}
+
+    # Delete races not in the incoming list
+    for rid, race in existing.items():
+        if rid not in incoming_ids:
+            await db.delete(race)
+
+    # Update existing / add new
+    for idx, item in enumerate(body):
+        if item.id and item.id in existing:
+            race = existing[item.id]
+            race.track = item.track.strip() if item.track else None
+            race.date = item.date
+            race.sort_order = idx
+        else:
+            db.add(CustomRace(
+                championship_id=champ.id,
+                track=item.track.strip() if item.track else None,
+                date=item.date,
+                sort_order=idx,
+            ))
+
+    await db.commit()
+    await db.refresh(champ)
+    return champ.races

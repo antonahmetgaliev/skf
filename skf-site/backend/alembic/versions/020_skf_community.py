@@ -1,0 +1,38 @@
+"""Add is_skf flag to communities and seed SKF community.
+
+Revision ID: 020
+Revises: 019
+"""
+
+import uuid
+
+from alembic import op
+import sqlalchemy as sa
+
+revision = "020"
+down_revision = "019"
+branch_labels = None
+depends_on = None
+
+SKF_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
+
+
+def upgrade() -> None:
+    op.add_column(
+        "communities",
+        sa.Column("is_skf", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+    )
+
+    # Seed the predefined SKF community (ON CONFLICT for idempotency)
+    op.execute(
+        sa.text(
+            "INSERT INTO communities (id, name, color, is_skf) "
+            f"VALUES ('{SKF_ID}'::uuid, 'SKF', '#f5bf24', true) "
+            "ON CONFLICT (id) DO NOTHING"
+        )
+    )
+
+
+def downgrade() -> None:
+    op.execute(sa.text("DELETE FROM communities WHERE is_skf = true"))
+    op.drop_column("communities", "is_skf")

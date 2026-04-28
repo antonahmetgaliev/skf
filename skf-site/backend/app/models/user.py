@@ -31,6 +31,7 @@ ROLE_MODERATOR = "moderator"
 ROLE_ADMIN = "admin"
 ROLE_SUPER_ADMIN = "super_admin"
 ROLE_JUDGE = "racing_judge"
+ROLE_COMMUNITY_MANAGER = "community_manager"
 
 
 class User(Base):

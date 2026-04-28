@@ -46,18 +46,37 @@
               </div>
 
               <div class="user-controls">
-                <div class="control-group">
-                  <app-form-field label="Role">
-                    <select
-                              [ngModel]="user.role"
-                      (ngModelChange)="changeRole(user, $event)"
-                      [disabled]="!canEdit(user)"
-                    >
-                      @for (role of availableRoles(); track role) {
-                        <option [value]="role">{{ role.replace('_', ' ') }}</option>
-                      }
-                    </select>
-                  </app-form-field>
+                <div class="control-groups">
+                  <div class="control-group">
+                    <app-form-field label="Role">
+                      <select
+                        [ngModel]="user.role"
+                        (ngModelChange)="changeRole(user, $event)"
+                        [disabled]="!canEdit(user)"
+                      >
+                        @for (role of availableRoles(); track role) {
+                          <option [value]="role">{{ role.replace('_', ' ') }}</option>
+                        }
+                      </select>
+                    </app-form-field>
+                  </div>
+
+                  @if (user.role === 'community_manager') {
+                    <div class="control-group">
+                      <app-form-field label="Community">
+                        <select
+                          [ngModel]="getAssignedCommunityId(user)"
+                          (ngModelChange)="assignCommunity(user, $event)"
+                          [disabled]="!canEdit(user)"
+                        >
+                          <option value="">— None —</option>
+                          @for (c of allCommunities(); track c.id) {
+                            <option [value]="c.id">{{ c.name }}</option>
+                          }
+                        </select>
+                      </app-form-field>
+                    </div>
+                  }
                 </div>
 
                 <div class="action-buttons">

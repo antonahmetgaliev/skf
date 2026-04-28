@@ -8,9 +8,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import require_admin, require_role
+from app.auth import require_admin, require_role, get_managed_community_ids
 from app.database import get_db
-from app.models.user import Role, Session, User, ROLE_ADMIN, ROLE_SUPER_ADMIN
+from app.models.community_manager import CommunityManager
+from app.models.user import Role, Session, User, ROLE_ADMIN, ROLE_SUPER_ADMIN, ROLE_COMMUNITY_MANAGER
 from app.schemas.auth import UserOut, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -23,6 +24,14 @@ async def list_users(
 ):
     result = await db.execute(select(User).order_by(User.username))
     users = result.scalars().all()
+
+    # Batch-load managed community IDs for community managers
+    cm_result = await db.execute(select(CommunityManager))
+    all_assignments = cm_result.scalars().all()
+    user_communities: dict[uuid.UUID, list[str]] = {}
+    for cm in all_assignments:
+        user_communities.setdefault(cm.user_id, []).append(str(cm.community_id))
+
     return [
         UserOut(
             id=u.id,
@@ -34,6 +43,7 @@ async def list_users(
             blocked=u.blocked,
             created_at=u.created_at,
             last_login_at=u.last_login_at,
+            managed_community_ids=user_communities.get(u.id, []),
         )
         for u in users
     ]
@@ -97,6 +107,7 @@ async def update_user(
     await db.commit()
     await db.refresh(target)
 
+    managed_ids = [str(cid) for cid in await get_managed_community_ids(target, db)]
     return UserOut(
         id=target.id,
         discord_id=target.discord_id,
@@ -107,6 +118,7 @@ async def update_user(
         blocked=target.blocked,
         created_at=target.created_at,
         last_login_at=target.last_login_at,
+        managed_community_ids=managed_ids,
     )
 
 
@@ -126,3 +138,55 @@ async def force_logout(
         )
     await db.execute(delete(Session).where(Session.user_id == user_id))
     await db.commit()
+
+
+# ── Community manager assignments ──────────────────────────────────────────
+
+
+from app.schemas.championship import CamelModel
+
+
+class ManagedCommunitiesUpdate(CamelModel):
+    community_ids: list[uuid.UUID]
+
+
+@router.get("/{user_id}/managed-communities", response_model=list[str])
+async def get_managed_communities(
+    user_id: uuid.UUID,
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(CommunityManager.community_id).where(
+            CommunityManager.user_id == user_id
+        )
+    )
+    return [str(cid) for cid in result.scalars().all()]
+
+
+@router.put(
+    "/{user_id}/managed-communities",
+    status_code=status.HTTP_200_OK,
+    response_model=list[str],
+)
+async def set_managed_communities(
+    user_id: uuid.UUID,
+    body: ManagedCommunitiesUpdate,
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Replace the full set of managed communities for a user."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    if not result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+        )
+    # Delete existing assignments
+    await db.execute(
+        delete(CommunityManager).where(CommunityManager.user_id == user_id)
+    )
+    # Insert new assignments
+    for cid in body.community_ids:
+        db.add(CommunityManager(user_id=user_id, community_id=cid))
+    await db.commit()
+    return [str(cid) for cid in body.community_ids]

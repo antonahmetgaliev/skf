@@ -26,29 +26,20 @@
   gap: 0.5rem;
 }
 
-// Communities
+// Toolbar (add buttons above lists)
 
-.community-form {
-  margin-bottom: 1rem;
-  padding: 0.75rem;
-  border-radius: 12px;
-  background: rgba(40, 36, 30, 0.4);
+.section-toolbar {
   display: flex;
-  align-items: flex-end;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
 
-  > app-form-field {
-    flex: 1;
-    min-width: 150px;
-    margin-bottom: 0;
-  }
+// Modal form layout
 
-  // Color field should be a small square, not stretch
-  > app-form-field:nth-child(2) {
-    flex: 0 0 auto;
-    min-width: auto;
-  }
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 
   input[type="color"] {
     width: 2.75rem;
@@ -59,11 +50,7 @@
   }
 }
 
-.community-form-actions {
-  display: flex;
-  gap: 0.5rem;
-  padding-bottom: 0.5rem; // align with form-field's margin-bottom
-}
+// Communities
 
 .community-list {
   display: flex;
@@ -126,30 +113,30 @@
   }
 }
 
-// Championships
+.subsection-title {
+  margin: 1rem 0 0.5rem;
+  font-size: var(--text-md);
+  font-family: var(--font-display);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+  color: var(--muted);
+}
 
-.champ-form {
-  margin-bottom: 1rem;
-  padding: 0.75rem;
-  border-radius: 12px;
-  background: rgba(40, 36, 30, 0.4);
-  display: flex;
-  align-items: flex-end;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-
-  > app-form-field {
-    flex: 1;
-    min-width: 150px;
+.champ-item--simgrid {
+  .champ-header {
     margin-bottom: 0;
   }
 }
 
-.champ-form-actions {
-  display: flex;
-  gap: 0.5rem;
-  padding-bottom: 0.5rem;
+.champ-item--inactive {
+  opacity: 0.6;
+
+  &:hover {
+    opacity: 1;
+  }
 }
+
+// Championships
 
 .champ-item {
   padding: 0.75rem;
@@ -207,19 +194,91 @@
   margin-left: 0.4rem;
 }
 
-.add-race-row {
+// DOTD Polls
+
+.dotd-poll-row {
   display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(40, 36, 30, 0.6);
+  margin-bottom: 0.5rem;
+}
 
-  app-form-field {
-    flex: 1;
-    min-width: 140px;
-    margin-bottom: 0;
-  }
+.dotd-poll-info {
+  flex: 1;
+  min-width: 0;
+}
 
-  app-btn {
-    margin-bottom: 0.5rem;
+.dotd-poll-name {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-family: var(--font-display);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+}
+
+.dotd-poll-meta {
+  margin: 0.1rem 0 0;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.dotd-live {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.dotd-driver-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1.5px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.dotd-driver-row {
+  padding: 0;
+}
+
+.dotd-driver-check-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: var(--text-md);
+  transition: background 0.1s ease;
+
+  &:hover {
+    background: rgba(243, 180, 25, 0.08);
   }
 }
+
+.dotd-driver-checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--gold-deep);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dotd-driver-pos {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 28px;
+}
+
+.dotd-driver-name {
+  color: var(--ink);
+}
+

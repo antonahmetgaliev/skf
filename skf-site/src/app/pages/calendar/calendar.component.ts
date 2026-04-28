@@ -1,8 +1,11 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertComponent } from '../../components/alert/alert.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
+import { FormFieldComponent } from '../../components/form-field/form-field.component';
+import { ModalComponent } from '../../components/modal/modal.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
@@ -13,20 +16,20 @@ import {
   CalendarApiService,
   CalendarEvent,
   Community,
+  CustomChampionshipCreate,
 } from '../../services/calendar-api.service';
-import { toLocalDateStr } from '../../utils/date';
+import { AuthService } from '../../services/auth.service';
+import { toLocalDateStr, withLocalTzOffset } from '../../utils/date';
 
 interface CalendarDay {
   dayNumber: number;
   isCurrentMonth: boolean;
   isToday: boolean;
   events: CalendarEvent[];
-  communityColors: string[];
 }
 
-interface YearMonthGroup {
-  month: number;
-  label: string;
+interface EventGroup {
+  color: string;
   events: CalendarEvent[];
 }
 
@@ -34,13 +37,15 @@ interface YearCommunityColumn {
   id: string;
   name: string;
   color: string;
-  months: YearMonthGroup[];
+  discordUrl: string | null;
+  events: CalendarEvent[];
 }
 
 type ViewMode = 'month' | 'year';
 
-const SKF_COLOR = '#f5bf24'; // gold
+const DEFAULT_COLOR = '#f5bf24'; // gold fallback
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WEEK_DAYS_SHORT = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const VIEW_TABS: { key: string; label: string }[] = [
   { key: 'month', label: 'Month' },
   { key: 'year', label: 'Year' },
@@ -48,15 +53,17 @@ const VIEW_TABS: { key: string; label: string }[] = [
 
 @Component({
   selector: 'app-calendar',
-  imports: [FormsModule, RouterLink, AlertComponent, BtnComponent, CardComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
+  imports: [NgTemplateOutlet, FormsModule, RouterLink, AlertComponent, BtnComponent, CardComponent, FormFieldComponent, ModalComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
 
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
 })
 export class CalendarComponent implements OnInit {
   private readonly calendarApi = inject(CalendarApiService);
+  readonly auth = inject(AuthService);
 
   readonly weekDays = WEEK_DAYS;
+  readonly weekDaysShort = WEEK_DAYS_SHORT;
   readonly viewTabs = VIEW_TABS;
   readonly viewMode = signal<ViewMode>('month');
   readonly currentYear = signal(new Date().getFullYear());
@@ -76,11 +83,18 @@ export class CalendarComponent implements OnInit {
   readonly selectedCommunityIds = signal<Set<string>>(new Set());
   readonly filtersOpen = signal(false);
   readonly selectedSimulator = signal<string | null>(null);
-  readonly selectedCarClass = signal<string | null>(null);
 
   readonly monthLabel = computed(() => {
     const d = new Date(this.currentYear(), this.currentMonth() - 1, 1);
     return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  });
+
+  readonly canGoBack = computed(() => {
+    const now = new Date();
+    return (
+      this.currentYear() > now.getFullYear() ||
+      (this.currentYear() === now.getFullYear() && this.currentMonth() > now.getMonth() + 1)
+    );
   });
 
   // Filtered events for month view
@@ -123,48 +137,50 @@ export class CalendarComponent implements OnInit {
 
   readonly yearLabel = computed(() => String(this.currentYear()));
 
-  readonly yearEventsByMonth = computed<YearMonthGroup[]>(() => {
-    const events = this.filteredYearEvents();
-    const year = this.currentYear();
-    const groups: YearMonthGroup[] = [];
-
-    for (let m = 1; m <= 12; m++) {
-      const monthEvents = events.filter((e) => this.eventFallsInMonth(e, year, m));
-      if (monthEvents.length === 0) continue;
-      const label = new Date(year, m - 1, 1).toLocaleString('en-US', { month: 'long' });
-      groups.push({ month: m, label, events: monthEvents });
-    }
-    return groups;
-  });
-
   readonly yearCommunityColumns = computed<YearCommunityColumn[]>(() => {
     const events = this.filteredYearEvents();
-    const year = this.currentYear();
     const communities = this.communities();
+    const managedCommunities = this.managedCommunities();
 
-    // Build community map: SKF first, then custom communities
-    const columnDefs: { id: string; name: string; color: string }[] = [
-      { id: 'skf', name: 'SKF', color: SKF_COLOR },
-      ...communities.map((c) => ({ id: c.id, name: c.name, color: c.color ?? SKF_COLOR })),
-    ];
-
+    // Communities are returned from API with SKF first (sorted by is_skf desc, name)
     const columns: YearCommunityColumn[] = [];
+    const addedIds = new Set<string>();
 
-    for (const def of columnDefs) {
-      const communityEvents = events.filter((e) =>
-        def.id === 'skf' ? !e.communityId : e.communityId === def.id,
-      );
+    for (const c of communities) {
+      const communityEvents = events.filter((e) => e.communityId === c.id);
       if (communityEvents.length === 0) continue;
 
-      const months: YearMonthGroup[] = [];
-      for (let m = 1; m <= 12; m++) {
-        const monthEvents = communityEvents.filter((e) => this.eventFallsInMonth(e, year, m));
-        if (monthEvents.length === 0) continue;
-        const label = new Date(year, m - 1, 1).toLocaleString('en-US', { month: 'short' });
-        months.push({ month: m, label, events: monthEvents });
-      }
+      // Sort by earliest race date or start date
+      const sorted = [...communityEvents].sort((a, b) => {
+        const dateA = this.getEarliestDate(a);
+        const dateB = this.getEarliestDate(b);
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        return dateA.getTime() - dateB.getTime();
+      });
 
-      columns.push({ id: def.id, name: def.name, color: def.color, months });
+      columns.push({
+        id: c.id,
+        name: c.name,
+        color: c.color ?? DEFAULT_COLOR,
+        discordUrl: c.discordUrl,
+        events: sorted,
+      });
+      addedIds.add(c.id);
+    }
+
+    // Add empty columns for managed communities with no events
+    for (const mc of managedCommunities) {
+      if (!addedIds.has(mc.id)) {
+        columns.push({
+          id: mc.id,
+          name: mc.name,
+          color: mc.color ?? DEFAULT_COLOR,
+          discordUrl: mc.discordUrl,
+          events: [],
+        });
+      }
     }
 
     return columns;
@@ -177,11 +193,18 @@ export class CalendarComponent implements OnInit {
     return [...sims].sort();
   });
 
-  readonly availableCarClasses = computed(() => {
-    const all = this.viewMode() === 'year' ? this.yearEvents() : this.events();
-    const classes = new Set(all.map((e) => e.carClass).filter((c): c is string => !!c));
-    return [...classes].sort();
-  });
+
+  private managedCommunitiesLoaded = false;
+
+  constructor() {
+    effect(() => {
+      const user = this.auth.user();
+      if (user?.role === 'community_manager' && !this.managedCommunitiesLoaded) {
+        this.managedCommunitiesLoaded = true;
+        this.loadManagedCommunities();
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.loadCommunities();
@@ -286,16 +309,212 @@ export class CalendarComponent implements OnInit {
 
   clearFilters(): void {
     this.selectedSimulator.set(null);
-    this.selectedCarClass.set(null);
   }
 
   hasActiveFilters(): boolean {
-    return this.selectedSimulator() !== null || this.selectedCarClass() !== null;
+    return this.selectedSimulator() !== null;
   }
 
 
   getCommunityColor(event: CalendarEvent): string {
-    return event.communityColor ?? SKF_COLOR;
+    return event.communityColor ?? DEFAULT_COLOR;
+  }
+
+  groupEventsByColor(events: CalendarEvent[]): EventGroup[] {
+    const map = new Map<string, CalendarEvent[]>();
+    for (const e of events) {
+      const color = e.communityColor || DEFAULT_COLOR;
+      const list = map.get(color);
+      if (list) {
+        list.push(e);
+      } else {
+        map.set(color, [e]);
+      }
+    }
+    return [...map.entries()].map(([color, evts]) => ({ color, events: evts }));
+  }
+
+  getCommunityDiscordUrl(event: CalendarEvent): string | null {
+    if (!event.communityId) return null;
+    const community = this.communities().find((c) => c.id === event.communityId);
+    return community?.discordUrl ?? null;
+  }
+
+  // ── Community management (year view) ──
+
+  readonly fetchedManagedCommunities = signal<Community[]>([]);
+  readonly managedCommunities = computed<Community[]>(() => {
+    const user = this.auth.user();
+    if (!user) return [];
+    // Admin viewing as community_manager — show only the selected community
+    if (this.auth.isRealAdmin() && this.auth.isCommunityManager()) {
+      const viewId = this.auth.viewAsCommunityId();
+      if (!viewId) return [];
+      return this.communities().filter((c) => c.id === viewId);
+    }
+    // Real community manager — show assigned communities
+    if (user.role === 'community_manager') {
+      return this.fetchedManagedCommunities();
+    }
+    return [];
+  });
+  readonly simulators = signal<string[]>([]);
+  readonly champForm = signal<{ name: string; game: string; carClass: string | null; description: string | null; races: { id?: string; track: string; date: string }[] }>({
+    name: '', game: '', carClass: null, description: null, races: [],
+  });
+  readonly editingChampId = signal<string | null>(null);
+  readonly champCommunityId = signal<string | null>(null);
+  readonly champModalOpen = signal(false);
+
+  canManageCommunity(communityId: string | null): boolean {
+    const user = this.auth.user();
+    if (!user) return false;
+    // Admin viewing as community_manager — check viewAsCommunityId
+    if (this.auth.isRealAdmin() && this.auth.isCommunityManager()) {
+      return communityId ? this.auth.viewAsCommunityId() === communityId : false;
+    }
+    if (this.auth.isAdmin()) return true;
+    if (!communityId) return false;
+    return user.role === 'community_manager' && (user.managedCommunityIds?.includes(communityId) ?? false);
+  }
+
+  openAddChampionship(communityId: string): void {
+    this.champForm.set({ name: '', game: '', carClass: null, description: null, races: [] });
+    this.editingChampId.set(null);
+    this.champCommunityId.set(communityId);
+    this.champModalOpen.set(true);
+    if (this.simulators().length === 0) {
+      this.calendarApi.getSimulators().subscribe({ next: (d) => this.simulators.set(d) });
+    }
+  }
+
+  editChampionship(event: CalendarEvent): void {
+    if (!event.customChampionshipId) return;
+    this.editingChampId.set(event.customChampionshipId);
+    this.champCommunityId.set(event.communityId);
+    this.champForm.set({
+      name: event.name,
+      game: event.game,
+      carClass: event.carClass,
+      description: event.description,
+      races: [],
+    });
+    this.champModalOpen.set(true);
+    if (this.simulators().length === 0) {
+      this.calendarApi.getSimulators().subscribe({ next: (d) => this.simulators.set(d) });
+    }
+    this.calendarApi.getCustomChampionship(event.customChampionshipId).subscribe({
+      next: (champ) => {
+        this.champForm.update((f) => ({
+          ...f,
+          races: champ.races.map((r) => ({
+            id: r.id,
+            track: r.track ?? '',
+            date: r.date ? r.date.slice(0, 16) : '',
+          })),
+        }));
+      },
+    });
+  }
+
+  saveChampionship(): void {
+    const form = this.champForm();
+    if (!form.name.trim() || !form.game.trim()) return;
+
+    const editId = this.editingChampId();
+    if (editId) {
+      this.calendarApi.updateCustomChampionship(editId, {
+        name: form.name.trim(),
+        game: form.game.trim(),
+        carClass: form.carClass?.trim() || null,
+        description: form.description?.trim() || null,
+      }).subscribe({
+        next: () => {
+          const racesToSync = form.races
+            .filter((r) => r.id || r.track.trim() || r.date)
+            .map((r) => ({
+              id: r.id,
+              track: r.track.trim() || null,
+              date: withLocalTzOffset(r.date || null),
+            }));
+          this.calendarApi.syncRaces(editId, racesToSync).subscribe({
+            next: () => {
+              this.champModalOpen.set(false);
+              this.reloadCalendar();
+            },
+          });
+        },
+      });
+    } else {
+      const communityId = this.champCommunityId();
+      if (!communityId) return;
+      const payload: CustomChampionshipCreate = {
+        name: form.name.trim(),
+        game: form.game.trim(),
+        communityId,
+        gameId: null,
+        carClass: form.carClass?.trim() || null,
+        description: form.description?.trim() || null,
+        races: form.races
+          .filter((r) => r.track.trim() || r.date)
+          .map((r) => ({
+            track: r.track.trim() || null,
+            date: withLocalTzOffset(r.date || null),
+          })),
+      };
+      this.calendarApi.createCustomChampionship(payload).subscribe({
+        next: () => {
+          this.champModalOpen.set(false);
+          this.reloadCalendar();
+        },
+      });
+    }
+  }
+
+  deleteChampionship(event: CalendarEvent): void {
+    if (!event.customChampionshipId) return;
+    if (!window.confirm(`Delete "${event.name}"?`)) return;
+    this.calendarApi.deleteCustomChampionship(event.customChampionshipId).subscribe({
+      next: () => this.reloadCalendar(),
+    });
+  }
+
+  private reloadCalendar(): void {
+    if (this.viewMode() === 'year') {
+      this.loadYearEvents();
+    } else {
+      this.loadEvents();
+    }
+  }
+
+  updateChampField(field: 'name' | 'game' | 'carClass' | 'description', value: string | null): void {
+    this.champForm.update((f) => ({ ...f, [field]: value }));
+  }
+
+  addRaceRow(): void {
+    this.champForm.update((f) => ({ ...f, races: [...f.races, { track: '', date: '' }] }));
+  }
+
+  updateRaceRow(index: number, field: 'track' | 'date', value: string): void {
+    this.champForm.update((f) => {
+      const races = [...f.races];
+      races[index] = { ...races[index], [field]: value };
+      return { ...f, races };
+    });
+  }
+
+  removeRaceRow(index: number): void {
+    this.champForm.update((f) => ({ ...f, races: f.races.filter((_, i) => i !== index) }));
+  }
+
+  private getEarliestDate(event: CalendarEvent): Date | null {
+    const dates: Date[] = [];
+    for (const race of event.races) {
+      if (race.date) dates.push(new Date(race.date));
+    }
+    if (event.startDate) dates.push(new Date(event.startDate));
+    if (dates.length === 0) return null;
+    return dates.reduce((min, d) => (d < min ? d : min));
   }
 
   // ── Private ──
@@ -306,6 +525,15 @@ export class CalendarComponent implements OnInit {
       this.communities.set(data);
     } catch {
       // Communities are non-critical; calendar still works without them
+    }
+  }
+
+  private async loadManagedCommunities(): Promise<void> {
+    try {
+      const data = await firstValueFrom(this.calendarApi.getCommunitiesAdmin());
+      this.fetchedManagedCommunities.set(data);
+    } catch {
+      // non-critical
     }
   }
 
@@ -339,49 +567,19 @@ export class CalendarComponent implements OnInit {
     }
   }
 
-  tileBackground(day: CalendarDay): string | null {
-    if (day.communityColors.length === 0) return null;
-
-    const opacity = 0.35;
-    if (day.communityColors.length === 1) {
-      return this.hexToRgba(day.communityColors[0], opacity);
-    }
-
-    // Multiple communities: vertical stripes
-    const stops: string[] = [];
-    const step = 100 / day.communityColors.length;
-    for (let i = 0; i < day.communityColors.length; i++) {
-      const color = this.hexToRgba(day.communityColors[i], opacity);
-      stops.push(`${color} ${step * i}%`, `${color} ${step * (i + 1)}%`);
-    }
-    return `linear-gradient(to right, ${stops.join(', ')})`;
-  }
-
-  private hexToRgba(hex: string, alpha: number): string {
-    const h = hex.replace('#', '');
-    const r = parseInt(h.substring(0, 2), 16);
-    const g = parseInt(h.substring(2, 4), 16);
-    const b = parseInt(h.substring(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  }
 
   private applyFilters(events: CalendarEvent[]): CalendarEvent[] {
     const communityIds = this.selectedCommunityIds();
     const simulator = this.selectedSimulator();
-    const carClass = this.selectedCarClass();
 
     return events.filter((e) => {
       // Community filter
       if (communityIds.size > 0) {
-        const eventCommunityKey = e.communityId ?? 'skf';
-        if (!communityIds.has(eventCommunityKey)) return false;
+        if (!e.communityId || !communityIds.has(e.communityId)) return false;
       }
 
       // Simulator filter
       if (simulator && e.game !== simulator) return false;
-
-      // Car class filter
-      if (carClass && e.carClass !== carClass) return false;
 
       return true;
     });
@@ -409,24 +607,17 @@ export class CalendarComponent implements OnInit {
         isCurrentMonth: false,
         isToday: false,
         events: [],
-        communityColors: [],
       });
     }
 
     // Current month days
     for (let d = 1; d <= daysInMonth; d++) {
       const dayEvents = events.filter((e) => this.eventFallsOnDay(e, year, month, d));
-      // Collect unique community colors for this day
-      const colorSet = new Set<string>();
-      for (const e of dayEvents) {
-        colorSet.add(e.communityColor ?? SKF_COLOR);
-      }
       cells.push({
         dayNumber: d,
         isCurrentMonth: true,
         isToday: isCurrentMonthToday && today.getDate() === d,
         events: dayEvents,
-        communityColors: [...colorSet],
       });
     }
 
@@ -439,7 +630,6 @@ export class CalendarComponent implements OnInit {
           isCurrentMonth: false,
           isToday: false,
           events: [],
-          communityColors: [],
         });
       }
     }
@@ -476,26 +666,4 @@ export class CalendarComponent implements OnInit {
     return false;
   }
 
-  private eventFallsInMonth(event: CalendarEvent, year: number, month: number): boolean {
-    const prefix = `${year}-${String(month).padStart(2, '0')}`;
-
-    for (const race of event.races) {
-      if (race.date && toLocalDateStr(race.date).startsWith(prefix)) {
-        return true;
-      }
-    }
-
-    // Check start/end date range overlap with month
-    const monthStart = new Date(year, month - 1, 1);
-    const monthEnd = new Date(year, month, 0, 23, 59, 59);
-
-    const start = event.startDate ? new Date(event.startDate) : null;
-    const end = event.endDate ? new Date(event.endDate) : null;
-
-    if (start && end) return start <= monthEnd && end >= monthStart;
-    if (start) return start >= monthStart && start <= monthEnd;
-    if (end) return end >= monthStart && end <= monthEnd;
-
-    return false;
-  }
 }
