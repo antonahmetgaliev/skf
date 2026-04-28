@@ -202,7 +202,7 @@
                                 @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }
                               </span>
                               @if (race.date) {
-                                <span class="race-pill-date">{{ formatRaceDate(race.date) }}</span>
+                                <span class="race-pill-date">{{ formatRaceDate(race.date, race.endDate) }}</span>
                               }
                             </span>
                           }
@@ -269,7 +269,7 @@
                     @if (race.name) { {{ race.name }} }
                     @if (race.track) { {{ race.name ? ' — ' : '' }}{{ race.track }} }
                     @if (race.date) {
-                      <span class="race-date">{{ formatRaceDate(race.date) }}</span>
+                      <span class="race-date">{{ formatRaceDate(race.date, race.endDate) }}</span>
                     }
                   </span>
                 }
@@ -352,6 +352,13 @@
               type="datetime-local"
               [ngModel]="race.date"
               (ngModelChange)="updateRaceRow($index, 'date', $event)"
+              title="Start date"
+            />
+            <input
+              type="datetime-local"
+              [ngModel]="race.endDate"
+              (ngModelChange)="updateRaceRow($index, 'endDate', $event)"
+              title="End date (optional, for multi-day rounds)"
             />
             <app-btn variant="danger" size="sm" (click)="removeRaceRow($index)">x</app-btn>
           </div>

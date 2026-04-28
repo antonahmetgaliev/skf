@@ -268,21 +268,40 @@ export class CalendarComponent implements OnInit {
     });
   }
 
-  formatRaceDate(isoDate: string): string {
+  formatRaceDate(isoDate: string, isoEndDate?: string | null): string {
     const d = new Date(isoDate);
     if (isNaN(d.getTime())) return isoDate.slice(0, 10);
     const date = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const hasTime = /T\d{2}:\d{2}/.test(isoDate) && !isoDate.includes('T00:00:00');
-    if (!hasTime) return date;
-    const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    return `${date} ${time}`;
+    const startStr = hasTime
+      ? `${date} ${d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+      : date;
+
+    if (isoEndDate) {
+      const ed = new Date(isoEndDate);
+      if (!isNaN(ed.getTime())) {
+        const endDate = ed.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const endHasTime = /T\d{2}:\d{2}/.test(isoEndDate) && !isoEndDate.includes('T00:00:00');
+        const endStr = endHasTime
+          ? `${endDate} ${ed.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+          : endDate;
+        return `${startStr} — ${endStr}`;
+      }
+    }
+
+    return startStr;
   }
 
   getRacesForSelectedDay(event: CalendarEvent): CalendarEvent['races'] {
     const day = this.selectedDay();
     if (day === null) return event.races;
     const dayStr = `${this.currentYear()}-${String(this.currentMonth()).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const filtered = event.races.filter((r) => r.date && toLocalDateStr(r.date) === dayStr);
+    const filtered = event.races.filter((r) => {
+      if (r.date && r.endDate) {
+        return dayStr >= toLocalDateStr(r.date) && dayStr <= toLocalDateStr(r.endDate);
+      }
+      return r.date && toLocalDateStr(r.date) === dayStr;
+    });
     return filtered.length > 0 ? filtered : event.races;
   }
 
@@ -363,7 +382,7 @@ export class CalendarComponent implements OnInit {
     return [];
   });
   readonly simulators = signal<string[]>([]);
-  readonly champForm = signal<{ name: string; game: string; carClass: string | null; description: string | null; races: { id?: string; track: string; date: string }[] }>({
+  readonly champForm = signal<{ name: string; game: string; carClass: string | null; description: string | null; races: { id?: string; track: string; date: string; endDate: string }[] }>({
     name: '', game: '', carClass: null, description: null, races: [],
   });
   readonly editingChampId = signal<string | null>(null);
@@ -415,6 +434,7 @@ export class CalendarComponent implements OnInit {
             id: r.id,
             track: r.track ?? '',
             date: r.date ? r.date.slice(0, 16) : '',
+            endDate: r.endDate ? r.endDate.slice(0, 16) : '',
           })),
         }));
       },
@@ -440,6 +460,7 @@ export class CalendarComponent implements OnInit {
               id: r.id,
               track: r.track.trim() || null,
               date: withLocalTzOffset(r.date || null),
+              endDate: withLocalTzOffset(r.endDate || null),
             }));
           this.calendarApi.syncRaces(editId, racesToSync).subscribe({
             next: () => {
@@ -464,6 +485,7 @@ export class CalendarComponent implements OnInit {
           .map((r) => ({
             track: r.track.trim() || null,
             date: withLocalTzOffset(r.date || null),
+            endDate: withLocalTzOffset(r.endDate || null),
           })),
       };
       this.calendarApi.createCustomChampionship(payload).subscribe({
@@ -492,10 +514,10 @@ export class CalendarComponent implements OnInit {
   }
 
   addRaceRow(): void {
-    this.champForm.update((f) => ({ ...f, races: [...f.races, { track: '', date: '' }] }));
+    this.champForm.update((f) => ({ ...f, races: [...f.races, { track: '', date: '', endDate: '' }] }));
   }
 
-  updateRaceRow(index: number, field: 'track' | 'date', value: string): void {
+  updateRaceRow(index: number, field: 'track' | 'date' | 'endDate', value: string): void {
     this.champForm.update((f) => {
       const races = [...f.races];
       races[index] = { ...races[index], [field]: value };
@@ -639,7 +661,12 @@ export class CalendarComponent implements OnInit {
     const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
 
     for (const race of event.races) {
-      if (race.date) {
+      if (race.date && race.endDate) {
+        // Multi-day race: check range overlap with month
+        const start = new Date(race.date);
+        const end = new Date(race.endDate);
+        if (start <= monthEnd && end >= monthStart) return true;
+      } else if (race.date) {
         const d = new Date(race.date);
         if (d >= monthStart && d <= monthEnd) return true;
       }
@@ -672,9 +699,14 @@ export class CalendarComponent implements OnInit {
   ): boolean {
     const dayStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-    // Check individual races
+    // Check individual races (including multi-day ranges)
     for (const race of event.races) {
-      if (race.date && toLocalDateStr(race.date) === dayStr) {
+      if (race.date && race.endDate) {
+        // Multi-day race: check if day falls within range
+        if (dayStr >= toLocalDateStr(race.date) && dayStr <= toLocalDateStr(race.endDate)) {
+          return true;
+        }
+      } else if (race.date && toLocalDateStr(race.date) === dayStr) {
         return true;
       }
     }

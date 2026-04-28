@@ -272,6 +272,7 @@ export class AdminCalendarTabComponent implements OnInit {
     const payload: CustomRaceCreate = {
       track: form.track?.trim() || null,
       date: withLocalTzOffset(form.date),
+      endDate: null,
     };
     this.calendarApi.addRace(champ.id, payload).subscribe({
       next: (race) => {
