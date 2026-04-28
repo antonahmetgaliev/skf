@@ -69,15 +69,17 @@ export class CalendarComponent implements OnInit {
   readonly viewMode = signal<ViewMode>('month');
   readonly currentYear = signal(new Date().getFullYear());
   readonly currentMonth = signal(new Date().getMonth() + 1); // 1-based
-  readonly events = signal<CalendarEvent[]>([]);
-  readonly loading = signal(false);
-  readonly selectedDay = signal<number | null>(null);
-  readonly errorMessage = signal('');
-
-  // Year view state
   readonly yearEvents = signal<CalendarEvent[]>([]);
-  readonly yearLoading = signal(false);
-  readonly yearError = signal('');
+  readonly loading = signal(false);
+  readonly errorMessage = signal('');
+  readonly selectedDay = signal<number | null>(null);
+
+  // Month events derived from year events
+  readonly events = computed(() => {
+    const year = this.currentYear();
+    const month = this.currentMonth();
+    return this.yearEvents().filter((e) => this.eventOverlapsMonth(e, year, month));
+  });
 
   // Filters
   readonly communities = signal<Community[]>([]);
@@ -103,6 +105,9 @@ export class CalendarComponent implements OnInit {
 
   // Filtered events for year view
   readonly filteredYearEvents = computed(() => this.applyFilters(this.yearEvents()));
+
+  readonly yearLoading = this.loading;
+  readonly yearError = this.errorMessage;
 
   readonly scheduledEvents = computed(() =>
     this.filteredEvents().filter((e) => e.startDate || e.endDate || e.races.some((r) => r.date)),
@@ -189,8 +194,7 @@ export class CalendarComponent implements OnInit {
 
 
   readonly availableSimulators = computed(() => {
-    const all = this.viewMode() === 'year' ? this.yearEvents() : this.events();
-    const sims = new Set(all.map((e) => e.game).filter(Boolean));
+    const sims = new Set(this.yearEvents().map((e) => e.game).filter(Boolean));
     return [...sims].sort();
   });
 
@@ -209,7 +213,7 @@ export class CalendarComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCommunities();
-    this.loadEvents();
+    this.loadYearEvents();
   }
 
   navigateMonth(delta: number): void {
@@ -222,18 +226,24 @@ export class CalendarComponent implements OnInit {
       m = 1;
       y++;
     }
+    const yearChanged = y !== this.currentYear();
     this.currentYear.set(y);
     this.currentMonth.set(m);
     this.selectedDay.set(null);
-    this.loadEvents();
+    if (yearChanged) {
+      this.loadYearEvents();
+    }
   }
 
   goToToday(): void {
     const now = new Date();
+    const yearChanged = now.getFullYear() !== this.currentYear();
     this.currentYear.set(now.getFullYear());
     this.currentMonth.set(now.getMonth() + 1);
     this.selectedDay.set(null);
-    this.loadEvents();
+    if (yearChanged) {
+      this.loadYearEvents();
+    }
   }
 
   selectDay(day: number): void {
@@ -242,18 +252,11 @@ export class CalendarComponent implements OnInit {
 
   setViewMode(mode: string): void {
     this.viewMode.set(mode as ViewMode);
-    if (mode === 'year') {
-      this.loadYearEvents();
-    }
   }
 
   navigateYear(delta: number): void {
     this.currentYear.set(this.currentYear() + delta);
-    if (this.viewMode() === 'year') {
-      this.loadYearEvents();
-    } else {
-      this.loadEvents();
-    }
+    this.loadYearEvents();
   }
 
   sortedRaces(races: CalendarEvent['races']): CalendarEvent['races'] {
@@ -481,11 +484,7 @@ export class CalendarComponent implements OnInit {
   }
 
   private reloadCalendar(): void {
-    if (this.viewMode() === 'year') {
-      this.loadYearEvents();
-    } else {
-      this.loadEvents();
-    }
+    this.loadYearEvents();
   }
 
   updateChampField(field: 'name' | 'game' | 'carClass' | 'description', value: string | null): void {
@@ -539,28 +538,13 @@ export class CalendarComponent implements OnInit {
   }
 
   private async loadYearEvents(): Promise<void> {
-    this.yearLoading.set(true);
-    this.yearError.set('');
+    this.loading.set(true);
+    this.errorMessage.set('');
     try {
       const data = await firstValueFrom(
         this.calendarApi.getYearEvents(this.currentYear()),
       );
       this.yearEvents.set(data);
-    } catch {
-      this.yearError.set('Failed to load calendar events.');
-    } finally {
-      this.yearLoading.set(false);
-    }
-  }
-
-  private async loadEvents(): Promise<void> {
-    this.loading.set(true);
-    this.errorMessage.set('');
-    try {
-      const data = await firstValueFrom(
-        this.calendarApi.getEvents(this.currentYear(), this.currentMonth()),
-      );
-      this.events.set(data);
     } catch {
       this.errorMessage.set('Failed to load calendar events.');
     } finally {
@@ -648,6 +632,36 @@ export class CalendarComponent implements OnInit {
       weeks.push(cells.slice(i, i + 7));
     }
     return weeks;
+  }
+
+  private eventOverlapsMonth(event: CalendarEvent, year: number, month: number): boolean {
+    const monthStart = new Date(year, month - 1, 1);
+    const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+
+    for (const race of event.races) {
+      if (race.date) {
+        const d = new Date(race.date);
+        if (d >= monthStart && d <= monthEnd) return true;
+      }
+    }
+
+    if (event.startDate) {
+      const d = new Date(event.startDate);
+      if (d >= monthStart && d <= monthEnd) return true;
+    }
+    if (event.endDate) {
+      const d = new Date(event.endDate);
+      if (d >= monthStart && d <= monthEnd) return true;
+    }
+
+    // Event spans the entire month
+    if (event.startDate && event.endDate) {
+      const start = new Date(event.startDate);
+      const end = new Date(event.endDate);
+      if (start <= monthStart && end >= monthEnd) return true;
+    }
+
+    return false;
   }
 
   private eventFallsOnDay(
