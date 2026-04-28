@@ -122,6 +122,7 @@
                   <div
                     class="calendar-cell"
                     [class.other-month]="!day.isCurrentMonth"
+                    [class.past]="day.isPast && day.isCurrentMonth"
                     [class.today]="day.isToday"
                     [class.selected]="selectedDay() === day.dayNumber && day.isCurrentMonth"
                     [class.has-events]="day.events.length > 0 && day.isCurrentMonth"

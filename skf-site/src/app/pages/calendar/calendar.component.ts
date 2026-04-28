@@ -25,6 +25,7 @@ interface CalendarDay {
   dayNumber: number;
   isCurrentMonth: boolean;
   isToday: boolean;
+  isPast: boolean;
   events: CalendarEvent[];
 }
 
@@ -600,12 +601,15 @@ export class CalendarComponent implements OnInit {
 
     const cells: CalendarDay[] = [];
 
+    const todayDate = today.getDate();
+
     // Previous month trailing days
     for (let i = startWeekday - 1; i >= 0; i--) {
       cells.push({
         dayNumber: prevMonthDays - i,
         isCurrentMonth: false,
         isToday: false,
+        isPast: true,
         events: [],
       });
     }
@@ -613,10 +617,13 @@ export class CalendarComponent implements OnInit {
     // Current month days
     for (let d = 1; d <= daysInMonth; d++) {
       const dayEvents = events.filter((e) => this.eventFallsOnDay(e, year, month, d));
+      const isPast = isCurrentMonthToday ? d < todayDate
+        : year < today.getFullYear() || (year === today.getFullYear() && month < today.getMonth() + 1);
       cells.push({
         dayNumber: d,
         isCurrentMonth: true,
-        isToday: isCurrentMonthToday && today.getDate() === d,
+        isToday: isCurrentMonthToday && todayDate === d,
+        isPast,
         events: dayEvents,
       });
     }
@@ -629,6 +636,7 @@ export class CalendarComponent implements OnInit {
           dayNumber: d,
           isCurrentMonth: false,
           isToday: false,
+          isPast: false,
           events: [],
         });
       }

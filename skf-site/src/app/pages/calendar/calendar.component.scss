@@ -301,11 +301,26 @@
     cursor: default;
   }
 
-  &.today {
-    background: rgba(243, 180, 25, 0.25);
-
+  &.past {
     .day-number {
-      color: var(--gold);
+      color: var(--muted);
+    }
+
+    .cell-event-label {
+      opacity: 0.45;
+    }
+  }
+
+  &.today {
+    .day-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.6rem;
+      height: 1.6rem;
+      border-radius: 50%;
+      background: var(--gold);
+      color: #000;
       font-weight: 800;
     }
   }
@@ -731,6 +746,11 @@
     font-size: var(--text-xs);
   }
 
+  .calendar-cell.today .day-number {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+
   .calendar-header {
     flex-direction: column;
     align-items: stretch;
@@ -795,6 +815,11 @@
 
   .day-number {
     font-size: var(--text-2xs);
+  }
+
+  .calendar-cell.today .day-number {
+    width: 1.15rem;
+    height: 1.15rem;
   }
 
   .weekday-full {
