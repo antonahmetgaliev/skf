@@ -220,16 +220,21 @@ async def list_communities_admin(
 # ── Simulators & Car Classes (from SimGrid API) ─────────────────────────────
 
 
+_EXTRA_SIMULATORS: set[str] = {
+    "Richard Burns Rally",
+}
+
+
 @router.get("/simulators", response_model=list[str])
 async def list_simulators():
-    """Return simulator/game names from SimGrid."""
+    """Return simulator/game names from SimGrid + manually added extras."""
     try:
         games = await simgrid_service.get_games()
-        return sorted(
-            g["name"] for g in games if isinstance(g, dict) and g.get("name")
-        )
+        names = {g["name"] for g in games if isinstance(g, dict) and g.get("name")}
     except Exception:
-        return []
+        names = set()
+    names |= _EXTRA_SIMULATORS
+    return sorted(names)
 
 
 @router.get("/car-classes", response_model=list[str])
