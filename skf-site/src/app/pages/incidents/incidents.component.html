@@ -245,7 +245,7 @@
           }
           @if (auth.isJudge() && w.incidents.length > 0 && hasUnpublished(w)) {
             <app-btn variant="accent" size="sm" (click)="publishAllIncidents(w.id)">
-              Publish All
+              Publish All Verdicts
             </app-btn>
           }
           @if (w.isOpen) {
@@ -273,7 +273,7 @@
                     <span class="incident-source incident-source--ingested">Auto</span>
                   }
                   @if (!inc.isPublished) {
-                    <app-badge variant="pending">Hidden</app-badge>
+                    <app-badge variant="pending">Verdict hidden</app-badge>
                   }
                   <div class="incident-header-main">
                     <span class="incident-drivers">{{ driverNames(inc) }}</span>
@@ -470,7 +470,7 @@
                         <button class="btn-link" type="button" (click)="addDriverShown[inc.id] = !addDriverShown[inc.id]">+ Driver</button>
                         <button class="btn-link" type="button" (click)="duplicateIncident(inc.id)">Duplicate</button>
                         @if (!inc.isPublished) {
-                          <button class="btn-link btn-link--bwp" type="button" (click)="publishIncident(inc.id)">Publish</button>
+                          <button class="btn-link btn-link--bwp" type="button" (click)="publishIncident(inc.id)">Publish verdict</button>
                         }
                       }
                     </div>
@@ -491,7 +491,7 @@
                     <span class="incident-source incident-source--ingested">Auto</span>
                   }
                   @if (!inc.isPublished) {
-                    <app-badge variant="pending">Hidden</app-badge>
+                    <app-badge variant="pending">Verdict hidden</app-badge>
                   }
                   <div class="incident-header-main">
                     <span class="incident-drivers">{{ driverNames(inc) }}</span>

@@ -354,14 +354,17 @@ async def get_window(
     current_user: User | None = Depends(get_current_user_optional),
 ):
     window = await _get_window_or_404(window_id, db)
-    # Non-judges only see published incidents
+    # Non-judges see all incidents but verdicts are hidden on unpublished ones
     is_judge = (
         current_user is not None
         and current_user.role is not None
         and current_user.role.name in ("racing_judge", "admin", "super_admin")
     )
     if not is_judge:
-        window.incidents = [inc for inc in window.incidents if inc.is_published]
+        for inc in window.incidents:
+            if not inc.is_published:
+                for drv in inc.drivers:
+                    drv.resolution = None
     return window
 
 
