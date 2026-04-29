@@ -142,6 +142,16 @@ def _parse_standings_html(html: str) -> ChampionshipStandingsData | None:
             e.display_name,
         ),
     )
+
+    # SimGrid HTML lists races newest-first; reverse so R1 = first race.
+    races = list(reversed(races))
+    race_id_to_new_index = {r.id: i for i, r in enumerate(races)}
+    for entry in entries:
+        entry.race_results = list(reversed(entry.race_results))
+        for rr in entry.race_results:
+            if rr.race_id is not None and rr.race_id in race_id_to_new_index:
+                rr.race_index = race_id_to_new_index[rr.race_id]
+
     return ChampionshipStandingsData(entries=entries, races=races)
 
 
