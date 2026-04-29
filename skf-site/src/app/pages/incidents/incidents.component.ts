@@ -71,15 +71,37 @@ export class IncidentsComponent implements OnInit {
     return this.windows().filter(w => !w.isOpen && new Date(w.closesAt).getTime() < cutoff);
   });
 
-  // ── Sorted incidents ──────────────────────────────────────────────
-  readonly sortedIncidents = computed(() => {
+  // ── Grouped incidents (Heat sessions first, then Feature, sorted by time) ──
+  readonly groupedIncidents = computed(() => {
     const incidents = this.windowDetail()?.incidents ?? [];
-    return [...incidents].sort((a, b) => {
-      if (!a.time && !b.time) return 0;
-      if (!a.time) return 1;
-      if (!b.time) return -1;
-      return a.time.localeCompare(b.time);
-    });
+
+    const groups = new Map<string, Incident[]>();
+    for (const inc of incidents) {
+      const key = inc.sessionName ?? '';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(inc);
+    }
+
+    for (const group of groups.values()) {
+      group.sort((a, b) => {
+        if (!a.time && !b.time) return 0;
+        if (!a.time) return 1;
+        if (!b.time) return -1;
+        return a.time.localeCompare(b.time);
+      });
+    }
+
+    const sessionOrder = (name: string): number => {
+      const upper = name.toUpperCase();
+      const heatMatch = upper.match(/^HEAT\s*(\d+)$/);
+      if (heatMatch) return parseInt(heatMatch[1], 10);
+      if (upper.startsWith('FEATURE')) return 1000;
+      return 2000;
+    };
+
+    return [...groups.entries()]
+      .sort(([a], [b]) => sessionOrder(a) - sessionOrder(b))
+      .map(([session, items]) => ({ session, items }));
   });
 
   // ── Modal visibility ──────────────────────────────────────────────
