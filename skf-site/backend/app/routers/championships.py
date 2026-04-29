@@ -135,17 +135,6 @@ async def get_championship(championship_id: int):
         )
 
 
-@router.post(
-    "/{championship_id}/refresh", status_code=status.HTTP_204_NO_CONTENT,
-)
-async def refresh_championship(
-    championship_id: int,
-    _: User = Depends(require_admin),
-):
-    """Clear cached data for a single championship so the next request re-fetches."""
-    await simgrid_service.invalidate_cache(championship_id)
-
-
 @router.get(
     "/{championship_id}/standings", response_model=ChampionshipStandingsData
 )

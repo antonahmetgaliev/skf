@@ -1,4 +1,5 @@
 import { NgClass } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -50,6 +51,7 @@ export class ChampionshipsComponent {
   readonly cs = inject(ChampionshipService);
   readonly freshness = inject(DataFreshnessService);
   private readonly api = inject(SimgridApiService);
+  private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private standingsLoadToken = 0;
@@ -350,7 +352,9 @@ export class ChampionshipsComponent {
     if (this.refreshingCache()) return;
     this.refreshingCache.set(true);
     try {
-      await firstValueFrom(this.api.refreshChampionship(championshipId));
+      await firstValueFrom(
+        this.http.post('/api/admin/clear-cache', {}, { params: { domain: 'simgrid' } }),
+      );
       await this.loadStandings(championshipId);
     } catch {
       this.errorMessage.set('Failed to refresh championship data.');
