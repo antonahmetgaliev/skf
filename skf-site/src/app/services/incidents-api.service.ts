@@ -70,6 +70,7 @@ export interface IncidentWindowCreate {
 }
 
 export interface IncidentFileCreate {
+  sessionName?: string | null;
   lap?: string | null;
   corner?: string | null;
   description?: string | null;

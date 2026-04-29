@@ -795,6 +795,24 @@
     <button class="btn-link add-driver" type="button" (click)="addDriver()">+ Add Driver</button>
   </div>
 
+  <app-form-field label="Session (optional)" fieldId="niSession">
+    <input
+      id="niSession"
+      type="text"
+      list="niSessionList"
+      [(ngModel)]="niSessionName"
+      placeholder="e.g. Heat 1, Feature…"
+      autocomplete="off"
+    />
+    <datalist id="niSessionList">
+      @for (g of groupedIncidents(); track g.session) {
+        @if (g.session) {
+          <option [value]="g.session"></option>
+        }
+      }
+    </datalist>
+  </app-form-field>
+
   <div class="form-row">
     <app-form-field label="Lap (optional)" fieldId="niLap">
       <input

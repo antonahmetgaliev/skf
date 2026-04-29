@@ -415,6 +415,7 @@ async def file_incident(
     incident = Incident(
         window_id=window.id,
         reporter_user_id=current_user.id if current_user else None,
+        session_name=payload.session_name,
         lap=payload.lap,
         corner=payload.corner,
         description=payload.description,

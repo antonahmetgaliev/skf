@@ -41,6 +41,7 @@ class IncidentBatchCreate(CamelModel):
 # ── Manual file incident ────────────────────────────────────────────────────
 
 class IncidentFileCreate(CamelModel):
+    session_name: str | None = Field(default=None, max_length=100)
     lap: str | None = Field(default=None, max_length=20)
     corner: str | None = Field(default=None, max_length=50)
     description: str | None = None

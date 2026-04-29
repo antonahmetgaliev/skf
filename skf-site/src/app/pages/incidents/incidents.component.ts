@@ -134,6 +134,7 @@ export class IncidentsComponent implements OnInit {
 
   // ── File Incident form fields ──────────────────────────────────────
   niDriverNames: string[] = ['', ''];
+  niSessionName = '';
   niLap = '';
   niCorner = '';
   niDescription = '';
@@ -304,6 +305,7 @@ export class IncidentsComponent implements OnInit {
 
   openNewIncidentModal(): void {
     this.niDriverNames = ['', ''];
+    this.niSessionName = '';
     this.niLap = '';
     this.niCorner = '';
     this.niDescription = '';
@@ -337,6 +339,7 @@ export class IncidentsComponent implements OnInit {
     try {
       await firstValueFrom(
         this.incidentsApi.fileIncident(windowId, {
+          sessionName: this.niSessionName.trim() || undefined,
           lap: this.niLap.trim() || undefined,
           corner: this.niCorner.trim() || undefined,
           description: this.niDescription.trim() || undefined,
