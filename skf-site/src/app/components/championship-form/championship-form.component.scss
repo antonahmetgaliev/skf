@@ -13,7 +13,7 @@
 .races-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.75rem;
   margin-bottom: 0.5rem;
 }
 
@@ -23,6 +23,7 @@
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
   color: var(--muted);
+  margin-right: auto;
 }
 
 .multi-day-toggle {
@@ -33,6 +34,7 @@
   color: var(--muted);
   cursor: pointer;
   user-select: none;
+  white-space: nowrap;
 
   input[type="checkbox"] {
     accent-color: var(--accent, #ffd600);
@@ -42,18 +44,23 @@
 
 .race-row-form {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.4rem;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 
   input {
-    height: 2.75rem;
-    padding: 0.65rem 0.85rem;
-    border-radius: 14px;
+    height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
     border: 1px solid var(--border-subtle);
     background: var(--surface);
     color: var(--ink);
-    font-size: var(--text-md);
+    font-size: var(--text-sm);
     font-family: inherit;
     box-sizing: border-box;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -70,25 +77,24 @@
   }
 
   input[type="text"] {
-    flex: 1;
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .race-dates {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex: 1 1 auto;
     min-width: 0;
   }
 
   input[type="datetime-local"] {
-    flex: 0 0 auto;
+    flex: 1 1 0;
+    min-width: 0;
   }
-}
 
-@media (max-width: 600px) {
-  .race-row-form {
-    flex-wrap: wrap;
-
-    input[type="text"] {
-      flex: 1 1 100%;
-    }
-
-    input[type="datetime-local"] {
-      flex: 1 1 auto;
-    }
+  .race-remove {
+    flex-shrink: 0;
   }
 }

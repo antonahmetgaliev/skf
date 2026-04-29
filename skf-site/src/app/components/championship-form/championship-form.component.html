@@ -47,7 +47,7 @@
       <span class="races-label">Races</span>
       <label class="multi-day-toggle">
         <input type="checkbox" [ngModel]="multiDay()" (ngModelChange)="multiDay.set($event)" />
-        Multi-day rounds
+        Multi-day
       </label>
       <app-btn variant="ghost" size="sm" (click)="addRaceRow()">+ Add Race</app-btn>
     </div>
@@ -60,21 +60,23 @@
           (ngModelChange)="updateRaceRow($index, 'track', $event)"
           autocomplete="off"
         />
-        <input
-          type="datetime-local"
-          [ngModel]="race.date"
-          (ngModelChange)="updateRaceRow($index, 'date', $event)"
-          title="Start date"
-        />
-        @if (multiDay()) {
+        <div class="race-dates">
           <input
             type="datetime-local"
-            [ngModel]="race.endDate"
-            (ngModelChange)="updateRaceRow($index, 'endDate', $event)"
-            title="End date (optional, for multi-day rounds)"
+            [ngModel]="race.date"
+            (ngModelChange)="updateRaceRow($index, 'date', $event)"
+            [title]="multiDay() ? 'Start date' : 'Date'"
           />
-        }
-        <app-btn variant="danger" size="sm" (click)="removeRaceRow($index)">x</app-btn>
+          @if (multiDay()) {
+            <input
+              type="datetime-local"
+              [ngModel]="race.endDate"
+              (ngModelChange)="updateRaceRow($index, 'endDate', $event)"
+              title="End date"
+            />
+          }
+          <app-btn class="race-remove" variant="danger" size="sm" (click)="removeRaceRow($index)">x</app-btn>
+        </div>
       </div>
     }
   </div>
