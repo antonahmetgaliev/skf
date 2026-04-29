@@ -83,6 +83,9 @@
               <app-btn variant="ghost" size="sm" (click)="openStandingsExportPreview()">
                 Export 16:9
               </app-btn>
+              <app-btn variant="ghost" size="sm" [disabled]="refreshingCache()" (click)="refreshChampionshipCache(championship.id)">
+                {{ refreshingCache() ? 'Refreshing...' : 'Refresh Data' }}
+              </app-btn>
             </div>
           }
         </div>

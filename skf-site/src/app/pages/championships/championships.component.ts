@@ -79,6 +79,7 @@ export class ChampionshipsComponent {
   // Modal states
   readonly exportPreviewOpen = signal(false);
   readonly giveawayOpen = signal(false);
+  readonly refreshingCache = signal(false);
 
   readonly isUpcomingChampionship = computed(() => {
     return this.cs.isChampionshipNotStarted(this.selectedChampionship());
@@ -343,6 +344,19 @@ export class ChampionshipsComponent {
   openStandingsExportPreview(): void {
     if (this.loadingStandings() || !this.selectedChampionship() || this.standings().length === 0) return;
     this.exportPreviewOpen.set(true);
+  }
+
+  async refreshChampionshipCache(championshipId: number): Promise<void> {
+    if (this.refreshingCache()) return;
+    this.refreshingCache.set(true);
+    try {
+      await firstValueFrom(this.api.refreshChampionship(championshipId));
+      await this.loadStandings(championshipId);
+    } catch {
+      this.errorMessage.set('Failed to refresh championship data.');
+    } finally {
+      this.refreshingCache.set(false);
+    }
   }
 
   // ------------------------------------------------------------------

@@ -120,6 +120,10 @@ export class SimgridApiService {
     return this.http.put<void>(`${this.base}/active/${simgridId}`, null);
   }
 
+  refreshChampionship(championshipId: number): Observable<void> {
+    return this.http.post<void>(`${this.base}/${championshipId}/refresh`, null);
+  }
+
   removeActiveChampionship(simgridId: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/active/${simgridId}`);
   }
