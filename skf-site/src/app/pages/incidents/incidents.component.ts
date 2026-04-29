@@ -71,6 +71,17 @@ export class IncidentsComponent implements OnInit {
     return this.windows().filter(w => !w.isOpen && new Date(w.closesAt).getTime() < cutoff);
   });
 
+  // ── Sorted incidents ──────────────────────────────────────────────
+  readonly sortedIncidents = computed(() => {
+    const incidents = this.windowDetail()?.incidents ?? [];
+    return [...incidents].sort((a, b) => {
+      if (!a.time && !b.time) return 0;
+      if (!a.time) return 1;
+      if (!b.time) return -1;
+      return a.time.localeCompare(b.time);
+    });
+  });
+
   // ── Modal visibility ──────────────────────────────────────────────
   readonly showNewWindowModal = signal(false);
   readonly showNewIncidentModal = signal(false);

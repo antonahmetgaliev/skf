@@ -259,7 +259,7 @@
           <app-empty>No incidents filed yet.</app-empty>
         } @else {
           <div class="incident-cards">
-            @for (inc of w.incidents; track inc.id; let i = $index) {
+            @for (inc of sortedIncidents(); track inc.id; let i = $index) {
               <div class="incident-card" [class.incident-card--resolved]="inc.status === 'resolved'" [class.incident-card--filed]="inc.source === 'filed'">
                 <div class="incident-card-header" (click)="toggleIncident(inc.id)">
                   <span class="incident-num">#{{ i + 1 }}</span>
