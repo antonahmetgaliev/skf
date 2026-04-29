@@ -4,9 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AlertComponent } from '../../components/alert/alert.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
-import { FormFieldComponent } from '../../components/form-field/form-field.component';
 import { ModalComponent } from '../../components/modal/modal.component';
-import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { ToggleComponent } from '../../components/toggle/toggle.component';
@@ -18,6 +16,10 @@ import {
   Community,
   CustomChampionshipCreate,
 } from '../../services/calendar-api.service';
+import {
+  ChampionshipFormComponent,
+  ChampionshipFormData,
+} from '../../components/championship-form/championship-form.component';
 import { AuthService } from '../../services/auth.service';
 import { toLocalDateStr, withLocalTzOffset } from '../../utils/date';
 
@@ -54,7 +56,7 @@ const VIEW_TABS: { key: string; label: string }[] = [
 
 @Component({
   selector: 'app-calendar',
-  imports: [NgTemplateOutlet, FormsModule, RouterLink, AlertComponent, BtnComponent, CardComponent, FormFieldComponent, ModalComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
+  imports: [NgTemplateOutlet, FormsModule, RouterLink, AlertComponent, BtnComponent, CardComponent, ChampionshipFormComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
 
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
@@ -382,9 +384,7 @@ export class CalendarComponent implements OnInit {
     return [];
   });
   readonly simulators = signal<string[]>([]);
-  readonly champForm = signal<{ name: string; game: string; carClass: string | null; description: string | null; races: { id?: string; track: string; date: string; endDate: string }[] }>({
-    name: '', game: '', carClass: null, description: null, races: [],
-  });
+  readonly champFormData = signal<ChampionshipFormData | null>(null);
   readonly editingChampId = signal<string | null>(null);
   readonly champCommunityId = signal<string | null>(null);
   readonly champModalOpen = signal(false);
@@ -402,7 +402,7 @@ export class CalendarComponent implements OnInit {
   }
 
   openAddChampionship(communityId: string): void {
-    this.champForm.set({ name: '', game: '', carClass: null, description: null, races: [] });
+    this.champFormData.set({ name: '', game: '', carClass: null, description: null, races: [] });
     this.editingChampId.set(null);
     this.champCommunityId.set(communityId);
     this.champModalOpen.set(true);
@@ -415,7 +415,7 @@ export class CalendarComponent implements OnInit {
     if (!event.customChampionshipId) return;
     this.editingChampId.set(event.customChampionshipId);
     this.champCommunityId.set(event.communityId);
-    this.champForm.set({
+    this.champFormData.set({
       name: event.name,
       game: event.game,
       carClass: event.carClass,
@@ -428,23 +428,23 @@ export class CalendarComponent implements OnInit {
     }
     this.calendarApi.getCustomChampionship(event.customChampionshipId).subscribe({
       next: (champ) => {
-        this.champForm.update((f) => ({
-          ...f,
+        this.champFormData.set({
+          name: champ.name,
+          game: champ.game,
+          carClass: champ.carClass,
+          description: champ.description,
           races: champ.races.map((r) => ({
             id: r.id,
             track: r.track ?? '',
             date: r.date ? r.date.slice(0, 16) : '',
             endDate: r.endDate ? r.endDate.slice(0, 16) : '',
           })),
-        }));
+        });
       },
     });
   }
 
-  saveChampionship(): void {
-    const form = this.champForm();
-    if (!form.name.trim() || !form.game.trim()) return;
-
+  saveChampionship(form: ChampionshipFormData): void {
     const editId = this.editingChampId();
     if (editId) {
       this.calendarApi.updateCustomChampionship(editId, {
@@ -509,25 +509,6 @@ export class CalendarComponent implements OnInit {
     this.loadYearEvents();
   }
 
-  updateChampField(field: 'name' | 'game' | 'carClass' | 'description', value: string | null): void {
-    this.champForm.update((f) => ({ ...f, [field]: value }));
-  }
-
-  addRaceRow(): void {
-    this.champForm.update((f) => ({ ...f, races: [...f.races, { track: '', date: '', endDate: '' }] }));
-  }
-
-  updateRaceRow(index: number, field: 'track' | 'date' | 'endDate', value: string): void {
-    this.champForm.update((f) => {
-      const races = [...f.races];
-      races[index] = { ...races[index], [field]: value };
-      return { ...f, races };
-    });
-  }
-
-  removeRaceRow(index: number): void {
-    this.champForm.update((f) => ({ ...f, races: f.races.filter((_, i) => i !== index) }));
-  }
 
   private getEarliestDate(event: CalendarEvent): Date | null {
     const dates: Date[] = [];

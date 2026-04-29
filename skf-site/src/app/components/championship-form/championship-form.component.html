@@ -1,0 +1,81 @@
+<div class="modal-form">
+  <app-form-field label="Name" fieldId="champFormName">
+    <input
+      id="champFormName"
+      type="text"
+      placeholder="Championship name"
+      [ngModel]="form().name"
+      (ngModelChange)="updateField('name', $event)"
+      autocomplete="off"
+    />
+  </app-form-field>
+  <app-form-field label="Simulator" fieldId="champFormSim">
+    <select
+      id="champFormSim"
+      [ngModel]="form().game"
+      (ngModelChange)="updateField('game', $event)"
+    >
+      <option [ngValue]="''">— Select simulator —</option>
+      @for (sim of simulators(); track sim) {
+        <option [ngValue]="sim">{{ sim }}</option>
+      }
+    </select>
+  </app-form-field>
+  <app-form-field label="Car Class" fieldId="champFormClass">
+    <input
+      id="champFormClass"
+      type="text"
+      placeholder="e.g. GT3, LMP2"
+      [ngModel]="form().carClass"
+      (ngModelChange)="updateField('carClass', $event)"
+      autocomplete="off"
+    />
+  </app-form-field>
+  <app-form-field label="Description" fieldId="champFormDesc">
+    <input
+      id="champFormDesc"
+      type="text"
+      placeholder="Optional description"
+      [ngModel]="form().description"
+      (ngModelChange)="updateField('description', $event)"
+      autocomplete="off"
+    />
+  </app-form-field>
+
+  <div class="races-section">
+    <div class="races-header">
+      <span class="races-label">Races</span>
+      <label class="multi-day-toggle">
+        <input type="checkbox" [ngModel]="multiDay()" (ngModelChange)="multiDay.set($event)" />
+        Multi-day rounds
+      </label>
+      <app-btn variant="ghost" size="sm" (click)="addRaceRow()">+ Add Race</app-btn>
+    </div>
+    @for (race of form().races; track $index) {
+      <div class="race-row-form">
+        <input
+          type="text"
+          placeholder="Track name"
+          [ngModel]="race.track"
+          (ngModelChange)="updateRaceRow($index, 'track', $event)"
+          autocomplete="off"
+        />
+        <input
+          type="datetime-local"
+          [ngModel]="race.date"
+          (ngModelChange)="updateRaceRow($index, 'date', $event)"
+          title="Start date"
+        />
+        @if (multiDay()) {
+          <input
+            type="datetime-local"
+            [ngModel]="race.endDate"
+            (ngModelChange)="updateRaceRow($index, 'endDate', $event)"
+            title="End date (optional, for multi-day rounds)"
+          />
+        }
+        <app-btn variant="danger" size="sm" (click)="removeRaceRow($index)">x</app-btn>
+      </div>
+    }
+  </div>
+</div>

@@ -15,8 +15,11 @@ import {
   CommunityCreate,
   CustomChampionshipCreate,
   CustomChampionshipOut,
-  CustomRaceCreate,
 } from '../../../services/calendar-api.service';
+import {
+  ChampionshipFormComponent,
+  ChampionshipFormData,
+} from '../../../components/championship-form/championship-form.component';
 import {
   DotdApiService,
   DotdCandidateIn,
@@ -30,7 +33,7 @@ import {
 
 @Component({
   selector: 'app-admin-calendar-tab',
-  imports: [FormsModule, DatePipe, AlertComponent, BtnComponent, CardComponent, FormFieldComponent, ModalComponent, SpinnerComponent],
+  imports: [FormsModule, DatePipe, AlertComponent, BtnComponent, CardComponent, ChampionshipFormComponent, FormFieldComponent, ModalComponent, SpinnerComponent],
   templateUrl: './admin-calendar-tab.component.html',
   styleUrl: './admin-calendar-tab.component.scss',
 })
@@ -54,28 +57,14 @@ export class AdminCalendarTabComponent implements OnInit {
   readonly communityForm = signal<CommunityCreate>({ name: '', color: '#ffd600', discordUrl: null });
   readonly editingCommunityId = signal<string | null>(null);
 
-  readonly champForm = signal<{ name: string; game: string; carClass: string | null; description: string | null }>({
-    name: '', game: '', carClass: null, description: null,
-  });
   readonly editingChampId = signal<string | null>(null);
-
-  readonly raceForm = signal<{ track: string | null; date: string | null }>({ track: null, date: null });
-  readonly raceChampionship = signal<CustomChampionshipOut | null>(null);
+  readonly champFormData = signal<ChampionshipFormData | null>(null);
 
   readonly communityModalOpen = signal(false);
   readonly champModalOpen = signal(false);
-  readonly raceModalOpen = signal(false);
 
   updateCommunityField(field: keyof CommunityCreate, value: string | null): void {
     this.communityForm.update((f) => ({ ...f, [field]: value }));
-  }
-
-  updateChampField(field: 'name' | 'game' | 'carClass' | 'description', value: string | null): void {
-    this.champForm.update((f) => ({ ...f, [field]: value }));
-  }
-
-  updateRaceField(field: 'track' | 'date', value: string | null): void {
-    this.raceForm.update((f) => ({ ...f, [field]: value }));
   }
 
   ngOnInit(): void {
@@ -172,7 +161,7 @@ export class AdminCalendarTabComponent implements OnInit {
     }
     this.selectedCommunity.set(c);
     this.loadCommunityChampionships(c.id);
-    this.resetChampForm();
+    this.editingChampId.set(null);
     if (c.isSkf) {
       this.loadSimgridChampionships();
     } else {
@@ -194,19 +183,31 @@ export class AdminCalendarTabComponent implements OnInit {
   }
 
   openChampModal(): void {
-    this.resetChampForm();
+    this.editingChampId.set(null);
+    this.champFormData.set({ name: '', game: '', carClass: null, description: null, races: [] });
     this.champModalOpen.set(true);
   }
 
-  resetChampForm(): void {
-    this.champForm.set({ name: '', game: '', carClass: null, description: null });
-    this.editingChampId.set(null);
+  editChampionship(champ: CustomChampionshipOut): void {
+    this.editingChampId.set(champ.id);
+    this.champFormData.set({
+      name: champ.name,
+      game: champ.game,
+      carClass: champ.carClass,
+      description: champ.description,
+      races: champ.races.map((r) => ({
+        id: r.id,
+        track: r.track ?? '',
+        date: r.date ? r.date.slice(0, 16) : '',
+        endDate: r.endDate ? r.endDate.slice(0, 16) : '',
+      })),
+    });
+    this.champModalOpen.set(true);
   }
 
-  saveChampionship(): void {
-    const form = this.champForm();
+  saveChampionship(form: ChampionshipFormData): void {
     const community = this.selectedCommunity();
-    if (!form.name.trim() || !form.game.trim() || !community) return;
+    if (!community) return;
 
     const editId = this.editingChampId();
     if (editId) {
@@ -216,10 +217,23 @@ export class AdminCalendarTabComponent implements OnInit {
         carClass: form.carClass?.trim() || null,
         description: form.description?.trim() || null,
       }).subscribe({
-        next: (updated) => {
-          this.communityChampionships.update((list) => list.map((c) => c.id === updated.id ? updated : c));
-          this.resetChampForm();
-          this.champModalOpen.set(false);
+        next: () => {
+          const racesToSync = form.races
+            .filter((r) => r.id || r.track.trim() || r.date)
+            .map((r) => ({
+              id: r.id,
+              track: r.track.trim() || null,
+              date: withLocalTzOffset(r.date || null),
+              endDate: withLocalTzOffset(r.endDate || null),
+            }));
+          this.calendarApi.syncRaces(editId, racesToSync).subscribe({
+            next: (syncedRaces) => {
+              this.communityChampionships.update((list) => list.map((c) =>
+                c.id === editId ? { ...c, name: form.name.trim(), game: form.game.trim(), carClass: form.carClass?.trim() || null, description: form.description?.trim() || null, races: syncedRaces } : c,
+              ));
+              this.champModalOpen.set(false);
+            },
+          });
         },
       });
     } else {
@@ -230,27 +244,21 @@ export class AdminCalendarTabComponent implements OnInit {
         gameId: null,
         carClass: form.carClass?.trim() || null,
         description: form.description?.trim() || null,
-        races: [],
+        races: form.races
+          .filter((r) => r.track.trim() || r.date)
+          .map((r) => ({
+            track: r.track.trim() || null,
+            date: withLocalTzOffset(r.date || null),
+            endDate: withLocalTzOffset(r.endDate || null),
+          })),
       };
       this.calendarApi.createCustomChampionship(payload).subscribe({
         next: (created) => {
           this.communityChampionships.update((list) => [...list, created]);
-          this.resetChampForm();
           this.champModalOpen.set(false);
         },
       });
     }
-  }
-
-  editChampionship(champ: CustomChampionshipOut): void {
-    this.editingChampId.set(champ.id);
-    this.champForm.set({
-      name: champ.name,
-      game: champ.game,
-      carClass: champ.carClass,
-      description: champ.description,
-    });
-    this.champModalOpen.set(true);
   }
 
   deleteChampionship(champ: CustomChampionshipOut): void {
@@ -259,41 +267,6 @@ export class AdminCalendarTabComponent implements OnInit {
     });
   }
 
-  // -- Races --
-
-  openRaceModal(champ: CustomChampionshipOut): void {
-    this.raceChampionship.set(champ);
-    this.raceForm.set({ track: null, date: null });
-    this.raceModalOpen.set(true);
-  }
-
-  addRace(champ: CustomChampionshipOut): void {
-    const form = this.raceForm();
-    const payload: CustomRaceCreate = {
-      track: form.track?.trim() || null,
-      date: withLocalTzOffset(form.date),
-      endDate: null,
-    };
-    this.calendarApi.addRace(champ.id, payload).subscribe({
-      next: (race) => {
-        this.communityChampionships.update((list) =>
-          list.map((c) => c.id === champ.id ? { ...c, races: [...c.races, race] } : c)
-        );
-        this.raceForm.set({ track: null, date: null });
-        this.raceModalOpen.set(false);
-      },
-    });
-  }
-
-  deleteRace(champ: CustomChampionshipOut, raceId: string): void {
-    this.calendarApi.deleteRace(champ.id, raceId).subscribe({
-      next: () => {
-        this.communityChampionships.update((list) =>
-          list.map((c) => c.id === champ.id ? { ...c, races: c.races.filter((r) => r.id !== raceId) } : c)
-        );
-      },
-    });
-  }
 
   // -- SimGrid championships (SKF community) --
 

@@ -297,84 +297,16 @@
     width="md"
     [(open)]="champModalOpen"
   >
-    <div class="modal-form">
-      <app-form-field label="Name" fieldId="calChampName">
-        <input
-          id="calChampName"
-          type="text"
-          placeholder="Championship name"
-          [ngModel]="champForm().name"
-          (ngModelChange)="updateChampField('name', $event)"
-          autocomplete="off"
-        />
-      </app-form-field>
-      <app-form-field label="Simulator" fieldId="calChampSim">
-        <select
-          id="calChampSim"
-          [ngModel]="champForm().game"
-          (ngModelChange)="updateChampField('game', $event)"
-        >
-          <option [ngValue]="''">— Select simulator —</option>
-          @for (sim of simulators(); track sim) {
-            <option [ngValue]="sim">{{ sim }}</option>
-          }
-        </select>
-      </app-form-field>
-      <app-form-field label="Car Class" fieldId="calChampClass">
-        <input
-          id="calChampClass"
-          type="text"
-          placeholder="e.g. GT3, LMP2"
-          [ngModel]="champForm().carClass"
-          (ngModelChange)="updateChampField('carClass', $event)"
-          autocomplete="off"
-        />
-      </app-form-field>
-      <app-form-field label="Description" fieldId="calChampDesc">
-        <input
-          id="calChampDesc"
-          type="text"
-          placeholder="Optional description"
-          [ngModel]="champForm().description"
-          (ngModelChange)="updateChampField('description', $event)"
-          autocomplete="off"
-        />
-      </app-form-field>
-
-      <div class="races-section">
-        <div class="races-header">
-          <span class="races-label">Races</span>
-          <app-btn variant="ghost" size="sm" (click)="addRaceRow()">+ Add Race</app-btn>
-        </div>
-        @for (race of champForm().races; track $index) {
-          <div class="race-row-form">
-            <input
-              type="text"
-              placeholder="Track name"
-              [ngModel]="race.track"
-              (ngModelChange)="updateRaceRow($index, 'track', $event)"
-              autocomplete="off"
-            />
-            <input
-              type="datetime-local"
-              [ngModel]="race.date"
-              (ngModelChange)="updateRaceRow($index, 'date', $event)"
-              title="Start date"
-            />
-            <input
-              type="datetime-local"
-              [ngModel]="race.endDate"
-              (ngModelChange)="updateRaceRow($index, 'endDate', $event)"
-              title="End date (optional, for multi-day rounds)"
-            />
-            <app-btn variant="danger" size="sm" (click)="removeRaceRow($index)">x</app-btn>
-          </div>
-        }
-      </div>
-    </div>
+    <app-championship-form
+      #calChampFormRef
+      [simulators]="simulators()"
+      [initialData]="champFormData()"
+      [isEditing]="!!editingChampId()"
+      (save)="saveChampionship($event)"
+    />
     <div modal-footer>
       <app-btn variant="ghost" size="sm" (click)="champModalOpen.set(false)">Cancel</app-btn>
-      <app-btn variant="primary" size="sm" (click)="saveChampionship()">
+      <app-btn variant="primary" size="sm" (click)="calChampFormRef.onSave()">
         {{ editingChampId() ? 'Update' : 'Add' }}
       </app-btn>
     </div>
