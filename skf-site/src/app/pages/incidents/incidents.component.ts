@@ -71,7 +71,8 @@ export class IncidentsComponent implements OnInit {
     return this.windows().filter(w => !w.isOpen && new Date(w.closesAt).getTime() < cutoff);
   });
 
-  // ── Grouped incidents (Heat sessions first, then Feature, sorted by time) ──
+  // ── Grouped incidents (Heat sessions first, then Feature) ──────────────────
+  // Within each session: auto incidents sorted by time, then filed sorted by lap → corner.
   readonly groupedIncidents = computed(() => {
     const incidents = this.windowDetail()?.incidents ?? [];
 
@@ -82,14 +83,19 @@ export class IncidentsComponent implements OnInit {
       groups.get(key)!.push(inc);
     }
 
-    for (const group of groups.values()) {
-      group.sort((a, b) => {
-        if (!a.time && !b.time) return 0;
-        if (!a.time) return 1;
-        if (!b.time) return -1;
-        return a.time.localeCompare(b.time);
-      });
-    }
+    const sortByTime = (a: Incident, b: Incident) => {
+      if (!a.time && !b.time) return 0;
+      if (!a.time) return 1;
+      if (!b.time) return -1;
+      return a.time.localeCompare(b.time);
+    };
+
+    const sortByLapCorner = (a: Incident, b: Incident) => {
+      const lapA = parseInt(a.lap ?? '', 10);
+      const lapB = parseInt(b.lap ?? '', 10);
+      if (!isNaN(lapA) && !isNaN(lapB) && lapA !== lapB) return lapA - lapB;
+      return (a.corner ?? '').localeCompare(b.corner ?? '');
+    };
 
     const sessionOrder = (name: string): number => {
       const upper = name.toUpperCase();
@@ -101,7 +107,11 @@ export class IncidentsComponent implements OnInit {
 
     return [...groups.entries()]
       .sort(([a], [b]) => sessionOrder(a) - sessionOrder(b))
-      .map(([session, items]) => ({ session, items }));
+      .map(([session, items]) => ({
+        session,
+        autoItems: items.filter(i => i.source !== 'filed').sort(sortByTime),
+        filedItems: items.filter(i => i.source === 'filed').sort(sortByLapCorner),
+      }));
   });
 
   // ── Modal visibility ──────────────────────────────────────────────

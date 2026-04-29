@@ -263,7 +263,225 @@
               @if (group.session) {
                 <div class="incident-group-label">{{ group.session }}</div>
               }
-              @for (inc of group.items; track inc.id; let i = $index) {
+              @for (inc of group.autoItems; track inc.id; let i = $index) {
+              <div class="incident-card" [class.incident-card--resolved]="inc.status === 'resolved'" [class.incident-card--filed]="inc.source === 'filed'">
+                <div class="incident-card-header" (click)="toggleIncident(inc.id)">
+                  <span class="incident-num">#{{ i + 1 }}</span>
+                  @if (inc.source === 'filed') {
+                    <span class="incident-source incident-source--filed">Report</span>
+                  } @else {
+                    <span class="incident-source incident-source--ingested">Auto</span>
+                  }
+                  @if (!inc.isPublished) {
+                    <app-badge variant="pending">Hidden</app-badge>
+                  }
+                  <div class="incident-header-main">
+                    <span class="incident-drivers">{{ driverNames(inc) }}</span>
+                    @if (inc.description && expandedIncidentId() !== inc.id) {
+                      <span class="incident-header-desc">{{ inc.description }}</span>
+                    }
+                  </div>
+                  @if (inc.sessionName) {
+                    <span class="incident-session">{{ inc.sessionName }}</span>
+                  }
+                  @if (inc.time) {
+                    <span class="incident-time">{{ inc.time }}</span>
+                  }
+                  @if (inc.lap) {
+                    <span class="incident-session">Lap {{ inc.lap }}</span>
+                  }
+                  @if (inc.corner) {
+                    <span class="incident-time">{{ inc.corner }}</span>
+                  }
+                  <div class="incident-status">
+                    @if (inc.status === 'resolved') {
+                      <app-badge variant="resolved">Resolved</app-badge>
+                    } @else {
+                      <app-badge variant="pending">Open</app-badge>
+                    }
+                  </div>
+                  <span class="incident-chevron" [class.incident-chevron--open]="expandedIncidentId() === inc.id">▸</span>
+                </div>
+
+                <!-- BWP strip: always visible for admins, shows pending/applied BWP per driver -->
+                @if (auth.isAdmin() && inc.status === 'resolved') {
+                  @let bwpDrvs = bwpResolvedDrivers(inc);
+                  @if (bwpDrvs.length > 0) {
+                    <div class="bwp-strip">
+                      @for (drv of bwpDrvs; track drv.id) {
+                        <div class="bwp-strip-row">
+                          <span class="bwp-strip-name">{{ drv.driverName }}</span>
+                          <span class="bwp-strip-verdict">{{ drv.resolution!.verdict }}</span>
+                          <span class="bwp-strip-pts">{{ drv.resolution!.bwpPoints }} BWP</span>
+                          @if (!drv.resolution!.bwpApplied) {
+                            <button class="btn-link btn-link--bwp" type="button" (click)="applyDriverBwp(drv.id); $event.stopPropagation()">Apply BWP</button>
+                          } @else {
+                            <app-badge variant="applied">Applied</app-badge>
+                            <button class="btn-link btn-link--danger" type="button" (click)="discardDriverBwp(drv.id); $event.stopPropagation()">Discard</button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                }
+
+                @if (expandedIncidentId() === inc.id) {
+                  <div class="incident-card-body">
+                    @if (inc.description) {
+                      <div class="incident-description">
+                        <span class="label-eyebrow">Description</span>
+                        <p class="desc-cell">{{ inc.description }}</p>
+                      </div>
+                    }
+
+                    <div class="driver-rows">
+                      @for (drv of inc.drivers; track drv.id) {
+                        <div class="driver-row">
+                          <div class="driver-row-header">
+                            <span class="driver-name">{{ drv.driverName }}</span>
+                            <app-badge [variant]="driverStatusBadge(drv).variant">{{ driverStatusBadge(drv).label }}</app-badge>
+                          </div>
+
+                          <!-- Existing resolution display -->
+                          @if (drv.resolution) {
+                            <div class="driver-resolution">
+                              <span class="resolution-verdict">{{ drv.resolution.verdict }}</span>
+                              @if (drv.resolution.bwpPoints !== null) {
+                                <span class="resolution-bwp">{{ drv.resolution.bwpPoints }} BWP</span>
+                              }
+                              @if (drv.resolution.description) {
+                                <span class="resolution-description">{{ drv.resolution.description }}</span>
+                              }
+                              @if (auth.isAdmin() && drv.resolution.bwpPoints) {
+                                @if (!drv.resolution.bwpApplied) {
+                                  <button class="btn-link btn-link--bwp" type="button" (click)="applyDriverBwp(drv.id)">Apply BWP</button>
+                                } @else {
+                                  <app-badge variant="applied">Applied</app-badge>
+                                  <button class="btn-link btn-link--danger" type="button" (click)="discardDriverBwp(drv.id)">Discard</button>
+                                }
+                              }
+                            </div>
+                          }
+
+                          <!-- Judge inline resolve form (verdict + BWP per driver) -->
+                          @if (auth.isJudge()) {
+                            {{ initResolveFields(inc) }}
+                            <div class="driver-resolve-form">
+                              <div class="resolve-fields">
+                                <div class="resolve-field resolve-field--verdict">
+                                  <label class="label-eyebrow" [for]="'rv-verdict-' + drv.id">Verdict</label>
+                                  <input
+                                    [id]="'rv-verdict-' + drv.id"
+                                    type="text"
+                                    [attr.list]="'verdict-presets-' + drv.id"
+                                    [ngModel]="rvVerdicts[drv.id]"
+                                    (ngModelChange)="rvVerdicts[drv.id] = $event; onVerdictChange(drv.id, $event)"
+                                    placeholder="Select or type…"
+                                  />
+                                  <datalist [id]="'verdict-presets-' + drv.id">
+                                    @for (v of verdictPresets(); track v) {
+                                      <option [value]="v"></option>
+                                    }
+                                  </datalist>
+                                </div>
+                                <div class="resolve-field resolve-field--bwp">
+                                  <label class="label-eyebrow" [for]="'rv-bwp-' + drv.id">BWP</label>
+                                  <input
+                                    [id]="'rv-bwp-' + drv.id"
+                                    type="number"
+                                    min="0"
+                                    [ngModel]="rvBwpPoints[drv.id]"
+                                    (ngModelChange)="rvBwpPoints[drv.id] = $event"
+                                    placeholder="0"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            <!-- Remove driver button (only if 2+ drivers) -->
+                            @if (inc.drivers.length > 1) {
+                              <button class="btn-link btn-link--danger" type="button" (click)="removeIncidentDriver(drv.id)">Remove driver</button>
+                            }
+                          }
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Judge: add driver -->
+                    @if (auth.isJudge()) {
+                      @if (addDriverShown[inc.id]) {
+                        <div class="add-driver-row">
+                          <input
+                            type="text"
+                            class="rule-input"
+                            [attr.list]="'add-drv-list-' + inc.id"
+                            [(ngModel)]="addDriverName[inc.id]"
+                            placeholder="Driver name…"
+                            autocomplete="off"
+                          />
+                          <datalist [id]="'add-drv-list-' + inc.id">
+                            @for (d of bwpDrivers(); track d.id) {
+                              <option [value]="d.name"></option>
+                            }
+                          </datalist>
+                          <app-btn variant="accent" size="sm" (click)="addIncidentDriver(inc.id)" [disabled]="!addDriverName[inc.id]?.trim()">Add</app-btn>
+                          <button class="btn-link btn-link--muted" type="button" (click)="addDriverShown[inc.id] = false">Cancel</button>
+                        </div>
+                      }
+                    }
+
+                    <!-- Judge: shared description + single save button per incident -->
+                    @if (auth.isJudge()) {
+                      <div class="incident-resolve-footer">
+                        <div class="resolve-field resolve-field--description">
+                          <label class="label-eyebrow" [for]="'rv-desc-' + inc.id">Decision description</label>
+                          <input
+                            type="text"
+                            [id]="'rv-desc-' + inc.id"
+                            [attr.list]="'desc-options-' + inc.id"
+                            [ngModel]="rvDescriptions[inc.id]"
+                            (ngModelChange)="rvDescriptions[inc.id] = $event"
+                            placeholder="Choose or type description…"
+                            autocomplete="off"
+                          />
+                          <datalist [id]="'desc-options-' + inc.id">
+                            @for (opt of descriptionPresetTexts(); track opt) {
+                              <option [value]="opt"></option>
+                            }
+                          </datalist>
+                        </div>
+                        <app-btn
+                          variant="accent"
+                          size="sm"
+                          [disabled]="rvIncSubmitting[inc.id]"
+                          (click)="submitResolveIncident(inc)"
+                        >
+                          {{ rvIncSubmitting[inc.id] ? 'Saving…' : (inc.status === 'resolved' ? 'Update All' : 'Save All') }}
+                        </app-btn>
+                        @if (rvIncError[inc.id]) {
+                          <p class="resolve-error">{{ rvIncError[inc.id] }}</p>
+                        }
+                      </div>
+                    }
+
+                    <div class="incident-card-footer">
+                      <span class="incident-filed">Filed {{ inc.createdAt | date:'dd MMM yyyy HH:mm' }}</span>
+                      <button class="btn-link" type="button" (click)="openDetailModal(inc)">Full Detail</button>
+                      @if (auth.isJudge()) {
+                        <button class="btn-link" type="button" (click)="addDriverShown[inc.id] = !addDriverShown[inc.id]">+ Driver</button>
+                        <button class="btn-link" type="button" (click)="duplicateIncident(inc.id)">Duplicate</button>
+                        @if (!inc.isPublished) {
+                          <button class="btn-link btn-link--bwp" type="button" (click)="publishIncident(inc.id)">Publish</button>
+                        }
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+              }
+              @if (group.filedItems.length > 0) {
+                <div class="incident-subgroup-label">Reports</div>
+              }
+              @for (inc of group.filedItems; track inc.id; let i = $index) {
               <div class="incident-card" [class.incident-card--resolved]="inc.status === 'resolved'" [class.incident-card--filed]="inc.source === 'filed'">
                 <div class="incident-card-header" (click)="toggleIncident(inc.id)">
                   <span class="incident-num">#{{ i + 1 }}</span>
