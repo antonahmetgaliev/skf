@@ -42,7 +42,7 @@ app-card {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--gold, #f3b419), var(--gold-deep, #d49a10));
+  background: linear-gradient(135deg, var(--gold, #ffd600), var(--gold-deep, #d49a10));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -51,7 +51,7 @@ app-card {
   font-weight: 900;
   color: var(--text-on-gold);
   flex-shrink: 0;
-  border: 3px solid rgba(243, 180, 25, 0.45);
+  border: 3px solid rgba(255, 214, 0, 0.45);
 }
 
 h1 {
@@ -278,9 +278,9 @@ h1 {
   text-transform: uppercase;
 
   &.active {
-    background: rgba(243, 180, 25, 0.15);
+    background: rgba(255, 214, 0, 0.15);
     color: var(--gold-deep);
-    border: 1px solid rgba(243, 180, 25, 0.35);
+    border: 1px solid rgba(255, 214, 0, 0.35);
   }
 }
 
@@ -300,9 +300,9 @@ h1 {
   white-space: nowrap;
 
   &[data-badge='champion'] {
-    background: linear-gradient(135deg, #f3b419, #d49a10);
-    color: #2b2214;
-    box-shadow: 0 2px 8px rgba(243, 180, 25, 0.4);
+    background: linear-gradient(135deg, #ffd600, #d49a10);
+    color: #1c1c22;
+    box-shadow: 0 2px 8px rgba(255, 214, 0, 0.4);
   }
 
   &[data-badge='top2'] {

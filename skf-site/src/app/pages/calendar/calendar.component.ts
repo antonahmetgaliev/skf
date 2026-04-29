@@ -25,6 +25,7 @@ interface CalendarDay {
   dayNumber: number;
   isCurrentMonth: boolean;
   isToday: boolean;
+  isPast: boolean;
   events: CalendarEvent[];
 }
 
@@ -43,7 +44,7 @@ interface YearCommunityColumn {
 
 type ViewMode = 'month' | 'year';
 
-const DEFAULT_COLOR = '#f5bf24'; // gold fallback
+const DEFAULT_COLOR = '#ffd600'; // gold fallback
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const WEEK_DAYS_SHORT = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const VIEW_TABS: { key: string; label: string }[] = [
@@ -68,15 +69,17 @@ export class CalendarComponent implements OnInit {
   readonly viewMode = signal<ViewMode>('month');
   readonly currentYear = signal(new Date().getFullYear());
   readonly currentMonth = signal(new Date().getMonth() + 1); // 1-based
-  readonly events = signal<CalendarEvent[]>([]);
-  readonly loading = signal(false);
-  readonly selectedDay = signal<number | null>(null);
-  readonly errorMessage = signal('');
-
-  // Year view state
   readonly yearEvents = signal<CalendarEvent[]>([]);
-  readonly yearLoading = signal(false);
-  readonly yearError = signal('');
+  readonly loading = signal(false);
+  readonly errorMessage = signal('');
+  readonly selectedDay = signal<number | null>(null);
+
+  // Month events derived from year events
+  readonly events = computed(() => {
+    const year = this.currentYear();
+    const month = this.currentMonth();
+    return this.yearEvents().filter((e) => this.eventOverlapsMonth(e, year, month));
+  });
 
   // Filters
   readonly communities = signal<Community[]>([]);
@@ -102,6 +105,9 @@ export class CalendarComponent implements OnInit {
 
   // Filtered events for year view
   readonly filteredYearEvents = computed(() => this.applyFilters(this.yearEvents()));
+
+  readonly yearLoading = this.loading;
+  readonly yearError = this.errorMessage;
 
   readonly scheduledEvents = computed(() =>
     this.filteredEvents().filter((e) => e.startDate || e.endDate || e.races.some((r) => r.date)),
@@ -188,8 +194,7 @@ export class CalendarComponent implements OnInit {
 
 
   readonly availableSimulators = computed(() => {
-    const all = this.viewMode() === 'year' ? this.yearEvents() : this.events();
-    const sims = new Set(all.map((e) => e.game).filter(Boolean));
+    const sims = new Set(this.yearEvents().map((e) => e.game).filter(Boolean));
     return [...sims].sort();
   });
 
@@ -208,7 +213,7 @@ export class CalendarComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCommunities();
-    this.loadEvents();
+    this.loadYearEvents();
   }
 
   navigateMonth(delta: number): void {
@@ -221,18 +226,24 @@ export class CalendarComponent implements OnInit {
       m = 1;
       y++;
     }
+    const yearChanged = y !== this.currentYear();
     this.currentYear.set(y);
     this.currentMonth.set(m);
     this.selectedDay.set(null);
-    this.loadEvents();
+    if (yearChanged) {
+      this.loadYearEvents();
+    }
   }
 
   goToToday(): void {
     const now = new Date();
+    const yearChanged = now.getFullYear() !== this.currentYear();
     this.currentYear.set(now.getFullYear());
     this.currentMonth.set(now.getMonth() + 1);
     this.selectedDay.set(null);
-    this.loadEvents();
+    if (yearChanged) {
+      this.loadYearEvents();
+    }
   }
 
   selectDay(day: number): void {
@@ -241,18 +252,11 @@ export class CalendarComponent implements OnInit {
 
   setViewMode(mode: string): void {
     this.viewMode.set(mode as ViewMode);
-    if (mode === 'year') {
-      this.loadYearEvents();
-    }
   }
 
   navigateYear(delta: number): void {
     this.currentYear.set(this.currentYear() + delta);
-    if (this.viewMode() === 'year') {
-      this.loadYearEvents();
-    } else {
-      this.loadEvents();
-    }
+    this.loadYearEvents();
   }
 
   sortedRaces(races: CalendarEvent['races']): CalendarEvent['races'] {
@@ -264,21 +268,40 @@ export class CalendarComponent implements OnInit {
     });
   }
 
-  formatRaceDate(isoDate: string): string {
+  formatRaceDate(isoDate: string, isoEndDate?: string | null): string {
     const d = new Date(isoDate);
     if (isNaN(d.getTime())) return isoDate.slice(0, 10);
     const date = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const hasTime = /T\d{2}:\d{2}/.test(isoDate) && !isoDate.includes('T00:00:00');
-    if (!hasTime) return date;
-    const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    return `${date} ${time}`;
+    const startStr = hasTime
+      ? `${date} ${d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+      : date;
+
+    if (isoEndDate) {
+      const ed = new Date(isoEndDate);
+      if (!isNaN(ed.getTime())) {
+        const endDate = ed.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const endHasTime = /T\d{2}:\d{2}/.test(isoEndDate) && !isoEndDate.includes('T00:00:00');
+        const endStr = endHasTime
+          ? `${endDate} ${ed.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+          : endDate;
+        return `${startStr} — ${endStr}`;
+      }
+    }
+
+    return startStr;
   }
 
   getRacesForSelectedDay(event: CalendarEvent): CalendarEvent['races'] {
     const day = this.selectedDay();
     if (day === null) return event.races;
     const dayStr = `${this.currentYear()}-${String(this.currentMonth()).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const filtered = event.races.filter((r) => r.date && toLocalDateStr(r.date) === dayStr);
+    const filtered = event.races.filter((r) => {
+      if (r.date && r.endDate) {
+        return dayStr >= toLocalDateStr(r.date) && dayStr <= toLocalDateStr(r.endDate);
+      }
+      return r.date && toLocalDateStr(r.date) === dayStr;
+    });
     return filtered.length > 0 ? filtered : event.races;
   }
 
@@ -359,7 +382,7 @@ export class CalendarComponent implements OnInit {
     return [];
   });
   readonly simulators = signal<string[]>([]);
-  readonly champForm = signal<{ name: string; game: string; carClass: string | null; description: string | null; races: { id?: string; track: string; date: string }[] }>({
+  readonly champForm = signal<{ name: string; game: string; carClass: string | null; description: string | null; races: { id?: string; track: string; date: string; endDate: string }[] }>({
     name: '', game: '', carClass: null, description: null, races: [],
   });
   readonly editingChampId = signal<string | null>(null);
@@ -411,6 +434,7 @@ export class CalendarComponent implements OnInit {
             id: r.id,
             track: r.track ?? '',
             date: r.date ? r.date.slice(0, 16) : '',
+            endDate: r.endDate ? r.endDate.slice(0, 16) : '',
           })),
         }));
       },
@@ -436,6 +460,7 @@ export class CalendarComponent implements OnInit {
               id: r.id,
               track: r.track.trim() || null,
               date: withLocalTzOffset(r.date || null),
+              endDate: withLocalTzOffset(r.endDate || null),
             }));
           this.calendarApi.syncRaces(editId, racesToSync).subscribe({
             next: () => {
@@ -460,6 +485,7 @@ export class CalendarComponent implements OnInit {
           .map((r) => ({
             track: r.track.trim() || null,
             date: withLocalTzOffset(r.date || null),
+            endDate: withLocalTzOffset(r.endDate || null),
           })),
       };
       this.calendarApi.createCustomChampionship(payload).subscribe({
@@ -480,11 +506,7 @@ export class CalendarComponent implements OnInit {
   }
 
   private reloadCalendar(): void {
-    if (this.viewMode() === 'year') {
-      this.loadYearEvents();
-    } else {
-      this.loadEvents();
-    }
+    this.loadYearEvents();
   }
 
   updateChampField(field: 'name' | 'game' | 'carClass' | 'description', value: string | null): void {
@@ -492,10 +514,10 @@ export class CalendarComponent implements OnInit {
   }
 
   addRaceRow(): void {
-    this.champForm.update((f) => ({ ...f, races: [...f.races, { track: '', date: '' }] }));
+    this.champForm.update((f) => ({ ...f, races: [...f.races, { track: '', date: '', endDate: '' }] }));
   }
 
-  updateRaceRow(index: number, field: 'track' | 'date', value: string): void {
+  updateRaceRow(index: number, field: 'track' | 'date' | 'endDate', value: string): void {
     this.champForm.update((f) => {
       const races = [...f.races];
       races[index] = { ...races[index], [field]: value };
@@ -538,28 +560,13 @@ export class CalendarComponent implements OnInit {
   }
 
   private async loadYearEvents(): Promise<void> {
-    this.yearLoading.set(true);
-    this.yearError.set('');
+    this.loading.set(true);
+    this.errorMessage.set('');
     try {
       const data = await firstValueFrom(
         this.calendarApi.getYearEvents(this.currentYear()),
       );
       this.yearEvents.set(data);
-    } catch {
-      this.yearError.set('Failed to load calendar events.');
-    } finally {
-      this.yearLoading.set(false);
-    }
-  }
-
-  private async loadEvents(): Promise<void> {
-    this.loading.set(true);
-    this.errorMessage.set('');
-    try {
-      const data = await firstValueFrom(
-        this.calendarApi.getEvents(this.currentYear(), this.currentMonth()),
-      );
-      this.events.set(data);
     } catch {
       this.errorMessage.set('Failed to load calendar events.');
     } finally {
@@ -567,6 +574,23 @@ export class CalendarComponent implements OnInit {
     }
   }
 
+
+  private static readonly SIM_COLORS: Record<string, string> = {
+    'iracing': '#0153db',
+    'assetto corsa competizione': '#d4132a',
+    'assetto corsa': '#d4132a',
+    'le mans ultimate': '#004d99',
+    'rfactor 2': '#e87722',
+    'automobilista 2': '#2dbe60',
+    'rennsport': '#8b5cf6',
+    'forza motorsport': '#107c10',
+    'gran turismo': '#003791',
+    'ea sports wrc': '#00a2e8',
+  };
+
+  getSimulatorColor(game: string): string {
+    return CalendarComponent.SIM_COLORS[game.toLowerCase()] ?? '#6b7280';
+  }
 
   private applyFilters(events: CalendarEvent[]): CalendarEvent[] {
     const communityIds = this.selectedCommunityIds();
@@ -600,12 +624,15 @@ export class CalendarComponent implements OnInit {
 
     const cells: CalendarDay[] = [];
 
+    const todayDate = today.getDate();
+
     // Previous month trailing days
     for (let i = startWeekday - 1; i >= 0; i--) {
       cells.push({
         dayNumber: prevMonthDays - i,
         isCurrentMonth: false,
         isToday: false,
+        isPast: true,
         events: [],
       });
     }
@@ -613,10 +640,13 @@ export class CalendarComponent implements OnInit {
     // Current month days
     for (let d = 1; d <= daysInMonth; d++) {
       const dayEvents = events.filter((e) => this.eventFallsOnDay(e, year, month, d));
+      const isPast = isCurrentMonthToday ? d < todayDate
+        : year < today.getFullYear() || (year === today.getFullYear() && month < today.getMonth() + 1);
       cells.push({
         dayNumber: d,
         isCurrentMonth: true,
-        isToday: isCurrentMonthToday && today.getDate() === d,
+        isToday: isCurrentMonthToday && todayDate === d,
+        isPast,
         events: dayEvents,
       });
     }
@@ -629,6 +659,7 @@ export class CalendarComponent implements OnInit {
           dayNumber: d,
           isCurrentMonth: false,
           isToday: false,
+          isPast: false,
           events: [],
         });
       }
@@ -642,6 +673,41 @@ export class CalendarComponent implements OnInit {
     return weeks;
   }
 
+  private eventOverlapsMonth(event: CalendarEvent, year: number, month: number): boolean {
+    const monthStart = new Date(year, month - 1, 1);
+    const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+
+    for (const race of event.races) {
+      if (race.date && race.endDate) {
+        // Multi-day race: check range overlap with month
+        const start = new Date(race.date);
+        const end = new Date(race.endDate);
+        if (start <= monthEnd && end >= monthStart) return true;
+      } else if (race.date) {
+        const d = new Date(race.date);
+        if (d >= monthStart && d <= monthEnd) return true;
+      }
+    }
+
+    if (event.startDate) {
+      const d = new Date(event.startDate);
+      if (d >= monthStart && d <= monthEnd) return true;
+    }
+    if (event.endDate) {
+      const d = new Date(event.endDate);
+      if (d >= monthStart && d <= monthEnd) return true;
+    }
+
+    // Event spans the entire month
+    if (event.startDate && event.endDate) {
+      const start = new Date(event.startDate);
+      const end = new Date(event.endDate);
+      if (start <= monthStart && end >= monthEnd) return true;
+    }
+
+    return false;
+  }
+
   private eventFallsOnDay(
     event: CalendarEvent,
     year: number,
@@ -650,9 +716,14 @@ export class CalendarComponent implements OnInit {
   ): boolean {
     const dayStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-    // Check individual races
+    // Check individual races (including multi-day ranges)
     for (const race of event.races) {
-      if (race.date && toLocalDateStr(race.date) === dayStr) {
+      if (race.date && race.endDate) {
+        // Multi-day race: check if day falls within range
+        if (dayStr >= toLocalDateStr(race.date) && dayStr <= toLocalDateStr(race.endDate)) {
+          return true;
+        }
+      } else if (race.date && toLocalDateStr(race.date) === dayStr) {
         return true;
       }
     }

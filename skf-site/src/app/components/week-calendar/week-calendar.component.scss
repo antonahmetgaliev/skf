@@ -83,7 +83,7 @@
   border-color: var(--gold-deep);
   background: linear-gradient(
     135deg,
-    rgba(243, 180, 25, 0.08) 0%,
+    rgba(255, 214, 0, 0.08) 0%,
     var(--card-bg) 100%
   );
 }
@@ -97,10 +97,10 @@
 .race-card--today {
   text-align: center;
   padding: 1.5rem 1rem;
-  border: 1px solid rgba(243, 180, 25, 0.3);
+  border: 1px solid rgba(255, 214, 0, 0.3);
   background: linear-gradient(
     135deg,
-    rgba(243, 180, 25, 0.06) 0%,
+    rgba(255, 214, 0, 0.06) 0%,
     transparent 100%
   );
 }
@@ -212,7 +212,7 @@
   transition: border-color 0.15s ease, background 0.15s ease;
 
   &:hover {
-    border-color: rgba(243, 180, 25, 0.4);
+    border-color: rgba(255, 214, 0, 0.4);
     background: var(--surface-hover);
   }
 }
@@ -287,7 +287,7 @@
   transition: border-color 0.15s ease, background 0.15s ease;
 
   &:hover {
-    border-color: rgba(243, 180, 25, 0.4);
+    border-color: rgba(255, 214, 0, 0.4);
     background: var(--surface-hover);
   }
 }
@@ -373,7 +373,7 @@
   border-color: var(--gold-deep);
   background: linear-gradient(
     135deg,
-    rgba(243, 180, 25, 0.06) 0%,
+    rgba(255, 214, 0, 0.06) 0%,
     var(--card-bg) 100%
   );
 }
@@ -384,12 +384,12 @@
   text-decoration: none;
   padding: 0.75rem;
   border-radius: 12px;
-  border: 1px solid rgba(243, 180, 25, 0.25);
+  border: 1px solid rgba(255, 214, 0, 0.25);
   background: rgba(255, 255, 255, 0.03);
   transition: border-color 0.15s ease, background 0.15s ease;
 
   &:hover {
-    border-color: rgba(243, 180, 25, 0.5);
+    border-color: rgba(255, 214, 0, 0.5);
     background: var(--surface-hover);
   }
 }

@@ -6,6 +6,7 @@ export type CalendarEventType = 'past' | 'ongoing' | 'upcoming' | 'future';
 
 export interface CalendarRace {
   date: string | null;
+  endDate: string | null;
   track: string | null;
   name: string | null;
 }
@@ -31,18 +32,21 @@ export interface CalendarEvent {
 
 export interface CustomRaceCreate {
   date: string | null;
+  endDate: string | null;
   track: string | null;
 }
 
 export interface CustomRaceSync {
   id?: string;
   date: string | null;
+  endDate: string | null;
   track: string | null;
 }
 
 export interface CustomRaceOut {
   id: string;
   date: string | null;
+  endDate: string | null;
   track: string | null;
   sortOrder: number;
   createdAt: string;

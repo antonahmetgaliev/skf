@@ -402,12 +402,15 @@ async def get_calendar_events(
     )
     for champ in custom_champs_result.scalars().all():
         race_dates = [r.date for r in champ.races if r.date is not None]
+        race_end_dates = [r.end_date for r in champ.races if r.end_date is not None]
+        all_dates = race_dates + race_end_dates
         earliest = min(race_dates) if race_dates else None
-        latest = max(race_dates) if race_dates else None
+        latest = max(all_dates) if all_dates else None
 
         custom_races = [
             CalendarRace(
                 date=r.date.isoformat() if r.date else None,
+                end_date=r.end_date.isoformat() if r.end_date else None,
                 track=r.track,
                 name=None,
             )
@@ -459,11 +462,16 @@ def _overlaps_month(
     month_end: datetime,
 ) -> bool:
     """Check if a championship or any of its races overlap with the month."""
-    # Check individual race dates
+    # Check individual race dates (including multi-day ranges)
     for race in races:
         if race.date:
             rd = _parse_date(race.date)
-            if rd and month_start <= rd <= month_end:
+            red = _parse_date(race.end_date) if race.end_date else None
+            if rd and red:
+                # Multi-day race: check range overlap
+                if rd <= month_end and red >= month_start:
+                    return True
+            elif rd and month_start <= rd <= month_end:
                 return True
 
     # Check championship date range
@@ -534,6 +542,7 @@ async def create_custom_championship(
         champ.races.append(
             CustomRace(
                 date=race_data.date,
+                end_date=race_data.end_date,
                 track=race_data.track.strip() if race_data.track else None,
                 sort_order=idx,
             )
@@ -604,6 +613,7 @@ async def add_race(
     race = CustomRace(
         championship_id=champ.id,
         date=body.date,
+        end_date=body.end_date,
         track=body.track.strip() if body.track else None,
         sort_order=max_order + 1,
     )
@@ -705,12 +715,14 @@ async def sync_races(
             race = existing[item.id]
             race.track = item.track.strip() if item.track else None
             race.date = item.date
+            race.end_date = item.end_date
             race.sort_order = idx
         else:
             db.add(CustomRace(
                 championship_id=champ.id,
                 track=item.track.strip() if item.track else None,
                 date=item.date,
+                end_date=item.end_date,
                 sort_order=idx,
             ))
 

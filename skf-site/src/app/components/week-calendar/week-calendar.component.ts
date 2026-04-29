@@ -174,20 +174,24 @@ export class WeekCalendarComponent {
     for (const ev of events) {
       for (const race of ev.races) {
         if (!race.date) continue;
-        const raceDay = toLocalDateStr(race.date);
-        if (raceDay >= mondayStr && raceDay <= sundayStr) {
-          races.push({
-            championshipName: ev.name,
-            track: race.track,
-            raceName: race.name,
-            time: toLocalTime(race.date),
-            image: ev.image,
-            date: new Date(race.date),
-            simgridChampionshipId: ev.simgridChampionshipId,
-            communityName: ev.communityName,
-            communityColor: ev.communityColor,
-          });
-        }
+        const raceStartStr = toLocalDateStr(race.date);
+        const raceEndStr = race.endDate ? toLocalDateStr(race.endDate) : raceStartStr;
+
+        // Check if race range overlaps with the week
+        if (raceEndStr < mondayStr || raceStartStr > sundayStr) continue;
+
+        // For multi-day races, use the start date as the display date
+        races.push({
+          championshipName: ev.name,
+          track: race.track,
+          raceName: race.name,
+          time: toLocalTime(race.date),
+          image: ev.image,
+          date: new Date(race.date),
+          simgridChampionshipId: ev.simgridChampionshipId,
+          communityName: ev.communityName,
+          communityColor: ev.communityColor,
+        });
       }
     }
 
@@ -212,10 +216,11 @@ export class WeekCalendarComponent {
       for (const race of ev.races) {
         if (!race.date) continue;
         const raceDay = toLocalDateStr(race.date);
-        if (raceDay < todayStr) {
+        const raceEndDay = race.endDate ? toLocalDateStr(race.endDate) : raceDay;
+        if (raceEndDay < todayStr) {
           completedRaces++;
         }
-        if (raceDay >= todayStr) {
+        if (raceEndDay >= todayStr) {
           if (!nextRaceDate || race.date < nextRaceDate) {
             nextRaceDate = race.date;
             nextRaceTrack = race.track;

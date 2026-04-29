@@ -69,11 +69,13 @@ class GameOut(CamelModel):
 
 class CustomRaceCreate(CamelModel):
     date: datetime | None = None
+    end_date: datetime | None = None
     track: str | None = Field(default=None, max_length=200)
 
 
 class CustomRaceUpdate(CamelModel):
     date: datetime | None = None
+    end_date: datetime | None = None
     track: str | None = Field(default=None, max_length=200)
     sort_order: int | None = None
 
@@ -82,6 +84,7 @@ class CustomRaceSync(CamelModel):
     """Used for batch race sync — id present means update, absent means create."""
     id: uuid.UUID | None = None
     date: datetime | None = None
+    end_date: datetime | None = None
     track: str | None = Field(default=None, max_length=200)
 
 
@@ -90,6 +93,7 @@ class CustomRaceOut(CamelModel):
 
     id: uuid.UUID
     date: datetime | None
+    end_date: datetime | None
     track: str | None
     sort_order: int
     created_at: datetime
@@ -138,6 +142,7 @@ class CustomChampionshipOut(CamelModel):
 
 class CalendarRace(CamelModel):
     date: str | None = None
+    end_date: str | None = None
     track: str | None = None
     name: str | None = None
 

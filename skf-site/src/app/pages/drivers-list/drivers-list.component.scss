@@ -56,7 +56,7 @@
 
   &:hover {
     transform: translateY(-2px);
-    border-color: rgba(243, 180, 25, 0.5);
+    border-color: rgba(255, 214, 0, 0.5);
   }
 }
 
@@ -64,14 +64,14 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--gold, #f3b419), var(--gold-deep, #d49a10));
+  background: linear-gradient(135deg, var(--gold, #ffd600), var(--gold-deep, #d49a10));
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-display);
   font-size: 1.2rem;
   font-weight: 900;
-  color: #2b2214;
+  color: #1c1c22;
   flex-shrink: 0;
 }
 

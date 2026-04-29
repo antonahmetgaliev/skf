@@ -1,13 +1,12 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { CardComponent } from '../../../components/card/card.component';
 import { PageIntroComponent } from '../../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../../components/page-layout/page-layout.component';
 
 @Component({
-  selector: 'app-regulations-thunder-trucks',
-  imports: [PageIntroComponent, PageLayoutComponent, CardComponent, RouterLink],
-  templateUrl: './thunder-trucks.component.html',
+  selector: 'app-regulations-nascar-general',
+  imports: [PageIntroComponent, PageLayoutComponent, CardComponent],
+  templateUrl: './nascar-general.component.html',
   styleUrl: '../regulations.component.scss'
 })
-export class RegulationsThunderTrucksComponent {}
+export class RegulationsNascarGeneralComponent {}
