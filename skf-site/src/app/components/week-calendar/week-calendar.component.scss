@@ -45,7 +45,7 @@
 .schedule-panel {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  border-radius: 20px;
+  border-radius: var(--radius-card);
   padding: 1.25rem;
   box-shadow: var(--card-shadow);
 }
@@ -167,7 +167,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   text-decoration: none;
   transition: background 0.15s ease;
   margin-bottom: 0.35rem;
@@ -181,7 +181,7 @@
   width: 80px;
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   flex-shrink: 0;
 }
 
@@ -206,7 +206,7 @@
   align-items: center;
   gap: 1rem;
   padding: 0.65rem 0.75rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   background: rgba(255, 255, 255, 0.03);
   transition: border-color 0.15s ease, background 0.15s ease;
@@ -280,7 +280,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.65rem 0.75rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   background: rgba(255, 255, 255, 0.03);
   text-decoration: none;
@@ -295,7 +295,7 @@
 .champ-image {
   width: 48px;
   height: 48px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -383,7 +383,7 @@
   gap: 1rem;
   text-decoration: none;
   padding: 0.75rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid rgba(255, 214, 0, 0.25);
   background: rgba(255, 255, 255, 0.03);
   transition: border-color 0.15s ease, background 0.15s ease;
@@ -397,7 +397,7 @@
 .next-race-image {
   width: 80px;
   height: 80px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -473,7 +473,7 @@
   }
 
   .schedule-panel {
-    border-radius: 14px;
+    border-radius: var(--radius-card-sm);
   }
 
   .champ-name {

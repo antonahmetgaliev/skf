@@ -49,14 +49,14 @@
   gap: 0.35rem;
   margin-bottom: 0.5rem;
   padding: 0.5rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
 
   input {
     height: 2.5rem;
     padding: 0.5rem 0.75rem;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border-subtle);
     background: var(--surface);
     color: var(--ink);

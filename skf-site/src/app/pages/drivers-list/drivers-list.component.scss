@@ -13,8 +13,8 @@
 
 .search-input {
   flex: 1;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
   padding: 0.55rem 1rem;
   font-size: var(--text-lg);
   color: var(--ink);
@@ -48,7 +48,7 @@
   padding: 0.8rem 1rem;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  border-radius: 16px;
+  border-radius: var(--radius-card-sm);
   box-shadow: var(--card-shadow);
   text-decoration: none;
   color: inherit;

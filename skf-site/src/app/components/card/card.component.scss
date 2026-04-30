@@ -2,7 +2,7 @@
   display: block;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  border-radius: 24px;
+  border-radius: var(--radius-card);
   padding: 1.5rem;
   box-shadow: var(--card-shadow);
   position: relative;
@@ -21,7 +21,7 @@
 @media (max-width: 640px) {
   :host {
     padding: 1rem;
-    border-radius: 16px;
+    border-radius: var(--radius-card-sm);
   }
 }
 

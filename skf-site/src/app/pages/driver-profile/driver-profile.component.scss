@@ -90,8 +90,8 @@ h1 {
   align-items: center;
   gap: 0.2rem;
   padding: 0.75rem 1.25rem;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-card-sm);
+  border: 1px solid var(--border-subtle);
   background: rgba(255, 255, 255, 0.04);
   min-width: 90px;
 }
@@ -134,9 +134,9 @@ h1 {
   align-items: center;
   gap: 0.15rem;
   padding: 0.75rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--border-subtle);
 }
 
 .stat-value {
@@ -170,9 +170,9 @@ h1 {
 .points-table {
   display: grid;
   gap: 2px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-subtle);
 }
 
 .points-header,
@@ -242,8 +242,8 @@ h1 {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.65rem 1rem;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
   background: rgba(255, 255, 255, 0.04);
   transition: opacity 0.2s;
 
