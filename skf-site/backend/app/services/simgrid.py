@@ -147,7 +147,19 @@ class SimgridService:
                     ),
                     "ended": info.get("ended", race.ended),
                 }))
-            return data.model_copy(update={"races": enriched})
+            # Sort races chronologically so R1 = earliest race.
+            enriched.sort(key=lambda r: r.starts_at or "")
+            race_id_to_index = {r.id: i for i, r in enumerate(enriched)}
+            reindexed_entries = []
+            for entry in data.entries:
+                new_results = sorted(
+                    entry.race_results,
+                    key=lambda rr: race_id_to_index.get(rr.race_id, rr.race_index),  # type: ignore[arg-type]
+                )
+                for i, rr in enumerate(new_results):
+                    rr.race_index = i
+                reindexed_entries.append(entry.model_copy(update={"race_results": new_results}))
+            return data.model_copy(update={"races": enriched, "entries": reindexed_entries})
         except Exception:
             logger.warning(
                 "Race enrichment failed for %d", championship_id,
