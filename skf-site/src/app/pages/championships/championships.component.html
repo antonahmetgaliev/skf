@@ -48,46 +48,64 @@
             <img class="championship-banner" [src]="championship.image" [alt]="championship.name" />
           }
           <div class="details-info">
-            <h2>{{ championship.name }}</h2>
-            <p class="meta">
-              {{ championship.hostName }} - {{ championship.gameName }} -
-              {{ championship.spotsTaken ?? 0 }}/{{ championship.capacity ?? 0 }} entries
-            </p>
-            <p class="meta">
-              Start date: {{ formatDate(championship.startDate) }}
-              @if (championship.endDate) {
-                - End date: {{ formatDate(championship.endDate) }}
+            <div class="details-title-row">
+              <h2>{{ championship.name }}</h2>
+              @if (auth.isAdmin()) {
+                <div class="details-actions">
+                  @if (championship.id; as champId) {
+                    <app-btn
+                      [variant]="isChampionshipActive(champId) ? 'danger' : 'accent'"
+                      size="sm"
+                      (click)="toggleActive(champId)"
+                    >
+                      {{ isChampionshipActive(champId) ? 'Mark Finished' : 'Mark Active' }}
+                    </app-btn>
+                  }
+                  <app-btn variant="ghost" size="sm" (click)="giveawayOpen.set(true)">
+                    Giveaway
+                  </app-btn>
+                  <app-btn variant="ghost" size="sm" (click)="openStandingsExportPreview()">
+                    Export 16:9
+                  </app-btn>
+                  <app-btn variant="ghost" size="sm" [disabled]="refreshingCache()" (click)="refreshChampionshipCache(championship.id)">
+                    {{ refreshingCache() ? 'Refreshing...' : 'Refresh Data' }}
+                  </app-btn>
+                </div>
               }
-            </p>
-            @if (lastUpdated(); as updated) {
-              <p class="meta">Last refresh: {{ updated.toLocaleString() }}</p>
+            </div>
+
+            <div class="info-chips">
+              <span class="info-chip">
+                <span class="info-chip-label">Simulator</span>
+                <span class="info-chip-value">{{ championship.gameName }}</span>
+              </span>
+              <span class="info-chip">
+                <span class="info-chip-label">Entries</span>
+                <span class="info-chip-value">{{ standings().length }}/{{ championship.capacity ?? '∞' }}</span>
+              </span>
+              <span class="info-chip">
+                <span class="info-chip-label">Start</span>
+                <span class="info-chip-value">{{ formatDate(championship.startDate) }}</span>
+              </span>
+              @if (championship.endDate) {
+                <span class="info-chip">
+                  <span class="info-chip-label">End</span>
+                  <span class="info-chip-value">{{ formatDate(championship.endDate) }}</span>
+                </span>
+              }
+            </div>
+
+            @if (championship.url) {
+              <a class="simgrid-link" [href]="championship.url" target="_blank" rel="noopener noreferrer">
+                Join the championship on SimGrid
+                <span class="simgrid-link-arrow">→</span>
+              </a>
             }
+
             @if (isStaleData()) {
               <app-alert variant="warning">Showing cached data — SimGrid API is temporarily unavailable.</app-alert>
             }
           </div>
-          @if (auth.isAdmin()) {
-            <div class="details-actions">
-              @if (championship.id; as champId) {
-                <app-btn
-                  [variant]="isChampionshipActive(champId) ? 'danger' : 'accent'"
-                  size="sm"
-                  (click)="toggleActive(champId)"
-                >
-                  {{ isChampionshipActive(champId) ? 'Mark Finished' : 'Mark Active' }}
-                </app-btn>
-              }
-              <app-btn variant="ghost" size="sm" (click)="giveawayOpen.set(true)">
-                Giveaway
-              </app-btn>
-              <app-btn variant="ghost" size="sm" (click)="openStandingsExportPreview()">
-                Export 16:9
-              </app-btn>
-              <app-btn variant="ghost" size="sm" [disabled]="refreshingCache()" (click)="refreshChampionshipCache(championship.id)">
-                {{ refreshingCache() ? 'Refreshing...' : 'Refresh Data' }}
-              </app-btn>
-            </div>
-          }
         </div>
 
         <!-- Main tabs -->

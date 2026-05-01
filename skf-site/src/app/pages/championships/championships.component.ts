@@ -65,12 +65,12 @@ export class ChampionshipsComponent {
   readonly loadingChampionships = signal(false);
   readonly loadingStandings = signal(false);
   readonly errorMessage = signal('');
-  readonly lastUpdated = signal<Date | null>(null);
   readonly activeTab = signal<'standings' | 'races' | 'participants'>('standings');
   readonly expandedRaceIndex = signal<number | null>(null);
   readonly allRaces = signal<ChampionshipRace[]>([]);
   readonly loadingRaces = signal(false);
   readonly activeChampionshipIds = signal<Set<number>>(new Set());
+
 
   readonly isStaleData = computed(() => {
     const key = this.selectedChampionshipKey();
@@ -391,7 +391,6 @@ export class ChampionshipsComponent {
       this.activeTab.set(isUpcoming ? 'races' : 'standings');
       this.standings.set(standingsData.entries);
       this.races.set(standingsData.races);
-      this.lastUpdated.set(new Date());
       if (!isUpcoming) {
         this.cs.ensureDriverMapLoaded();
       }
