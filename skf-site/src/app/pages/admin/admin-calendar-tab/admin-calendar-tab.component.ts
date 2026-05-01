@@ -2,12 +2,14 @@ import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
-import { withLocalTzOffset } from '../../../utils/date';
+import { toLocalDatetimeLocal, withLocalTzOffset } from '../../../utils/date';
 import { BtnComponent } from '../../../components/btn/btn.component';
 import { CardComponent } from '../../../components/card/card.component';
 import { FormFieldComponent } from '../../../components/form-field/form-field.component';
 import { ModalComponent } from '../../../components/modal/modal.component';
 import { SpinnerComponent } from '../../../components/spinner/spinner.component';
+import { InputDirective } from '../../../directives/input.directive';
+import { SelectDirective } from '../../../directives/select.directive';
 import { AlertComponent } from '../../../components/alert/alert.component';
 import {
   CalendarApiService,
@@ -33,7 +35,7 @@ import {
 
 @Component({
   selector: 'app-admin-calendar-tab',
-  imports: [FormsModule, DatePipe, AlertComponent, BtnComponent, CardComponent, ChampionshipFormComponent, FormFieldComponent, ModalComponent, SpinnerComponent],
+  imports: [FormsModule, DatePipe, InputDirective, SelectDirective, AlertComponent, BtnComponent, CardComponent, ChampionshipFormComponent, FormFieldComponent, ModalComponent, SpinnerComponent],
   templateUrl: './admin-calendar-tab.component.html',
   styleUrl: './admin-calendar-tab.component.scss',
 })
@@ -198,8 +200,8 @@ export class AdminCalendarTabComponent implements OnInit {
       races: champ.races.map((r) => ({
         id: r.id,
         track: r.track ?? '',
-        date: r.date ? r.date.slice(0, 16) : '',
-        endDate: r.endDate ? r.endDate.slice(0, 16) : '',
+        date: r.date ? toLocalDatetimeLocal(r.date) : '',
+        endDate: r.endDate ? toLocalDatetimeLocal(r.endDate) : '',
       })),
     });
     this.champModalOpen.set(true);

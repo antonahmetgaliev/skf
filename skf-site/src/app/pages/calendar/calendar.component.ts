@@ -8,6 +8,7 @@ import { ModalComponent } from '../../components/modal/modal.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { ToggleComponent } from '../../components/toggle/toggle.component';
+import { SelectDirective } from '../../directives/select.directive';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -21,7 +22,7 @@ import {
   ChampionshipFormData,
 } from '../../components/championship-form/championship-form.component';
 import { AuthService } from '../../services/auth.service';
-import { toLocalDateStr, withLocalTzOffset } from '../../utils/date';
+import { toLocalDateStr, toLocalDatetimeLocal, withLocalTzOffset } from '../../utils/date';
 
 interface CalendarDay {
   dayNumber: number;
@@ -56,7 +57,7 @@ const VIEW_TABS: { key: string; label: string }[] = [
 
 @Component({
   selector: 'app-calendar',
-  imports: [NgTemplateOutlet, FormsModule, RouterLink, AlertComponent, BtnComponent, CardComponent, ChampionshipFormComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
+  imports: [NgTemplateOutlet, FormsModule, RouterLink, SelectDirective, AlertComponent, BtnComponent, CardComponent, ChampionshipFormComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
 
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
@@ -436,8 +437,8 @@ export class CalendarComponent implements OnInit {
           races: champ.races.map((r) => ({
             id: r.id,
             track: r.track ?? '',
-            date: r.date ? r.date.slice(0, 16) : '',
-            endDate: r.endDate ? r.endDate.slice(0, 16) : '',
+            date: r.date ? toLocalDatetimeLocal(r.date) : '',
+            endDate: r.endDate ? toLocalDatetimeLocal(r.endDate) : '',
           })),
         });
       },
