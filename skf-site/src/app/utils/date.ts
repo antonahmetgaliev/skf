@@ -40,7 +40,7 @@ export function withLocalTzOffset(date: string | null): string | null {
   if (!date) return null;
   const parts = date.split(':');
   const base = parts.length >= 3 ? date : `${date}:00`;
-  const offset = new Date().getTimezoneOffset();
+  const offset = new Date(date).getTimezoneOffset();
   const sign = offset <= 0 ? '+' : '-';
   const absH = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
   const absM = String(Math.abs(offset) % 60).padStart(2, '0');
