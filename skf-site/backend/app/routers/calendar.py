@@ -285,6 +285,7 @@ async def get_calendar_events(
     skf_id = str(skf_community.id) if skf_community else None
     skf_name = skf_community.name if skf_community else None
     skf_color = skf_community.color if skf_community else None
+    skf_discord_url = skf_community.discord_url if skf_community else None
 
     # ── SimGrid championships (active only) ──
     active_result = await db.execute(select(ActiveChampionship.simgrid_id))
@@ -398,6 +399,8 @@ async def get_calendar_events(
             community_id=skf_id,
             community_name=skf_name,
             community_color=skf_color,
+            community_discord_url=skf_discord_url,
+            community_is_skf=True,
             races=races,
         ))
 
@@ -433,6 +436,8 @@ async def get_calendar_events(
         community_id = str(community.id) if community else None
         community_name = community.name if community else None
         community_color = community.color if community else None
+        community_discord_url = community.discord_url if community else None
+        community_is_skf = community.is_skf if community else False
 
         # Use game name from Game relation if available, fall back to game string field
         game_name = champ.game
@@ -453,6 +458,8 @@ async def get_calendar_events(
             community_id=community_id,
             community_name=community_name,
             community_color=community_color,
+            community_discord_url=community_discord_url,
+            community_is_skf=community_is_skf,
             races=custom_races,
         ))
 

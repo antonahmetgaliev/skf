@@ -337,6 +337,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   z-index: 200;
   animation: fadeIn 0.2s ease;
 }
@@ -394,6 +395,19 @@
   flex: 1;
   overflow-y: auto;
   padding: 1rem 1.25rem;
+
+  .event-card {
+    border-radius: 0;
+    background: none;
+    border-left: none;
+    margin-bottom: 0;
+    padding-bottom: 0.75rem;
+  }
+
+  .event-card + .event-card {
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
 }
 
 @keyframes slideIn {
@@ -554,8 +568,6 @@
   align-items: center;
   gap: 0.5rem;
   margin-top: 0.6rem;
-  padding-top: 0.6rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .event-link {
@@ -595,6 +607,12 @@
 
   svg {
     flex-shrink: 0;
+  }
+
+  &--sm {
+    padding: 0.15rem 0.45rem;
+    gap: 0.3rem;
+    font-size: var(--text-2xs);
   }
 }
 
@@ -645,6 +663,7 @@
 .discord-link {
   display: inline-flex;
   align-items: center;
+  margin-left: auto;
   color: var(--ink-soft);
   transition: color 0.15s ease;
   flex-shrink: 0;
