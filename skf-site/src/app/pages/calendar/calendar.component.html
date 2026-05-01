@@ -64,9 +64,8 @@
       <aside class="filter-sidebar">
         <div class="filter-section">
           <label class="filter-label" for="simulatorFilter">Simulator</label>
-          <select
+          <select appSelect size="sm"
             id="simulatorFilter"
-            class="filter-select"
             [ngModel]="selectedSimulator()"
             (ngModelChange)="selectedSimulator.set($event || null)"
           >

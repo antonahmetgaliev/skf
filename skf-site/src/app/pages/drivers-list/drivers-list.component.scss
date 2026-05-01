@@ -11,20 +11,8 @@
   margin-bottom: 1.5rem;
 }
 
-.search-input {
+.app-input {
   flex: 1;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  padding: 0.55rem 1rem;
-  font-size: var(--text-lg);
-  color: var(--ink);
-  background: var(--card-bg);
-  outline: none;
-  transition: border-color 0.2s;
-
-  &:focus {
-    border-color: var(--gold-deep);
-  }
 }
 
 .count {

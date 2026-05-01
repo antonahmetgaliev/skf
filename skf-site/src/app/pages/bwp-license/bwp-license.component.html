@@ -8,7 +8,7 @@
         <h2>Add driver</h2>
         <form class="form" (ngSubmit)="addDriver()">
           <app-form-field label="Driver" fieldId="newDriverSelect">
-            <select
+            <select appSelect
               id="newDriverSelect"
               name="newDriverSelect"
               [ngModel]="newDriverSelection()"
@@ -23,10 +23,9 @@
             </select>
           </app-form-field>
           @if (newDriverSelection() === '__new__') {
-            <input
+            <input appInput
               id="newDriverName"
               name="newDriverName"
-              class="form-control"
               type="text"
               placeholder="Andrea Muscarella"
               [(ngModel)]="newDriverNameOverride"
@@ -48,7 +47,7 @@
         <form class="form" (ngSubmit)="addPoint()">
           <div class="driver-search-group">
             <app-form-field label="Driver" fieldId="driverSelect">
-              <input
+              <input appInput
                 class="driver-search-input"
                 type="text"
                 placeholder="Search driver…"
@@ -56,7 +55,7 @@
                 (ngModelChange)="pointDriverFilter.set($event)"
                 autocomplete="off"
               />
-              <select
+              <select appSelect
                 id="driverSelect"
                 name="driverSelect"
                 [(ngModel)]="selectedDriverId"
@@ -73,7 +72,7 @@
 
           <div class="form-grid">
             <app-form-field label="BWP points" fieldId="pointValue">
-              <input
+              <input appInput
                 id="pointValue"
                 name="pointValue"
                 type="number"
@@ -84,7 +83,7 @@
               />
             </app-form-field>
             <app-form-field label="Issued date" fieldId="pointDate">
-              <input
+              <input appInput
                 id="pointDate"
                 name="pointDate"
                 type="date"
@@ -146,7 +145,7 @@
       <div class="driver-toolbar">
         <div class="filter-field">
           <app-form-field label="Filter name" fieldId="driverFilter">
-            <input
+            <input appInput
               id="driverFilter"
               name="driverFilter"
               type="text"
@@ -159,7 +158,7 @@
         </div>
         <div class="sort-field">
           <app-form-field label="Order by" fieldId="driverSort">
-            <select
+            <select appSelect
               id="driverSort"
               name="driverSort"
               [ngModel]="sortMode()"
@@ -364,7 +363,7 @@
           <input
             id="modal-rule-{{ rule.id }}"
             name="modal-rule-{{ rule.id }}"
-            class="form-control rule-input"
+            appInput size="sm" class="rule-input"
             type="number"
             min="1"
             step="1"
@@ -375,7 +374,7 @@
           <input
             id="modal-rule-label-{{ rule.id }}"
             name="modal-rule-label-{{ rule.id }}"
-            class="form-control rule-input"
+            appInput size="sm" class="rule-input"
             type="text"
             aria-label="Penalty"
             placeholder="Penalty description"

@@ -1,5 +1,7 @@
 import { Component, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { InputDirective } from '../../directives/input.directive';
+import { SelectDirective } from '../../directives/select.directive';
 import { BtnComponent } from '../btn/btn.component';
 import { FormFieldComponent } from '../form-field/form-field.component';
 
@@ -21,7 +23,7 @@ export interface ChampionshipFormData {
 @Component({
   selector: 'app-championship-form',
   standalone: true,
-  imports: [FormsModule, BtnComponent, FormFieldComponent],
+  imports: [FormsModule, InputDirective, SelectDirective, BtnComponent, FormFieldComponent],
   templateUrl: './championship-form.component.html',
   styleUrl: './championship-form.component.scss',
 })

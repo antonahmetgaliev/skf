@@ -112,21 +112,6 @@
   gap: 0.6rem;
 }
 
-.nickname-input {
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: var(--radius-sm);
-  padding: 0.25rem 0.55rem;
-  font-size: var(--text-lg);
-  color: var(--ink);
-  background: transparent;
-  outline: none;
-  width: 18rem;
-  max-width: 100%;
-
-  &:focus {
-    border-color: var(--gold-deep);
-  }
-}
 
 .profile-actions {
   display: flex;
@@ -274,20 +259,6 @@
   border: 1px solid var(--border-subtle);
 }
 
-.photo-url-input {
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: var(--radius-sm);
-  padding: 0.35rem 0.65rem;
-  font-size: var(--text-md);
-  color: var(--ink);
-  background: transparent;
-  outline: none;
-  width: 100%;
-
-  &:focus {
-    border-color: var(--gold-deep);
-  }
-}
 
 .photo-edit-actions {
   display: flex;
@@ -524,10 +495,6 @@
   .guild-nickname-row {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .nickname-input {
-    width: 100%;
   }
 
   .profile-actions {

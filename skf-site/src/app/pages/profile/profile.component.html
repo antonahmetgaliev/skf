@@ -77,8 +77,7 @@
             <!-- Photo URL editor -->
             @if (editingPhoto()) {
               <div class="photo-edit-row">
-                <input
-                  class="photo-url-input"
+                <input appInput
                   type="url"
                   placeholder="https://example.com/your-photo.jpg"
                   [(ngModel)]="editPhotoValue"

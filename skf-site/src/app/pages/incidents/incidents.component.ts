@@ -1,6 +1,9 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { InputDirective } from '../../directives/input.directive';
+import { SelectDirective } from '../../directives/select.directive';
+import { TextareaDirective } from '../../directives/textarea.directive';
 import { BadgeComponent, BadgeVariant } from '../../components/badge/badge.component';
 import { CardComponent } from '../../components/card/card.component';
 import { DetailListComponent } from '../../components/detail-list/detail-list.component';
@@ -31,7 +34,7 @@ import {
 
 @Component({
   selector: 'app-incidents',
-  imports: [FormsModule, DatePipe, BadgeComponent, CardComponent, DetailListComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent],
+  imports: [FormsModule, DatePipe, InputDirective, SelectDirective, TextareaDirective, BadgeComponent, CardComponent, DetailListComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent],
   templateUrl: './incidents.component.html',
   styleUrl: './incidents.component.scss',
 })

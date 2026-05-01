@@ -79,10 +79,10 @@
               <tr>
                 @if (editingRuleId === rule.id) {
                   <td>
-                    <input type="text" [(ngModel)]="editRuleVerdict" class="rule-input" />
+                    <input type="text" [(ngModel)]="editRuleVerdict" appInput size="sm" />
                   </td>
                   <td>
-                    <input type="number" min="0" [(ngModel)]="editRuleDefaultBwp" class="rule-input rule-input--bwp" />
+                    <input type="number" min="0" [(ngModel)]="editRuleDefaultBwp" appInput size="sm" class="rule-input--bwp" />
                   </td>
                   <td class="rule-actions">
                     <button class="btn-link" type="button" (click)="saveEditRule()">Save</button>
@@ -101,8 +101,8 @@
           </tbody>
         </table>
         <div class="verdict-rule-form">
-          <input type="text" [(ngModel)]="newRuleVerdict" placeholder="Verdict name" class="rule-input" />
-          <input type="number" min="0" [(ngModel)]="newRuleDefaultBwp" placeholder="BWP" class="rule-input rule-input--bwp" />
+          <input type="text" [(ngModel)]="newRuleVerdict" placeholder="Verdict name" appInput size="sm" />
+          <input type="number" min="0" [(ngModel)]="newRuleDefaultBwp" placeholder="BWP" appInput size="sm" class="rule-input--bwp" />
           <app-btn variant="accent" size="sm" (click)="addVerdictRule()" [disabled]="!newRuleVerdict.trim()">
             Add
           </app-btn>
@@ -123,7 +123,7 @@
               <tr>
                 @if (editingPresetId === preset.id) {
                   <td>
-                    <input type="text" [(ngModel)]="editPresetText" class="rule-input" />
+                    <input type="text" [(ngModel)]="editPresetText" appInput size="sm" />
                   </td>
                   <td class="rule-actions">
                     <button class="btn-link" type="button" (click)="saveEditPreset()">Save</button>
@@ -141,7 +141,7 @@
           </tbody>
         </table>
         <div class="verdict-rule-form">
-          <input type="text" [(ngModel)]="newPresetText" placeholder="Description text" class="rule-input" />
+          <input type="text" [(ngModel)]="newPresetText" placeholder="Description text" appInput size="sm" />
           <app-btn variant="accent" size="sm" (click)="addDescriptionPreset()" [disabled]="!newPresetText.trim()">
             Add
           </app-btn>
@@ -370,7 +370,7 @@
                               <div class="resolve-fields">
                                 <div class="resolve-field resolve-field--verdict">
                                   <label class="label-eyebrow" [for]="'rv-verdict-' + drv.id">Verdict</label>
-                                  <input
+                                  <input appInput size="sm"
                                     [id]="'rv-verdict-' + drv.id"
                                     type="text"
                                     [attr.list]="'verdict-presets-' + drv.id"
@@ -386,7 +386,7 @@
                                 </div>
                                 <div class="resolve-field resolve-field--bwp">
                                   <label class="label-eyebrow" [for]="'rv-bwp-' + drv.id">BWP</label>
-                                  <input
+                                  <input appInput size="sm"
                                     [id]="'rv-bwp-' + drv.id"
                                     type="number"
                                     min="0"
@@ -412,7 +412,7 @@
                         <div class="add-driver-row">
                           <input
                             type="text"
-                            class="rule-input"
+                            appInput size="sm"
                             [attr.list]="'add-drv-list-' + inc.id"
                             [(ngModel)]="addDriverName[inc.id]"
                             placeholder="Driver name…"
@@ -434,7 +434,7 @@
                       <div class="incident-resolve-footer">
                         <div class="resolve-field resolve-field--description">
                           <label class="label-eyebrow" [for]="'rv-desc-' + inc.id">Decision description</label>
-                          <input
+                          <input appInput size="sm"
                             type="text"
                             [id]="'rv-desc-' + inc.id"
                             [attr.list]="'desc-options-' + inc.id"
@@ -588,7 +588,7 @@
                               <div class="resolve-fields">
                                 <div class="resolve-field resolve-field--verdict">
                                   <label class="label-eyebrow" [for]="'rv-verdict-' + drv.id">Verdict</label>
-                                  <input
+                                  <input appInput size="sm"
                                     [id]="'rv-verdict-' + drv.id"
                                     type="text"
                                     [attr.list]="'verdict-presets-' + drv.id"
@@ -604,7 +604,7 @@
                                 </div>
                                 <div class="resolve-field resolve-field--bwp">
                                   <label class="label-eyebrow" [for]="'rv-bwp-' + drv.id">BWP</label>
-                                  <input
+                                  <input appInput size="sm"
                                     [id]="'rv-bwp-' + drv.id"
                                     type="number"
                                     min="0"
@@ -630,7 +630,7 @@
                         <div class="add-driver-row">
                           <input
                             type="text"
-                            class="rule-input"
+                            appInput size="sm"
                             [attr.list]="'add-drv-list-' + inc.id"
                             [(ngModel)]="addDriverName[inc.id]"
                             placeholder="Driver name…"
@@ -652,7 +652,7 @@
                       <div class="incident-resolve-footer">
                         <div class="resolve-field resolve-field--description">
                           <label class="label-eyebrow" [for]="'rv-desc-' + inc.id">Decision description</label>
-                          <input
+                          <input appInput size="sm"
                             type="text"
                             [id]="'rv-desc-' + inc.id"
                             [attr.list]="'desc-options-' + inc.id"
@@ -708,7 +708,7 @@
 <!-- ── New Window Modal ──────────────────────────────────────────────────── -->
 <app-modal title="Open Incident Window" width="md" [(open)]="showNewWindowModal">
   <app-form-field label="Championship (optional)" fieldId="nwChamp">
-    <select
+    <select appSelect
       id="nwChamp"
       [ngModel]="nwChampId ?? ''"
       (ngModelChange)="onChampionshipChange($event)"
@@ -722,7 +722,7 @@
 
   <app-form-field label="Race" fieldId="nwRace">
     @if (nwChampId) {
-      <select
+      <select appSelect
         id="nwRace"
         [disabled]="loadingRaces()"
         [ngModel]="nwRaceId ?? ''"
@@ -734,7 +734,7 @@
         }
       </select>
     } @else {
-      <input
+      <input appInput
         id="nwRace"
         type="text"
         [(ngModel)]="nwRaceName"
@@ -744,7 +744,7 @@
   </app-form-field>
 
   <app-form-field label="Reporting Window (hours)" fieldId="nwInterval" [error]="nwError">
-    <input
+    <input appInput
       id="nwInterval"
       type="number"
       min="1"
@@ -773,7 +773,7 @@
     @for (name of niDriverNames; track trackByIndex($index); let i = $index) {
       <div class="driver-input-row">
         <app-form-field [label]="'Driver ' + (i + 1)" [fieldId]="'niD' + i">
-          <input
+          <input appInput
             [id]="'niD' + i"
             type="text"
             [attr.list]="'driver-list-' + i"
@@ -796,7 +796,7 @@
   </div>
 
   <app-form-field label="Session (optional)" fieldId="niSession">
-    <input
+    <input appInput
       id="niSession"
       type="text"
       list="niSessionList"
@@ -815,7 +815,7 @@
 
   <div class="form-row">
     <app-form-field label="Lap (optional)" fieldId="niLap">
-      <input
+      <input appInput
         id="niLap"
         type="text"
         [(ngModel)]="niLap"
@@ -823,7 +823,7 @@
       />
     </app-form-field>
     <app-form-field label="Corner (optional)" fieldId="niCorner">
-      <input
+      <input appInput
         id="niCorner"
         type="text"
         [(ngModel)]="niCorner"
@@ -833,7 +833,7 @@
   </div>
 
   <app-form-field label="Description (optional)" fieldId="niDesc" [error]="niError">
-    <textarea
+    <textarea appTextarea
       id="niDesc"
       rows="4"
       [(ngModel)]="niDescription"

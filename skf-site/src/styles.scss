@@ -149,9 +149,11 @@ pre {
   margin: 0;
 }
 
-/* ── Forms ── */
+/* ── Form controls ── */
 
-.form-control {
+.app-input,
+.app-select,
+.app-textarea {
   width: 100%;
   height: 2.75rem;
   padding: 0.65rem 0.85rem;
@@ -163,26 +165,41 @@ pre {
   font-family: inherit;
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: rgba(255, 214, 0, 0.9);
+    box-shadow: 0 0 0 3px rgba(255, 214, 0, 0.25);
+  }
+
+  &:disabled,
+  &[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  &::placeholder {
+    color: var(--muted);
+  }
+
+  &--sm {
+    height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: var(--text-sm);
+  }
 }
 
-.form-control:focus {
-  outline: none;
-  border-color: rgba(255, 214, 0, 0.9);
-  box-shadow: 0 0 0 3px rgba(255, 214, 0, 0.25);
+.app-select {
+  cursor: pointer;
+
+  option {
+    background: var(--sand-strong);
+  }
 }
 
-.form-control:disabled,
-.form-control[disabled] {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.form-control::placeholder {
-  color: var(--muted);
-}
-
-.form-textarea {
+.app-textarea {
+  height: auto;
   resize: vertical;
   min-height: 4rem;
   line-height: 1.5;
