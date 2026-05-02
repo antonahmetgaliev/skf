@@ -147,6 +147,57 @@
           </app-btn>
         </div>
       </app-card>
+
+      @if (auth.isAdmin()) {
+        <app-card class="verdict-rules-card bwp-audit-card">
+          <h2 class="sidebar-heading">BWP Audit</h2>
+          <p class="audit-description">Find drivers with applied BWP in incidents that have no matching BWP entry.</p>
+          @if (bwpAuditEntries() === null) {
+            <app-btn variant="ghost" size="sm" (click)="loadBwpAudit()">Check for Gaps</app-btn>
+          } @else if (bwpAuditEntries()!.length === 0) {
+            <app-empty>No gaps found — all applied BWPs are linked.</app-empty>
+          } @else {
+            <table class="verdict-rules-table">
+              <thead>
+                <tr>
+                  <th>Driver (in incident)</th>
+                  <th>BWP</th>
+                  <th>Matched driver</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (entry of bwpAuditEntries()!; track entry.incidentDriverId) {
+                  <tr>
+                    <td>{{ entry.driverName }}</td>
+                    <td>{{ entry.bwpPoints }}</td>
+                    <td>
+                      @if (entry.matchedDriverName) {
+                        <span class="audit-match">{{ entry.matchedDriverName }}</span>
+                      } @else {
+                        <span class="audit-no-match">No match</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            @if (bwpAuditEntries()!.some(e => e.matchedDriverId !== null)) {
+              <div class="verdict-rule-form">
+                <app-btn variant="accent" size="sm" (click)="runBwpBackfill()" [disabled]="backfillRunning()">
+                  {{ backfillRunning() ? 'Fixing...' : 'Fix All Matched' }}
+                </app-btn>
+                @if (backfillResult()) {
+                  <span class="audit-result">Fixed {{ backfillResult()!.fixed }}
+                    @if (backfillResult()!.unmatched.length > 0) {
+                      · Unmatched: {{ backfillResult()!.unmatched.join(', ') }}
+                    }
+                  </span>
+                }
+              </div>
+            }
+          }
+        </app-card>
+      }
     }
     </aside>
 

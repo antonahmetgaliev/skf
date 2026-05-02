@@ -171,3 +171,11 @@ class IncidentWindowListItem(CamelModel):
 
 class IncidentWindowOut(IncidentWindowListItem):
     incidents: list[IncidentOut] = []
+
+
+class BwpAuditEntry(CamelModel):
+    incident_driver_id: uuid.UUID
+    driver_name: str
+    bwp_points: int
+    matched_driver_id: uuid.UUID | None = None
+    matched_driver_name: str | None = None

@@ -115,6 +115,19 @@ export interface DescriptionPresetCreate {
   text: string;
 }
 
+export interface BwpAuditEntry {
+  incidentDriverId: string;
+  driverName: string;
+  bwpPoints: number;
+  matchedDriverId: string | null;
+  matchedDriverName: string | null;
+}
+
+export interface BwpBackfillResult {
+  fixed: number;
+  unmatched: string[];
+}
+
 // ── Service ────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
@@ -244,5 +257,13 @@ export class IncidentsApiService {
 
   deleteDescriptionPreset(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/description-presets/${id}`);
+  }
+
+  getBwpAudit(): Observable<BwpAuditEntry[]> {
+    return this.http.get<BwpAuditEntry[]>(`${this.base}/bwp-audit`);
+  }
+
+  runBwpBackfill(): Observable<BwpBackfillResult> {
+    return this.http.post<BwpBackfillResult>(`${this.base}/bwp-backfill`, {});
   }
 }

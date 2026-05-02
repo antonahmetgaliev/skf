@@ -30,6 +30,8 @@ import {
   IncidentsApiService,
   VerdictRule,
   DescriptionPreset,
+  BwpAuditEntry,
+  BwpBackfillResult,
 } from '../../services/incidents-api.service';
 
 @Component({
@@ -59,6 +61,11 @@ export class IncidentsComponent implements OnInit {
   readonly championships = signal<ChampionshipListItem[]>([]);
   readonly availableRaces = signal<StandingRace[]>([]);
   readonly loadingRaces = signal(false);
+
+  // ── BWP audit ─────────────────────────────────────────────────────
+  readonly bwpAuditEntries = signal<BwpAuditEntry[] | null>(null);
+  readonly backfillRunning = signal(false);
+  readonly backfillResult = signal<BwpBackfillResult | null>(null);
 
   // ── Window groups ─────────────────────────────────────────────────
   private readonly RECENT_DAYS = 7;
@@ -644,5 +651,26 @@ export class IncidentsComponent implements OnInit {
     if (!confirm('Delete this description preset?')) return;
     await firstValueFrom(this.incidentsApi.deleteDescriptionPreset(id));
     await this.loadDescriptionPresets();
+  }
+
+  // ── BWP audit ────────────────────────────────────────────────────────
+
+  async loadBwpAudit(): Promise<void> {
+    const entries = await firstValueFrom(this.incidentsApi.getBwpAudit());
+    this.bwpAuditEntries.set(entries);
+    this.backfillResult.set(null);
+  }
+
+  async runBwpBackfill(): Promise<void> {
+    this.backfillRunning.set(true);
+    try {
+      const result = await firstValueFrom(this.incidentsApi.runBwpBackfill());
+      this.backfillResult.set(result);
+      // Refresh audit list to reflect fixes
+      const entries = await firstValueFrom(this.incidentsApi.getBwpAudit());
+      this.bwpAuditEntries.set(entries);
+    } finally {
+      this.backfillRunning.set(false);
+    }
   }
 }

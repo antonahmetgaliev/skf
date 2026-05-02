@@ -37,6 +37,7 @@ from app.schemas.incidents import (
     DescriptionPresetCreate,
     DescriptionPresetOut,
     DescriptionPresetUpdate,
+    BwpAuditEntry,
 )
 
 router = APIRouter(prefix="/incidents", tags=["Incidents"])
@@ -726,6 +727,15 @@ async def apply_bwp(
         )
     entry.resolution.bwp_applied = True
 
+    # If not already linked, try to match driver by name
+    if not entry.driver_id:
+        matched = await db.execute(
+            select(Driver.id).where(func.lower(Driver.name) == entry.driver_name.lower())
+        )
+        matched_id = matched.scalar_one_or_none()
+        if matched_id:
+            entry.driver_id = matched_id
+
     # Auto-create BwpPoint if driver is linked
     if entry.driver_id:
         today = date.today()
@@ -759,3 +769,75 @@ async def discard_bwp(
     entry.resolution.bwp_applied = False
     await db.commit()
     return await _get_incident_driver_or_404(incident_driver_id, db)
+
+
+# ── BWP audit / backfill ─────────────────────────────────────────────────────
+
+@router.get("/bwp-audit", response_model=list[BwpAuditEntry])
+async def bwp_audit(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    """Return incident drivers where BWP was applied but no BwpPoint was created.
+
+    This happens when the incident driver had no driver_id link at apply time.
+    """
+    rows = await db.execute(
+        select(IncidentDriver, Driver)
+        .join(IncidentResolution, IncidentResolution.incident_driver_id == IncidentDriver.id)
+        .outerjoin(Driver, func.lower(Driver.name) == func.lower(IncidentDriver.driver_name))
+        .where(IncidentResolution.bwp_applied == True)  # noqa: E712
+        .where(IncidentDriver.driver_id.is_(None))
+    )
+    return [
+        BwpAuditEntry(
+            incident_driver_id=inc_drv.id,
+            driver_name=inc_drv.driver_name,
+            bwp_points=inc_drv.resolution.bwp_points or 0,
+            matched_driver_id=drv.id if drv else None,
+            matched_driver_name=drv.name if drv else None,
+        )
+        for inc_drv, drv in rows.all()
+    ]
+
+
+@router.post("/bwp-backfill", response_model=dict)
+async def bwp_backfill(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    """Create missing BwpPoints for applied incident BWPs where driver_id was NULL.
+
+    For each unlinked IncidentDriver where bwp_applied=True, if the driver_name
+    can be matched to a Driver by name, creates the missing BwpPoint, links
+    driver_id, and returns a summary.
+    """
+    rows = await db.execute(
+        select(IncidentDriver, Driver)
+        .join(IncidentResolution, IncidentResolution.incident_driver_id == IncidentDriver.id)
+        .outerjoin(Driver, func.lower(Driver.name) == func.lower(IncidentDriver.driver_name))
+        .where(IncidentResolution.bwp_applied == True)  # noqa: E712
+        .where(IncidentDriver.driver_id.is_(None))
+    )
+    fixed = 0
+    unmatched: list[str] = []
+    for inc_drv, drv in rows.all():
+        if drv is None:
+            if inc_drv.driver_name not in unmatched:
+                unmatched.append(inc_drv.driver_name)
+            continue
+        # Link and create the missing BwpPoint
+        inc_drv.driver_id = drv.id
+        bwp_pts = inc_drv.resolution.bwp_points or 0
+        if bwp_pts:
+            today = date.today()
+            db.add(BwpPoint(
+                driver_id=drv.id,
+                points=bwp_pts,
+                issued_on=today,
+                expires_on=today + timedelta(days=90),
+            ))
+        fixed += 1
+
+    await db.commit()
+    return {"fixed": fixed, "unmatched": unmatched}

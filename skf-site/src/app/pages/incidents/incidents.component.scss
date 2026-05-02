@@ -675,6 +675,28 @@
   gap: 0.4rem;
 }
 
+.audit-description {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  margin: 0 0 0.6rem;
+}
+
+.audit-match {
+  color: var(--success, #4ade80);
+  font-size: var(--text-sm);
+}
+
+.audit-no-match {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-style: italic;
+}
+
+.audit-result {
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
 .btn-link--muted {
   color: var(--muted);
 }
