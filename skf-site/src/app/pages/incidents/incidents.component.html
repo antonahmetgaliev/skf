@@ -181,7 +181,7 @@
                 }
               </tbody>
             </table>
-            @if (bwpAuditEntries()!.some(e => e.matchedDriverId !== null)) {
+            @if (hasMatchableAuditEntries()) {
               <div class="verdict-rule-form">
                 <app-btn variant="accent" size="sm" (click)="runBwpBackfill()" [disabled]="backfillRunning()">
                   {{ backfillRunning() ? 'Fixing...' : 'Fix All Matched' }}

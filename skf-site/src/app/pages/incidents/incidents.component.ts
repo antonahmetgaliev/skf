@@ -66,6 +66,9 @@ export class IncidentsComponent implements OnInit {
   readonly bwpAuditEntries = signal<BwpAuditEntry[] | null>(null);
   readonly backfillRunning = signal(false);
   readonly backfillResult = signal<BwpBackfillResult | null>(null);
+  readonly hasMatchableAuditEntries = computed(() =>
+    (this.bwpAuditEntries() ?? []).some(e => e.matchedDriverId !== null)
+  );
 
   // ── Window groups ─────────────────────────────────────────────────
   private readonly RECENT_DAYS = 7;
