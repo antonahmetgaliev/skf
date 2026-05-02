@@ -165,4 +165,6 @@ class CalendarEvent(CamelModel):
     community_id: str | None = None
     community_name: str | None = None
     community_color: str | None = None
+    community_discord_url: str | None = None
+    community_is_skf: bool = False
     races: list[CalendarRace] = []

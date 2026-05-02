@@ -1,13 +1,14 @@
 import { Component, computed, inject, model, input, signal } from '@angular/core';
 import { StandingEntry } from '../../services/simgrid-api.service';
 import { ChampionshipService } from '../../services/championship.service';
+import { InputDirective } from '../../directives/input.directive';
 import { BtnComponent } from '../btn/btn.component';
 import { EmptyComponent } from '../empty/empty.component';
 
 @Component({
   selector: 'app-giveaway-modal',
   standalone: true,
-  imports: [BtnComponent, EmptyComponent],
+  imports: [InputDirective, BtnComponent, EmptyComponent],
   templateUrl: './giveaway-modal.component.html',
   styleUrl: './giveaway-modal.component.scss',
 })

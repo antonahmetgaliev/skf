@@ -27,6 +27,8 @@ export interface CalendarEvent {
   communityId: string | null;
   communityName: string | null;
   communityColor: string | null;
+  communityDiscordUrl: string | null;
+  communityIsSkf: boolean;
   races: CalendarRace[];
 }
 

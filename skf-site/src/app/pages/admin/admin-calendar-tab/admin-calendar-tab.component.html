@@ -183,12 +183,11 @@
                   }
                   @if (!race.track && !race.date) { Round {{ race.sortOrder + 1 }} }
                 </span>
-                <app-btn variant="danger" size="sm" (click)="deleteRace(champ, race.id)">x</app-btn>
               </div>
             }
           </div>
 
-          <app-btn variant="ghost" size="sm" (click)="openRaceModal(champ)">+ Add Race</app-btn>
+          <app-btn variant="ghost" size="sm" (click)="editChampionship(champ)">Edit Races</app-btn>
         </div>
       }
       @if (communityChampionships().length === 0) {
@@ -206,7 +205,7 @@
 >
   <div class="modal-form">
     <app-form-field label="Name" fieldId="communityName">
-      <input
+      <input appInput
         id="communityName"
         type="text"
         placeholder="Community name"
@@ -224,7 +223,7 @@
       />
     </app-form-field>
     <app-form-field label="Discord URL" fieldId="communityDiscord">
-      <input
+      <input appInput
         id="communityDiscord"
         type="url"
         placeholder="https://discord.gg/..."
@@ -248,85 +247,18 @@
   width="md"
   [(open)]="champModalOpen"
 >
-  <div class="modal-form">
-    <app-form-field label="Name" fieldId="champName">
-      <input
-        id="champName"
-        type="text"
-        placeholder="Championship name"
-        [ngModel]="champForm().name"
-        (ngModelChange)="updateChampField('name', $event)"
-        autocomplete="off"
-      />
-    </app-form-field>
-    <app-form-field label="Simulator" fieldId="champSimulator">
-      <select
-        id="champSimulator"
-        [ngModel]="champForm().game"
-        (ngModelChange)="updateChampField('game', $event)"
-      >
-        <option [ngValue]="''">— Select simulator —</option>
-        @for (sim of simulators(); track sim) {
-          <option [ngValue]="sim">{{ sim }}</option>
-        }
-      </select>
-    </app-form-field>
-    <app-form-field label="Car Class" fieldId="champCarClass">
-      <input
-        id="champCarClass"
-        type="text"
-        placeholder="e.g. GT3, LMP2"
-        [ngModel]="champForm().carClass"
-        (ngModelChange)="updateChampField('carClass', $event)"
-        autocomplete="off"
-      />
-    </app-form-field>
-    <app-form-field label="Description" fieldId="champDesc">
-      <input
-        id="champDesc"
-        type="text"
-        placeholder="Optional description"
-        [ngModel]="champForm().description"
-        (ngModelChange)="updateChampField('description', $event)"
-        autocomplete="off"
-      />
-    </app-form-field>
-  </div>
+  <app-championship-form
+    #champFormRef
+    [simulators]="simulators()"
+    [initialData]="champFormData()"
+    [isEditing]="!!editingChampId()"
+    (save)="saveChampionship($event)"
+  />
   <div modal-footer>
     <app-btn variant="ghost" size="sm" (click)="champModalOpen.set(false)">Cancel</app-btn>
-    <app-btn variant="primary" size="sm" (click)="saveChampionship()">
+    <app-btn variant="primary" size="sm" (click)="champFormRef.onSave()">
       {{ editingChampId() ? 'Update' : 'Add' }}
     </app-btn>
-  </div>
-</app-modal>
-
-<!-- Race Modal -->
-<app-modal title="Add Race" width="sm" [(open)]="raceModalOpen">
-  <div class="modal-form">
-    <app-form-field label="Track" fieldId="raceTrack">
-      <input
-        id="raceTrack"
-        type="text"
-        placeholder="Track name"
-        [ngModel]="raceForm().track"
-        (ngModelChange)="updateRaceField('track', $event)"
-        autocomplete="off"
-      />
-    </app-form-field>
-    <app-form-field label="Date" fieldId="raceDate">
-      <input
-        id="raceDate"
-        type="datetime-local"
-        [ngModel]="raceForm().date"
-        (ngModelChange)="updateRaceField('date', $event)"
-      />
-    </app-form-field>
-  </div>
-  <div modal-footer>
-    <app-btn variant="ghost" size="sm" (click)="raceModalOpen.set(false)">Cancel</app-btn>
-    @if (raceChampionship(); as champ) {
-      <app-btn variant="primary" size="sm" (click)="addRace(champ)">Add</app-btn>
-    }
   </div>
 </app-modal>
 
@@ -334,7 +266,7 @@
 <app-modal title="Create DOTD Poll" width="md" [(open)]="dotdModalOpen">
   <div class="modal-form">
     <app-form-field label="Championship" fieldId="dotd-champ-select">
-      <select id="dotd-champ-select"
+      <select appSelect id="dotd-champ-select"
               [(ngModel)]="dotdSelectedChampId"
               (ngModelChange)="onDotdChampionshipChange()">
         <option [value]="0" disabled>Select championship...</option>
@@ -346,7 +278,7 @@
 
     @if (dotdStandings() !== null) {
       <app-form-field label="Race (optional)" fieldId="dotd-race-select">
-        <select id="dotd-race-select"
+        <select appSelect id="dotd-race-select"
                 [(ngModel)]="dotdSelectedRaceId"
                 (ngModelChange)="onDotdRaceChange()">
           <option [value]="null">No specific race</option>
@@ -375,7 +307,7 @@
     }
 
     <app-form-field label="Closes at" fieldId="dotd-closes-at">
-      <input id="dotd-closes-at" type="datetime-local"
+      <input appInput id="dotd-closes-at" type="datetime-local"
              [(ngModel)]="dotdClosesAt" />
     </app-form-field>
 

@@ -5,11 +5,12 @@ import { EmptyComponent } from '../../components/empty/empty.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
+import { InputDirective } from '../../directives/input.directive';
 import { BwpApiService, Driver } from '../../services/bwp-api.service';
 
 @Component({
   selector: 'app-drivers-list',
-  imports: [RouterLink, FormsModule, PageIntroComponent, PageLayoutComponent, SpinnerComponent, EmptyComponent],
+  imports: [RouterLink, FormsModule, InputDirective, PageIntroComponent, PageLayoutComponent, SpinnerComponent, EmptyComponent],
   templateUrl: './drivers-list.component.html',
   styleUrl: './drivers-list.component.scss',
 })

@@ -142,6 +142,7 @@ def _parse_standings_html(html: str) -> ChampionshipStandingsData | None:
             e.display_name,
         ),
     )
+
     return ChampionshipStandingsData(entries=entries, races=races)
 
 

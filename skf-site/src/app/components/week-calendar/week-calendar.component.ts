@@ -20,8 +20,11 @@ interface WeekRace {
   image: string | null;
   date: Date;
   simgridChampionshipId: number | null;
+  customChampionshipId: string | null;
   communityName: string | null;
   communityColor: string | null;
+  communityDiscordUrl: string | null;
+  communityIsSkf: boolean;
 }
 
 interface ChampionshipSummary {
@@ -189,8 +192,11 @@ export class WeekCalendarComponent {
           image: ev.image,
           date: new Date(race.date),
           simgridChampionshipId: ev.simgridChampionshipId,
+          customChampionshipId: ev.customChampionshipId,
           communityName: ev.communityName,
           communityColor: ev.communityColor,
+          communityDiscordUrl: ev.communityDiscordUrl,
+          communityIsSkf: ev.communityIsSkf,
         });
       }
     }
@@ -261,6 +267,27 @@ export class WeekCalendarComponent {
   formatChampDate(iso: string): string {
     const d = new Date(iso);
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  }
+
+  raceLink(race: WeekRace): string | null {
+    if (race.simgridChampionshipId) {
+      return `/championships`;
+    }
+    if (race.customChampionshipId && race.communityDiscordUrl) {
+      return race.communityDiscordUrl;
+    }
+    return null;
+  }
+
+  raceQueryParams(race: WeekRace): Record<string, string> | null {
+    if (race.simgridChampionshipId) {
+      return { id: String(race.simgridChampionshipId) };
+    }
+    return null;
+  }
+
+  isExternalLink(race: WeekRace): boolean {
+    return !!race.customChampionshipId && !!race.communityDiscordUrl;
   }
 
   champQueryParams(champ: ChampionshipSummary): Record<string, string> {

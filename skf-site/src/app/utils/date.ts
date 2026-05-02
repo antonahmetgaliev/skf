@@ -22,6 +22,17 @@ export function toLocalTime(iso: string): string | null {
 }
 
 /**
+ * Convert an ISO date string to a naive local datetime-local string (YYYY-MM-DDTHH:MM).
+ * Suitable for <input type="datetime-local"> value binding.
+ */
+export function toLocalDatetimeLocal(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso.slice(0, 16);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/**
  * Append the browser's local timezone offset to a naive datetime-local string.
  * e.g. "2025-04-15T18:00" → "2025-04-15T18:00:00+03:00"
  */
@@ -29,7 +40,7 @@ export function withLocalTzOffset(date: string | null): string | null {
   if (!date) return null;
   const parts = date.split(':');
   const base = parts.length >= 3 ? date : `${date}:00`;
-  const offset = new Date().getTimezoneOffset();
+  const offset = new Date(date).getTimezoneOffset();
   const sign = offset <= 0 ? '+' : '-';
   const absH = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
   const absM = String(Math.abs(offset) % 60).padStart(2, '0');

@@ -27,6 +27,19 @@
                   @if (race.time) {
                     <p class="race-time">{{ race.time }}</p>
                   }
+                  @if (race.communityName) {
+                    <div class="race-community-row">
+                      <span class="race-community-name" [style.color]="race.communityColor">{{ race.communityName }}</span>
+                      @if (raceLink(race); as link) {
+                        <span class="race-community-sep">·</span>
+                        @if (isExternalLink(race)) {
+                          <a class="race-community-link" [href]="link" target="_blank" rel="noopener">Discord ↗</a>
+                        } @else {
+                          <a class="race-community-link" [routerLink]="link" [queryParams]="raceQueryParams(race)!">Championship →</a>
+                        }
+                      }
+                    </div>
+                  }
                 </app-card>
               }
             </div>
@@ -70,23 +83,61 @@
             @if (weekRaces().length > 0) {
               <div class="week-races">
                 @for (race of weekRaces(); track race.championshipName + race.date) {
-                  <div class="week-race-row">
-                    <div class="week-race-date">
-                      <span class="week-race-day">{{ formatDate(race.date) }}</span>
-                      @if (race.time) {
-                        <span class="week-race-time">{{ race.time }}</span>
-                      }
+                  @if (isExternalLink(race)) {
+                    <a class="week-race-row" [href]="raceLink(race)" target="_blank" rel="noopener">
+                      <div class="week-race-date">
+                        <span class="week-race-day">{{ formatDate(race.date) }}</span>
+                        @if (race.time) {
+                          <span class="week-race-time">{{ race.time }}</span>
+                        }
+                      </div>
+                      <div class="week-race-info">
+                        <span class="week-race-champ">{{ race.championshipName }}</span>
+                        @if (race.track) {
+                          <span class="week-race-track">{{ race.track }}</span>
+                        }
+                        @if (race.communityName) {
+                          <span class="week-race-community" [style.color]="race.communityColor">{{ race.communityName }}</span>
+                        }
+                      </div>
+                    </a>
+                  } @else if (raceLink(race)) {
+                    <a class="week-race-row" [routerLink]="raceLink(race)" [queryParams]="raceQueryParams(race)!">
+                      <div class="week-race-date">
+                        <span class="week-race-day">{{ formatDate(race.date) }}</span>
+                        @if (race.time) {
+                          <span class="week-race-time">{{ race.time }}</span>
+                        }
+                      </div>
+                      <div class="week-race-info">
+                        <span class="week-race-champ">{{ race.championshipName }}</span>
+                        @if (race.track) {
+                          <span class="week-race-track">{{ race.track }}</span>
+                        }
+                        @if (race.communityName) {
+                          <span class="week-race-community" [style.color]="race.communityColor">{{ race.communityName }}</span>
+                        }
+                      </div>
+                    </a>
+                  } @else {
+                    <div class="week-race-row">
+                      <div class="week-race-date">
+                        <span class="week-race-day">{{ formatDate(race.date) }}</span>
+                        @if (race.time) {
+                          <span class="week-race-time">{{ race.time }}</span>
+                        }
+                      </div>
+                      <div class="week-race-info">
+                        <span class="week-race-champ">{{ race.championshipName }}</span>
+                        @if (race.track) {
+                          <span class="week-race-track">{{ race.track }}</span>
+                        }
+                        @if (race.communityName) {
+                          <span class="week-race-community" [style.color]="race.communityColor">{{ race.communityName }}</span>
+                        }
+                      </div>
                     </div>
-                    <div class="week-race-info">
-                      <span class="week-race-champ">{{ race.championshipName }}</span>
-                      @if (race.track) {
-                        <span class="week-race-track">{{ race.track }}</span>
-                      }
-                      @if (race.communityName) {
-                        <span class="week-race-community" [style.color]="race.communityColor">{{ race.communityName }}</span>
-                      }
-                    </div>
-                  </div>
+                  }
                 }
               </div>
             } @else {

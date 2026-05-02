@@ -1,6 +1,15 @@
 <app-page>
   <app-page-intro title="Media" subtitle="Streams and videos from our YouTube channel." />
 
+  <div class="search-bar">
+    <input appInput
+      type="text"
+      placeholder="Filter by name..."
+      [value]="searchQuery()"
+      (input)="onSearch($any($event.target).value)"
+    />
+  </div>
+
   @if (loading()) {
     <p class="status-msg">Loading videos...</p>
   }
@@ -82,7 +91,7 @@
       </section>
     }
 
-    @if (allPastVideos().length === 0 && allUpcomingVideos().length === 0) {
+    @if (pastVideos().length === 0 && upcomingVideos().length === 0) {
       <p class="status-msg">No videos found.</p>
     }
   }

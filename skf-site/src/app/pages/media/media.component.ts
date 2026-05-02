@@ -4,13 +4,14 @@ import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
+import { InputDirective } from '../../directives/input.directive';
 import { MediaApiService, YouTubeVideo } from '../../services/media-api.service';
 
 const PAGE_SIZE = 12;
 
 @Component({
   selector: 'app-media',
-  imports: [PageIntroComponent, PageLayoutComponent, CardComponent, BtnComponent],
+  imports: [InputDirective, PageIntroComponent, PageLayoutComponent, CardComponent, BtnComponent],
   templateUrl: './media.component.html',
   styleUrl: './media.component.scss',
 })
@@ -22,13 +23,17 @@ export class MediaComponent {
   readonly loading = signal(false);
   readonly errorMessage = signal('');
 
+  readonly searchQuery = signal('');
   readonly pastVisible = signal(PAGE_SIZE);
   readonly upcomingVisible = signal(PAGE_SIZE);
 
-  readonly pastVideos = computed(() => this.allPastVideos().slice(0, this.pastVisible()));
-  readonly upcomingVideos = computed(() => this.allUpcomingVideos().slice(0, this.upcomingVisible()));
-  readonly hasMorePast = computed(() => this.pastVisible() < this.allPastVideos().length);
-  readonly hasMoreUpcoming = computed(() => this.upcomingVisible() < this.allUpcomingVideos().length);
+  private readonly filteredPast = computed(() => this.filterByName(this.allPastVideos()));
+  private readonly filteredUpcoming = computed(() => this.filterByName(this.allUpcomingVideos()));
+
+  readonly pastVideos = computed(() => this.filteredPast().slice(0, this.pastVisible()));
+  readonly upcomingVideos = computed(() => this.filteredUpcoming().slice(0, this.upcomingVisible()));
+  readonly hasMorePast = computed(() => this.pastVisible() < this.filteredPast().length);
+  readonly hasMoreUpcoming = computed(() => this.upcomingVisible() < this.filteredUpcoming().length);
 
   constructor() {
     this.loadVideos();
@@ -44,12 +49,24 @@ export class MediaComponent {
     });
   }
 
+  onSearch(query: string): void {
+    this.searchQuery.set(query);
+    this.pastVisible.set(PAGE_SIZE);
+    this.upcomingVisible.set(PAGE_SIZE);
+  }
+
   showMorePast(): void {
     this.pastVisible.update(v => v + PAGE_SIZE);
   }
 
   showMoreUpcoming(): void {
     this.upcomingVisible.update(v => v + PAGE_SIZE);
+  }
+
+  private filterByName(videos: YouTubeVideo[]): YouTubeVideo[] {
+    const q = this.searchQuery().trim().toLowerCase();
+    if (!q) return videos;
+    return videos.filter(v => v.title.toLowerCase().includes(q));
   }
 
   private async loadVideos(): Promise<void> {

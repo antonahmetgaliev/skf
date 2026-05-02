@@ -12,7 +12,7 @@
       <div class="toolbar">
         <div class="filter-field">
           <app-form-field label="Filter" fieldId="userFilter">
-            <input
+            <input appInput
               id="userFilter"
               type="text"
               placeholder="Search by name or Discord ID"
@@ -49,7 +49,7 @@
                 <div class="control-groups">
                   <div class="control-group">
                     <app-form-field label="Role">
-                      <select
+                      <select appSelect size="sm"
                         [ngModel]="user.role"
                         (ngModelChange)="changeRole(user, $event)"
                         [disabled]="!canEdit(user)"
@@ -64,7 +64,7 @@
                   @if (user.role === 'community_manager') {
                     <div class="control-group">
                       <app-form-field label="Community">
-                        <select
+                        <select appSelect size="sm"
                           [ngModel]="getAssignedCommunityId(user)"
                           (ngModelChange)="assignCommunity(user, $event)"
                           [disabled]="!canEdit(user)"

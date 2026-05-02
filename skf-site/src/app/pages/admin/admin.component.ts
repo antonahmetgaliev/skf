@@ -9,6 +9,8 @@ import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { TabsComponent } from '../../components/tabs/tabs.component';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { InputDirective } from '../../directives/input.directive';
+import { SelectDirective } from '../../directives/select.directive';
 import { AuthService, AuthUser, ROLES, Role } from '../../services/auth.service';
 import { CalendarApiService, Community } from '../../services/calendar-api.service';
 import { AdminCalendarTabComponent } from './admin-calendar-tab/admin-calendar-tab.component';
@@ -17,7 +19,7 @@ type AdminTab = 'users' | 'site' | 'calendar';
 
 @Component({
   selector: 'app-admin',
-  imports: [FormsModule, DatePipe, AdminCalendarTabComponent, BtnComponent, CardComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
+  imports: [FormsModule, DatePipe, InputDirective, SelectDirective, AdminCalendarTabComponent, BtnComponent, CardComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',
 })

@@ -1,6 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { InputDirective } from '../../directives/input.directive';
 import { BadgeComponent } from '../../components/badge/badge.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { FormFieldComponent } from '../../components/form-field/form-field.component';
@@ -13,7 +14,7 @@ import { DriverChampionshipResult, DriverPublic, LinkCandidate, ProfileApiServic
 
 @Component({
   selector: 'app-profile',
-  imports: [DatePipe, DecimalPipe, FormsModule, BadgeComponent, BtnComponent, CardComponent, FormFieldComponent, ModalComponent, PageLayoutComponent, SpinnerComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, InputDirective, BadgeComponent, BtnComponent, CardComponent, FormFieldComponent, ModalComponent, PageLayoutComponent, SpinnerComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
 })

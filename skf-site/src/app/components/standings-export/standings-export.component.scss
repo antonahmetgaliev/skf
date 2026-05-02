@@ -12,7 +12,7 @@
 .export-modal {
   background: var(--ink);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
+  border-radius: var(--radius-card-sm);
   width: 100%;
   max-width: 960px;
   max-height: 92vh;
@@ -51,7 +51,7 @@
   canvas {
     width: 100%;
     height: auto;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
   }
 }
 
