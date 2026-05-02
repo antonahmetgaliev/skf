@@ -224,6 +224,15 @@
                     >
                       Rename
                     </app-btn>
+                    <app-btn
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      (click)="setSimgridId(driver.id)"
+                      [title]="driver.simgridDriverId ? 'SimGrid #' + driver.simgridDriverId : 'No SimGrid ID set'"
+                    >
+                      {{ driver.simgridDriverId ? 'SimGrid #' + driver.simgridDriverId : 'Set SimGrid ID' }}
+                    </app-btn>
                     }
                     @if (auth.isAdmin()) {
                     <app-btn

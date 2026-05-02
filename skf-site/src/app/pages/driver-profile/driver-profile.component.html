@@ -17,6 +17,11 @@
             @if (d.countryCode) {
               <span class="country-tag">{{ d.countryCode }}</span>
             }
+            @if (d.simgridDriverId) {
+              <a class="simgrid-link" [href]="'https://www.thesimgrid.com/drivers/' + d.simgridDriverId" target="_blank" rel="noopener noreferrer">
+                SimGrid profile ↗
+              </a>
+            }
             @if (d.simgridDisplayName && d.simgridDisplayName !== d.name) {
               <p class="simgrid-name">SimGrid: {{ d.simgridDisplayName }}</p>
             }

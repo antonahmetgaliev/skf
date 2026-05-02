@@ -212,6 +212,35 @@ export class BwpLicenseComponent {
     });
   }
 
+  setSimgridId(driverId: string): void {
+    const driver = this.drivers().find((d) => d.id === driverId);
+    if (!driver) return;
+
+    const current = driver.simgridDriverId ? String(driver.simgridDriverId) : '';
+    const input = window.prompt('Enter SimGrid driver ID (numeric):', current);
+    if (input === null) return;
+
+    const trimmed = input.trim();
+    const parsed = trimmed === '' ? null : Number(trimmed);
+    if (trimmed !== '' && (!Number.isInteger(parsed) || (parsed as number) <= 0)) {
+      this.driverError = 'SimGrid ID must be a positive integer.';
+      return;
+    }
+    if (parsed === driver.simgridDriverId) return;
+
+    this.driverError = '';
+    this.api.updateDriver(driverId, { name: driver.name, simgridDriverId: parsed }).subscribe({
+      next: (updated) => {
+        this.drivers.update((list) =>
+          list.map((d) => (d.id === driverId ? updated : d))
+        );
+      },
+      error: (err) => {
+        this.driverError = err?.error?.detail ?? 'Failed to update SimGrid ID.';
+      }
+    });
+  }
+
   // ── Points ───────────────────────────────────────────────────────
 
   addPoint(): void {

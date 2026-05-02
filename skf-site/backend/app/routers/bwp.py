@@ -119,6 +119,9 @@ async def rename_driver(
         )
 
     driver.name = new_name
+    if body.simgrid_driver_id is not None:
+        driver.simgrid_driver_id = body.simgrid_driver_id
+        driver.simgrid_display_name = driver.simgrid_display_name or new_name
     await db.commit()
     await db.refresh(driver)
     return driver

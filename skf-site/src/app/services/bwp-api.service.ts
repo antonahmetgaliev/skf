@@ -48,7 +48,7 @@ export class BwpApiService {
     return this.http.post<Driver>(`${this.base}/drivers`, { name });
   }
 
-  updateDriver(driverId: string, patch: { name: string }): Observable<Driver> {
+  updateDriver(driverId: string, patch: { name: string; simgridDriverId?: number | null }): Observable<Driver> {
     return this.http.patch<Driver>(`${this.base}/drivers/${driverId}`, patch);
   }
 

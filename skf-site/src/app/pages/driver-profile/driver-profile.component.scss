@@ -82,6 +82,20 @@ h1 {
   color: var(--muted);
 }
 
+.simgrid-link {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: var(--text-sm);
+  color: var(--gold, #f5c518);
+  text-decoration: none;
+  opacity: 0.85;
+
+  &:hover {
+    opacity: 1;
+    text-decoration: underline;
+  }
+}
+
 /* ── BWP summary ── */
 
 .bwp-summary {
