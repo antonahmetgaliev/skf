@@ -293,6 +293,22 @@ class SimgridService:
         )
         return results
 
+    async def find_simgrid_driver_info(
+        self, simgrid_driver_id: int,
+    ) -> tuple[str, str] | None:
+        """Return (display_name, country_code) from cached standings, or None if not found."""
+        cached_standings = await read_all_by_prefix("standings_")
+        for _, raw in cached_standings:
+            standings = self._standings_from_cache(raw)
+            if standings is None:
+                continue
+            entry = next(
+                (e for e in standings.entries if e.id == simgrid_driver_id), None
+            )
+            if entry is not None:
+                return entry.display_name, entry.country_code
+        return None
+
     async def _championship_map(self) -> dict[int, ChampionshipListItem]:
         """Build a championship-id → list-item lookup, tolerating upstream failures."""
         try:

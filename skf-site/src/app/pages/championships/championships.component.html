@@ -146,11 +146,7 @@
                     <tr [ngClass]="isMulticlass() ? 'class-strip-' + getClassIndex(entry.carClass) : ''">
                       <td>{{ getPosition(entry, i) }}</td>
                       <td class="driver-cell">
-                        @if (cs.driverUuidBySimgridId().get(entry.id); as uuid) {
-                          <a [routerLink]="['/drivers', uuid]" class="driver-link">{{ entry.displayName }}</a>
-                        } @else {
-                          {{ entry.displayName }}
-                        }
+                        <a [routerLink]="['/drivers', cs.driverUuidBySimgridId().get(entry.id) ?? entry.id]" class="driver-link">{{ entry.displayName }}</a>
                         @if (entry.dsq) {
                           <span class="dsq-badge">DSQ</span>
                         }
@@ -237,11 +233,7 @@
                               <tr>
                                 <td>{{ result.dns ? 'DNS' : (result.position ?? '-') }}</td>
                                 <td class="driver-cell">
-                                  @if (result.driverUuid) {
-                                    <a [routerLink]="['/drivers', result.driverUuid]" class="driver-link">{{ result.displayName }}</a>
-                                  } @else {
-                                    {{ result.displayName }}
-                                  }
+                                  <a [routerLink]="['/drivers', result.driverUuid ?? result.simgridDriverId]" class="driver-link">{{ result.displayName }}</a>
                                 </td>
                                 <td>{{ result.car || '-' }}</td>
                               </tr>

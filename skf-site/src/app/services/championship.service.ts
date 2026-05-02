@@ -23,6 +23,7 @@ export interface RaceResultRow {
   carClass: string;
   dns: boolean;
   driverUuid: string | null;
+  simgridDriverId: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -116,6 +117,7 @@ export class ChampionshipService {
           carClass: entry.carClass,
           dns: result?.dns ?? false,
           driverUuid: driverMap.get(entry.id) ?? null,
+          simgridDriverId: entry.id,
         };
       })
       .filter((row) => row.position !== null || row.dns)

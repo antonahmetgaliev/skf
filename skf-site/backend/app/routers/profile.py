@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -14,8 +15,10 @@ from app.database import get_db
 from app.models.bwp import Driver
 from app.models.user import User
 from app.schemas.bwp import DriverOut, DriverPublicOut, LinkCandidateOut
+from app.services.simgrid import SimgridService
 
 router = APIRouter(prefix="/profile", tags=["Profile"])
+_simgrid = SimgridService()
 
 
 class LinkDriverBody(BaseModel):
@@ -112,12 +115,49 @@ async def get_my_driver(
 
 @router.get("/drivers/{driver_id}", response_model=DriverPublicOut)
 async def get_public_driver(
-    driver_id: uuid.UUID,
+    driver_id: str,
     db: AsyncSession = Depends(get_db),
 ):
-    """Return a public driver profile (no authentication required)."""
-    result = await db.execute(select(Driver).where(Driver.id == driver_id))
-    driver = result.scalar_one_or_none()
+    """Return a public driver profile by internal UUID or SimGrid numeric ID.
+    If no local record exists but the SimGrid ID is known in cached standings,
+    a synthetic (unregistered) profile is returned.
+    """
+    driver = None
+
+    # Try as UUID first
+    try:
+        uid = uuid.UUID(driver_id)
+        result = await db.execute(select(Driver).where(Driver.id == uid))
+        driver = result.scalar_one_or_none()
+    except ValueError:
+        pass
+
+    # Fall back to SimGrid numeric ID
+    if driver is None and driver_id.isdigit():
+        simgrid_id = int(driver_id)
+        result = await db.execute(
+            select(Driver).where(Driver.simgrid_driver_id == simgrid_id)
+        )
+        driver = result.scalar_one_or_none()
+
+        # No local record — synthesize from cached standings
+        if driver is None:
+            info = await _simgrid.find_simgrid_driver_info(simgrid_id)
+            if info is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found.")
+            display_name, country_code = info
+            return DriverPublicOut(
+                id=uuid.UUID(int=0),  # sentinel
+                name=display_name,
+                simgrid_driver_id=simgrid_id,
+                simgrid_display_name=display_name,
+                country_code=country_code or None,
+                photo_url=None,
+                created_at=datetime.now(timezone.utc),
+                points=[],
+                clearances=[],
+            )
+
     if not driver:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found.")
     return driver
