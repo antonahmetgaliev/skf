@@ -1,8 +1,8 @@
 <app-page>
-  <app-page-intro title="Admin" subtitle="Manage users and site settings." />
+  <app-page-intro [title]="'admin.title' | transloco" [subtitle]="'admin.subtitle' | transloco" />
 
   <app-tabs
-    [tabs]="[{key: 'users', label: 'Users'}, {key: 'site', label: 'Site'}, {key: 'calendar', label: 'Calendar'}, {key: 'translations', label: 'Translations'}]"
+    [tabs]="[{key: 'users', label: ('admin.tabUsers' | transloco)}, {key: 'site', label: ('admin.tabSite' | transloco)}, {key: 'calendar', label: ('admin.tabCalendar' | transloco)}, {key: 'translations', label: ('admin.tabTranslations' | transloco)}]"
     [activeTab]="activeTab()"
     (tabChange)="setActiveTab($any($event))"
   />
@@ -11,24 +11,24 @@
     <app-card [animated]="true">
       <div class="toolbar">
         <div class="filter-field">
-          <app-form-field label="Filter" fieldId="userFilter">
+          <app-form-field [label]="'admin.filter' | transloco" fieldId="userFilter">
             <input appInput
               id="userFilter"
               type="text"
-              placeholder="Search by name or Discord ID"
+              [placeholder]="'admin.searchByNameOrId' | transloco"
               [ngModel]="filter()"
               (ngModelChange)="filter.set($event)"
               autocomplete="off"
             />
           </app-form-field>
         </div>
-        <span class="meta">{{ filteredUsers().length }} user(s)</span>
+        <span class="meta">{{ filteredUsers().length }} {{ 'admin.userCount' | transloco }}</span>
       </div>
 
       @if (loading()) {
         <app-spinner />
       } @else if (filteredUsers().length === 0) {
-        <p class="empty">No users found.</p>
+        <p class="empty">{{ 'admin.noUsersFound' | transloco }}</p>
       } @else {
         <div class="user-list">
           @for (user of filteredUsers(); track user.id) {
@@ -48,7 +48,7 @@
               <div class="user-controls">
                 <div class="control-groups">
                   <div class="control-group">
-                    <app-form-field label="Role">
+                    <app-form-field [label]="'admin.role' | transloco">
                       <select appSelect size="sm"
                         [ngModel]="user.role"
                         (ngModelChange)="changeRole(user, $event)"
@@ -63,13 +63,13 @@
 
                   @if (user.role === 'community_manager') {
                     <div class="control-group">
-                      <app-form-field label="Community">
+                      <app-form-field [label]="'admin.community' | transloco">
                         <select appSelect size="sm"
                           [ngModel]="getAssignedCommunityId(user)"
                           (ngModelChange)="assignCommunity(user, $event)"
                           [disabled]="!canEdit(user)"
                         >
-                          <option value="">— None —</option>
+                          <option value="">{{ 'admin.none' | transloco }}</option>
                           @for (c of allCommunities(); track c.id) {
                             <option [value]="c.id">{{ c.name }}</option>
                           }
@@ -86,23 +86,23 @@
                       size="sm"
                       (click)="toggleBlock(user)"
                     >
-                      {{ user.blocked ? 'Unblock' : 'Block' }}
+                      {{ user.blocked ? ('admin.unblock' | transloco) : ('admin.block' | transloco) }}
                     </app-btn>
                   }
                   @if (canEdit(user)) {
                     <app-btn variant="ghost" size="sm" (click)="forceLogout(user)">
-                      Force logout
+                      {{ 'admin.forceLogout' | transloco }}
                     </app-btn>
                   }
                 </div>
               </div>
 
               @if (user.blocked) {
-                <span class="blocked-badge">Blocked</span>
+                <span class="blocked-badge">{{ 'admin.blocked' | transloco }}</span>
               }
 
               @if (user.lastLoginAt) {
-                <p class="last-login">Last login: {{ user.lastLoginAt | date:'medium' }}</p>
+                <p class="last-login">{{ 'admin.lastLogin' | transloco }} {{ user.lastLoginAt | date:'medium' }}</p>
               }
             </article>
           }
@@ -113,13 +113,13 @@
 
   @if (activeTab() === 'site') {
     <app-card [animated]="true">
-      <h3 class="section-title">Cache</h3>
+      <h3 class="section-title">{{ 'admin.cache' | transloco }}</h3>
       <p class="section-description">
-        Clear cached data from external sources. Fresh data will be fetched on the next request.
+        {{ 'admin.cacheDescription' | transloco }}
       </p>
       <div class="cache-actions">
         <app-btn variant="danger" size="sm" [disabled]="clearingCache()" (click)="clearCache()">
-          {{ clearingCache() ? 'Clearing...' : 'Clear All' }}
+          {{ clearingCache() ? ('admin.clearing' | transloco) : ('admin.clearAll' | transloco) }}
         </app-btn>
         <app-btn variant="ghost" size="sm" [disabled]="clearingCache()" (click)="clearCache('simgrid')">
           SimGrid

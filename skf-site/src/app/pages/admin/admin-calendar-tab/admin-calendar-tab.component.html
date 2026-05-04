@@ -23,17 +23,17 @@
             @if (poll.raceName) { {{ poll.raceName }} · }
             {{ poll.totalVotes }} vote{{ poll.totalVotes !== 1 ? 's' : '' }}
             @if (poll.isOpen) {
-              · <span class="dotd-live">LIVE</span>
+              · <span class="dotd-live">{{ 'dotd.live' | transloco }}</span>
             } @else {
-              · Closed
+              · {{ 'admin.closed' | transloco }}
             }
           </p>
         </div>
         <div class="action-buttons">
           @if (poll.isOpen) {
-            <app-btn variant="danger" size="sm" (click)="closeDotdPoll(poll.id)">Close</app-btn>
+            <app-btn variant="danger" size="sm" (click)="closeDotdPoll(poll.id)">{{ 'admin.close' | transloco }}</app-btn>
           }
-          <app-btn variant="ghost" size="sm" (click)="deleteDotdPoll(poll.id)">Delete</app-btn>
+          <app-btn variant="ghost" size="sm" (click)="deleteDotdPoll(poll.id)">{{ 'admin.delete' | transloco }}</app-btn>
         </div>
       </div>
     }
@@ -66,14 +66,14 @@
             <div>
               <h4 class="community-name">{{ c.name }}</h4>
               @if (c.discordUrl) {
-                <a class="community-discord" [href]="c.discordUrl" target="_blank" (click)="$event.stopPropagation()">Discord</a>
+                <a class="community-discord" [href]="c.discordUrl" target="_blank" (click)="$event.stopPropagation()">{{ 'admin.discord' | transloco }}</a>
               }
             </div>
           </div>
           <div class="action-buttons">
-            <app-btn variant="ghost" size="sm" (click)="editCommunity(c)">Edit</app-btn>
+            <app-btn variant="ghost" size="sm" (click)="editCommunity(c)">{{ 'admin.edit' | transloco }}</app-btn>
             @if (!c.isSkf) {
-              <app-btn variant="danger" size="sm" (click)="deleteCommunity(c)">Delete</app-btn>
+              <app-btn variant="danger" size="sm" (click)="deleteCommunity(c)">{{ 'admin.delete' | transloco }}</app-btn>
             }
           </div>
         </article>
@@ -91,7 +91,7 @@
     <app-card [animated]="true">
       <h3 class="section-title">
         <span class="community-color-swatch" [style.background]="community.color"></span>
-        {{ community.name }} — SimGrid Championships
+        {{ community.name }} — {{ 'admin.simgridChampionships' | transloco }}
       </h3>
       <p class="section-description">
         {{ 'admin.simgridDescription' | transloco }}
@@ -145,7 +145,7 @@
   <app-card [animated]="true">
     <h3 class="section-title">
       <span class="community-color-swatch" [style.background]="community.color"></span>
-      {{ community.name }} — Custom Championships
+      {{ community.name }} — {{ 'admin.customChampionships' | transloco }}
     </h3>
 
     <div class="section-toolbar">
@@ -167,8 +167,8 @@
               </p>
             </div>
             <div class="action-buttons">
-              <app-btn variant="ghost" size="sm" (click)="editChampionship(champ)">Edit</app-btn>
-              <app-btn variant="danger" size="sm" (click)="deleteChampionship(champ)">Delete</app-btn>
+              <app-btn variant="ghost" size="sm" (click)="editChampionship(champ)">{{ 'admin.edit' | transloco }}</app-btn>
+              <app-btn variant="danger" size="sm" (click)="deleteChampionship(champ)">{{ 'admin.delete' | transloco }}</app-btn>
             </div>
           </div>
 
@@ -181,13 +181,13 @@
                   @if (race.date) {
                     <span class="race-date-text">{{ race.date | date:'mediumDate' }}</span>
                   }
-                  @if (!race.track && !race.date) { Round {{ race.sortOrder + 1 }} }
+                  @if (!race.track && !race.date) { {{ 'admin.round' | transloco }} {{ race.sortOrder + 1 }} }
                 </span>
               </div>
             }
           </div>
 
-          <app-btn variant="ghost" size="sm" (click)="editChampionship(champ)">Edit Races</app-btn>
+          <app-btn variant="ghost" size="sm" (click)="editChampionship(champ)">{{ 'admin.editRaces' | transloco }}</app-btn>
         </div>
       }
       @if (communityChampionships().length === 0) {
@@ -204,17 +204,17 @@
   [(open)]="communityModalOpen"
 >
   <div class="modal-form">
-    <app-form-field label="Name" fieldId="communityName">
+    <app-form-field [label]="'admin.name' | transloco" fieldId="communityName">
       <input appInput
         id="communityName"
         type="text"
-        placeholder="Community name"
+        [placeholder]="'admin.communityNamePlaceholder' | transloco"
         [ngModel]="communityForm().name"
         (ngModelChange)="updateCommunityField('name', $event)"
         autocomplete="off"
       />
     </app-form-field>
-    <app-form-field label="Color" fieldId="communityColor">
+    <app-form-field [label]="'admin.color' | transloco" fieldId="communityColor">
       <input
         id="communityColor"
         type="color"
@@ -222,7 +222,7 @@
         (ngModelChange)="updateCommunityField('color', $event)"
       />
     </app-form-field>
-    <app-form-field label="Discord URL" fieldId="communityDiscord">
+    <app-form-field [label]="'admin.discordUrl' | transloco" fieldId="communityDiscord">
       <input appInput
         id="communityDiscord"
         type="url"
@@ -234,9 +234,9 @@
     </app-form-field>
   </div>
   <div modal-footer>
-    <app-btn variant="ghost" size="sm" (click)="communityModalOpen.set(false)">Cancel</app-btn>
+    <app-btn variant="ghost" size="sm" (click)="communityModalOpen.set(false)">{{ 'admin.cancel' | transloco }}</app-btn>
     <app-btn variant="primary" size="sm" (click)="saveCommunity()">
-      {{ editingCommunityId() ? 'Update' : 'Add' }}
+      {{ editingCommunityId() ? ('admin.update' | transloco) : ('admin.add' | transloco) }}
     </app-btn>
   </div>
 </app-modal>
@@ -255,9 +255,9 @@
     (save)="saveChampionship($event)"
   />
   <div modal-footer>
-    <app-btn variant="ghost" size="sm" (click)="champModalOpen.set(false)">Cancel</app-btn>
+    <app-btn variant="ghost" size="sm" (click)="champModalOpen.set(false)">{{ 'admin.cancel' | transloco }}</app-btn>
     <app-btn variant="primary" size="sm" (click)="champFormRef.onSave()">
-      {{ editingChampId() ? 'Update' : 'Add' }}
+      {{ editingChampId() ? ('admin.update' | transloco) : ('admin.add' | transloco) }}
     </app-btn>
   </div>
 </app-modal>
@@ -265,11 +265,11 @@
 <!-- DOTD Poll Modal -->
 <app-modal [title]="'admin.createDotdPoll' | transloco" width="md" [(open)]="dotdModalOpen">
   <div class="modal-form">
-    <app-form-field label="Championship" fieldId="dotd-champ-select">
+    <app-form-field [label]="'admin.championship' | transloco" fieldId="dotd-champ-select">
       <select appSelect id="dotd-champ-select"
               [(ngModel)]="dotdSelectedChampId"
               (ngModelChange)="onDotdChampionshipChange()">
-        <option [value]="0" disabled>Select championship...</option>
+        <option [value]="0" disabled>{{ 'admin.selectChampionship' | transloco }}</option>
         @for (c of dotdChampionships(); track c.id) {
           <option [value]="c.id">{{ c.name }}</option>
         }
@@ -277,18 +277,18 @@
     </app-form-field>
 
     @if (dotdStandings() !== null) {
-      <app-form-field label="Race (optional)" fieldId="dotd-race-select">
+      <app-form-field [label]="'admin.raceOptional' | transloco" fieldId="dotd-race-select">
         <select appSelect id="dotd-race-select"
                 [(ngModel)]="dotdSelectedRaceId"
                 (ngModelChange)="onDotdRaceChange()">
-          <option [value]="null">No specific race</option>
+          <option [value]="null">{{ 'admin.noSpecificRace' | transloco }}</option>
           @for (r of dotdStandings()!.races; track r.id) {
             <option [value]="r.id">{{ r.displayName }}</option>
           }
         </select>
       </app-form-field>
 
-      <app-form-field label="Drivers (select at least 2)" />
+      <app-form-field [label]="'admin.driversSelectAtLeast2' | transloco" />
       <ul class="dotd-driver-list" role="list">
         @for (entry of dotdStandings()!.entries; track entry.id) {
           <li class="dotd-driver-row">
@@ -303,10 +303,10 @@
         }
       </ul>
     } @else if (dotdSelectedChampId > 0) {
-      <p class="empty">Loading standings...</p>
+      <p class="empty">{{ 'admin.loadingStandings' | transloco }}</p>
     }
 
-    <app-form-field label="Closes at" fieldId="dotd-closes-at">
+    <app-form-field [label]="'admin.closesAt' | transloco" fieldId="dotd-closes-at">
       <input appInput id="dotd-closes-at" type="datetime-local"
              [(ngModel)]="dotdClosesAt" />
     </app-form-field>
@@ -316,11 +316,11 @@
     }
   </div>
   <div modal-footer>
-    <app-btn variant="ghost" size="sm" (click)="dotdModalOpen.set(false)">Cancel</app-btn>
+    <app-btn variant="ghost" size="sm" (click)="dotdModalOpen.set(false)">{{ 'admin.cancel' | transloco }}</app-btn>
     <app-btn variant="primary" size="sm"
             [disabled]="dotdCreating()"
             (click)="submitDotdPoll()">
-      {{ dotdCreating() ? 'Creating...' : 'Create Poll' }}
+      {{ dotdCreating() ? ('admin.creating' | transloco) : ('admin.createPoll' | transloco) }}
     </app-btn>
   </div>
 </app-modal>

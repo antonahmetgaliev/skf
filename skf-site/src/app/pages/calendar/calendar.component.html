@@ -107,8 +107,8 @@
             <div class="calendar-grid">
               @for (dayName of weekDays; track $index) {
                 <div class="calendar-weekday">
-                  <span class="weekday-full">{{ dayName }}</span>
-                  <span class="weekday-short">{{ weekDaysShort[$index] }}</span>
+                  <span class="weekday-full">{{ dayName | transloco }}</span>
+                  <span class="weekday-short">{{ weekDaysShort[$index] | transloco }}</span>
                 </div>
               }
 

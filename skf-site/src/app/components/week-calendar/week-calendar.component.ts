@@ -6,6 +6,7 @@ import {
   CalendarApiService,
   CalendarEvent,
 } from '../../services/calendar-api.service';
+import { LocaleService } from '../../services/locale.service';
 import { MediaApiService, YouTubeVideo } from '../../services/media-api.service';
 import { toLocalDateStr, toLocalTime } from '../../utils/date';
 import { CardComponent } from '../card/card.component';
@@ -61,6 +62,7 @@ interface NextRaceInfo {
 export class WeekCalendarComponent {
   private readonly calendarApi = inject(CalendarApiService);
   private readonly mediaApi = inject(MediaApiService);
+  private readonly locale = inject(LocaleService);
 
   readonly loading = signal(true);
   readonly todayRaces = signal<WeekRace[]>([]);
@@ -82,11 +84,11 @@ export class WeekCalendarComponent {
   }
 
   formatDate(date: Date): string {
-    return date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+    return date.toLocaleDateString(this.locale.locale, { weekday: 'short', day: 'numeric', month: 'short' });
   }
 
   formatTime(date: Date): string {
-    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString(this.locale.locale, { hour: '2-digit', minute: '2-digit' });
   }
 
   private async load(): Promise<void> {
@@ -267,7 +269,7 @@ export class WeekCalendarComponent {
 
   formatChampDate(iso: string): string {
     const d = new Date(iso);
-    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    return d.toLocaleDateString(this.locale.locale, { day: 'numeric', month: 'short' });
   }
 
   raceLink(race: WeekRace): string | null {

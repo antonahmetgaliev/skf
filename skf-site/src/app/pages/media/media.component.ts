@@ -6,6 +6,7 @@ import { CardComponent } from '../../components/card/card.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { InputDirective } from '../../directives/input.directive';
+import { LocaleService } from '../../services/locale.service';
 import { MediaApiService, YouTubeVideo } from '../../services/media-api.service';
 
 const PAGE_SIZE = 12;
@@ -18,6 +19,7 @@ const PAGE_SIZE = 12;
 })
 export class MediaComponent {
   private readonly mediaApi = inject(MediaApiService);
+  private readonly locale = inject(LocaleService);
 
   readonly allPastVideos = signal<YouTubeVideo[]>([]);
   readonly allUpcomingVideos = signal<YouTubeVideo[]>([]);
@@ -43,7 +45,7 @@ export class MediaComponent {
   formatDate(iso: string): string {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '';
-    return d.toLocaleDateString('en-GB', {
+    return d.toLocaleDateString(this.locale.locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',

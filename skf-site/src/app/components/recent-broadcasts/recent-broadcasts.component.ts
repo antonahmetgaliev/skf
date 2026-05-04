@@ -4,6 +4,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { BtnComponent } from '../btn/btn.component';
 import { CardComponent } from '../card/card.component';
+import { LocaleService } from '../../services/locale.service';
 import { MediaApiService, YouTubeVideo } from '../../services/media-api.service';
 
 @Component({
@@ -14,6 +15,7 @@ import { MediaApiService, YouTubeVideo } from '../../services/media-api.service'
 })
 export class RecentBroadcastsComponent {
   private readonly mediaApi = inject(MediaApiService);
+  private readonly locale = inject(LocaleService);
 
   readonly streams = signal<YouTubeVideo[]>([]);
 
@@ -24,7 +26,7 @@ export class RecentBroadcastsComponent {
   formatDate(iso: string): string {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '';
-    return d.toLocaleDateString('en-GB', {
+    return d.toLocaleDateString(this.locale.locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',

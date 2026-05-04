@@ -23,6 +23,7 @@ import {
   ChampionshipFormData,
 } from '../../components/championship-form/championship-form.component';
 import { AuthService } from '../../services/auth.service';
+import { LocaleService } from '../../services/locale.service';
 import { toLocalDateStr, toLocalDatetimeLocal, withLocalTzOffset } from '../../utils/date';
 
 interface CalendarDay {
@@ -49,8 +50,7 @@ interface YearCommunityColumn {
 type ViewMode = 'month' | 'year';
 
 const DEFAULT_COLOR = '#ffd600'; // gold fallback
-const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const WEEK_DAYS_SHORT = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const WEEK_DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const VIEW_TABS: { key: string; label: string }[] = [
   { key: 'month', label: 'calendar.month' },
   { key: 'year', label: 'calendar.year' },
@@ -65,10 +65,11 @@ const VIEW_TABS: { key: string; label: string }[] = [
 })
 export class CalendarComponent implements OnInit {
   private readonly calendarApi = inject(CalendarApiService);
+  private readonly locale = inject(LocaleService);
   readonly auth = inject(AuthService);
 
-  readonly weekDays = WEEK_DAYS;
-  readonly weekDaysShort = WEEK_DAYS_SHORT;
+  readonly weekDays = WEEK_DAY_KEYS.map((d) => `calendar.day.${d}`);
+  readonly weekDaysShort = WEEK_DAY_KEYS.map((d) => `calendar.dayShort.${d}`);
   readonly viewTabs = VIEW_TABS;
   readonly viewMode = signal<ViewMode>('month');
   readonly currentYear = signal(new Date().getFullYear());
@@ -93,7 +94,7 @@ export class CalendarComponent implements OnInit {
 
   readonly monthLabel = computed(() => {
     const d = new Date(this.currentYear(), this.currentMonth() - 1, 1);
-    return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    return d.toLocaleString(this.locale.locale, { month: 'long', year: 'numeric' });
   });
 
   readonly canGoBack = computed(() => {
@@ -137,7 +138,7 @@ export class CalendarComponent implements OnInit {
     const day = this.selectedDay();
     if (day === null) return '';
     const d = new Date(this.currentYear(), this.currentMonth() - 1, day);
-    return d.toLocaleDateString('en-GB', {
+    return d.toLocaleDateString(this.locale.locale, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -275,19 +276,19 @@ export class CalendarComponent implements OnInit {
   formatRaceDate(isoDate: string, isoEndDate?: string | null): string {
     const d = new Date(isoDate);
     if (isNaN(d.getTime())) return isoDate.slice(0, 10);
-    const date = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const date = d.toLocaleDateString(this.locale.locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
     const hasTime = /T\d{2}:\d{2}/.test(isoDate) && !isoDate.includes('T00:00:00');
     const startStr = hasTime
-      ? `${date} ${d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+      ? `${date} ${d.toLocaleTimeString(this.locale.locale, { hour: '2-digit', minute: '2-digit' })}`
       : date;
 
     if (isoEndDate) {
       const ed = new Date(isoEndDate);
       if (!isNaN(ed.getTime())) {
-        const endDate = ed.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const endDate = ed.toLocaleDateString(this.locale.locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
         const endHasTime = /T\d{2}:\d{2}/.test(isoEndDate) && !isoEndDate.includes('T00:00:00');
         const endStr = endHasTime
-          ? `${endDate} ${ed.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+          ? `${endDate} ${ed.toLocaleTimeString(this.locale.locale, { hour: '2-digit', minute: '2-digit' })}`
           : endDate;
         return `${startStr} — ${endStr}`;
       }

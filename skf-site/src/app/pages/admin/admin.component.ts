@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { FormFieldComponent } from '../../components/form-field/form-field.component';
 import { CardComponent } from '../../components/card/card.component';
@@ -20,7 +21,7 @@ type AdminTab = 'users' | 'site' | 'calendar' | 'translations';
 
 @Component({
   selector: 'app-admin',
-  imports: [FormsModule, DatePipe, InputDirective, SelectDirective, AdminCalendarTabComponent, AdminTranslationsTabComponent, BtnComponent, CardComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
+  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, AdminCalendarTabComponent, AdminTranslationsTabComponent, BtnComponent, CardComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',
 })
