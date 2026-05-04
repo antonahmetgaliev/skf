@@ -118,7 +118,6 @@
         <a routerLink="/admin" routerLinkActive="active">{{ 'nav.admin' | transloco }}</a>
       }
       <a routerLink="/incidents" routerLinkActive="active">{{ 'nav.incidents' | transloco }}</a>
-      <app-lang-switcher class="lang-switcher--mobile"></app-lang-switcher>
       <div class="auth-zone auth-zone--mobile">
         @if (auth.isLoggedIn()) {
           <a routerLink="/profile" class="user-badge">
