@@ -1,23 +1,20 @@
+<!-- Languages management -->
 <app-card [animated]="true">
   <h3 class="section-title">Languages</h3>
-  <div class="lang-bar">
+  <p class="section-description">Manage available languages. Translations for all languages are shown side by side below.</p>
+
+  <div class="section-toolbar">
     @for (lang of languages(); track lang.code) {
-      <button
-        type="button"
-        class="lang-chip"
-        [class.active]="lang.code === activeLang()"
-        (click)="switchLang(lang.code)"
-      >
+      <span class="lang-tag">
         {{ lang.name }} ({{ lang.code }})
-      </button>
+        <button type="button" class="lang-tag-remove" (click)="removeLanguage(lang.code)" title="Remove">&times;</button>
+      </span>
     }
-    <app-btn variant="ghost" size="sm" (click)="showAddLang.set(!showAddLang())">
-      + Add Language
-    </app-btn>
+    <app-btn variant="ghost" size="sm" (click)="showAddLang.set(!showAddLang())">+ Add Language</app-btn>
   </div>
 
   @if (showAddLang()) {
-    <div class="add-lang-form">
+    <div class="inline-form">
       <app-form-field label="Code" fieldId="newLangCode">
         <input appInput id="newLangCode" type="text" placeholder="e.g. fr" [ngModel]="newLangCode()" (ngModelChange)="newLangCode.set($event)" />
       </app-form-field>
@@ -29,20 +26,23 @@
   }
 </app-card>
 
+<!-- Translations editor -->
 <app-card [animated]="true">
-  <div class="translations-toolbar">
+  <div class="toolbar">
     <div class="filter-field">
-      <app-form-field label="Search" fieldId="transFilter">
-        <input appInput id="transFilter" type="text" placeholder="Filter by key or value" [ngModel]="filter()" (ngModelChange)="filter.set($event)" autocomplete="off" />
+      <app-form-field label="Filter" fieldId="transFilter">
+        <input appInput id="transFilter" type="text" placeholder="Search by key or value" [ngModel]="filter()" (ngModelChange)="filter.set($event)" autocomplete="off" />
       </app-form-field>
     </div>
-    <div class="toolbar-actions">
+    <div class="action-buttons">
       <app-btn variant="ghost" size="sm" (click)="showAddKey.set(!showAddKey())">+ Add Key</app-btn>
-      <app-btn variant="ghost" size="sm" (click)="exportJson()">Export JSON</app-btn>
-      <label class="import-btn">
-        <app-btn variant="ghost" size="sm">Import JSON</app-btn>
-        <input type="file" accept=".json" hidden (change)="importJson($event)" />
-      </label>
+      @for (lang of languages(); track lang.code) {
+        <app-btn variant="ghost" size="sm" (click)="exportJson(lang.code)">Export {{ lang.code.toUpperCase() }}</app-btn>
+        <label class="import-label">
+          <app-btn variant="ghost" size="sm">Import {{ lang.code.toUpperCase() }}</app-btn>
+          <input type="file" accept=".json" hidden (change)="importJson($event, lang.code)" />
+        </label>
+      }
       <app-btn variant="primary" size="sm" [disabled]="!hasChanges() || saving()" (click)="save()">
         {{ saving() ? 'Saving...' : 'Save Changes' }}
       </app-btn>
@@ -54,40 +54,58 @@
   }
 
   @if (showAddKey()) {
-    <div class="add-key-form">
+    <div class="inline-form">
       <app-form-field label="Key" fieldId="newKey">
         <input appInput id="newKey" type="text" placeholder="e.g. nav.home" [ngModel]="newKey()" (ngModelChange)="newKey.set($event)" />
       </app-form-field>
-      <app-form-field label="Value" fieldId="newValue">
-        <input appInput id="newValue" type="text" placeholder="Translation value" [ngModel]="newValue()" (ngModelChange)="newValue.set($event)" />
-      </app-form-field>
+      @for (lang of languages(); track lang.code) {
+        <app-form-field [label]="lang.code.toUpperCase()" [fieldId]="'newVal_' + lang.code">
+          <input appInput [id]="'newVal_' + lang.code" type="text" [placeholder]="'Value (' + lang.code + ')'" [ngModel]="newValues()[lang.code] || ''" (ngModelChange)="updateNewValue(lang.code, $event)" />
+        </app-form-field>
+      }
       <app-btn variant="primary" size="sm" (click)="addKey()">Add</app-btn>
     </div>
   }
 
   @if (loading()) {
     <app-spinner />
-  } @else if (filteredTranslations().length === 0) {
+  } @else if (filteredRows().length === 0) {
     <p class="empty">No translations found.</p>
   } @else {
-    <div class="translations-list">
-      @for (item of filteredTranslations(); track item.key) {
-        <div class="translation-row" [class.modified]="modified().has(item.key)">
-          <span class="translation-key">{{ item.key }}</span>
-          <input
-            appInput
-            class="translation-value"
-            type="text"
-            [ngModel]="item.value"
-            (ngModelChange)="updateValue(item.key, $event)"
-          />
-          <button type="button" class="delete-btn" (click)="deleteKey(item.key)" title="Delete">
-            &times;
-          </button>
-        </div>
-      }
+    <div class="translations-table-wrap">
+      <table class="translations-table">
+        <thead>
+          <tr>
+            <th class="col-key">Key</th>
+            @for (lang of languages(); track lang.code) {
+              <th class="col-lang">{{ lang.name }} ({{ lang.code }})</th>
+            }
+            <th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of filteredRows(); track row.key) {
+            <tr>
+              <td class="cell-key">{{ row.key }}</td>
+              @for (lang of languages(); track lang.code) {
+                <td class="cell-value" [class.modified]="modified().has(lang.code + ':' + row.key)">
+                  <input
+                    appInput
+                    type="text"
+                    [ngModel]="row.values[lang.code] || ''"
+                    (ngModelChange)="updateValue(row.key, lang.code, $event)"
+                  />
+                </td>
+              }
+              <td class="cell-actions">
+                <button type="button" class="delete-btn" (click)="deleteKey(row.key)" title="Delete">&times;</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
   }
 
-  <p class="count-meta">{{ filteredTranslations().length }} key(s)</p>
+  <span class="meta">{{ filteredRows().length }} key(s)</span>
 </app-card>

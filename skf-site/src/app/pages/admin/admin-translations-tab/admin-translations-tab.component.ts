@@ -1,11 +1,17 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { BtnComponent } from '../../../components/btn/btn.component';
 import { CardComponent } from '../../../components/card/card.component';
 import { FormFieldComponent } from '../../../components/form-field/form-field.component';
 import { SpinnerComponent } from '../../../components/spinner/spinner.component';
 import { InputDirective } from '../../../directives/input.directive';
 import { Language, TranslationApiService, TranslationItem } from '../../../services/translation-api.service';
+
+interface TranslationRow {
+  key: string;
+  values: Record<string, string>; // lang code → value
+}
 
 @Component({
   selector: 'app-admin-translations-tab',
@@ -18,8 +24,7 @@ export class AdminTranslationsTabComponent implements OnInit {
   private readonly api = inject(TranslationApiService);
 
   readonly languages = signal<Language[]>([]);
-  readonly activeLang = signal('en');
-  readonly translations = signal<TranslationItem[]>([]);
+  readonly rows = signal<TranslationRow[]>([]);
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly filter = signal('');
@@ -33,16 +38,18 @@ export class AdminTranslationsTabComponent implements OnInit {
   // New key form
   readonly showAddKey = signal(false);
   readonly newKey = signal('');
-  readonly newValue = signal('');
+  readonly newValues = signal<Record<string, string>>({});
 
-  // Track modified items
+  // Track modified cells: "lang:key"
   readonly modified = signal<Set<string>>(new Set());
 
-  readonly filteredTranslations = computed(() => {
+  readonly filteredRows = computed(() => {
     const q = this.filter().toLowerCase();
-    if (!q) return this.translations();
-    return this.translations().filter(
-      (t) => t.key.toLowerCase().includes(q) || t.value.toLowerCase().includes(q)
+    if (!q) return this.rows();
+    return this.rows().filter(
+      (r) =>
+        r.key.toLowerCase().includes(q) ||
+        Object.values(r.values).some((v) => v.toLowerCase().includes(q))
     );
   });
 
@@ -56,50 +63,92 @@ export class AdminTranslationsTabComponent implements OnInit {
     this.api.getLanguages().subscribe({
       next: (langs) => {
         this.languages.set(langs);
-        if (langs.length > 0 && !langs.find((l) => l.code === this.activeLang())) {
-          this.activeLang.set(langs[0].code);
-        }
-        this.loadTranslations();
+        this.loadAllTranslations();
       },
     });
   }
 
-  loadTranslations(): void {
+  loadAllTranslations(): void {
+    const langs = this.languages();
+    if (langs.length === 0) {
+      this.rows.set([]);
+      return;
+    }
+
     this.loading.set(true);
     this.modified.set(new Set());
-    this.api.getTranslations(this.activeLang()).subscribe({
-      next: (items) => {
-        this.translations.set(items);
+
+    const requests = langs.reduce(
+      (acc, lang) => {
+        acc[lang.code] = this.api.getTranslations(lang.code);
+        return acc;
+      },
+      {} as Record<string, ReturnType<TranslationApiService['getTranslations']>>
+    );
+
+    forkJoin(requests).subscribe({
+      next: (results) => {
+        // Collect all unique keys
+        const keySet = new Set<string>();
+        for (const items of Object.values(results)) {
+          for (const item of items) {
+            keySet.add(item.key);
+          }
+        }
+
+        // Build rows
+        const rows: TranslationRow[] = [...keySet].sort().map((key) => {
+          const values: Record<string, string> = {};
+          for (const lang of langs) {
+            const item = results[lang.code]?.find((i: TranslationItem) => i.key === key);
+            values[lang.code] = item?.value ?? '';
+          }
+          return { key, values };
+        });
+
+        this.rows.set(rows);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
     });
   }
 
-  switchLang(code: string): void {
-    this.activeLang.set(code);
-    this.loadTranslations();
-  }
-
-  updateValue(key: string, value: string): void {
-    this.translations.update((list) =>
-      list.map((t) => (t.key === key ? { ...t, value } : t))
+  updateValue(key: string, lang: string, value: string): void {
+    this.rows.update((list) =>
+      list.map((r) =>
+        r.key === key ? { ...r, values: { ...r.values, [lang]: value } } : r
+      )
     );
-    this.modified.update((set) => new Set(set).add(key));
+    this.modified.update((set) => new Set(set).add(`${lang}:${key}`));
   }
 
   save(): void {
-    const modifiedKeys = this.modified();
-    const items = this.translations().filter((t) => modifiedKeys.has(t.key));
-    if (items.length === 0) return;
+    const modifiedCells = this.modified();
+    if (modifiedCells.size === 0) return;
+
+    // Group modified items by language
+    const byLang: Record<string, TranslationItem[]> = {};
+    for (const cell of modifiedCells) {
+      const [lang, ...keyParts] = cell.split(':');
+      const key = keyParts.join(':');
+      const row = this.rows().find((r) => r.key === key);
+      if (!row) continue;
+      if (!byLang[lang]) byLang[lang] = [];
+      byLang[lang].push({ key, value: row.values[lang] ?? '' });
+    }
 
     this.saving.set(true);
     this.message.set('');
-    this.api.saveTranslations(this.activeLang(), items).subscribe({
+
+    const saves = Object.entries(byLang).map(([lang, items]) =>
+      this.api.saveTranslations(lang, items)
+    );
+
+    forkJoin(saves).subscribe({
       next: () => {
         this.modified.set(new Set());
         this.saving.set(false);
-        this.message.set(`Saved ${items.length} translation(s).`);
+        this.message.set(`Saved ${modifiedCells.size} translation(s).`);
       },
       error: () => {
         this.saving.set(false);
@@ -109,12 +158,16 @@ export class AdminTranslationsTabComponent implements OnInit {
   }
 
   deleteKey(key: string): void {
-    this.api.deleteKey(this.activeLang(), key).subscribe({
+    const langs = this.languages();
+    const deletes = langs.map((l) => this.api.deleteKey(l.code, key));
+    forkJoin(deletes).subscribe({
       next: () => {
-        this.translations.update((list) => list.filter((t) => t.key !== key));
+        this.rows.update((list) => list.filter((r) => r.key !== key));
         this.modified.update((set) => {
           const next = new Set(set);
-          next.delete(key);
+          for (const lang of langs) {
+            next.delete(`${lang.code}:${key}`);
+          }
           return next;
         });
       },
@@ -123,18 +176,37 @@ export class AdminTranslationsTabComponent implements OnInit {
 
   addKey(): void {
     const key = this.newKey().trim();
-    const value = this.newValue().trim();
     if (!key) return;
 
-    const items: TranslationItem[] = [{ key, value }];
-    this.api.saveTranslations(this.activeLang(), items).subscribe({
+    const vals = this.newValues();
+    const langs = this.languages();
+    const items: Record<string, TranslationItem[]> = {};
+    for (const lang of langs) {
+      items[lang.code] = [{ key, value: vals[lang.code] ?? '' }];
+    }
+
+    const saves = Object.entries(items).map(([lang, itms]) =>
+      this.api.saveTranslations(lang, itms)
+    );
+
+    forkJoin(saves).subscribe({
       next: () => {
-        this.translations.update((list) => [...list, { key, value }].sort((a, b) => a.key.localeCompare(b.key)));
+        const values: Record<string, string> = {};
+        for (const lang of langs) {
+          values[lang.code] = vals[lang.code] ?? '';
+        }
+        this.rows.update((list) =>
+          [...list, { key, values }].sort((a, b) => a.key.localeCompare(b.key))
+        );
         this.newKey.set('');
-        this.newValue.set('');
+        this.newValues.set({});
         this.showAddKey.set(false);
       },
     });
+  }
+
+  updateNewValue(lang: string, value: string): void {
+    this.newValues.update((v) => ({ ...v, [lang]: value }));
   }
 
   addLanguage(): void {
@@ -145,6 +217,10 @@ export class AdminTranslationsTabComponent implements OnInit {
     this.api.addLanguage(code, name).subscribe({
       next: (lang) => {
         this.languages.update((list) => [...list, lang]);
+        // Add empty column to all rows
+        this.rows.update((list) =>
+          list.map((r) => ({ ...r, values: { ...r.values, [code]: '' } }))
+        );
         this.newLangCode.set('');
         this.newLangName.set('');
         this.showAddLang.set(false);
@@ -156,38 +232,39 @@ export class AdminTranslationsTabComponent implements OnInit {
     this.api.deleteLanguage(code).subscribe({
       next: () => {
         this.languages.update((list) => list.filter((l) => l.code !== code));
-        if (this.activeLang() === code) {
-          const remaining = this.languages();
-          this.activeLang.set(remaining.length > 0 ? remaining[0].code : '');
-          this.loadTranslations();
-        }
+        this.rows.update((list) =>
+          list.map((r) => {
+            const { [code]: _, ...rest } = r.values;
+            return { ...r, values: rest };
+          })
+        );
       },
     });
   }
 
-  exportJson(): void {
-    this.api.exportTranslations(this.activeLang()).subscribe({
+  exportJson(lang: string): void {
+    this.api.exportTranslations(lang).subscribe({
       next: (data) => {
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `translations_${this.activeLang()}.json`;
+        a.download = `translations_${lang}.json`;
         a.click();
         URL.revokeObjectURL(url);
       },
     });
   }
 
-  importJson(event: Event): void {
+  importJson(event: Event, lang: string): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
 
-    this.api.importTranslations(this.activeLang(), file).subscribe({
+    this.api.importTranslations(lang, file).subscribe({
       next: () => {
-        this.message.set('Import successful.');
-        this.loadTranslations();
+        this.message.set(`Import to "${lang}" successful.`);
+        this.loadAllTranslations();
         input.value = '';
       },
       error: () => {
