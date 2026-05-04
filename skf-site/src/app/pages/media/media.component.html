@@ -1,17 +1,17 @@
 <app-page>
-  <app-page-intro title="Media" subtitle="Streams and videos from our YouTube channel." />
+  <app-page-intro [title]="'media.title' | transloco" [subtitle]="'media.subtitle' | transloco" />
 
   <div class="search-bar">
     <input appInput
       type="text"
-      placeholder="Filter by name..."
+      [placeholder]="'media.filterPlaceholder' | transloco"
       [value]="searchQuery()"
       (input)="onSearch($any($event.target).value)"
     />
   </div>
 
   @if (loading()) {
-    <p class="status-msg">Loading videos...</p>
+    <p class="status-msg">{{ 'media.loadingVideos' | transloco }}</p>
   }
 
   @if (errorMessage()) {
@@ -21,7 +21,7 @@
   @if (!loading() && !errorMessage()) {
     @if (upcomingVideos().length > 0) {
       <section class="broadcast-section">
-        <h2 class="section-title">Upcoming Broadcasts</h2>
+        <h2 class="section-title">{{ 'media.upcomingBroadcasts' | transloco }}</h2>
         <div class="video-grid">
           @for (video of upcomingVideos(); track video.videoId) {
             <a
@@ -49,7 +49,7 @@
         </div>
         @if (hasMoreUpcoming()) {
           <div class="show-more">
-            <app-btn variant="outline" size="sm" (click)="showMoreUpcoming()">Show More</app-btn>
+            <app-btn variant="outline" size="sm" (click)="showMoreUpcoming()">{{ 'media.showMore' | transloco }}</app-btn>
           </div>
         }
       </section>
@@ -57,7 +57,7 @@
 
     @if (pastVideos().length > 0) {
       <section class="broadcast-section">
-        <h2 class="section-title">Past Broadcasts</h2>
+        <h2 class="section-title">{{ 'media.pastBroadcasts' | transloco }}</h2>
         <div class="video-grid">
           @for (video of pastVideos(); track video.videoId) {
             <a
@@ -85,14 +85,14 @@
         </div>
         @if (hasMorePast()) {
           <div class="show-more">
-            <app-btn variant="outline" size="sm" (click)="showMorePast()">Show More</app-btn>
+            <app-btn variant="outline" size="sm" (click)="showMorePast()">{{ 'media.showMore' | transloco }}</app-btn>
           </div>
         }
       </section>
     }
 
     @if (pastVideos().length === 0 && upcomingVideos().length === 0) {
-      <p class="status-msg">No videos found.</p>
+      <p class="status-msg">{{ 'media.noVideosFound' | transloco }}</p>
     }
   }
 </app-page>

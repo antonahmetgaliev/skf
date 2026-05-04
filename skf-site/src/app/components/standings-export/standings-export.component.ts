@@ -8,6 +8,7 @@ import {
   model,
   signal,
 } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   ChampionshipDetails,
   StandingEntry,
@@ -20,7 +21,7 @@ import { BtnComponent } from '../btn/btn.component';
 @Component({
   selector: 'app-standings-export',
   standalone: true,
-  imports: [BtnComponent],
+  imports: [TranslocoPipe, BtnComponent],
   templateUrl: './standings-export.component.html',
   styleUrl: './standings-export.component.scss',
 })

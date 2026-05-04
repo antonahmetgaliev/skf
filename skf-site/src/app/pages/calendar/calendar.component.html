@@ -1,8 +1,8 @@
 <ng-template #manageActions let-event>
   @if (event.source === 'custom' && canManageCommunity(event.communityId)) {
     <div class="event-manage-actions">
-      <app-btn variant="ghost" size="sm" (click)="editChampionship(event)">Edit</app-btn>
-      <app-btn variant="danger" size="sm" (click)="deleteChampionship(event)">Delete</app-btn>
+      <app-btn variant="ghost" size="sm" (click)="editChampionship(event)">{{ 'calendar.edit' | transloco }}</app-btn>
+      <app-btn variant="danger" size="sm" (click)="deleteChampionship(event)">{{ 'calendar.delete' | transloco }}</app-btn>
     </div>
   }
 </ng-template>
@@ -16,12 +16,12 @@
         class="filter-toggle-btn"
         [class.active]="filtersOpen() || hasActiveFilters()"
         (click)="toggleFilters()"
-        title="Toggle filters"
+        [title]="'calendar.toggleFilters' | transloco"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
           <path d="M1 2a1 1 0 011-1h12a1 1 0 01.8 1.6L10 9.3V13a1 1 0 01-.5.9l-2 1A1 1 0 016 14V9.3L1.2 2.6A1 1 0 011 2z"/>
         </svg>
-        Filters
+        {{ 'calendar.filters' | transloco }}
         @if (hasActiveFilters()) {
           <span class="filter-badge">!</span>
         }
@@ -32,7 +32,7 @@
         class="community-chip"
         [class.active]="selectedCommunityIds().size === 0"
         (click)="toggleCommunity(null)"
-      >All</button>
+      >{{ 'calendar.all' | transloco }}</button>
       @for (c of communities(); track c.id) {
         <button
           type="button"
@@ -46,7 +46,7 @@
 
     @for (mc of managedCommunities(); track mc.id) {
       <app-btn variant="accent" size="sm" (click)="openAddChampionship(mc.id)">
-        + Add{{ managedCommunities().length > 1 ? ' to ' + mc.name : '' }}
+        + {{ 'calendar.add' | transloco }}{{ managedCommunities().length > 1 ? ' to ' + mc.name : '' }}
       </app-btn>
     }
 
@@ -63,13 +63,13 @@
     @if (filtersOpen()) {
       <aside class="filter-sidebar">
         <div class="filter-section">
-          <label class="filter-label" for="simulatorFilter">Simulator</label>
+          <label class="filter-label" for="simulatorFilter">{{ 'calendar.simulator' | transloco }}</label>
           <select appSelect size="sm"
             id="simulatorFilter"
             [ngModel]="selectedSimulator()"
             (ngModelChange)="selectedSimulator.set($event || null)"
           >
-            <option [ngValue]="null">All simulators</option>
+            <option [ngValue]="null">{{ 'calendar.allSimulators' | transloco }}</option>
             @for (sim of availableSimulators(); track sim) {
               <option [ngValue]="sim">{{ sim }}</option>
             }
@@ -77,7 +77,7 @@
         </div>
 
         @if (hasActiveFilters()) {
-          <app-btn variant="ghost" size="sm" (click)="clearFilters()">Clear filters</app-btn>
+          <app-btn variant="ghost" size="sm" (click)="clearFilters()">{{ 'calendar.clearFilters' | transloco }}</app-btn>
         }
       </aside>
     }
@@ -89,12 +89,12 @@
           <!-- Header with navigation -->
           <div class="calendar-header">
             @if (canGoBack()) {
-              <app-btn variant="ghost" size="sm" (click)="navigateMonth(-1)">&larr; Prev</app-btn>
+              <app-btn variant="ghost" size="sm" (click)="navigateMonth(-1)">&larr; {{ 'calendar.prev' | transloco }}</app-btn>
             }
             <h2 class="month-label">{{ monthLabel() }}</h2>
             <div class="header-actions">
-              <app-btn variant="ghost" size="sm" (click)="goToToday()">Today</app-btn>
-              <app-btn variant="ghost" size="sm" (click)="navigateMonth(1)">Next &rarr;</app-btn>
+              <app-btn variant="ghost" size="sm" (click)="goToToday()">{{ 'calendar.today' | transloco }}</app-btn>
+              <app-btn variant="ghost" size="sm" (click)="navigateMonth(1)">{{ 'calendar.next' | transloco }} &rarr;</app-btn>
             </div>
           </div>
 
@@ -148,10 +148,10 @@
         <div class="year-header-card">
           <app-card class="calendar-card">
             <div class="calendar-header">
-              <app-btn variant="ghost" size="sm" (click)="navigateYear(-1)">&larr; Prev</app-btn>
+              <app-btn variant="ghost" size="sm" (click)="navigateYear(-1)">&larr; {{ 'calendar.prev' | transloco }}</app-btn>
               <h2 class="month-label">{{ yearLabel() }}</h2>
               <div class="header-actions">
-                <app-btn variant="ghost" size="sm" (click)="navigateYear(1)">Next &rarr;</app-btn>
+                <app-btn variant="ghost" size="sm" (click)="navigateYear(1)">{{ 'calendar.next' | transloco }} &rarr;</app-btn>
               </div>
             </div>
           </app-card>
@@ -163,7 +163,7 @@
           <app-alert variant="error">{{ yearError() }}</app-alert>
         } @else if (yearCommunityColumns().length === 0) {
           <app-card>
-            <p class="year-empty">No events found for {{ yearLabel() }}.</p>
+            <p class="year-empty">{{ 'calendar.noEventsForYear' | transloco }}</p>
           </app-card>
         } @else {
           <div class="year-columns">
@@ -173,7 +173,7 @@
                   <span class="year-column-dot" [style.background]="col.color"></span>
                   <h3 class="year-column-title">{{ col.name }}</h3>
                   @if (col.discordUrl) {
-                    <a class="discord-link" [href]="col.discordUrl" target="_blank" rel="noopener" title="Join Discord">
+                    <a class="discord-link" [href]="col.discordUrl" target="_blank" rel="noopener" [title]="'calendar.joinDiscord' | transloco">
                       <svg width="18" height="14" viewBox="0 0 71 55" fill="currentColor">
                         <path d="M60.1 4.9A58.5 58.5 0 0045.4.2a.2.2 0 00-.2.1 40.8 40.8 0 00-1.8 3.7 54 54 0 00-16.2 0A37.4 37.4 0 0025.4.3a.2.2 0 00-.2-.1A58.4 58.4 0 0010.5 4.9a.2.2 0 00-.1.1C1.5 18.7-.9 32.2.3 45.5v.2a58.9 58.9 0 0017.7 9a.2.2 0 00.3-.1 42.1 42.1 0 003.6-5.9.2.2 0 00-.1-.3 38.8 38.8 0 01-5.5-2.7.2.2 0 01 0-.4l1.1-.9a.2.2 0 01.2 0 42 42 0 0035.6 0 .2.2 0 01.2 0l1.1.9a.2.2 0 010 .4 36.4 36.4 0 01-5.5 2.7.2.2 0 00-.1.3 47.3 47.3 0 003.6 5.9.2.2 0 00.3.1 58.7 58.7 0 0017.7-9 .2.2 0 00.1-.2c1.4-15.1-2.4-28.2-10.1-39.8a.2.2 0 00-.1-.1zM23.7 37.3c-3.4 0-6.3-3.2-6.3-7s2.8-7 6.3-7 6.4 3.1 6.3 7-2.8 7-6.3 7zm23.2 0c-3.4 0-6.3-3.2-6.3-7s2.8-7 6.3-7 6.4 3.1 6.3 7-2.8 7-6.3 7z"/>
                       </svg>
@@ -208,7 +208,7 @@
                         </div>
                       }
                       @if (event.simgridChampionshipId) {
-                        <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>
+                        <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">{{ 'calendar.viewChampionship' | transloco }} &rarr;</a>
                       }
                       <ng-container *ngTemplateOutlet="manageActions; context: { $implicit: event }" />
                     </div>
@@ -228,7 +228,7 @@
     <aside class="day-sidebar">
       <div class="sidebar-header">
         <h3>{{ selectedDayLabel() }}</h3>
-        <button class="sidebar-close" (click)="selectDay(selectedDay()!)" title="Close">&times;</button>
+        <button class="sidebar-close" (click)="selectDay(selectedDay()!)" [title]="'calendar.close' | transloco">&times;</button>
       </div>
       <div class="sidebar-body">
         @for (event of selectedDayEvents(); track event.id) {
@@ -280,7 +280,7 @@
               }
               @if (event.simgridChampionshipId) {
                 <div class="event-card-actions">
-                  <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">View championship &rarr;</a>
+                  <a routerLink="/championships" [queryParams]="{id: event.simgridChampionshipId}" class="event-link">{{ 'calendar.viewChampionship' | transloco }} &rarr;</a>
                 </div>
               }
               <ng-container *ngTemplateOutlet="manageActions; context: { $implicit: event }" />
@@ -292,7 +292,7 @@
   }
   <!-- ── Championship Modal ── -->
   <app-modal
-    [title]="editingChampId() ? 'Edit Championship' : 'Add Championship'"
+    [title]="editingChampId() ? ('calendar.editChampionship' | transloco) : ('calendar.addChampionship' | transloco)"
     width="md"
     [(open)]="champModalOpen"
   >
@@ -304,9 +304,9 @@
       (save)="saveChampionship($event)"
     />
     <div modal-footer>
-      <app-btn variant="ghost" size="sm" (click)="champModalOpen.set(false)">Cancel</app-btn>
+      <app-btn variant="ghost" size="sm" (click)="champModalOpen.set(false)">{{ 'calendar.cancel' | transloco }}</app-btn>
       <app-btn variant="primary" size="sm" (click)="calChampFormRef.onSave()">
-        {{ editingChampId() ? 'Update' : 'Add' }}
+        {{ editingChampId() ? ('calendar.update' | transloco) : ('calendar.addBtn' | transloco) }}
       </app-btn>
     </div>
   </app-modal>

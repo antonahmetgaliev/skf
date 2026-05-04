@@ -2,10 +2,10 @@
   <div class="giveaway-backdrop" (click)="close()">
     <section class="giveaway-modal" (click)="$event.stopPropagation()">
       <header class="giveaway-header">
-        <h3>Giveaway — Eligible Drivers</h3>
+        <h3>{{ 'giveaway.title' | transloco }}</h3>
         <div class="giveaway-actions">
           <label class="giveaway-input-label">
-            Min races
+            {{ 'giveaway.minRaces' | transloco }}
             <input appInput size="sm"
               class="giveaway-input"
               type="number"
@@ -15,7 +15,7 @@
             />
           </label>
           <app-btn variant="ghost" size="sm" (click)="close()">
-            Close
+            {{ 'giveaway.close' | transloco }}
           </app-btn>
         </div>
       </header>
@@ -23,7 +23,7 @@
       <div class="giveaway-body">
         @if (winner(); as w) {
           <div class="giveaway-winner">
-            <span class="giveaway-winner-label">Winner</span>
+            <span class="giveaway-winner-label">{{ 'giveaway.winner' | transloco }}</span>
             <span class="giveaway-winner-name">{{ w }}</span>
           </div>
         }
@@ -35,14 +35,14 @@
             [disabled]="drivers().length === 0"
             (click)="pickRandom()"
           >
-            Get Random
+            {{ 'giveaway.getRandom' | transloco }}
           </app-btn>
         </div>
 
         @if (drivers().length === 0) {
-          <app-empty>No drivers match the minimum race requirement.</app-empty>
+          <app-empty>{{ 'giveaway.noDriversMatch' | transloco }}</app-empty>
         } @else {
-          <p class="giveaway-count">{{ drivers().length }} driver(s) eligible</p>
+          <p class="giveaway-count">{{ drivers().length }} {{ 'giveaway.driversEligible' | transloco }}</p>
           <div class="giveaway-list">
             @for (driver of drivers(); track driver.id; let i = $index) {
               <div class="giveaway-driver">

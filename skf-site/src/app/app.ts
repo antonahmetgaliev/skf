@@ -1,14 +1,16 @@
 import { Component, ElementRef, HostListener, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { filter } from 'rxjs/operators';
 import { DotdWidgetComponent } from './components/dotd-widget/dotd-widget.component';
+import { LangSwitcherComponent } from './components/lang-switcher/lang-switcher.component';
 import { AuthService } from './services/auth.service';
 import { CalendarApiService, Community } from './services/calendar-api.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, DotdWidgetComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, TranslocoPipe, DotdWidgetComponent, LangSwitcherComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

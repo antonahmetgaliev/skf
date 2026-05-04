@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { BtnComponent } from '../btn/btn.component';
 import { CardComponent } from '../card/card.component';
@@ -7,7 +8,7 @@ import { MediaApiService, YouTubeVideo } from '../../services/media-api.service'
 
 @Component({
   selector: 'app-recent-broadcasts',
-  imports: [RouterLink, BtnComponent, CardComponent],
+  imports: [RouterLink, TranslocoPipe, BtnComponent, CardComponent],
   templateUrl: './recent-broadcasts.component.html',
   styleUrl: './recent-broadcasts.component.scss',
 })

@@ -1,7 +1,7 @@
 @if (streams().length > 0) {
   <div class="broadcasts-section">
-    <p class="eyebrow center">Watch</p>
-    <h2 class="section-title">Recent Broadcasts</h2>
+    <p class="eyebrow center">{{ 'media.watch' | transloco }}</p>
+    <h2 class="section-title">{{ 'media.recentBroadcasts' | transloco }}</h2>
     <div class="broadcast-grid">
       @for (stream of streams(); track stream.videoId) {
         <app-card class="broadcast-card">
@@ -28,7 +28,7 @@
       }
     </div>
     <div class="view-all">
-      <app-btn variant="outline" routerLink="/media">View All Media</app-btn>
+      <app-btn variant="outline" routerLink="/media">{{ 'media.viewAllMedia' | transloco }}</app-btn>
     </div>
   </div>
 }

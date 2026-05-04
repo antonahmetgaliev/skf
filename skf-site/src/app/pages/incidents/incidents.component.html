@@ -1,8 +1,8 @@
 <app-page>
-  <app-page-intro title="Incidents">
+  <app-page-intro [title]="'incidents.title' | transloco">
     @if (auth.isAdmin()) {
       <app-btn variant="accent" (click)="openNewWindowModal()">
-        + Open Window
+        + {{ 'incidents.openWindow' | transloco }}
       </app-btn>
     }
   </app-page-intro>
@@ -11,12 +11,12 @@
     <!-- Windows sidebar -->
     <aside [class.incidents-layout__aside--hidden]="!windowDetail() && !loadingDetail()">
     <app-card>
-      <h2 class="sidebar-heading">Race Windows</h2>
+      <h2 class="sidebar-heading">{{ 'incidents.raceWindows' | transloco }}</h2>
 
       @if (loadingWindows()) {
         <app-spinner />
       } @else if (windows().length === 0) {
-        <app-empty>No incident windows yet.</app-empty>
+        <app-empty>{{ 'incidents.noWindows' | transloco }}</app-empty>
       } @else {
         <ul class="window-list">
           @for (w of openWindows(); track w.id) {
@@ -33,7 +33,7 @@
           }
           @if (recentClosedWindows().length > 0) {
             @if (openWindows().length > 0) {
-              <li class="window-group-label">Recent</li>
+              <li class="window-group-label">{{ 'incidents.recent' | transloco }}</li>
             }
             @for (w of recentClosedWindows(); track w.id) {
               <li class="window-item"
@@ -47,7 +47,7 @@
             }
           }
           @if (oldClosedWindows().length > 0) {
-            <li class="window-group-label window-group-label--old">Archived</li>
+            <li class="window-group-label window-group-label--old">{{ 'incidents.archived' | transloco }}</li>
             @for (w of oldClosedWindows(); track w.id) {
               <li class="window-item window-item--old"
                 [class.window-item--active]="windowDetail()?.id === w.id"
@@ -65,11 +65,11 @@
 
     @if (auth.isAdmin() || auth.isJudge()) {
       <app-card class="verdict-rules-card">
-        <h2 class="sidebar-heading">Verdict Rules</h2>
+        <h2 class="sidebar-heading">{{ 'incidents.verdictRules' | transloco }}</h2>
         <table class="verdict-rules-table">
           <thead>
             <tr>
-              <th>Verdict</th>
+              <th>{{ 'incidents.verdict' | transloco }}</th>
               <th>BWP</th>
               <th></th>
             </tr>
@@ -110,11 +110,11 @@
       </app-card>
 
       <app-card class="verdict-rules-card">
-        <h2 class="sidebar-heading">Description Presets</h2>
+        <h2 class="sidebar-heading">{{ 'incidents.descriptionPresets' | transloco }}</h2>
         <table class="verdict-rules-table">
           <thead>
             <tr>
-              <th>Description</th>
+              <th>{{ 'incidents.description' | transloco }}</th>
               <th></th>
             </tr>
           </thead>
@@ -206,11 +206,11 @@
     <app-card>
       @if (!windowDetail() && !loadingDetail()) {
         <div class="window-picker-centered">
-          <h2 class="sidebar-heading">Race Windows</h2>
+          <h2 class="sidebar-heading">{{ 'incidents.raceWindows' | transloco }}</h2>
           @if (loadingWindows()) {
             <app-spinner />
           } @else if (windows().length === 0) {
-            <app-empty>No incident windows yet.</app-empty>
+            <app-empty>{{ 'incidents.noWindows' | transloco }}</app-empty>
           } @else {
             @if (openWindows().length > 0) {
               <ul class="window-list window-list--grid">
@@ -225,7 +225,7 @@
               </ul>
             }
             @if (recentClosedWindows().length > 0) {
-              <p class="window-group-label" [class.window-group-label--spaced]="openWindows().length > 0">Recent</p>
+              <p class="window-group-label" [class.window-group-label--spaced]="openWindows().length > 0">{{ 'incidents.recent' | transloco }}</p>
               <ul class="window-list window-list--grid">
                 @for (w of recentClosedWindows(); track w.id) {
                   <li class="window-item" (click)="selectWindow(w.id)">
@@ -238,7 +238,7 @@
               </ul>
             }
             @if (oldClosedWindows().length > 0) {
-              <p class="window-group-label window-group-label--old window-group-label--spaced">Archived</p>
+              <p class="window-group-label window-group-label--old window-group-label--spaced">{{ 'incidents.archived' | transloco }}</p>
               <ul class="window-list window-list--grid">
                 @for (w of oldClosedWindows(); track w.id) {
                   <li class="window-item window-item--old" (click)="selectWindow(w.id)">
@@ -268,7 +268,7 @@
           <div class="detail-meta">
             @if (w.isOpen) {
               <app-badge variant="open">OPEN</app-badge>
-              <span class="detail-closes">Closes {{ w.closesAt | date:'dd MMM yyyy HH:mm' }} UTC · {{ closesIn(w.closesAt) }} remaining</span>
+              <span class="detail-closes">{{ 'incidents.closes' | transloco }} {{ w.closesAt | date:'dd MMM yyyy HH:mm' }} UTC · {{ closesIn(w.closesAt) }} {{ 'incidents.remaining' | transloco }}</span>
             } @else {
               <app-badge variant="closed">CLOSED</app-badge>
             }
@@ -277,11 +277,11 @@
             <div class="detail-actions">
               @if (w.isOpen) {
                 <app-btn variant="ghost" size="sm" (click)="closeWindow(w.id)">
-                  Close Window
+                  {{ 'incidents.closeWindow' | transloco }}
                 </app-btn>
               }
               <app-btn variant="danger" size="sm" (click)="deleteWindow(w.id)">
-                Delete
+                {{ 'incidents.delete' | transloco }}
               </app-btn>
             </div>
           }
@@ -291,23 +291,23 @@
           <span class="incident-count">{{ w.incidents.length }} incident{{ w.incidents.length !== 1 ? 's' : '' }}</span>
           @if (auth.isAdmin() || auth.isJudge()) {
             <app-btn variant="ghost" size="sm" (click)="openDiscordPreview(w)">
-              Copy for Discord
+              {{ 'incidents.copyForDiscord' | transloco }}
             </app-btn>
           }
           @if (auth.isJudge() && w.incidents.length > 0 && hasUnpublished(w)) {
             <app-btn variant="accent" size="sm" (click)="publishAllIncidents(w.id)">
-              Publish All Verdicts
+              {{ 'incidents.publishAllVerdicts' | transloco }}
             </app-btn>
           }
           @if (w.isOpen) {
             <app-btn variant="accent" size="sm" (click)="openNewIncidentModal()">
-              + File Incident
+              + {{ 'incidents.fileIncident' | transloco }}
             </app-btn>
           }
         </div>
 
         @if (w.incidents.length === 0) {
-          <app-empty>No incidents filed yet.</app-empty>
+          <app-empty>{{ 'incidents.noIncidents' | transloco }}</app-empty>
         } @else {
           <div class="incident-cards">
             @for (group of groupedIncidents(); track group.session) {
@@ -757,7 +757,7 @@
 </app-page>
 
 <!-- ── New Window Modal ──────────────────────────────────────────────────── -->
-<app-modal title="Open Incident Window" width="md" [(open)]="showNewWindowModal">
+<app-modal [title]="'incidents.openIncidentWindow' | transloco" width="md" [(open)]="showNewWindowModal">
   <app-form-field label="Championship (optional)" fieldId="nwChamp">
     <select appSelect
       id="nwChamp"
@@ -819,7 +819,7 @@
 </app-modal>
 
 <!-- ── File Incident Modal ───────────────────────────────────────────────── -->
-<app-modal title="File Incident" width="md" [(open)]="showNewIncidentModal">
+<app-modal [title]="'incidents.fileIncident' | transloco" width="md" [(open)]="showNewIncidentModal">
   <div class="driver-inputs">
     @for (name of niDriverNames; track trackByIndex($index); let i = $index) {
       <div class="driver-input-row">
@@ -907,7 +907,7 @@
 </app-modal>
 
 <!-- ── Incident Detail Modal ─────────────────────────────────────────────── -->
-<app-modal title="Incident Detail" width="lg" [(open)]="showDetailModal">
+<app-modal [title]="'incidents.incidentDetail' | transloco" width="lg" [(open)]="showDetailModal">
   @if (detailIncident(); as inc) {
     <app-detail-list>
       @if (inc.sessionName) {
@@ -971,11 +971,11 @@
 </app-modal>
 
 <!-- Discord preview modal -->
-<app-modal title="Discord Preview" width="md" [(open)]="showDiscordPreview">
+<app-modal [title]="'incidents.discordPreview' | transloco" width="md" [(open)]="showDiscordPreview">
   <pre class="discord-preview">{{ discordPreviewText }}</pre>
   <div modal-footer>
     <app-btn variant="accent" (click)="copyDiscordText()">
-      {{ copiedDecisions ? '✓ Copied!' : 'Copy to Clipboard' }}
+      {{ copiedDecisions ? ('incidents.copied' | transloco) : ('incidents.copyToClipboard' | transloco) }}
     </app-btn>
     <app-btn variant="ghost" (click)="showDiscordPreview.set(false)">
       Close

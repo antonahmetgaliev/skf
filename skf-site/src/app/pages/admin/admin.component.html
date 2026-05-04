@@ -2,7 +2,7 @@
   <app-page-intro title="Admin" subtitle="Manage users and site settings." />
 
   <app-tabs
-    [tabs]="[{key: 'users', label: 'Users'}, {key: 'site', label: 'Site'}, {key: 'calendar', label: 'Calendar'}]"
+    [tabs]="[{key: 'users', label: 'Users'}, {key: 'site', label: 'Site'}, {key: 'calendar', label: 'Calendar'}, {key: 'translations', label: 'Translations'}]"
     [activeTab]="activeTab()"
     (tabChange)="setActiveTab($any($event))"
   />
@@ -136,5 +136,9 @@
 
   @if (activeTab() === 'calendar') {
     <app-admin-calendar-tab />
+  }
+
+  @if (activeTab() === 'translations') {
+    <app-admin-translations-tab />
   }
 </app-page>

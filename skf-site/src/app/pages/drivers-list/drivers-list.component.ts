@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { EmptyComponent } from '../../components/empty/empty.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
@@ -10,7 +11,7 @@ import { BwpApiService, Driver } from '../../services/bwp-api.service';
 
 @Component({
   selector: 'app-drivers-list',
-  imports: [RouterLink, FormsModule, InputDirective, PageIntroComponent, PageLayoutComponent, SpinnerComponent, EmptyComponent],
+  imports: [RouterLink, FormsModule, TranslocoPipe, InputDirective, PageIntroComponent, PageLayoutComponent, SpinnerComponent, EmptyComponent],
   templateUrl: './drivers-list.component.html',
   styleUrl: './drivers-list.component.scss',
 })

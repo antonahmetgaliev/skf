@@ -16,25 +16,25 @@
 
       <div class="profile-details">
         <div class="detail-row">
-          <span class="detail-label">Discord ID</span>
+          <span class="detail-label">{{ 'profile.discordId' | transloco }}</span>
           <span class="detail-value">{{ user.discordId }}</span>
         </div>
         <div class="detail-row">
-          <span class="detail-label">Member since</span>
+          <span class="detail-label">{{ 'profile.memberSince' | transloco }}</span>
           <span class="detail-value">{{ user.createdAt | date:'mediumDate' }}</span>
         </div>
         @if (user.lastLoginAt) {
           <div class="detail-row">
-            <span class="detail-label">Last login</span>
+            <span class="detail-label">{{ 'profile.lastLogin' | transloco }}</span>
             <span class="detail-value">{{ user.lastLoginAt | date:'medium' }}</span>
           </div>
         }
         <div class="detail-row">
-          <span class="detail-label">Name in SKF Racing Hub</span>
+          <span class="detail-label">{{ 'profile.nameInHub' | transloco }}</span>
           <span class="detail-value guild-nickname-row">
             <span>{{ user.guildNickname || '—' }}</span>
             <app-btn variant="ghost" size="xs" [disabled]="syncingNickname()" (click)="syncGuildNickname()">
-              {{ syncingNickname() ? 'Syncing…' : 'Sync' }}
+              {{ syncingNickname() ? ('profile.syncing' | transloco) : ('profile.sync' | transloco) }}
             </app-btn>
           </span>
         </div>
@@ -42,7 +42,7 @@
 
       <!-- Driver profile section (expanded inline) -->
       <div class="driver-section">
-        <h2 class="section-title">Driver Profile</h2>
+        <h2 class="section-title">{{ 'profile.driverProfile' | transloco }}</h2>
         @if (user.driverId) {
           @if (loadingDriver()) {
             <app-spinner />
@@ -50,13 +50,13 @@
 
             <!-- Photo + identity header -->
             <div class="driver-profile-head">
-              <div class="driver-photo-wrap" (click)="startEditPhoto()" title="Click to change photo">
+              <div class="driver-photo-wrap" (click)="startEditPhoto()" [title]="'profile.changePhoto' | transloco">
                 @if (driver.photoUrl) {
                   <img class="driver-photo" [src]="driver.photoUrl" alt="{{ driver.name }}" />
                 } @else {
                   <span class="driver-photo driver-photo--fallback">{{ driver.name.charAt(0).toUpperCase() }}</span>
                 }
-                <span class="driver-photo-hint">Change</span>
+                <span class="driver-photo-hint">{{ 'profile.change' | transloco }}</span>
               </div>
               <div class="driver-identity">
                 <div class="driver-identity-row">
@@ -87,11 +87,11 @@
                 />
                 <div class="photo-edit-actions">
                   <app-btn variant="ghost" size="xs" [disabled]="savingPhoto()" (click)="savePhoto()">
-                    {{ savingPhoto() ? 'Saving…' : 'Save' }}
+                    {{ savingPhoto() ? ('profile.saving' | transloco) : ('profile.save' | transloco) }}
                   </app-btn>
-                  <app-btn variant="ghost" size="xs" (click)="cancelEditPhoto()">Cancel</app-btn>
+                  <app-btn variant="ghost" size="xs" (click)="cancelEditPhoto()">{{ 'profile.cancel' | transloco }}</app-btn>
                   @if (driver.photoUrl) {
-                    <app-btn variant="ghost" size="xs" class="danger-ghost" [disabled]="savingPhoto()" (click)="editPhotoValue = ''; savePhoto()">Remove</app-btn>
+                    <app-btn variant="ghost" size="xs" class="danger-ghost" [disabled]="savingPhoto()" (click)="editPhotoValue = ''; savePhoto()">{{ 'profile.remove' | transloco }}</app-btn>
                   }
                 </div>
               </div>
@@ -100,13 +100,13 @@
             <!-- BWP History -->
             @if (driver.points.length > 0) {
               <div class="driver-detail-section">
-                <h3 class="detail-section-title">BWP History</h3>
+                <h3 class="detail-section-title">{{ 'profile.bwpHistory' | transloco }}</h3>
                 <div class="points-table">
                   <div class="points-header" aria-hidden="true">
-                    <span>Pts</span>
-                    <span>Issued</span>
-                    <span>Expires</span>
-                    <span>Status</span>
+                    <span>{{ 'profile.pts' | transloco }}</span>
+                    <span>{{ 'profile.issued' | transloco }}</span>
+                    <span>{{ 'profile.expires' | transloco }}</span>
+                    <span>{{ 'profile.status' | transloco }}</span>
                   </div>
                   @for (point of driver.points; track point.id) {
                     <div class="point-row" [class.expired]="isExpired(point.expiresOn)">
@@ -114,7 +114,7 @@
                       <span>{{ point.issuedOn | date:'dd MMM yyyy' }}</span>
                       <span>{{ point.expiresOn | date:'dd MMM yyyy' }}</span>
                       <app-badge [variant]="isExpired(point.expiresOn) ? 'closed' : 'open'">
-                        {{ isExpired(point.expiresOn) ? 'Expired' : 'Active' }}
+                        {{ isExpired(point.expiresOn) ? ('profile.expired' | transloco) : ('profile.active' | transloco) }}
                       </app-badge>
                     </div>
                   }
@@ -125,14 +125,14 @@
             <!-- Championship Results -->
             @if (championshipResults().length > 0) {
               <div class="driver-detail-section">
-                <h3 class="detail-section-title">Championship Results</h3>
+                <h3 class="detail-section-title">{{ 'profile.championshipResults' | transloco }}</h3>
                 <div class="champ-list">
                   @for (result of championshipResults(); track result.championshipId) {
                     <div class="champ-row" [class.champ-finished]="isFinishedChampionship(result)">
                       <div class="champ-meta">
                         <span class="champ-name">{{ result.championshipName }}</span>
                         @if (!isFinishedChampionship(result)) {
-                          <span class="champ-status-tag">Active</span>
+                          <span class="champ-status-tag">{{ 'profile.active' | transloco }}</span>
                         }
                       </div>
                       <div class="champ-result">
@@ -150,7 +150,7 @@
             }
 
             <div class="driver-actions">
-              <app-btn variant="ghost" size="sm" class="danger-ghost" (click)="unlinkDriver()">Unlink</app-btn>
+              <app-btn variant="ghost" size="sm" class="danger-ghost" (click)="unlinkDriver()">{{ 'profile.unlink' | transloco }}</app-btn>
             </div>
           }
         } @else {
@@ -158,28 +158,28 @@
             <app-spinner />
           } @else {
             <div class="no-driver">
-              <p class="hint">No driver profile linked to your account yet.</p>
-              <app-btn variant="accent" size="sm" (click)="fetchLinkCandidates()">Find my profile</app-btn>
+              <p class="hint">{{ 'profile.noDriverLinked' | transloco }}</p>
+              <app-btn variant="accent" size="sm" (click)="fetchLinkCandidates()">{{ 'profile.findMyProfile' | transloco }}</app-btn>
             </div>
           }
         }
       </div>
 
       <div class="profile-actions">
-        <app-btn variant="danger" (click)="logout()">Logout</app-btn>
+        <app-btn variant="danger" (click)="logout()">{{ 'profile.logout' | transloco }}</app-btn>
       </div>
     </app-card>
   } @else {
     <app-card [animated]="true">
-      <p>You are not signed in.</p>
-      <app-btn variant="accent" (click)="auth.login()">Sign in with Discord</app-btn>
+      <p>{{ 'profile.notSignedIn' | transloco }}</p>
+      <app-btn variant="accent" (click)="auth.login()">{{ 'profile.signInWithDiscord' | transloco }}</app-btn>
     </app-card>
   }
 </app-page>
 
 <!-- Link Driver Modal -->
-<app-modal title="Link your driver profile" width="md" [(open)]="showLinkModal">
-  <p class="hint">We found the following matches for <strong>{{ auth.user()?.guildNickname || auth.user()?.displayName }}</strong>. Select the correct one to link your account:</p>
+<app-modal [title]="'profile.linkDriverProfile' | transloco" width="md" [(open)]="showLinkModal">
+  <p class="hint">{{ 'profile.linkDescription' | transloco }}</p>
   <div class="candidates">
     @for (candidate of linkCandidates(); track candidate.id) {
       <div class="candidate">
@@ -198,7 +198,7 @@
           [disabled]="linking()"
           (click)="confirmLink(candidate.id)"
         >
-          {{ linking() ? 'Linking…' : 'Link' }}
+          {{ linking() ? ('profile.linking' | transloco) : ('profile.link' | transloco) }}
         </app-btn>
       </div>
     }
@@ -207,6 +207,6 @@
     <app-form-field [error]="linkError()" />
   }
   <div modal-footer>
-    <app-btn variant="ghost" (click)="skipLink()">Skip for now</app-btn>
+    <app-btn variant="ghost" (click)="skipLink()">{{ 'profile.skipForNow' | transloco }}</app-btn>
   </div>
 </app-modal>

@@ -1,13 +1,13 @@
 <app-page class="bwp-page">
-  <app-page-intro title="Driver License Control" subtitle="Track BWP points, keep dates for the 3-month expiry, and manage penalty rules in one place." />
+  <app-page-intro [title]="'bwp.title' | transloco" [subtitle]="'bwp.subtitle' | transloco" />
 
   <section class="content-grid">
     @if (auth.isAdmin()) {
     <div class="stack">
       <app-card [animated]="true" class="delay-1">
-        <h2>Add driver</h2>
+        <h2>{{ 'bwp.addDriver' | transloco }}</h2>
         <form class="form" (ngSubmit)="addDriver()">
-          <app-form-field label="Driver" fieldId="newDriverSelect">
+          <app-form-field [label]="'bwp.driver' | transloco" fieldId="newDriverSelect">
             <select appSelect
               id="newDriverSelect"
               name="newDriverSelect"
@@ -15,11 +15,11 @@
               (ngModelChange)="newDriverSelection.set($event)"
               required
             >
-              <option value="__none__" disabled>Select a driver…</option>
+              <option value="__none__" disabled>{{ 'bwp.selectDriver' | transloco }}</option>
               @for (driver of sortedDrivers(); track driver.id) {
                 <option [value]="driver.id">{{ driver.name }}</option>
               }
-              <option value="__new__">── Add new driver ──</option>
+              <option value="__new__">{{ 'bwp.addNewDriver' | transloco }}</option>
             </select>
           </app-form-field>
           @if (newDriverSelection() === '__new__') {
@@ -34,7 +34,7 @@
             />
           }
           <app-btn variant="accent" type="submit">
-            {{ newDriverSelection() === '__new__' ? 'Create driver' : 'Select driver' }}
+            {{ newDriverSelection() === '__new__' ? ('bwp.createDriver' | transloco) : ('bwp.selectDriverBtn' | transloco) }}
           </app-btn>
         </form>
         @if (driverError) {
@@ -43,14 +43,14 @@
       </app-card>
 
       <app-card [animated]="true" class="delay-2">
-        <h2>Add BWP point</h2>
+        <h2>{{ 'bwp.addBwpPoint' | transloco }}</h2>
         <form class="form" (ngSubmit)="addPoint()">
           <div class="driver-search-group">
-            <app-form-field label="Driver" fieldId="driverSelect">
+            <app-form-field [label]="'bwp.driver' | transloco" fieldId="driverSelect">
               <input appInput
                 class="driver-search-input"
                 type="text"
-                placeholder="Search driver…"
+                [placeholder]="'bwp.searchDriver' | transloco"
                 [ngModel]="pointDriverFilter()"
                 (ngModelChange)="pointDriverFilter.set($event)"
                 autocomplete="off"
@@ -62,7 +62,7 @@
                 [disabled]="drivers().length === 0"
                 required
               >
-                <option value="" disabled>Select a driver</option>
+                <option value="" disabled>{{ 'bwp.selectADriver' | transloco }}</option>
                 @for (driver of filteredSelectDrivers(); track driver.id) {
                   <option [value]="driver.id">{{ driver.name }}</option>
                 }
@@ -71,7 +71,7 @@
           </div>
 
           <div class="form-grid">
-            <app-form-field label="BWP points" fieldId="pointValue">
+            <app-form-field [label]="'bwp.bwpPoints' | transloco" fieldId="pointValue">
               <input appInput
                 id="pointValue"
                 name="pointValue"
@@ -82,7 +82,7 @@
                 required
               />
             </app-form-field>
-            <app-form-field label="Issued date" fieldId="pointDate">
+            <app-form-field [label]="'bwp.issuedDate' | transloco" fieldId="pointDate">
               <input appInput
                 id="pointDate"
                 name="pointDate"
@@ -92,9 +92,9 @@
               />
             </app-form-field>
           </div>
-          <p class="hint">Expiry is calculated automatically (+3 months).</p>
+          <p class="hint">{{ 'bwp.expiryHint' | transloco }}</p>
           <app-btn variant="accent" type="submit" [disabled]="drivers().length === 0">
-            Add point
+            {{ 'bwp.addPoint' | transloco }}
           </app-btn>
         </form>
         @if (pointError) {
@@ -103,15 +103,15 @@
       </app-card>
 
       <app-card [animated]="true" class="delay-3">
-        <h2>BWP penalty rules</h2>
-        <p class="hint">Set thresholds and the penalty applied at or above each total.</p>
+        <h2>{{ 'bwp.penaltyRules' | transloco }}</h2>
+        <p class="hint">{{ 'bwp.penaltyRulesHint' | transloco }}</p>
         <div class="rules-summary">
           @if (sortedPenaltyRules().length === 0) {
-            <app-empty>No penalty rules configured.</app-empty>
+            <app-empty>{{ 'bwp.noPenaltyRules' | transloco }}</app-empty>
           } @else {
             <div class="rules-summary-header" aria-hidden="true">
-              <span>Threshold</span>
-              <span>Penalty</span>
+              <span>{{ 'bwp.threshold' | transloco }}</span>
+              <span>{{ 'bwp.penalty' | transloco }}</span>
             </div>
             @for (rule of sortedPenaltyRules(); track rule.id) {
               <div class="rules-summary-row">
@@ -128,7 +128,7 @@
             type="button"
             (click)="rulesModalOpen.set(true)"
           >
-            Manage rules
+            {{ 'bwp.manageRules' | transloco }}
           </app-btn>
         </div>
       </app-card>
@@ -138,18 +138,18 @@
     <app-card [animated]="true" class="delay-4 drivers">
       <div class="card-header">
         <div class="card-title">
-          <h2>Active penalties</h2>
+          <h2>{{ 'bwp.activePenalties' | transloco }}</h2>
           <span class="meta">{{ penaltySummary() }}</span>
         </div>
       </div>
       <div class="driver-toolbar">
         <div class="filter-field">
-          <app-form-field label="Filter name" fieldId="driverFilter">
+          <app-form-field [label]="'bwp.filterName' | transloco" fieldId="driverFilter">
             <input appInput
               id="driverFilter"
               name="driverFilter"
               type="text"
-              placeholder="Search drivers"
+              [placeholder]="'bwp.searchDrivers' | transloco"
               [ngModel]="nameFilter()"
               (ngModelChange)="nameFilter.set($event)"
               autocomplete="off"
@@ -157,26 +157,26 @@
           </app-form-field>
         </div>
         <div class="sort-field">
-          <app-form-field label="Order by" fieldId="driverSort">
+          <app-form-field [label]="'bwp.orderBy' | transloco" fieldId="driverSort">
             <select appSelect
               id="driverSort"
               name="driverSort"
               [ngModel]="sortMode()"
               (ngModelChange)="sortMode.set($event)"
             >
-              <option value="bwp-desc">BWP (high to low)</option>
-              <option value="bwp-asc">BWP (low to high)</option>
-              <option value="name-asc">Name (A-Z)</option>
-              <option value="name-desc">Name (Z-A)</option>
+              <option value="bwp-desc">{{ 'bwp.bwpHighToLow' | transloco }}</option>
+              <option value="bwp-asc">{{ 'bwp.bwpLowToHigh' | transloco }}</option>
+              <option value="name-asc">{{ 'bwp.nameAZ' | transloco }}</option>
+              <option value="name-desc">{{ 'bwp.nameZA' | transloco }}</option>
             </select>
           </app-form-field>
         </div>
       </div>
       <div class="driver-list">
         @if (drivers().length === 0) {
-          <app-empty>Add a driver to start tracking BWP points.</app-empty>
+          <app-empty>{{ 'bwp.addDriverToStart' | transloco }}</app-empty>
         } @else if (displayDrivers().length === 0) {
-          <app-empty>No drivers match the current filter.</app-empty>
+          <app-empty>{{ 'bwp.noDriversMatch' | transloco }}</app-empty>
         } @else {
           @for (driver of displayDrivers(); track driver.id) {
             <article class="driver">
@@ -184,7 +184,7 @@
                 <div>
                   <h3><a [routerLink]="['/drivers', driver.id]" class="driver-name-link">{{ driver.name }}</a></h3>
                   <p class="driver-meta">
-                    {{ getActivePoints(driver).length }} active points -
+                    {{ getActivePoints(driver).length }} {{ 'bwp.activePointsLabel' | transloco }} -
                     {{ getTotalPoints(driver) }} BWP
                     @if (getActivePenalty(driver); as penalty) {
                       <span class="driver-penalty">· {{ penalty.label }}</span>
@@ -195,7 +195,7 @@
                   <div class="pill-group">
                     <span class="pill">{{ getTotalPoints(driver) }} BWP</span>
                     @if (getActivePenalty(driver)) {
-                      <span class="pill danger">Penalty</span>
+                      <span class="pill danger">{{ 'bwp.penalty' | transloco }}</span>
                     }
                   </div>
                   <div class="driver-buttons">
@@ -205,7 +205,7 @@
                       type="button"
                       (click)="toggleDriverCollapse(driver.id)"
                     >
-                      {{ isDriverCollapsed(driver.id) ? 'Expand' : 'Collapse' }}
+                      {{ isDriverCollapsed(driver.id) ? ('bwp.expand' | transloco) : ('bwp.collapse' | transloco) }}
                     </app-btn>
                     <app-btn
                       variant="ghost"
@@ -213,7 +213,7 @@
                       type="button"
                       (click)="toggleExpiredVisibility(driver.id)"
                     >
-                      {{ isExpiredHidden(driver.id) ? 'Show expired' : 'Hide expired' }}
+                      {{ isExpiredHidden(driver.id) ? ('bwp.showExpired' | transloco) : ('bwp.hideExpired' | transloco) }}
                     </app-btn>
                     @if (auth.isAdmin() || auth.isJudge()) {
                     <app-btn
@@ -222,7 +222,7 @@
                       type="button"
                       (click)="renameDriver(driver.id)"
                     >
-                      Rename
+                      {{ 'bwp.rename' | transloco }}
                     </app-btn>
                     <app-btn
                       variant="ghost"
@@ -241,7 +241,7 @@
                       type="button"
                       (click)="deleteDriver(driver.id)"
                     >
-                      Delete driver
+                      {{ 'bwp.deleteDriver' | transloco }}
                     </app-btn>
                     }
                   </div>
@@ -285,22 +285,22 @@
                               (change)="toggleClearance(driver, rule.id)"
                             />
                             <span class="penalty-check-text">
-                              {{ rule.threshold }} BWP — {{ rule.label || 'Penalty' }}
+                              {{ rule.threshold }} BWP — {{ rule.label || ('bwp.penalty' | transloco) }}
                             </span>
                             @if (isClearedPenalty(driver, rule.id)) {
-                              <span class="cleared-badge">Cleared</span>
+                              <span class="cleared-badge">{{ 'bwp.cleared' | transloco }}</span>
                             } @else if (getTotalPoints(driver) >= rule.threshold) {
-                              <span class="pending-badge">Pending</span>
+                              <span class="pending-badge">{{ 'bwp.pending' | transloco }}</span>
                             }
                           </label>
                         } @else {
                           <span class="penalty-check-text">
-                            {{ rule.threshold }} BWP — {{ rule.label || 'Penalty' }}
+                            {{ rule.threshold }} BWP — {{ rule.label || ('bwp.penalty' | transloco) }}
                           </span>
                           @if (isClearedPenalty(driver, rule.id)) {
-                            <span class="cleared-badge">Cleared</span>
+                            <span class="cleared-badge">{{ 'bwp.cleared' | transloco }}</span>
                           } @else if (getTotalPoints(driver) >= rule.threshold) {
-                            <span class="pending-badge">Pending</span>
+                            <span class="pending-badge">{{ 'bwp.pending' | transloco }}</span>
                           }
                         }
                       </div>
@@ -314,9 +314,9 @@
                   @if (getVisiblePoints(driver).length === 0) {
                     <app-empty>
                       @if (driver.points.length === 0) {
-                        No points recorded yet.
+                        {{ 'bwp.noPointsRecorded' | transloco }}
                       } @else {
-                        No visible points.
+                        {{ 'bwp.noVisiblePoints' | transloco }}
                       }
                     </app-empty>
                   } @else {
@@ -324,13 +324,13 @@
                       <div class="point" [class.expired]="isExpired(point)">
                         <div>
                           <span class="point-value">{{ point.points }} BWP</span>
-                          <span class="point-date">Issued {{ formatDate(point.issuedOn) }}</span>
+                          <span class="point-date">{{ 'bwp.issued' | transloco }} {{ formatDate(point.issuedOn) }}</span>
                         </div>
                         <div class="point-meta">
-                          <span>expires {{ formatDate(point.expiresOn) }}</span>
+                          <span>{{ 'bwp.expires' | transloco }} {{ formatDate(point.expiresOn) }}</span>
                           <div class="point-actions">
                             @if (isExpired(point)) {
-                              <span class="tag">expired</span>
+                              <span class="tag">{{ 'bwp.expired' | transloco }}</span>
                             }
                             @if (auth.isAdmin()) {
                             <button
@@ -338,7 +338,7 @@
                               type="button"
                               (click)="deletePoint(driver.id, point.id)"
                             >
-                              Delete
+                              {{ 'bwp.delete' | transloco }}
                             </button>
                             }
                           </div>
@@ -356,16 +356,16 @@
   </section>
 </app-page>
 
-<app-modal title="Manage BWP penalty rules" width="xl" [(open)]="rulesModalOpen">
-  <p class="hint">Set thresholds and the penalty applied at or above each total.</p>
+<app-modal [title]="'bwp.managePenaltyRules' | transloco" width="xl" [(open)]="rulesModalOpen">
+  <p class="hint">{{ 'bwp.penaltyRulesHint' | transloco }}</p>
   <div class="rules">
     @if (sortedPenaltyRules().length === 0) {
-      <app-empty>No penalty rules configured.</app-empty>
+      <app-empty>{{ 'bwp.noPenaltyRules' | transloco }}</app-empty>
     } @else {
       <div class="rules-header" aria-hidden="true">
-        <span>Threshold (BWP)</span>
-        <span>Penalty</span>
-        <span class="rules-action">Action</span>
+        <span>{{ 'bwp.thresholdBwp' | transloco }}</span>
+        <span>{{ 'bwp.penalty' | transloco }}</span>
+        <span class="rules-action">{{ 'bwp.action' | transloco }}</span>
       </div>
       @for (rule of sortedPenaltyRules(); track rule.id) {
         <div class="rule-row">
@@ -376,7 +376,7 @@
             type="number"
             min="1"
             step="1"
-            aria-label="Threshold (BWP)"
+            [attr.aria-label]="'bwp.thresholdBwp' | transloco"
             [ngModel]="rule.threshold"
             (ngModelChange)="updatePenaltyRule(rule.id, { threshold: $event })"
           />
@@ -385,22 +385,22 @@
             name="modal-rule-label-{{ rule.id }}"
             appInput size="sm" class="rule-input"
             type="text"
-            aria-label="Penalty"
-            placeholder="Penalty description"
+            [attr.aria-label]="'bwp.penalty' | transloco"
+            [placeholder]="'bwp.penaltyDescription' | transloco"
             [ngModel]="rule.label"
             (ngModelChange)="updatePenaltyRule(rule.id, { label: $event })"
           />
           <app-btn variant="ghost" size="sm" type="button" (click)="deletePenaltyRule(rule.id)">
-            Remove
+            {{ 'bwp.remove' | transloco }}
           </app-btn>
         </div>
       }
     }
   </div>
   <div modal-footer>
-    <app-btn variant="accent" size="sm" type="button" (click)="addPenaltyRule()">Add rule</app-btn>
+    <app-btn variant="accent" size="sm" type="button" (click)="addPenaltyRule()">{{ 'bwp.addRule' | transloco }}</app-btn>
     <app-btn variant="ghost" size="sm" type="button" (click)="rulesModalOpen.set(false)">
-      Done
+      {{ 'bwp.done' | transloco }}
     </app-btn>
   </div>
 </app-modal>

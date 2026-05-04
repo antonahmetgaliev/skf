@@ -1,8 +1,10 @@
 import { Component, input, output } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-toggle',
   standalone: true,
+  imports: [TranslocoPipe],
   template: `
     <div class="toggle">
       @for (option of options(); track option.key) {
@@ -11,7 +13,7 @@ import { Component, input, output } from '@angular/core';
           type="button"
           [class.active]="activeKey() === option.key"
           (click)="keyChange.emit(option.key)"
-        >{{ option.label }}</button>
+        >{{ option.label | transloco }}</button>
       }
     </div>
   `,

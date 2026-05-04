@@ -1,4 +1,5 @@
 import { Component, computed, inject, model, input, signal } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { StandingEntry } from '../../services/simgrid-api.service';
 import { ChampionshipService } from '../../services/championship.service';
 import { InputDirective } from '../../directives/input.directive';
@@ -8,7 +9,7 @@ import { EmptyComponent } from '../empty/empty.component';
 @Component({
   selector: 'app-giveaway-modal',
   standalone: true,
-  imports: [InputDirective, BtnComponent, EmptyComponent],
+  imports: [TranslocoPipe, InputDirective, BtnComponent, EmptyComponent],
   templateUrl: './giveaway-modal.component.html',
   styleUrl: './giveaway-modal.component.scss',
 })

@@ -6,6 +6,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService } from '../../services/auth.service';
 import { AlertComponent } from '../alert/alert.component';
 import { BadgeComponent } from '../badge/badge.component';
@@ -18,7 +19,7 @@ import {
 @Component({
   selector: 'app-dotd-widget',
   standalone: true,
-  imports: [AlertComponent, BadgeComponent, BtnComponent],
+  imports: [TranslocoPipe, AlertComponent, BadgeComponent, BtnComponent],
   templateUrl: './dotd-widget.component.html',
   styleUrl: './dotd-widget.component.scss',
 })

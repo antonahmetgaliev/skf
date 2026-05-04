@@ -2,7 +2,7 @@
   @if (error()) {
     <app-card [animated]="true" class="error-card">
       <p>{{ error() }}</p>
-      <app-btn variant="ghost" routerLink="/bwp-license">Back to BWP License</app-btn>
+      <app-btn variant="ghost" routerLink="/bwp-license">{{ 'driverProfile.backToBwp' | transloco }}</app-btn>
     </app-card>
   } @else if (driver(); as d) {
     <app-card [animated]="true" class="driver-page-card">
@@ -29,36 +29,36 @@
         </div>
         <div class="bwp-summary">
           <span class="bwp-value" [class.bwp-active]="getActiveBwp(d) > 0">{{ getActiveBwp(d) }}</span>
-          <span class="bwp-label">Active BWP</span>
+          <span class="bwp-label">{{ 'driverProfile.activeBwp' | transloco }}</span>
         </div>
       </div>
 
       <div class="stats-row">
         <div class="stat">
           <span class="stat-value">{{ d.points.length }}</span>
-          <span class="stat-label">Total points issued</span>
+          <span class="stat-label">{{ 'driverProfile.totalPointsIssued' | transloco }}</span>
         </div>
         <div class="stat">
           <span class="stat-value">{{ getActivePoints(d).length }}</span>
-          <span class="stat-label">Active entries</span>
+          <span class="stat-label">{{ 'driverProfile.activeEntries' | transloco }}</span>
         </div>
         <div class="stat">
           <span class="stat-value">{{ getExpiredPoints(d).length }}</span>
-          <span class="stat-label">Expired entries</span>
+          <span class="stat-label">{{ 'driverProfile.expiredEntries' | transloco }}</span>
         </div>
       </div>
 
       @if (d.points.length === 0) {
-        <app-empty>No BWP points recorded for this driver.</app-empty>
+        <app-empty>{{ 'driverProfile.noPoints' | transloco }}</app-empty>
       } @else {
         <div class="points-section">
-          <h2>BWP History</h2>
+          <h2>{{ 'driverProfile.bwpHistory' | transloco }}</h2>
           <div class="points-table">
             <div class="points-header" aria-hidden="true">
-              <span>Points</span>
-              <span>Issued</span>
-              <span>Expires</span>
-              <span>Status</span>
+              <span>{{ 'driverProfile.points' | transloco }}</span>
+              <span>{{ 'driverProfile.issued' | transloco }}</span>
+              <span>{{ 'driverProfile.expires' | transloco }}</span>
+              <span>{{ 'driverProfile.status' | transloco }}</span>
             </div>
             @for (point of d.points; track point.id) {
               <div class="point-row" [class.expired]="isExpired(point.expiresOn)">
@@ -66,7 +66,7 @@
                 <span>{{ point.issuedOn | date:'dd MMM yyyy' }}</span>
                 <span>{{ point.expiresOn | date:'dd MMM yyyy' }}</span>
                 <app-badge [variant]="isExpired(point.expiresOn) ? 'closed' : 'open'">
-                  {{ isExpired(point.expiresOn) ? 'Expired' : 'Active' }}
+                  {{ isExpired(point.expiresOn) ? ('driverProfile.expired' | transloco) : ('driverProfile.active' | transloco) }}
                 </app-badge>
               </div>
             }
@@ -76,14 +76,14 @@
 
       @if (championshipResults().length > 0) {
         <div class="championships-section">
-          <h2>Championship Results</h2>
+          <h2>{{ 'driverProfile.championshipResults' | transloco }}</h2>
           <div class="champ-list">
             @for (result of championshipResults(); track result.championshipId) {
               <div class="champ-row" [class.champ-finished]="isFinishedChampionship(result)">
                 <div class="champ-meta">
                   <span class="champ-name">{{ result.championshipName }}</span>
                   @if (!isFinishedChampionship(result)) {
-                    <span class="champ-status-tag active">Active</span>
+                    <span class="champ-status-tag active">{{ 'driverProfile.active' | transloco }}</span>
                   }
                 </div>
                 <div class="champ-result">
@@ -106,7 +106,7 @@
   } @else {
     <!-- loading state handled by global overlay -->
     <app-card [animated]="true" class="loading-card">
-      <p class="loading-row">Loading driver profile…</p>
+      <p class="loading-row">{{ 'driverProfile.loading' | transloco }}</p>
     </app-card>
   }
 </app-page>

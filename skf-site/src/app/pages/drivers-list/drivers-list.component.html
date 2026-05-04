@@ -1,10 +1,10 @@
 <app-page>
-  <app-page-intro title="Drivers" subtitle="All registered drivers in the SKF system." />
+  <app-page-intro [title]="'drivers.title' | transloco" [subtitle]="'drivers.subtitle' | transloco" />
 
   <div class="toolbar">
     <input appInput
       type="text"
-      placeholder="Search driver…"
+      [placeholder]="'drivers.searchPlaceholder' | transloco"
       [ngModel]="search()"
       (ngModelChange)="search.set($event)"
       autocomplete="off"
@@ -15,7 +15,7 @@
   @if (loading()) {
     <app-spinner />
   } @else if (filtered().length === 0) {
-    <app-empty>No drivers found.</app-empty>
+    <app-empty>{{ 'drivers.noDriversFound' | transloco }}</app-empty>
   } @else {
     <div class="drivers-grid">
       @for (driver of filtered(); track driver.id) {

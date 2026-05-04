@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import {
   CalendarApiService,
@@ -53,7 +54,7 @@ interface NextRaceInfo {
 
 @Component({
   selector: 'app-week-calendar',
-  imports: [RouterLink, CardComponent, BtnComponent, SpinnerComponent, BadgeComponent],
+  imports: [RouterLink, TranslocoPipe, CardComponent, BtnComponent, SpinnerComponent, BadgeComponent],
   templateUrl: './week-calendar.component.html',
   styleUrl: './week-calendar.component.scss',
 })

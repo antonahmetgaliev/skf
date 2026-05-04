@@ -1,19 +1,19 @@
 <!-- DOTD Polls section -->
 <app-card [animated]="true">
-  <h3 class="section-title">Driver of the Day Polls</h3>
+  <h3 class="section-title">{{ 'admin.dotdPolls' | transloco }}</h3>
   <p class="section-description">
-    Create and manage DOTD polls for active championships.
+    {{ 'admin.dotdPollsDescription' | transloco }}
   </p>
 
   <div class="section-toolbar">
-    <app-btn variant="primary" size="sm" (click)="openDotdModal()">Create Poll</app-btn>
+    <app-btn variant="primary" size="sm" (click)="openDotdModal()">{{ 'admin.createPoll' | transloco }}</app-btn>
   </div>
 
   @if (dotdLoading()) {
     <app-spinner />
   } @else {
     @if (dotdPolls().length === 0) {
-      <p class="empty">No active polls.</p>
+      <p class="empty">{{ 'admin.noActivePolls' | transloco }}</p>
     }
     @for (poll of dotdPolls(); track poll.id) {
       <div class="dotd-poll-row">
@@ -42,16 +42,16 @@
 
 <!-- Communities section -->
 <app-card [animated]="true">
-  <h3 class="section-title">Communities</h3>
+  <h3 class="section-title">{{ 'admin.communities' | transloco }}</h3>
   <p class="section-description">
-    Each community has its own championships that appear in the global calendar.
+    {{ 'admin.communitiesDescription' | transloco }}
   </p>
 
   @if (communitiesLoading()) {
     <app-spinner />
   } @else {
     <div class="section-toolbar">
-      <app-btn variant="primary" size="sm" (click)="openCommunityModal()">Add Community</app-btn>
+      <app-btn variant="primary" size="sm" (click)="openCommunityModal()">{{ 'admin.addCommunity' | transloco }}</app-btn>
     </div>
 
     <!-- Community list -->
@@ -79,7 +79,7 @@
         </article>
       }
       @if (communities().length === 0) {
-        <p class="empty">No communities yet.</p>
+        <p class="empty">{{ 'admin.noCommunities' | transloco }}</p>
       }
     </div>
   }
@@ -94,14 +94,14 @@
         {{ community.name }} — SimGrid Championships
       </h3>
       <p class="section-description">
-        Activate SimGrid championships to show them on the SKF calendar.
+        {{ 'admin.simgridDescription' | transloco }}
       </p>
 
       @if (simgridLoading()) {
         <app-spinner />
       } @else {
         @if (activeSimgridChampionships.length > 0) {
-          <h4 class="subsection-title">Active</h4>
+          <h4 class="subsection-title">{{ 'admin.active' | transloco }}</h4>
           @for (champ of activeSimgridChampionships; track champ.id) {
             <div class="champ-item champ-item--simgrid">
               <div class="champ-header">
@@ -112,14 +112,14 @@
                     @if (champ.startDate) { · {{ champ.startDate | date:'mediumDate' }} }
                   </p>
                 </div>
-                <app-btn variant="danger" size="sm" (click)="toggleSimgridActive(champ.id)">Deactivate</app-btn>
+                <app-btn variant="danger" size="sm" (click)="toggleSimgridActive(champ.id)">{{ 'admin.deactivate' | transloco }}</app-btn>
               </div>
             </div>
           }
         }
 
         @if (inactiveSimgridChampionships.length > 0) {
-          <h4 class="subsection-title">Available</h4>
+          <h4 class="subsection-title">{{ 'admin.available' | transloco }}</h4>
           @for (champ of inactiveSimgridChampionships; track champ.id) {
             <div class="champ-item champ-item--simgrid champ-item--inactive">
               <div class="champ-header">
@@ -130,7 +130,7 @@
                     @if (champ.startDate) { · {{ champ.startDate | date:'mediumDate' }} }
                   </p>
                 </div>
-                <app-btn variant="primary" size="sm" (click)="toggleSimgridActive(champ.id)">Activate</app-btn>
+                <app-btn variant="primary" size="sm" (click)="toggleSimgridActive(champ.id)">{{ 'admin.activate' | transloco }}</app-btn>
               </div>
             </div>
           }
@@ -149,7 +149,7 @@
     </h3>
 
     <div class="section-toolbar">
-      <app-btn variant="primary" size="sm" (click)="openChampModal()">Add Championship</app-btn>
+      <app-btn variant="primary" size="sm" (click)="openChampModal()">{{ 'admin.addChampionship' | transloco }}</app-btn>
     </div>
 
     @if (champsLoading()) {
@@ -191,7 +191,7 @@
         </div>
       }
       @if (communityChampionships().length === 0) {
-        <p class="empty">No championships yet for this community.</p>
+        <p class="empty">{{ 'admin.noChampionships' | transloco }}</p>
       }
     }
   </app-card>
@@ -199,7 +199,7 @@
 
 <!-- Community Modal -->
 <app-modal
-  [title]="editingCommunityId() ? 'Edit Community' : 'Add Community'"
+  [title]="editingCommunityId() ? ('admin.editCommunity' | transloco) : ('admin.addCommunity' | transloco)"
   width="md"
   [(open)]="communityModalOpen"
 >
@@ -243,7 +243,7 @@
 
 <!-- Championship Modal -->
 <app-modal
-  [title]="editingChampId() ? 'Edit Championship' : 'Add Championship'"
+  [title]="editingChampId() ? ('admin.editChampionship' | transloco) : ('admin.addChampionship' | transloco)"
   width="md"
   [(open)]="champModalOpen"
 >
@@ -263,7 +263,7 @@
 </app-modal>
 
 <!-- DOTD Poll Modal -->
-<app-modal title="Create DOTD Poll" width="md" [(open)]="dotdModalOpen">
+<app-modal [title]="'admin.createDotdPoll' | transloco" width="md" [(open)]="dotdModalOpen">
   <div class="modal-form">
     <app-form-field label="Championship" fieldId="dotd-champ-select">
       <select appSelect id="dotd-champ-select"

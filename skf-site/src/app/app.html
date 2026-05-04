@@ -7,7 +7,7 @@
 <div class="app-shell">
   @if (auth.isRealAdmin()) {
     <div class="view-as-bar">
-      <label class="view-as-label" for="viewAsRole">Viewing as</label>
+      <label class="view-as-label" for="viewAsRole">{{ 'admin.viewingAs' | transloco }}</label>
       <select
         id="viewAsRole"
         class="view-as-select"
@@ -20,7 +20,7 @@
         <option value="admin">Admin</option>
         <option value="community_manager">Community Manager</option>
         <option value="racing_judge">Racing Judge</option>
-        <option value="driver">Driver</option>
+        <option value="driver">{{ 'common.driver' | transloco }}</option>
       </select>
       @if (auth.viewAsRole() === 'community_manager') {
         <select
@@ -28,14 +28,14 @@
           [ngModel]="auth.viewAsCommunityId()"
           (ngModelChange)="auth.viewAsCommunityId.set($event)"
         >
-          <option [ngValue]="null">— Select community —</option>
+          <option [ngValue]="null">— {{ 'admin.selectCommunity' | transloco }} —</option>
           @for (c of viewAsCommunities(); track c.id) {
             <option [value]="c.id">{{ c.name }}</option>
           }
         </select>
       }
       @if (auth.viewAsRole() !== null) {
-        <span class="view-as-badge">Preview mode</span>
+        <span class="view-as-badge">{{ 'admin.previewMode' | transloco }}</span>
       }
     </div>
   }
@@ -52,7 +52,7 @@
       class="hamburger"
       [class.open]="mobileMenuOpen()"
       (click)="toggleMobileMenu()"
-      aria-label="Toggle navigation"
+      [attr.aria-label]="'nav.toggleMenu' | transloco"
       [attr.aria-expanded]="mobileMenuOpen()"
     >
       <span class="hamburger-line"></span>
@@ -60,11 +60,11 @@
       <span class="hamburger-line"></span>
     </button>
     <nav class="site-nav" [class.site-nav--open]="mobileMenuOpen()" aria-label="Primary">
-      <a routerLink="/home" routerLinkActive="active">Home</a>
-      <a routerLink="/championships" routerLinkActive="active">Championships</a>
-      <a routerLink="/drivers" routerLinkActive="active">Drivers</a>
-      <a routerLink="/calendar" routerLinkActive="active">Calendar</a>
-      <a routerLink="/bwp-license" routerLinkActive="active">BWP License</a>
+      <a routerLink="/home" routerLinkActive="active">{{ 'nav.home' | transloco }}</a>
+      <a routerLink="/championships" routerLinkActive="active">{{ 'nav.championships' | transloco }}</a>
+      <a routerLink="/drivers" routerLinkActive="active">{{ 'nav.drivers' | transloco }}</a>
+      <a routerLink="/calendar" routerLinkActive="active">{{ 'nav.calendar' | transloco }}</a>
+      <a routerLink="/bwp-license" routerLinkActive="active">{{ 'nav.bwpLicense' | transloco }}</a>
       <div class="site-nav-dropdown" [class.open]="regulationsOpen()">
         <button
           type="button"
@@ -74,7 +74,7 @@
           aria-haspopup="menu"
           (click)="toggleRegulations()"
         >
-          Regulations
+          {{ 'nav.regulations' | transloco }}
           <span class="site-nav-dropdown-chevron" aria-hidden="true">▾</span>
         </button>
         @if (regulationsOpen()) {
@@ -85,39 +85,40 @@
               [routerLinkActiveOptions]="{ exact: true }"
               (click)="closeRegulations()"
               role="menuitem"
-            >General Regulations</a>
+            >{{ 'nav.generalRegulations' | transloco }}</a>
             <a
               routerLink="/regulations/nascar-general"
               routerLinkActive="active"
               (click)="closeRegulations()"
               role="menuitem"
-            >NASCAR General Regulations</a>
+            >{{ 'nav.nascarRegulations' | transloco }}</a>
             <a
               routerLink="/regulations/iracing-league"
               routerLinkActive="active"
               (click)="closeRegulations()"
               role="menuitem"
-            >SKF iRacing League</a>
+            >{{ 'nav.iracingLeague' | transloco }}</a>
             <a
               routerLink="/regulations/nightfall-gte"
               routerLinkActive="active"
               (click)="closeRegulations()"
               role="menuitem"
-            >SKF Nightfall GTE Championship</a>
+            >{{ 'nav.nightfallGte' | transloco }}</a>
             <a
               routerLink="/regulations/thunder-trucks"
               routerLinkActive="active"
               (click)="closeRegulations()"
               role="menuitem"
-            >SKF Thunder Truck Series</a>
+            >{{ 'nav.thunderTrucks' | transloco }}</a>
           </div>
         }
       </div>
-      <a routerLink="/media" routerLinkActive="active">Media</a>
+      <a routerLink="/media" routerLinkActive="active">{{ 'nav.media' | transloco }}</a>
       @if (auth.isAdmin()) {
-        <a routerLink="/admin" routerLinkActive="active">Admin</a>
+        <a routerLink="/admin" routerLinkActive="active">{{ 'nav.admin' | transloco }}</a>
       }
-      <a routerLink="/incidents" routerLinkActive="active">Incidents</a>
+      <a routerLink="/incidents" routerLinkActive="active">{{ 'nav.incidents' | transloco }}</a>
+      <app-lang-switcher class="lang-switcher--mobile"></app-lang-switcher>
       <div class="auth-zone auth-zone--mobile">
         @if (auth.isLoggedIn()) {
           <a routerLink="/profile" class="user-badge">
@@ -128,17 +129,18 @@
             }
             <span class="user-name">{{ auth.user()!.displayName }}</span>
           </a>
-          <button class="btn-logout" type="button" (click)="auth.logout()">Logout</button>
+          <button class="btn-logout" type="button" (click)="auth.logout()">{{ 'auth.logout' | transloco }}</button>
         } @else {
           <button class="btn-discord" type="button" (click)="auth.login()">
             <svg class="discord-icon" viewBox="0 0 127.14 96.36" fill="currentColor" width="20" height="18">
               <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
             </svg>
-            Sign in with Discord
+            {{ 'auth.signInWithDiscord' | transloco }}
           </button>
         }
       </div>
     </nav>
+    <app-lang-switcher></app-lang-switcher>
     <div class="auth-zone auth-zone--desktop">
       @if (auth.isLoggedIn()) {
         <a routerLink="/profile" class="user-badge">
@@ -149,13 +151,13 @@
           }
           <span class="user-name">{{ auth.user()!.displayName }}</span>
         </a>
-        <button class="btn-logout" type="button" (click)="auth.logout()">Logout</button>
+        <button class="btn-logout" type="button" (click)="auth.logout()">{{ 'auth.logout' | transloco }}</button>
       } @else {
         <button class="btn-discord" type="button" (click)="auth.login()">
           <svg class="discord-icon" viewBox="0 0 127.14 96.36" fill="currentColor" width="20" height="18">
             <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
           </svg>
-          Sign in with Discord
+          {{ 'auth.signInWithDiscord' | transloco }}
         </button>
       }
     </div>

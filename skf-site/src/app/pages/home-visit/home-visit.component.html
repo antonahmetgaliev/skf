@@ -2,12 +2,9 @@
 
   <!-- ───── HERO ───── -->
   <div class="hero">
-    <p class="eyebrow">Sim Racing Community</p>
+    <p class="eyebrow">{{ 'home.eyebrow' | transloco }}</p>
     <h1>SKF <span class="accent">Racing Hub</span></h1>
-    <p class="subtitle">
-      We are Ukrainian simracing community. Multiclass, sprints &amp; endurance
-      races in LMU, iRacing and others. Welcome!
-    </p>
+    <p class="subtitle">{{ 'home.subtitle' | transloco }}</p>
   </div>
 
   <!-- ───── WEEK CALENDAR ───── -->
@@ -15,51 +12,39 @@
 
   <!-- ───── PROS ───── -->
   <div class="pros">
-    <p class="eyebrow center">Why SKF</p>
-    <h2 class="section-title">Main Features</h2>
+    <p class="eyebrow center">{{ 'home.whySkf' | transloco }}</p>
+    <h2 class="section-title">{{ 'home.mainFeatures' | transloco }}</h2>
     <div class="pros-grid">
       <a class="pro-card" routerLink="/championships">
         <app-card [animated]="true">
           <div class="pro-icon">🏁</div>
-          <h3>Multi-Class Racing</h3>
-          <p>
-            GT, Prototypes, NASCAR and more — we run championships across a variety
-            of car classes so every driver finds their fit.
-          </p>
-          <span class="pro-link">Browse Championships</span>
+          <h3>{{ 'home.multiClassRacing' | transloco }}</h3>
+          <p>{{ 'home.multiClassRacingDesc' | transloco }}</p>
+          <span class="pro-link">{{ 'home.browseChampionships' | transloco }}</span>
         </app-card>
       </a>
       <a class="pro-card" routerLink="/calendar">
         <app-card [animated]="true">
           <div class="pro-icon">📅</div>
-          <h3>Full Season Commitment</h3>
-          <p>
-            Structured multi-round seasons from start to finish. See past, current,
-            and upcoming championships all in one place.
-          </p>
-          <span class="pro-link">View Calendar</span>
+          <h3>{{ 'home.fullSeasonCommitment' | transloco }}</h3>
+          <p>{{ 'home.fullSeasonCommitmentDesc' | transloco }}</p>
+          <span class="pro-link">{{ 'home.viewCalendar' | transloco }}</span>
         </app-card>
       </a>
       <a class="pro-card" routerLink="/bwp-license">
         <app-card [animated]="true">
           <div class="pro-icon">⚖️</div>
-          <h3>Stewarding</h3>
-          <p>
-            Every incident is reviewed by our stewards panel. The BWP licence system
-            tracks your safety rating.
-          </p>
-          <span class="pro-link">Check BWP Licence</span>
+          <h3>{{ 'home.stewarding' | transloco }}</h3>
+          <p>{{ 'home.stewardingDesc' | transloco }}</p>
+          <span class="pro-link">{{ 'home.checkBwpLicence' | transloco }}</span>
         </app-card>
       </a>
       <a class="pro-card" routerLink="/media">
         <app-card [animated]="true">
           <div class="pro-icon">🎙️</div>
-          <h3>Live Broadcasting</h3>
-          <p>
-            Races are streamed live and archived. Watch the action unfold in
-            real time or catch up on anything you missed.
-          </p>
-          <span class="pro-link">View All Broadcasts</span>
+          <h3>{{ 'home.liveBroadcasting' | transloco }}</h3>
+          <p>{{ 'home.liveBroadcastingDesc' | transloco }}</p>
+          <span class="pro-link">{{ 'home.viewAllBroadcasts' | transloco }}</span>
         </app-card>
       </a>
     </div>
@@ -71,11 +56,8 @@
   <!-- ───── JOIN ───── -->
   <div class="cta">
     <app-card class="cta-card">
-      <h2>Join the Grid</h2>
-      <p>
-        All our championships are hosted on SimGrid. Join the SKF Racing Hub
-        community there to sign up for upcoming seasons and hit the track.
-      </p>
+      <h2>{{ 'home.joinTheGrid' | transloco }}</h2>
+      <p>{{ 'home.joinTheGridDesc' | transloco }}</p>
       <div class="cta-actions">
         <a
           class="btn-link"
@@ -83,7 +65,7 @@
           target="_blank"
           rel="noopener noreferrer"
         >
-          Join on SimGrid
+          {{ 'home.joinOnSimgrid' | transloco }}
         </a>
       </div>
     </app-card>
@@ -92,6 +74,6 @@
   <!-- ───── FOOTER ───── -->
   <footer class="page-footer">
     <span>&copy; 2026 SKF Racing Hub</span>
-    <span>Sim Racing Community</span>
+    <span>{{ 'home.eyebrow' | transloco }}</span>
   </footer>
 </app-page>

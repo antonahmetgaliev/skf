@@ -2,6 +2,7 @@ import { NgClass } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import {
   ChampionshipDetails,
@@ -31,6 +32,7 @@ import { TabsComponent } from '../../components/tabs/tabs.component';
   imports: [
     RouterLink,
     NgClass,
+    TranslocoPipe,
     AlertComponent,
     BadgeComponent,
     BtnComponent,
@@ -90,13 +92,13 @@ export class ChampionshipsComponent {
   readonly availableTabs = computed(() => {
     if (this.isUpcomingChampionship()) {
       return [
-        { key: 'races', label: 'Races' },
-        { key: 'participants', label: 'Participants' },
+        { key: 'races', label: 'championships.races' },
+        { key: 'participants', label: 'championships.participants' },
       ];
     }
     return [
-      { key: 'standings', label: 'Standings' },
-      { key: 'races', label: 'Races' },
+      { key: 'standings', label: 'championships.standings' },
+      { key: 'races', label: 'championships.races' },
     ];
   });
 

@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { InputDirective } from '../../directives/input.directive';
 import { SelectDirective } from '../../directives/select.directive';
 import { TextareaDirective } from '../../directives/textarea.directive';
@@ -36,7 +37,7 @@ import {
 
 @Component({
   selector: 'app-incidents',
-  imports: [FormsModule, DatePipe, InputDirective, SelectDirective, TextareaDirective, BadgeComponent, CardComponent, DetailListComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent],
+  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, TextareaDirective, BadgeComponent, CardComponent, DetailListComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent],
   templateUrl: './incidents.component.html',
   styleUrl: './incidents.component.scss',
 })

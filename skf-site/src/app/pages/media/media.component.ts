@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
@@ -11,7 +12,7 @@ const PAGE_SIZE = 12;
 
 @Component({
   selector: 'app-media',
-  imports: [InputDirective, PageIntroComponent, PageLayoutComponent, CardComponent, BtnComponent],
+  imports: [TranslocoPipe, InputDirective, PageIntroComponent, PageLayoutComponent, CardComponent, BtnComponent],
   templateUrl: './media.component.html',
   styleUrl: './media.component.scss',
 })

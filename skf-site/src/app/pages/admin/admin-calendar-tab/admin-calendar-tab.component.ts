@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { toLocalDatetimeLocal, withLocalTzOffset } from '../../../utils/date';
 import { BtnComponent } from '../../../components/btn/btn.component';
@@ -35,7 +36,7 @@ import {
 
 @Component({
   selector: 'app-admin-calendar-tab',
-  imports: [FormsModule, DatePipe, InputDirective, SelectDirective, AlertComponent, BtnComponent, CardComponent, ChampionshipFormComponent, FormFieldComponent, ModalComponent, SpinnerComponent],
+  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, AlertComponent, BtnComponent, CardComponent, ChampionshipFormComponent, FormFieldComponent, ModalComponent, SpinnerComponent],
   templateUrl: './admin-calendar-tab.component.html',
   styleUrl: './admin-calendar-tab.component.scss',
 })

@@ -1,6 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { AlertComponent } from '../../components/alert/alert.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
@@ -51,13 +52,13 @@ const DEFAULT_COLOR = '#ffd600'; // gold fallback
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const WEEK_DAYS_SHORT = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const VIEW_TABS: { key: string; label: string }[] = [
-  { key: 'month', label: 'Month' },
-  { key: 'year', label: 'Year' },
+  { key: 'month', label: 'calendar.month' },
+  { key: 'year', label: 'calendar.year' },
 ];
 
 @Component({
   selector: 'app-calendar',
-  imports: [NgTemplateOutlet, FormsModule, RouterLink, SelectDirective, AlertComponent, BtnComponent, CardComponent, ChampionshipFormComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
+  imports: [NgTemplateOutlet, FormsModule, RouterLink, TranslocoPipe, SelectDirective, AlertComponent, BtnComponent, CardComponent, ChampionshipFormComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
 
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',

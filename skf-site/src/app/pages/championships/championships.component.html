@@ -1,17 +1,17 @@
 <app-page>
-  <app-page-intro title="Championships" />
+  <app-page-intro [title]="'championships.title' | transloco" />
 
   <div class="layout">
     <aside>
     <app-card class="side-panel">
       <div class="panel-header">
-        <h2>Championships</h2>
+        <h2>{{ 'championships.title' | transloco }}</h2>
       </div>
 
       @if (loadingChampionships()) {
         <app-spinner />
       } @else if (championships().length === 0) {
-        <app-empty>No championships returned from API.</app-empty>
+        <app-empty>{{ 'championships.noChampionships' | transloco }}</app-empty>
       } @else {
         <div class="championship-list">
           @for (entry of championships(); track entry.key) {
@@ -58,17 +58,17 @@
                       size="sm"
                       (click)="toggleActive(champId)"
                     >
-                      {{ isChampionshipActive(champId) ? 'Mark Finished' : 'Mark Active' }}
+                      {{ isChampionshipActive(champId) ? ('championships.markFinished' | transloco) : ('championships.markActive' | transloco) }}
                     </app-btn>
                   }
                   <app-btn variant="ghost" size="sm" (click)="giveawayOpen.set(true)">
-                    Giveaway
+                    {{ 'championships.giveaway' | transloco }}
                   </app-btn>
                   <app-btn variant="ghost" size="sm" (click)="openStandingsExportPreview()">
-                    Export 16:9
+                    {{ 'championships.export16x9' | transloco }}
                   </app-btn>
                   <app-btn variant="ghost" size="sm" [disabled]="refreshingCache()" (click)="refreshChampionshipCache(championship.id)">
-                    {{ refreshingCache() ? 'Refreshing...' : 'Refresh Data' }}
+                    {{ refreshingCache() ? ('championships.refreshing' | transloco) : ('championships.refreshData' | transloco) }}
                   </app-btn>
                 </div>
               }
@@ -76,20 +76,20 @@
 
             <div class="info-chips">
               <span class="info-chip">
-                <span class="info-chip-label">Simulator</span>
+                <span class="info-chip-label">{{ 'championships.simulator' | transloco }}</span>
                 <span class="info-chip-value">{{ championship.gameName }}</span>
               </span>
               <span class="info-chip">
-                <span class="info-chip-label">Entries</span>
+                <span class="info-chip-label">{{ 'championships.entries' | transloco }}</span>
                 <span class="info-chip-value">{{ standings().length }}/{{ championship.capacity ?? '∞' }}</span>
               </span>
               <span class="info-chip">
-                <span class="info-chip-label">Start</span>
+                <span class="info-chip-label">{{ 'championships.start' | transloco }}</span>
                 <span class="info-chip-value">{{ formatDate(championship.startDate) }}</span>
               </span>
               @if (championship.endDate) {
                 <span class="info-chip">
-                  <span class="info-chip-label">End</span>
+                  <span class="info-chip-label">{{ 'championships.end' | transloco }}</span>
                   <span class="info-chip-value">{{ formatDate(championship.endDate) }}</span>
                 </span>
               }
@@ -97,13 +97,13 @@
 
             @if (championship.url) {
               <a class="simgrid-link" [href]="championship.url" target="_blank" rel="noopener noreferrer">
-                Join the championship on SimGrid
+                {{ 'championships.joinSimGrid' | transloco }}
                 <span class="simgrid-link-arrow">→</span>
               </a>
             }
 
             @if (isStaleData()) {
-              <app-alert variant="warning">Showing cached data — SimGrid API is temporarily unavailable.</app-alert>
+              <app-alert variant="warning">{{ 'championships.staleDataWarning' | transloco }}</app-alert>
             }
           </div>
         </div>
@@ -131,23 +131,23 @@
 
           <h3 class="section-title">
             @if (activeClass(); as cls) {
-              {{ cls }} standings
+              {{ cls }} {{ 'championships.standingsLower' | transloco }}
             } @else {
-              Standings
+              {{ 'championships.standings' | transloco }}
             }
           </h3>
           <div class="table-wrap">
             <table class="standings-table">
               <thead>
                 <tr>
-                  <th>Pos</th>
-                  <th>Driver</th>
-                  <th>Country</th>
+                  <th>{{ 'championships.pos' | transloco }}</th>
+                  <th>{{ 'championships.driver' | transloco }}</th>
+                  <th>{{ 'championships.country' | transloco }}</th>
                   @if (isMulticlass()) {
-                    <th>Class</th>
+                    <th>{{ 'championships.class' | transloco }}</th>
                   }
-                  <th>Car</th>
-                  <th>Score</th>
+                  <th>{{ 'championships.car' | transloco }}</th>
+                  <th>{{ 'championships.score' | transloco }}</th>
                   @if (hasRaceBreakdown()) {
                     @for (race of races(); track race.id; let raceIndex = $index) {
                       <th [attr.title]="getRaceTitle(race, raceIndex)">{{ getRaceLabel(raceIndex) }}</th>
@@ -159,7 +159,7 @@
                 @if (visibleStandings().length === 0) {
                   <tr>
                     <td class="empty-row" [attr.colspan]="getOverallColspan()">
-                      No standings available for this championship yet.
+                      {{ 'championships.noStandings' | transloco }}
                     </td>
                   </tr>
                 } @else {
@@ -196,7 +196,7 @@
           @if (loadingRaces()) {
             <app-spinner />
           } @else if (allRaces().length === 0) {
-            <app-empty>No race schedule available for this championship.</app-empty>
+            <app-empty>{{ 'championships.noRaceSchedule' | transloco }}</app-empty>
           } @else {
             <div class="races-list">
               @for (race of allRaces(); track race.id; let raceIndex = $index) {
@@ -217,12 +217,12 @@
                     </div>
                     <div class="race-card-status">
                       @if (getRaceStatus(race) === 'completed') {
-                        <app-badge variant="completed">Completed</app-badge>
+                        <app-badge variant="completed">{{ 'championships.completed' | transloco }}</app-badge>
                         @if (hasRaceResults(race)) {
                           <span class="race-expand-icon" [class.expanded]="expandedRaceIndex() === raceIndex">&#9662;</span>
                         }
                       } @else {
-                        <app-badge variant="upcoming">Upcoming</app-badge>
+                        <app-badge variant="upcoming">{{ 'championships.upcoming' | transloco }}</app-badge>
                       }
                     </div>
                   </div>
@@ -244,9 +244,9 @@
                         <table class="standings-table race-results-table">
                           <thead>
                             <tr>
-                              <th>Pos</th>
-                              <th>Driver</th>
-                              <th>Car</th>
+                              <th>{{ 'championships.pos' | transloco }}</th>
+                              <th>{{ 'championships.driver' | transloco }}</th>
+                              <th>{{ 'championships.car' | transloco }}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -273,17 +273,17 @@
         <!-- Participants tab -->
         @if (activeTab() === 'participants') {
           @if (standings().length === 0) {
-            <app-empty>No participants registered for this championship yet.</app-empty>
+            <app-empty>{{ 'championships.noParticipants' | transloco }}</app-empty>
           } @else {
-            <h3 class="section-title">Registered Participants ({{ standings().length }})</h3>
+            <h3 class="section-title">{{ 'championships.registeredParticipants' | transloco }} ({{ standings().length }})</h3>
             <div class="table-wrap">
               <table class="standings-table participants-table">
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Driver</th>
-                    <th>Country</th>
-                    <th>Car</th>
+                    <th>{{ 'championships.driver' | transloco }}</th>
+                    <th>{{ 'championships.country' | transloco }}</th>
+                    <th>{{ 'championships.car' | transloco }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -307,7 +307,7 @@
           }
         }
       } @else {
-        <app-empty>Select a championship to view details.</app-empty>
+        <app-empty>{{ 'championships.selectChampionship' | transloco }}</app-empty>
       }
     </app-card>
     </section>

@@ -1,8 +1,10 @@
 import { Component, input, output } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-tabs',
   standalone: true,
+  imports: [TranslocoPipe],
   template: `
     <div class="tabs">
       @for (tab of tabs(); track tab.key) {
@@ -11,7 +13,7 @@ import { Component, input, output } from '@angular/core';
           type="button"
           [class.active]="activeTab() === tab.key"
           (click)="tabChange.emit(tab.key)"
-        >{{ tab.label }}</button>
+        >{{ tab.label | transloco }}</button>
       }
     </div>
   `,

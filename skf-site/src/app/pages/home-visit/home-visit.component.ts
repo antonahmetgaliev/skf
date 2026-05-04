@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { CardComponent } from '../../components/card/card.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { RecentBroadcastsComponent } from '../../components/recent-broadcasts/recent-broadcasts.component';
@@ -7,7 +8,7 @@ import { WeekCalendarComponent } from '../../components/week-calendar/week-calen
 
 @Component({
   selector: 'app-home-visit',
-  imports: [RouterLink, CardComponent, PageLayoutComponent, RecentBroadcastsComponent, WeekCalendarComponent],
+  imports: [RouterLink, TranslocoPipe, CardComponent, PageLayoutComponent, RecentBroadcastsComponent, WeekCalendarComponent],
   templateUrl: './home-visit.component.html',
   styleUrl: './home-visit.component.scss',
 })

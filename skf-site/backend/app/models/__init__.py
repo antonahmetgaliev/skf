@@ -7,6 +7,7 @@ from app.models.dotd import DotdPoll, DotdCandidate, DotdVote
 from app.models.community import Community, Game
 from app.models.custom_championship import CustomChampionship, CustomRace
 from app.models.active_championship import ActiveChampionship
+from app.models.translation import Language, Translation
 
 __all__ = [
     "Driver", "BwpPoint", "PenaltyRule", "PenaltyClearance", "SimgridCache",
@@ -18,4 +19,5 @@ __all__ = [
     "Community", "Game",
     "CustomChampionship", "CustomRace",
     "ActiveChampionship",
+    "Language", "Translation",
 ]

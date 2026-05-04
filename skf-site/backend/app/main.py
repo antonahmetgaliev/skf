@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.middleware import StaleHeaderMiddleware
-from app.routers import admin, auth, bwp, calendar, championships, dotd, incidents, profile, users, youtube
+from app.routers import admin, auth, bwp, calendar, championships, dotd, incidents, profile, translations, users, youtube
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -32,6 +32,7 @@ app.include_router(incidents.router, prefix="/api")
 app.include_router(dotd.router, prefix="/api")
 app.include_router(calendar.router, prefix="/api")
 app.include_router(youtube.router, prefix="/api")
+app.include_router(translations.router, prefix="/api")
 
 
 @app.get("/healthz")
@@ -65,6 +66,41 @@ async def on_startup():
                 logger.info(f"Seeded role: {role_name}")
         await session.commit()
     logger.info("Roles seeded")
+
+    # Seed default languages
+    from app.models.translation import Language
+
+    async with async_session() as session:
+        for code, name in [("en", "English"), ("uk", "Українська")]:
+            existing = await session.get(Language, code)
+            if existing is None:
+                session.add(Language(code=code, name=name, is_active=True))
+                logger.info(f"Seeded language: {code}")
+        await session.commit()
+    logger.info("Languages seeded")
+
+    # Seed translations from JSON files if empty
+    from app.models.translation import Translation
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+    import json
+    from pathlib import Path
+
+    async with async_session() as session:
+        result = await session.execute(select(Translation).limit(1))
+        if result.scalar_one_or_none() is None:
+            seed_dir = Path(__file__).resolve().parent.parent / "seed"
+            for lang_code in ("en", "uk"):
+                seed_file = seed_dir / f"translations_{lang_code}.json"
+                if seed_file.exists():
+                    data = json.loads(seed_file.read_text(encoding="utf-8"))
+                    items = [{"lang": lang_code, "key": k, "value": v} for k, v in data.items()]
+                    if items:
+                        stmt = pg_insert(Translation).values(items)
+                        stmt = stmt.on_conflict_do_nothing()
+                        await session.execute(stmt)
+                    logger.info(f"Seeded {len(items)} translations for '{lang_code}'")
+            await session.commit()
+    logger.info("Translations seeded")
 
     logger.info(f"DATABASE_URL scheme: {settings.database_url.split('@')[0].split('://')[0]}")
     logger.info(f"PORT: {settings.port}")
