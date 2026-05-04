@@ -31,17 +31,6 @@ export interface DriverPublic {
   }>;
 }
 
-export interface DriverChampionshipResult {
-  championshipId: number;
-  championshipName: string;
-  position: number | null;
-  score: number;
-  dsq: boolean;
-  startDate: string | null;
-  endDate: string | null;
-  acceptingRegistrations: boolean;
-}
-
 @Injectable({ providedIn: 'root' })
 export class ProfileApiService {
   private readonly http = inject(HttpClient);
@@ -65,10 +54,6 @@ export class ProfileApiService {
 
   getPublicDriver(driverId: string): Observable<DriverPublic> {
     return this.http.get<DriverPublic>(`${this.base}/drivers/${driverId}`);
-  }
-
-  getDriverChampionshipResults(simgridDriverId: number): Observable<DriverChampionshipResult[]> {
-    return this.http.get<DriverChampionshipResult[]>(`/api/championships/driver/${simgridDriverId}/results`);
   }
 
   updateDriverPhoto(photoUrl: string | null): Observable<DriverPublic> {

@@ -33,21 +33,6 @@
         </div>
       </div>
 
-      <div class="stats-row">
-        <div class="stat">
-          <span class="stat-value">{{ d.points.length }}</span>
-          <span class="stat-label">{{ 'driverProfile.totalPointsIssued' | transloco }}</span>
-        </div>
-        <div class="stat">
-          <span class="stat-value">{{ getActivePoints(d).length }}</span>
-          <span class="stat-label">{{ 'driverProfile.activeEntries' | transloco }}</span>
-        </div>
-        <div class="stat">
-          <span class="stat-value">{{ getExpiredPoints(d).length }}</span>
-          <span class="stat-label">{{ 'driverProfile.expiredEntries' | transloco }}</span>
-        </div>
-      </div>
-
       @if (d.points.length === 0) {
         <app-empty>{{ 'driverProfile.noPoints' | transloco }}</app-empty>
       } @else {
@@ -68,34 +53,6 @@
                 <app-badge [variant]="isExpired(point.expiresOn) ? 'closed' : 'open'">
                   {{ isExpired(point.expiresOn) ? ('driverProfile.expired' | transloco) : ('driverProfile.active' | transloco) }}
                 </app-badge>
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      @if (championshipResults().length > 0) {
-        <div class="championships-section">
-          <h2>{{ 'driverProfile.championshipResults' | transloco }}</h2>
-          <div class="champ-list">
-            @for (result of championshipResults(); track result.championshipId) {
-              <div class="champ-row" [class.champ-finished]="isFinishedChampionship(result)">
-                <div class="champ-meta">
-                  <span class="champ-name">{{ result.championshipName }}</span>
-                  @if (!isFinishedChampionship(result)) {
-                    <span class="champ-status-tag active">{{ 'driverProfile.active' | transloco }}</span>
-                  }
-                </div>
-                <div class="champ-result">
-                  @if (getPositionBadge(result); as badge) {
-                    <span class="position-badge" [attr.data-badge]="badge">
-                      {{ getPositionLabel(result) }}
-                    </span>
-                  } @else {
-                    <span class="position-plain">{{ getPositionLabel(result) }}</span>
-                  }
-                  <span class="champ-score">{{ result.score | number:'1.0-1' }} pts</span>
-                </div>
               </div>
             }
           </div>

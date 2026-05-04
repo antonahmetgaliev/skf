@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -11,11 +11,11 @@ import { ModalComponent } from '../../components/modal/modal.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { AuthService } from '../../services/auth.service';
-import { DriverChampionshipResult, DriverPublic, LinkCandidate, ProfileApiService } from '../../services/profile-api.service';
+import { DriverPublic, LinkCandidate, ProfileApiService } from '../../services/profile-api.service';
 
 @Component({
   selector: 'app-profile',
-  imports: [DatePipe, DecimalPipe, FormsModule, TranslocoPipe, InputDirective, BadgeComponent, BtnComponent, CardComponent, FormFieldComponent, ModalComponent, PageLayoutComponent, SpinnerComponent],
+  imports: [DatePipe, FormsModule, TranslocoPipe, InputDirective, BadgeComponent, BtnComponent, CardComponent, FormFieldComponent, ModalComponent, PageLayoutComponent, SpinnerComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
 })
@@ -32,7 +32,6 @@ export class ProfileComponent implements OnInit {
 
   readonly linkedDriver = signal<DriverPublic | null>(null);
   readonly loadingDriver = signal(false);
-  readonly championshipResults = signal<DriverChampionshipResult[]>([]);
 
   readonly editingPhoto = signal(false);
   editPhotoValue = '';
@@ -66,11 +65,6 @@ export class ProfileComponent implements OnInit {
       next: (driver) => {
         this.linkedDriver.set(driver);
         this.loadingDriver.set(false);
-        if (driver.simgridDriverId != null) {
-          this.profileApi.getDriverChampionshipResults(driver.simgridDriverId).subscribe({
-            next: (results) => this.championshipResults.set(results),
-          });
-        }
       },
       error: () => this.loadingDriver.set(false),
     });
@@ -120,7 +114,6 @@ export class ProfileComponent implements OnInit {
     this.profileApi.unlinkDriver().subscribe({
       next: () => {
         this.linkedDriver.set(null);
-        this.championshipResults.set([]);
         this.auth.loadUser();
       },
     });
@@ -176,29 +169,6 @@ export class ProfileComponent implements OnInit {
       },
       error: () => this.savingPhoto.set(false),
     });
-  }
-
-  getPositionBadge(result: DriverChampionshipResult): string | null {
-    if (result.dsq) return null;
-    if (result.position === 1) return 'champion';
-    if (result.position === 2) return 'top2';
-    if (result.position === 3) return 'top3';
-    return null;
-  }
-
-  getPositionLabel(result: DriverChampionshipResult): string {
-    if (result.dsq) return 'DSQ';
-    if (result.position === 1) return '🏆 Champion';
-    if (result.position === 2) return '🥈 Runner-up';
-    if (result.position === 3) return '🥉 3rd Place';
-    return result.position != null ? `P${result.position}` : '—';
-  }
-
-  isFinishedChampionship(result: DriverChampionshipResult): boolean {
-    const today = new Date().toISOString().slice(0, 10);
-    if (result.endDate && result.endDate < today) return true;
-    if (!result.endDate && !result.acceptingRegistrations) return true;
-    return false;
   }
 
   logout(): void {

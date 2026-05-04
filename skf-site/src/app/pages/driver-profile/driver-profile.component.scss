@@ -131,45 +131,6 @@ h1 {
   white-space: nowrap;
 }
 
-/* ── Stats row ── */
-
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  padding: 0.75rem;
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-subtle);
-}
-
-.stat-value {
-  font-family: var(--font-display);
-  font-size: var(--heading-2xl);
-  font-weight: 800;
-  color: var(--ink);
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  color: var(--muted);
-  text-align: center;
-}
-
 /* ── Points table ── */
 
 .points-section h2 {
@@ -227,124 +188,6 @@ h1 {
   color: var(--ink);
 }
 
-
-/* ── Championship results ── */
-
-.championships-section {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-
-  h2 {
-    margin: 0 0 0.85rem;
-    font-family: var(--font-display);
-    font-size: var(--text-md);
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-wider);
-    color: var(--muted);
-  }
-}
-
-.champ-list {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.champ-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.65rem 1rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  background: rgba(255, 255, 255, 0.04);
-  transition: opacity 0.2s;
-
-  &.champ-finished {
-    opacity: 0.55;
-  }
-}
-
-.champ-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-.champ-name {
-  font-weight: 600;
-  font-size: var(--text-lg);
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.champ-status-tag {
-  flex-shrink: 0;
-  padding: 0.1rem 0.5rem;
-  border-radius: 999px;
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-
-  &.active {
-    background: rgba(255, 214, 0, 0.15);
-    color: var(--gold-deep);
-    border: 1px solid rgba(255, 214, 0, 0.35);
-  }
-}
-
-.champ-result {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-shrink: 0;
-}
-
-.position-badge {
-  padding: 0.2rem 0.7rem;
-  border-radius: 999px;
-  font-size: var(--text-sm);
-  font-weight: 800;
-  letter-spacing: var(--tracking-normal);
-  white-space: nowrap;
-
-  &[data-badge='champion'] {
-    background: linear-gradient(135deg, #ffd600, #d49a10);
-    color: #1c1c22;
-    box-shadow: 0 2px 8px rgba(255, 214, 0, 0.4);
-  }
-
-  &[data-badge='top2'] {
-    background: linear-gradient(135deg, #c0c0c0, #a0a0a0);
-    color: #1a1a1a;
-  }
-
-  &[data-badge='top3'] {
-    background: linear-gradient(135deg, #cd7f32, #a0632a);
-    color: #fff;
-  }
-}
-
-.position-plain {
-  font-size: var(--text-md);
-  font-weight: 600;
-  color: var(--muted);
-  min-width: 2.5rem;
-  text-align: right;
-}
-
-.champ-score {
-  font-size: var(--text-sm);
-  color: var(--muted);
-  min-width: 4rem;
-  text-align: right;
-}
-
 .loading-row {
   font-size: var(--text-md);
   color: var(--muted);
@@ -382,17 +225,6 @@ h1 {
     justify-content: center;
   }
 
-  .stats-row {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-
-  .stat {
-    flex-direction: row;
-    justify-content: space-between;
-    padding: 0.55rem 0.75rem;
-  }
-
   .points-header,
   .point-row {
     grid-template-columns: 1fr;
@@ -403,28 +235,5 @@ h1 {
 
   .points-header {
     display: none;
-  }
-
-  .champ-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-
-  .champ-meta {
-    width: 100%;
-  }
-
-  .champ-name {
-    white-space: normal;
-  }
-
-  .champ-result {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .champ-score {
-    text-align: left;
   }
 }
