@@ -73,6 +73,10 @@ export class BwpApiService {
     return this.http.delete<void>(`${this.base}/points/${pointId}`);
   }
 
+  expirePoint(pointId: string, note: string): Observable<BwpPoint> {
+    return this.http.patch<BwpPoint>(`${this.base}/points/${pointId}/expire`, { note });
+  }
+
   // ── Penalty Rules ────────────────────────────────────────────────
 
   getPenaltyRules(): Observable<PenaltyRule[]> {

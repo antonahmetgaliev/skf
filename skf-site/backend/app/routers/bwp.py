@@ -174,9 +174,32 @@ async def delete_point(
     await db.commit()
 
 
-# ---------------------------------------------------------------------------
-# Penalty Rules
-# ---------------------------------------------------------------------------
+class ExpirePointBody(BaseModel):
+    note: str = ""
+
+
+@router.patch("/points/{point_id}/expire", response_model=BwpPointOut)
+async def expire_point(
+    point_id: uuid.UUID,
+    body: ExpirePointBody,
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Immediately expire a single BWP point by setting expires_on to today."""
+    result = await db.execute(select(BwpPoint).where(BwpPoint.id == point_id))
+    point = result.scalar_one_or_none()
+    if not point:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Point not found."
+        )
+    today = date.today()
+    if point.expires_on <= today:
+        return point  # already expired, no-op
+    point.expires_on = today
+    point.note = body.note.strip() or None
+    await db.commit()
+    await db.refresh(point)
+    return point
 
 
 @router.get("/penalty-rules", response_model=list[PenaltyRuleOut])

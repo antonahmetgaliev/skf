@@ -336,6 +336,15 @@
                               <span class="tag">{{ 'bwp.expired' | transloco }}</span>
                             }
                             @if (auth.isAdmin()) {
+                            @if (!isExpired(point)) {
+                            <button
+                              class="btn-link"
+                              type="button"
+                              (click)="expirePoint(point.id)"
+                            >
+                              {{ 'bwp.expire' | transloco }}
+                            </button>
+                            }
                             <button
                               class="btn-link"
                               type="button"

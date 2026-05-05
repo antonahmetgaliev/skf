@@ -287,6 +287,13 @@ export class BwpLicenseComponent {
     });
   }
 
+  expirePoint(pointId: string): void {
+    const note = window.prompt('Reason for expiring this point (optional):') ?? '';
+    this.api.expirePoint(pointId, note).subscribe({
+      next: () => this.refreshDrivers()
+    });
+  }
+
   // ── Penalty Rules ────────────────────────────────────────────────
 
   addPenaltyRule(): void {
