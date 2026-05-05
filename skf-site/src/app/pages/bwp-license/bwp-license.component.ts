@@ -351,13 +351,6 @@ export class BwpLicenseComponent {
     });
   }
 
-  expireAllDriverPoints(driverId: string): void {
-    if (!window.confirm('Expire all active BWP points for this driver?')) return;
-    this.api.expireAllPoints(driverId, '').subscribe({
-      next: () => this.refreshDrivers()
-    });
-  }
-
   // ── Penalty Clearances ───────────────────────────────────────────
 
   isClearedPenalty(driver: Driver, ruleId: string): boolean {
