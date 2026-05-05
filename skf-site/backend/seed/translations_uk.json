@@ -304,6 +304,7 @@
   "admin.tabSite": "Сайт",
   "admin.tabCalendar": "Календар",
   "admin.tabTranslations": "Переклади",
+  "admin.tabRegulations": "Регламенти",
   "admin.filter": "Фільтр",
   "admin.searchByNameOrId": "Пошук за ім'ям або Discord ID",
   "admin.userCount": "користувач(ів)",

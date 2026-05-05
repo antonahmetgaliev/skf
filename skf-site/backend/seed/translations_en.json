@@ -304,6 +304,7 @@
   "admin.tabSite": "Site",
   "admin.tabCalendar": "Calendar",
   "admin.tabTranslations": "Translations",
+  "admin.tabRegulations": "Regulations",
   "admin.filter": "Filter",
   "admin.searchByNameOrId": "Search by name or Discord ID",
   "admin.userCount": "user(s)",

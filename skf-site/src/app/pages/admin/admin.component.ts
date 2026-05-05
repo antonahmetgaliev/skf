@@ -15,13 +15,14 @@ import { SelectDirective } from '../../directives/select.directive';
 import { AuthService, AuthUser, ROLES, Role } from '../../services/auth.service';
 import { CalendarApiService, Community } from '../../services/calendar-api.service';
 import { AdminCalendarTabComponent } from './admin-calendar-tab/admin-calendar-tab.component';
+import { AdminRegulationsTabComponent } from './admin-regulations-tab/admin-regulations-tab.component';
 import { AdminTranslationsTabComponent } from './admin-translations-tab/admin-translations-tab.component';
 
-type AdminTab = 'users' | 'site' | 'calendar' | 'translations';
+type AdminTab = 'users' | 'site' | 'calendar' | 'translations' | 'regulations';
 
 @Component({
   selector: 'app-admin',
-  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, AdminCalendarTabComponent, AdminTranslationsTabComponent, BtnComponent, CardComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
+  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, AdminCalendarTabComponent, AdminRegulationsTabComponent, AdminTranslationsTabComponent, BtnComponent, CardComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',
 })

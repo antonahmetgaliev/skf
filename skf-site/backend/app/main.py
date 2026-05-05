@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.middleware import StaleHeaderMiddleware
-from app.routers import admin, auth, bwp, calendar, championships, dotd, incidents, profile, translations, users, youtube
+from app.routers import admin, auth, bwp, calendar, championships, dotd, incidents, profile, regulations, translations, users, youtube
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ app.include_router(dotd.router, prefix="/api")
 app.include_router(calendar.router, prefix="/api")
 app.include_router(youtube.router, prefix="/api")
 app.include_router(translations.router, prefix="/api")
+app.include_router(regulations.router, prefix="/api")
 
 
 @app.get("/healthz")
@@ -101,6 +102,36 @@ async def on_startup():
                     logger.info(f"Seeded {len(items)} translations for '{lang_code}'")
             await session.commit()
     logger.info("Translations seeded")
+
+    # Seed regulation pages from JSON if empty
+    from app.models.regulation import RegulationPage, RegulationContent
+
+    async with async_session() as session:
+        result = await session.execute(select(RegulationPage).limit(1))
+        if result.scalar_one_or_none() is None:
+            seed_dir = Path(__file__).resolve().parent.parent / "seed"
+            seed_file = seed_dir / "regulations_en.json"
+            if seed_file.exists():
+                data = json.loads(seed_file.read_text(encoding="utf-8"))
+                for slug, entry in data.items():
+                    import uuid as _uuid
+                    page = RegulationPage(
+                        id=_uuid.uuid4(),
+                        slug=slug,
+                        sort_order=entry.get("sort_order", 0),
+                    )
+                    session.add(page)
+                    page.contents.append(
+                        RegulationContent(
+                            lang="en",
+                            title=entry["title"],
+                            subtitle=entry.get("subtitle", ""),
+                            content=entry.get("content", ""),
+                        )
+                    )
+                await session.commit()
+                logger.info(f"Seeded {len(data)} regulation pages")
+    logger.info("Regulations seeded")
 
     logger.info(f"DATABASE_URL scheme: {settings.database_url.split('@')[0].split('://')[0]}")
     logger.info(f"PORT: {settings.port}")

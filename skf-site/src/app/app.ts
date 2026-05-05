@@ -1,11 +1,12 @@
 import { Component, ElementRef, HostListener, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { filter } from 'rxjs/operators';
 import { DotdWidgetComponent } from './components/dotd-widget/dotd-widget.component';
 import { AuthService } from './services/auth.service';
 import { CalendarApiService, Community } from './services/calendar-api.service';
+import { RegulationApiService, RegulationPageListItem } from './services/regulation-api.service';
 
 @Component({
   selector: 'app-root',
@@ -18,8 +19,11 @@ export class App implements OnInit {
   private readonly router = inject(Router);
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly calendarApi = inject(CalendarApiService);
+  private readonly regulationApi = inject(RegulationApiService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly viewAsCommunities = signal<Community[]>([]);
+  readonly regulationPages = signal<RegulationPageListItem[]>([]);
   readonly regulationsOpen = signal(false);
   readonly regulationsActive = signal(false);
   readonly mobileMenuOpen = signal(false);
@@ -27,6 +31,8 @@ export class App implements OnInit {
   ngOnInit(): void {
     this.auth.loadUser();
     this.loadViewAsCommunities();
+    this.loadRegulationPages(this.transloco.getActiveLang());
+    this.transloco.langChanges$.subscribe((lang) => this.loadRegulationPages(lang));
     this.updateRegulationsActive(this.router.url);
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
@@ -73,6 +79,12 @@ export class App implements OnInit {
   private loadViewAsCommunities(): void {
     this.calendarApi.getCommunities().subscribe({
       next: (data) => this.viewAsCommunities.set(data),
+    });
+  }
+
+  private loadRegulationPages(lang: string): void {
+    this.regulationApi.listPages(lang).subscribe({
+      next: (pages) => this.regulationPages.set(pages),
     });
   }
 

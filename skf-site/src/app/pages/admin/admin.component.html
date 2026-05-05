@@ -2,7 +2,7 @@
   <app-page-intro [title]="'admin.title' | transloco" [subtitle]="'admin.subtitle' | transloco" />
 
   <app-tabs
-    [tabs]="[{key: 'users', label: ('admin.tabUsers' | transloco)}, {key: 'site', label: ('admin.tabSite' | transloco)}, {key: 'calendar', label: ('admin.tabCalendar' | transloco)}, {key: 'translations', label: ('admin.tabTranslations' | transloco)}]"
+    [tabs]="[{key: 'users', label: ('admin.tabUsers' | transloco)}, {key: 'site', label: ('admin.tabSite' | transloco)}, {key: 'calendar', label: ('admin.tabCalendar' | transloco)}, {key: 'regulations', label: ('admin.tabRegulations' | transloco)}, {key: 'translations', label: ('admin.tabTranslations' | transloco)}]"
     [activeTab]="activeTab()"
     (tabChange)="setActiveTab($any($event))"
   />
@@ -136,6 +136,10 @@
 
   @if (activeTab() === 'calendar') {
     <app-admin-calendar-tab />
+  }
+
+  @if (activeTab() === 'regulations') {
+    <app-admin-regulations-tab />
   }
 
   @if (activeTab() === 'translations') {

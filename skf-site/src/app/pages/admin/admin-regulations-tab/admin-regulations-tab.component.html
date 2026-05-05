@@ -1,0 +1,137 @@
+@if (loading()) {
+  <app-spinner />
+} @else {
+  <div class="reg-admin-layout">
+    <!-- Page list -->
+    <app-card [animated]="true" class="page-list-card">
+      <div class="page-list-header">
+        <h3 class="section-title">Pages</h3>
+        <app-btn variant="accent" size="sm" (click)="showNewForm.set(!showNewForm())">
+          {{ showNewForm() ? 'Cancel' : '+ Add Page' }}
+        </app-btn>
+      </div>
+
+      @if (showNewForm()) {
+        <div class="new-page-form">
+          <app-form-field label="Slug" fieldId="newRegSlug">
+            <input appInput id="newRegSlug" type="text" [(ngModel)]="newSlug" placeholder="e.g. my-regulations" autocomplete="off" />
+          </app-form-field>
+          <app-form-field label="Sort Order" fieldId="newRegSort">
+            <input appInput id="newRegSort" type="number" [(ngModel)]="newSortOrder" />
+          </app-form-field>
+          <app-btn variant="accent" size="sm" [disabled]="saving() || !newSlug.trim()" (click)="createPage()">
+            Create
+          </app-btn>
+        </div>
+      }
+
+      @if (pages().length === 0) {
+        <app-empty>No regulation pages yet.</app-empty>
+      } @else {
+        <ul class="page-list">
+          @for (page of pages(); track page.slug) {
+            <li
+              class="page-item"
+              [class.page-item--active]="selectedSlug() === page.slug"
+              (click)="selectPage(page.slug)"
+            >
+              <div class="page-item-info">
+                <span class="page-item-slug">{{ page.slug }}</span>
+                <span class="page-item-order">#{{ page.sortOrder }}</span>
+              </div>
+              <button class="btn-link btn-link--danger" type="button" (click)="deletePage(page.slug); $event.stopPropagation()">×</button>
+            </li>
+          }
+        </ul>
+      }
+    </app-card>
+
+    <!-- Editor -->
+    @if (selectedPage(); as page) {
+      <app-card [animated]="true" class="editor-card">
+        <div class="editor-header">
+          <h3 class="section-title">Edit: {{ page.slug }}</h3>
+          @if (message()) {
+            <span class="editor-message">{{ message() }}</span>
+          }
+        </div>
+
+        <div class="editor-meta">
+          <app-form-field label="Slug" fieldId="editSlug">
+            <input appInput id="editSlug" type="text" [(ngModel)]="editSlug" autocomplete="off" />
+          </app-form-field>
+          <app-form-field label="Sort Order" fieldId="editSort">
+            <input appInput id="editSort" type="number" [(ngModel)]="editSortOrder" />
+          </app-form-field>
+        </div>
+
+        <!-- Language tabs -->
+        <div class="lang-tabs">
+          @for (lang of availableLangs; track lang) {
+            <button
+              type="button"
+              class="lang-tab"
+              [class.lang-tab--active]="activeLang() === lang"
+              (click)="activeLang.set(lang)"
+            >
+              {{ lang.toUpperCase() }}
+            </button>
+          }
+          <div class="lang-tabs-spacer"></div>
+          <app-btn variant="ghost" size="sm" (click)="showPreview.set(!showPreview())">
+            {{ showPreview() ? 'Editor' : 'Preview' }}
+          </app-btn>
+        </div>
+
+        <!-- Content editor per language -->
+        @for (lang of availableLangs; track lang) {
+          @if (activeLang() === lang) {
+            <div class="content-editor">
+              <app-form-field label="Title" [fieldId]="'regTitle-' + lang">
+                <input appInput
+                  [id]="'regTitle-' + lang"
+                  type="text"
+                  [ngModel]="editContents[lang]?.title ?? ''"
+                  (ngModelChange)="updateField(lang, 'title', $event)"
+                  autocomplete="off"
+                />
+              </app-form-field>
+              <app-form-field label="Subtitle" [fieldId]="'regSubtitle-' + lang">
+                <input appInput
+                  [id]="'regSubtitle-' + lang"
+                  type="text"
+                  [ngModel]="editContents[lang]?.subtitle ?? ''"
+                  (ngModelChange)="updateField(lang, 'subtitle', $event)"
+                  autocomplete="off"
+                />
+              </app-form-field>
+
+              @if (showPreview()) {
+                <div class="preview-container">
+                  <div class="regulation-content" [innerHTML]="editContents[lang]?.content | markdown"></div>
+                </div>
+              } @else {
+                <app-form-field label="Content (Markdown)" [fieldId]="'regContent-' + lang">
+                  <textarea
+                    class="markdown-textarea"
+                    [id]="'regContent-' + lang"
+                    [ngModel]="editContents[lang]?.content ?? ''"
+                    (ngModelChange)="updateField(lang, 'content', $event)"
+                    rows="30"
+                    spellcheck="false"
+                  ></textarea>
+                </app-form-field>
+              }
+            </div>
+          }
+        }
+
+        <div class="editor-footer">
+          <app-btn variant="accent" [disabled]="saving()" (click)="savePage()">
+            {{ saving() ? 'Saving...' : 'Save' }}
+          </app-btn>
+        </div>
+      </app-card>
+    }
+  </div>
+}

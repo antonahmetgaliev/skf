@@ -79,37 +79,15 @@
         </button>
         @if (regulationsOpen()) {
           <div class="site-nav-dropdown-menu" role="menu">
-            <a
-              routerLink="/regulations"
-              routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: true }"
-              (click)="closeRegulations()"
-              role="menuitem"
-            >{{ 'nav.generalRegulations' | transloco }}</a>
-            <a
-              routerLink="/regulations/nascar-general"
-              routerLinkActive="active"
-              (click)="closeRegulations()"
-              role="menuitem"
-            >{{ 'nav.nascarRegulations' | transloco }}</a>
-            <a
-              routerLink="/regulations/iracing-league"
-              routerLinkActive="active"
-              (click)="closeRegulations()"
-              role="menuitem"
-            >{{ 'nav.iracingLeague' | transloco }}</a>
-            <a
-              routerLink="/regulations/nightfall-gte"
-              routerLinkActive="active"
-              (click)="closeRegulations()"
-              role="menuitem"
-            >{{ 'nav.nightfallGte' | transloco }}</a>
-            <a
-              routerLink="/regulations/thunder-trucks"
-              routerLinkActive="active"
-              (click)="closeRegulations()"
-              role="menuitem"
-            >{{ 'nav.thunderTrucks' | transloco }}</a>
+            @for (regPage of regulationPages(); track regPage.slug) {
+              <a
+                [routerLink]="regPage.slug === 'general' ? '/regulations' : '/regulations/' + regPage.slug"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="regPage.slug === 'general' ? { exact: true } : { exact: false }"
+                (click)="closeRegulations()"
+                role="menuitem"
+              >{{ regPage.title }}</a>
+            }
           </div>
         }
       </div>

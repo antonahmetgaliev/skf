@@ -223,6 +223,145 @@ pre {
 
 /* ── Typography ── */
 
+// ── Regulation content (rendered from markdown via [innerHTML]) ──
+
+.regulation-content {
+  h2 {
+    margin: 1.5rem 0 1rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-widest);
+    font-size: var(--heading-lg);
+    color: var(--ink);
+
+    &:first-child { margin-top: 0; }
+  }
+
+  h3 {
+    margin: 1.25rem 0 0.6rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    font-size: var(--heading-md);
+    color: var(--ink-soft);
+  }
+
+  h4 {
+    margin: 1rem 0 0.5rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    font-size: var(--heading-sm);
+    color: var(--muted);
+  }
+
+  ol {
+    margin: 0;
+    padding-left: 1.4rem;
+    display: grid;
+    gap: 0.5rem;
+    line-height: 1.65;
+    color: var(--muted);
+    font-size: var(--text-lg);
+
+    ol {
+      margin-top: 0.5rem;
+      padding-left: 1.6rem;
+    }
+  }
+
+  ol li::marker {
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  ul {
+    list-style: disc;
+    margin: 0.5rem 0 0;
+    padding-left: 1.4rem;
+    display: grid;
+    gap: 0.35rem;
+    line-height: 1.65;
+    color: var(--muted);
+    font-size: var(--text-lg);
+  }
+
+  ul li::marker {
+    color: var(--gold);
+  }
+
+  p {
+    margin: 0 0 0.5rem;
+    color: var(--muted);
+    font-size: var(--text-lg);
+    line-height: 1.65;
+  }
+
+  strong {
+    color: var(--ink);
+  }
+
+  a {
+    color: var(--gold);
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(244, 196, 48, 0.4);
+    transition: border-color 0.2s ease;
+
+    &:hover {
+      border-color: var(--gold);
+    }
+  }
+
+  code {
+    font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+    background: rgba(255, 214, 0, 0.1);
+    color: var(--gold);
+    padding: 0 0.3rem;
+    border-radius: var(--radius-xs);
+    font-size: 0.85em;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-lg);
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.02);
+    margin: 0.75rem 0 0.25rem;
+    border: 1px solid var(--card-border, rgba(255, 214, 0, 0.25));
+    border-radius: var(--radius-md);
+    overflow: hidden;
+
+    th, td {
+      padding: 0.55rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 214, 0, 0.15);
+    }
+
+    th {
+      font-family: var(--font-display);
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-wide);
+      font-size: var(--text-sm);
+      color: var(--gold);
+      background: rgba(255, 214, 0, 0.08);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .regulation-content {
+    ol, ul {
+      padding-left: 1.2rem;
+    }
+  }
+}
+
 .eyebrow {
   margin: 0 0 0.15rem;
   font-size: var(--text-xs);
