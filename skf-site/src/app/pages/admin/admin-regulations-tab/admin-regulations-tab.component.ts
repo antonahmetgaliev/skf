@@ -51,7 +51,7 @@ export class AdminRegulationsTabComponent implements OnInit {
     return this.editContents[lang] ?? { title: '', subtitle: '', content: '' };
   });
 
-  readonly availableLangs = ['en', 'uk'];
+  readonly availableLangs = ['en', 'ua'];
 
   ngOnInit(): void {
     this.loadPages();

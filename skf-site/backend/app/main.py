@@ -72,7 +72,7 @@ async def on_startup():
     from app.models.translation import Language
 
     async with async_session() as session:
-        for code, name in [("en", "English"), ("uk", "Українська")]:
+        for code, name in [("en", "English"), ("ua", "Українська")]:
             existing = await session.get(Language, code)
             if existing is None:
                 session.add(Language(code=code, name=name, is_active=True))
@@ -90,7 +90,7 @@ async def on_startup():
         result = await session.execute(select(Translation).limit(1))
         if result.scalar_one_or_none() is None:
             seed_dir = Path(__file__).resolve().parent.parent / "seed"
-            for lang_code in ("en", "uk"):
+            for lang_code in ("en", "ua"):
                 seed_file = seed_dir / f"translations_{lang_code}.json"
                 if seed_file.exists():
                     data = json.loads(seed_file.read_text(encoding="utf-8"))

@@ -3,7 +3,7 @@ import { TranslocoService } from '@jsverse/transloco';
 
 const LANG_TO_LOCALE: Record<string, string> = {
   en: 'en-GB',
-  uk: 'uk-UA',
+  ua: 'uk-UA',
 };
 
 @Injectable({ providedIn: 'root' })
