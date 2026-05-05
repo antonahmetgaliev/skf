@@ -56,6 +56,7 @@ class BwpPoint(Base):
     points: Mapped[int] = mapped_column(Integer, nullable=False)
     issued_on: Mapped[date] = mapped_column(Date, nullable=False)
     expires_on: Mapped[date] = mapped_column(Date, nullable=False)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     driver: Mapped["Driver"] = relationship(back_populates="points")
 

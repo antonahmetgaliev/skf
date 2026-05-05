@@ -352,7 +352,26 @@ export class BwpLicenseComponent {
       });
     } else {
       this.api.setClearance(driver.id, ruleId).subscribe({
-        next: () => this.refreshDrivers()
+        next: () => {
+          // Check if ALL penalty rules are now cleared
+          const allRuleIds = this.penaltyRules().map((r) => r.id);
+          const alreadyCleared = driver.clearances.map((c) => c.penaltyRuleId);
+          const nowCleared = new Set([...alreadyCleared, ruleId]);
+          const allCleared = allRuleIds.every((id) => nowCleared.has(id));
+
+          if (allCleared) {
+            const note =
+              window.prompt(
+                'All penalties cleared! Enter a reason for the BWP reset (leave blank for default):',
+                'All penalties cleared — points reset'
+              ) ?? '';
+            this.api.expireAllPoints(driver.id, note).subscribe({
+              next: () => this.refreshDrivers()
+            });
+          } else {
+            this.refreshDrivers();
+          }
+        }
       });
     }
   }

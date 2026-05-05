@@ -22,6 +22,7 @@ class BwpPointOut(CamelModel):
     points: int
     issued_on: date
     expires_on: date
+    note: str | None = None
 
 
 # ---------------------------------------------------------------------------

@@ -328,6 +328,9 @@
                         </div>
                         <div class="point-meta">
                           <span>{{ 'bwp.expires' | transloco }} {{ formatDate(point.expiresOn) }}</span>
+                          @if (point.note) {
+                            <span class="point-note" title="{{ point.note }}">{{ point.note }}</span>
+                          }
                           <div class="point-actions">
                             @if (isExpired(point)) {
                               <span class="tag">{{ 'bwp.expired' | transloco }}</span>

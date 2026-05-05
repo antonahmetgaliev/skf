@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import uuid
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -298,3 +300,45 @@ async def remove_clearance(
         )
     await db.delete(clearance)
     await db.commit()
+
+
+# ---------------------------------------------------------------------------
+# Expire all active points (full penalty clear / reset)
+# ---------------------------------------------------------------------------
+
+class ExpireAllBody(BaseModel):
+    note: str = ""
+
+
+@router.post(
+    "/drivers/{driver_id}/expire-all",
+    response_model=DriverOut,
+    status_code=status.HTTP_200_OK,
+)
+async def expire_all_points(
+    driver_id: uuid.UUID,
+    body: ExpireAllBody,
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Expire all active BWP points for a driver and remove all penalty clearances.
+
+    Used after a driver has served all penalties so they can start accumulating
+    fresh.  Points are expired today (not deleted) so history is preserved.
+    Clearances are removed so they don't carry over to the next cycle.
+    """
+    driver = await _get_driver_or_404(driver_id, db)
+    today = date.today()
+    note = body.note.strip() or "All penalties cleared — points reset"
+
+    for point in driver.points:
+        if point.expires_on > today:
+            point.expires_on = today
+            point.note = note
+
+    for clearance in list(driver.clearances):
+        await db.delete(clearance)
+
+    await db.commit()
+    await db.refresh(driver)
+    return driver

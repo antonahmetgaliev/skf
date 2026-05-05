@@ -7,6 +7,7 @@ export interface BwpPoint {
   points: number;
   issuedOn: string;
   expiresOn: string;
+  note: string | null;
 }
 
 export interface PenaltyClearance {
@@ -115,5 +116,9 @@ export class BwpApiService {
     return this.http.delete<void>(
       `${this.base}/drivers/${driverId}/clearances/${ruleId}`
     );
+  }
+
+  expireAllPoints(driverId: string, note: string): Observable<Driver> {
+    return this.http.post<Driver>(`${this.base}/drivers/${driverId}/expire-all`, { note });
   }
 }
