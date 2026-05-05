@@ -1,15 +1,15 @@
 """Rename language code uk -> ua
 
-Revision ID: 011
-Revises: 010
+Revision ID: 025
+Revises: 024
 Create Date: 2026-05-05
 """
 from typing import Sequence, Union
 
 from alembic import op
 
-revision: str = "011"
-down_revision: Union[str, None] = "010"
+revision: str = "025"
+down_revision: Union[str, None] = "024"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
