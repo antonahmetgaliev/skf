@@ -288,8 +288,7 @@ export class BwpLicenseComponent {
   }
 
   expirePoint(pointId: string): void {
-    const note = window.prompt('Reason for expiring this point (optional):') ?? '';
-    this.api.expirePoint(pointId, note).subscribe({
+    this.api.expirePoint(pointId, '').subscribe({
       next: () => this.refreshDrivers()
     });
   }
@@ -345,6 +344,20 @@ export class BwpLicenseComponent {
     });
   }
 
+  expireAllDriverPoints(driverId: string): void {
+    if (!window.confirm('Expire all active BWP points for this driver?')) return;
+    this.api.expireAllPoints(driverId, '').subscribe({
+      next: () => this.refreshDrivers()
+    });
+  }
+
+  expireAllDriverPoints(driverId: string): void {
+    if (!window.confirm('Expire all active BWP points for this driver?')) return;
+    this.api.expireAllPoints(driverId, '').subscribe({
+      next: () => this.refreshDrivers()
+    });
+  }
+
   // ── Penalty Clearances ───────────────────────────────────────────
 
   isClearedPenalty(driver: Driver, ruleId: string): boolean {
@@ -367,12 +380,7 @@ export class BwpLicenseComponent {
           const allCleared = allRuleIds.every((id) => nowCleared.has(id));
 
           if (allCleared) {
-            const note =
-              window.prompt(
-                'All penalties cleared! Enter a reason for the BWP reset (leave blank for default):',
-                'All penalties cleared — points reset'
-              ) ?? '';
-            this.api.expireAllPoints(driver.id, note).subscribe({
+            this.api.expireAllPoints(driver.id, '').subscribe({
               next: () => this.refreshDrivers()
             });
           } else {
