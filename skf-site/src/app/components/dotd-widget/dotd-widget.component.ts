@@ -6,8 +6,9 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../services/auth.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { AlertComponent } from '../alert/alert.component';
 import { BadgeComponent } from '../badge/badge.component';
 import { BtnComponent } from '../btn/btn.component';
@@ -26,6 +27,8 @@ import {
 export class DotdWidgetComponent implements OnInit, OnDestroy {
   readonly auth = inject(AuthService);
   private readonly dotd = inject(DotdApiService);
+  private readonly confirmSvc = inject(ConfirmDialogService);
+  private readonly transloco = inject(TranslocoService);
   // ── core state ────────────────────────────────────────────────────────────
   readonly polls = signal<DotdPollOut[]>([]);
   readonly expanded = signal(false);
@@ -82,7 +85,14 @@ export class DotdWidgetComponent implements OnInit, OnDestroy {
     });
   }
 
-  deletePoll(pollId: string): void {
+  async deletePoll(pollId: string): Promise<void> {
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.deleteTitle'),
+      message: this.transloco.translate('dotd.deletePollConfirm'),
+      confirmLabel: this.transloco.translate('common.confirm.delete'),
+      danger: true,
+    });
+    if (!ok) return;
     this.dotd.deletePoll(pollId).subscribe({
       next: () => this.polls.update(list => list.filter(p => p.id !== pollId)),
     });

@@ -1,7 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AlertComponent } from '../../components/alert/alert.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
@@ -23,6 +23,7 @@ import {
   ChampionshipFormData,
 } from '../../components/championship-form/championship-form.component';
 import { AuthService } from '../../services/auth.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { LocaleService } from '../../services/locale.service';
 import { toLocalDateStr, toLocalDatetimeLocal, withLocalTzOffset } from '../../utils/date';
 
@@ -66,6 +67,8 @@ const VIEW_TABS: { key: string; label: string }[] = [
 export class CalendarComponent implements OnInit {
   private readonly calendarApi = inject(CalendarApiService);
   private readonly locale = inject(LocaleService);
+  private readonly confirmSvc = inject(ConfirmDialogService);
+  private readonly transloco = inject(TranslocoService);
   readonly auth = inject(AuthService);
 
   readonly weekDays = WEEK_DAY_KEYS.map((d) => `calendar.day.${d}`);
@@ -500,9 +503,15 @@ export class CalendarComponent implements OnInit {
     }
   }
 
-  deleteChampionship(event: CalendarEvent): void {
+  async deleteChampionship(event: CalendarEvent): Promise<void> {
     if (!event.customChampionshipId) return;
-    if (!window.confirm(`Delete "${event.name}"?`)) return;
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.deleteTitle'),
+      message: this.transloco.translate('calendar.deleteChampionshipConfirm', { name: event.name }),
+      confirmLabel: this.transloco.translate('common.confirm.delete'),
+      danger: true,
+    });
+    if (!ok) return;
     this.calendarApi.deleteCustomChampionship(event.customChampionshipId).subscribe({
       next: () => this.reloadCalendar(),
     });

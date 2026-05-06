@@ -1,0 +1,26 @@
+@if (options(); as opts) {
+  <div class="confirm-backdrop" (click)="cancel()">
+    <div
+      class="confirm-panel"
+      role="alertdialog"
+      aria-modal="true"
+      [attr.aria-label]="opts.title ?? ('common.confirm.title' | transloco)"
+      (click)="$event.stopPropagation()"
+    >
+      <h3 class="confirm-title">{{ opts.title ?? ('common.confirm.title' | transloco) }}</h3>
+      <p class="confirm-message">{{ opts.message }}</p>
+      <div class="confirm-footer">
+        <app-btn variant="ghost" size="sm" (click)="cancel()">
+          {{ opts.cancelLabel ?? ('common.confirm.cancel' | transloco) }}
+        </app-btn>
+        <app-btn
+          [variant]="opts.danger === false ? 'primary' : 'danger'"
+          size="sm"
+          (click)="accept()"
+        >
+          {{ opts.confirmLabel ?? ('common.confirm.confirm' | transloco) }}
+        </app-btn>
+      </div>
+    </div>
+  </div>
+}

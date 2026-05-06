@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { toLocalDatetimeLocal, withLocalTzOffset } from '../../../utils/date';
 import { BtnComponent } from '../../../components/btn/btn.component';
@@ -12,6 +12,7 @@ import { SpinnerComponent } from '../../../components/spinner/spinner.component'
 import { InputDirective } from '../../../directives/input.directive';
 import { SelectDirective } from '../../../directives/select.directive';
 import { AlertComponent } from '../../../components/alert/alert.component';
+import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 import {
   CalendarApiService,
   Community,
@@ -44,6 +45,8 @@ export class AdminCalendarTabComponent implements OnInit {
   private readonly calendarApi = inject(CalendarApiService);
   private readonly dotdApi = inject(DotdApiService);
   private readonly simgridApi = inject(SimgridApiService);
+  private readonly confirmSvc = inject(ConfirmDialogService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly communities = signal<Community[]>([]);
   readonly simulators = signal<string[]>([]);
@@ -143,7 +146,14 @@ export class AdminCalendarTabComponent implements OnInit {
     }
   }
 
-  deleteCommunity(c: Community): void {
+  async deleteCommunity(c: Community): Promise<void> {
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.deleteTitle'),
+      message: this.transloco.translate('admin.deleteCommunityConfirm', { name: c.name }),
+      confirmLabel: this.transloco.translate('common.confirm.delete'),
+      danger: true,
+    });
+    if (!ok) return;
     this.calendarApi.deleteCommunity(c.id).subscribe({
       next: () => {
         this.communities.update((list) => list.filter((x) => x.id !== c.id));
@@ -264,7 +274,14 @@ export class AdminCalendarTabComponent implements OnInit {
     }
   }
 
-  deleteChampionship(champ: CustomChampionshipOut): void {
+  async deleteChampionship(champ: CustomChampionshipOut): Promise<void> {
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.deleteTitle'),
+      message: this.transloco.translate('admin.deleteChampionshipConfirm', { name: champ.name }),
+      confirmLabel: this.transloco.translate('common.confirm.delete'),
+      danger: true,
+    });
+    if (!ok) return;
     this.calendarApi.deleteCustomChampionship(champ.id).subscribe({
       next: () => this.communityChampionships.update((list) => list.filter((c) => c.id !== champ.id)),
     });
@@ -462,7 +479,14 @@ export class AdminCalendarTabComponent implements OnInit {
     });
   }
 
-  deleteDotdPoll(pollId: string): void {
+  async deleteDotdPoll(pollId: string): Promise<void> {
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.deleteTitle'),
+      message: this.transloco.translate('admin.deleteDotdPollConfirm'),
+      confirmLabel: this.transloco.translate('common.confirm.delete'),
+      danger: true,
+    });
+    if (!ok) return;
     this.dotdApi.deletePoll(pollId).subscribe({
       next: () => this.dotdPolls.update(list => list.filter(p => p.id !== pollId)),
     });

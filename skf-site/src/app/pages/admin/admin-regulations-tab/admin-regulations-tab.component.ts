@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoService } from '@jsverse/transloco';
 import { BtnComponent } from '../../../components/btn/btn.component';
 import { CardComponent } from '../../../components/card/card.component';
 import { EmptyComponent } from '../../../components/empty/empty.component';
@@ -7,6 +8,7 @@ import { FormFieldComponent } from '../../../components/form-field/form-field.co
 import { SpinnerComponent } from '../../../components/spinner/spinner.component';
 import { InputDirective } from '../../../directives/input.directive';
 import { MarkdownPipe } from '../../../pipes/markdown.pipe';
+import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 import {
   RegulationApiService,
   RegulationContentUpdate,
@@ -22,6 +24,8 @@ import {
 })
 export class AdminRegulationsTabComponent implements OnInit {
   private readonly api = inject(RegulationApiService);
+  private readonly confirmSvc = inject(ConfirmDialogService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly pages = signal<RegulationPageOut[]>([]);
   readonly loading = signal(false);
@@ -145,8 +149,14 @@ export class AdminRegulationsTabComponent implements OnInit {
     });
   }
 
-  deletePage(slug: string): void {
-    if (!window.confirm(`Delete regulation page "${slug}"?`)) return;
+  async deletePage(slug: string): Promise<void> {
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.deleteTitle'),
+      message: this.transloco.translate('admin.deleteRegulationConfirm', { slug }),
+      confirmLabel: this.transloco.translate('common.confirm.delete'),
+      danger: true,
+    });
+    if (!ok) return;
 
     this.api.deletePage(slug).subscribe({
       next: () => {

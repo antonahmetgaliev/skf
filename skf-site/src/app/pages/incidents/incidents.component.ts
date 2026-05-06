@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { InputDirective } from '../../directives/input.directive';
 import { SelectDirective } from '../../directives/select.directive';
 import { TextareaDirective } from '../../directives/textarea.directive';
@@ -18,6 +18,7 @@ import { ModalComponent } from '../../components/modal/modal.component';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { BwpApiService, Driver } from '../../services/bwp-api.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import {
   ChampionshipListItem,
   SimgridApiService,
@@ -46,6 +47,8 @@ export class IncidentsComponent implements OnInit {
   private readonly incidentsApi = inject(IncidentsApiService);
   private readonly simgridApi = inject(SimgridApiService);
   private readonly bwpApi = inject(BwpApiService);
+  private readonly confirmSvc = inject(ConfirmDialogService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly verdictRules = signal<VerdictRule[]>([]);
   readonly verdictPresets = computed(() => this.verdictRules().map(r => r.verdict));
@@ -307,7 +310,13 @@ export class IncidentsComponent implements OnInit {
   }
 
   async deleteWindow(windowId: string): Promise<void> {
-    if (!confirm('Delete this incident window and all its incidents?')) return;
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.deleteTitle'),
+      message: this.transloco.translate('incidents.deleteWindowConfirm'),
+      confirmLabel: this.transloco.translate('common.confirm.delete'),
+      danger: true,
+    });
+    if (!ok) return;
     await firstValueFrom(this.incidentsApi.deleteWindow(windowId));
     if (this.windowDetail()?.id === windowId) {
       this.windowDetail.set(null);
@@ -468,7 +477,13 @@ export class IncidentsComponent implements OnInit {
   }
 
   async removeIncidentDriver(incidentDriverId: string): Promise<void> {
-    if (!confirm('Remove this driver from the incident?')) return;
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.title'),
+      message: this.transloco.translate('incidents.removeDriverConfirm'),
+      confirmLabel: this.transloco.translate('common.confirm.confirm'),
+      danger: true,
+    });
+    if (!ok) return;
     await firstValueFrom(this.incidentsApi.removeDriverFromIncident(incidentDriverId));
     const windowId = this.windowDetail()?.id;
     if (windowId) await this.selectWindow(windowId, true);
@@ -483,7 +498,13 @@ export class IncidentsComponent implements OnInit {
   }
 
   async discardDriverBwp(driverId: string): Promise<void> {
-    if (!confirm('Discard BWP points for this driver?')) return;
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.title'),
+      message: this.transloco.translate('incidents.discardBwpConfirm'),
+      confirmLabel: this.transloco.translate('common.confirm.confirm'),
+      danger: true,
+    });
+    if (!ok) return;
     await firstValueFrom(this.incidentsApi.discardDriverBwp(driverId));
     const windowId = this.windowDetail()?.id;
     if (windowId) await this.selectWindow(windowId, true);
@@ -604,7 +625,13 @@ export class IncidentsComponent implements OnInit {
   }
 
   async deleteVerdictRule(id: string): Promise<void> {
-    if (!confirm('Delete this verdict rule?')) return;
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.deleteTitle'),
+      message: this.transloco.translate('incidents.deleteVerdictRuleConfirm'),
+      confirmLabel: this.transloco.translate('common.confirm.delete'),
+      danger: true,
+    });
+    if (!ok) return;
     await firstValueFrom(this.incidentsApi.deleteVerdictRule(id));
     await this.loadVerdictRules();
   }
@@ -652,7 +679,13 @@ export class IncidentsComponent implements OnInit {
   }
 
   async deleteDescriptionPreset(id: string): Promise<void> {
-    if (!confirm('Delete this description preset?')) return;
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.deleteTitle'),
+      message: this.transloco.translate('incidents.deleteDescriptionPresetConfirm'),
+      confirmLabel: this.transloco.translate('common.confirm.delete'),
+      danger: true,
+    });
+    if (!ok) return;
     await firstValueFrom(this.incidentsApi.deleteDescriptionPreset(id));
     await this.loadDescriptionPresets();
   }

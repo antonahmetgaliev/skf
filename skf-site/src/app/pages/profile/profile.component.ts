@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { InputDirective } from '../../directives/input.directive';
 import { BadgeComponent } from '../../components/badge/badge.component';
 import { BtnComponent } from '../../components/btn/btn.component';
@@ -11,6 +11,7 @@ import { ModalComponent } from '../../components/modal/modal.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { AuthService } from '../../services/auth.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { DriverPublic, LinkCandidate, ProfileApiService } from '../../services/profile-api.service';
 
 @Component({
@@ -22,6 +23,8 @@ import { DriverPublic, LinkCandidate, ProfileApiService } from '../../services/p
 export class ProfileComponent implements OnInit {
   readonly auth = inject(AuthService);
   private readonly profileApi = inject(ProfileApiService);
+  private readonly confirmSvc = inject(ConfirmDialogService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly linkCandidates = signal<LinkCandidate[]>([]);
   readonly loadingCandidates = signal(false);
@@ -109,8 +112,14 @@ export class ProfileComponent implements OnInit {
     this.showLinkModal.set(false);
   }
 
-  unlinkDriver(): void {
-    if (!window.confirm('Unlink your driver profile?')) return;
+  async unlinkDriver(): Promise<void> {
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.title'),
+      message: this.transloco.translate('profile.unlinkDriverConfirm'),
+      confirmLabel: this.transloco.translate('profile.unlink'),
+      danger: true,
+    });
+    if (!ok) return;
     this.profileApi.unlinkDriver().subscribe({
       next: () => {
         this.linkedDriver.set(null);
@@ -137,11 +146,17 @@ export class ProfileComponent implements OnInit {
         this.auth.user.set(user);
         this.syncingNickname.set(false);
       },
-      error: (err) => {
+      error: async (err) => {
         this.syncingNickname.set(false);
         const detail: string = err?.error?.detail ?? '';
         if (detail.toLowerCase().includes('log out')) {
-          if (window.confirm('Guild name can only be refreshed by logging out and back in. Log out now?')) {
+          const ok = await this.confirmSvc.confirm({
+            title: this.transloco.translate('common.confirm.title'),
+            message: this.transloco.translate('profile.logoutToRefreshGuildConfirm'),
+            confirmLabel: this.transloco.translate('profile.logout'),
+            danger: false,
+          });
+          if (ok) {
             this.auth.logout();
           }
         }

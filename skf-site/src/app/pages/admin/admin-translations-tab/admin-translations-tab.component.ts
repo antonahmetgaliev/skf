@@ -1,11 +1,13 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoService } from '@jsverse/transloco';
 import { forkJoin } from 'rxjs';
 import { BtnComponent } from '../../../components/btn/btn.component';
 import { CardComponent } from '../../../components/card/card.component';
 import { FormFieldComponent } from '../../../components/form-field/form-field.component';
 import { SpinnerComponent } from '../../../components/spinner/spinner.component';
 import { InputDirective } from '../../../directives/input.directive';
+import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 import { Language, TranslationApiService, TranslationItem } from '../../../services/translation-api.service';
 
 interface TranslationRow {
@@ -22,6 +24,8 @@ interface TranslationRow {
 })
 export class AdminTranslationsTabComponent implements OnInit {
   private readonly api = inject(TranslationApiService);
+  private readonly confirmSvc = inject(ConfirmDialogService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly languages = signal<Language[]>([]);
   readonly rows = signal<TranslationRow[]>([]);
@@ -157,7 +161,14 @@ export class AdminTranslationsTabComponent implements OnInit {
     });
   }
 
-  deleteKey(key: string): void {
+  async deleteKey(key: string): Promise<void> {
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.deleteTitle'),
+      message: this.transloco.translate('admin.deleteTranslationKeyConfirm', { key }),
+      confirmLabel: this.transloco.translate('common.confirm.delete'),
+      danger: true,
+    });
+    if (!ok) return;
     const langs = this.languages();
     const deletes = langs.map((l) => this.api.deleteKey(l.code, key));
     forkJoin(deletes).subscribe({

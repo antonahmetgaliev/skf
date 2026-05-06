@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { InputDirective } from '../../directives/input.directive';
 import { SelectDirective } from '../../directives/select.directive';
 import { CardComponent } from '../../components/card/card.component';
@@ -18,6 +18,7 @@ import {
   PenaltyRule
 } from '../../services/bwp-api.service';
 import { AuthService } from '../../services/auth.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 
 type SortMode = 'bwp-desc' | 'bwp-asc' | 'name-asc' | 'name-desc';
 
@@ -29,6 +30,8 @@ type SortMode = 'bwp-desc' | 'bwp-asc' | 'name-asc' | 'name-desc';
 })
 export class BwpLicenseComponent {
   private readonly api = inject(BwpApiService);
+  private readonly confirmSvc = inject(ConfirmDialogService);
+  private readonly transloco = inject(TranslocoService);
   readonly auth = inject(AuthService);
 
   readonly drivers = signal<Driver[]>([]);
@@ -173,9 +176,16 @@ export class BwpLicenseComponent {
     }
   }
 
-  deleteDriver(driverId: string): void {
+  async deleteDriver(driverId: string): Promise<void> {
     const driver = this.drivers().find((d) => d.id === driverId);
-    if (!driver || !window.confirm(`Delete driver ${driver.name}?`)) return;
+    if (!driver) return;
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.deleteTitle'),
+      message: this.transloco.translate('bwp.deleteDriverConfirm', { name: driver.name }),
+      confirmLabel: this.transloco.translate('common.confirm.delete'),
+      danger: true,
+    });
+    if (!ok) return;
 
     this.api.deleteDriver(driverId).subscribe({
       next: () => {
@@ -279,8 +289,14 @@ export class BwpLicenseComponent {
       });
   }
 
-  deletePoint(driverId: string, pointId: string): void {
-    if (!window.confirm('Delete this point?')) return;
+  async deletePoint(driverId: string, pointId: string): Promise<void> {
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.deleteTitle'),
+      message: this.transloco.translate('bwp.deletePointConfirm'),
+      confirmLabel: this.transloco.translate('common.confirm.delete'),
+      danger: true,
+    });
+    if (!ok) return;
 
     this.api.deletePoint(pointId).subscribe({
       next: () => this.refreshDrivers()
@@ -335,7 +351,14 @@ export class BwpLicenseComponent {
     }
   }
 
-  deletePenaltyRule(ruleId: string): void {
+  async deletePenaltyRule(ruleId: string): Promise<void> {
+    const ok = await this.confirmSvc.confirm({
+      title: this.transloco.translate('common.confirm.deleteTitle'),
+      message: this.transloco.translate('bwp.deletePenaltyRuleConfirm'),
+      confirmLabel: this.transloco.translate('common.confirm.delete'),
+      danger: true,
+    });
+    if (!ok) return;
     this.api.deletePenaltyRule(ruleId).subscribe({
       next: () =>
         this.penaltyRules.update((list) =>

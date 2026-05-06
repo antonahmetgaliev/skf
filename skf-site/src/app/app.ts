@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { filter } from 'rxjs/operators';
+import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 import { DotdWidgetComponent } from './components/dotd-widget/dotd-widget.component';
 import { AuthService } from './services/auth.service';
 import { CalendarApiService, Community } from './services/calendar-api.service';
@@ -10,7 +11,7 @@ import { RegulationApiService, RegulationPageListItem } from './services/regulat
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, TranslocoPipe, DotdWidgetComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, TranslocoPipe, DotdWidgetComponent, ConfirmDialogComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
