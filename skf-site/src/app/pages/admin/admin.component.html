@@ -46,38 +46,45 @@
               </div>
 
               <div class="user-controls">
-                <div class="control-groups">
-                  <div class="control-group">
-                    <app-form-field [label]="'admin.role' | transloco">
-                      <select appSelect size="sm"
-                        [ngModel]="user.role"
-                        (ngModelChange)="changeRole(user, $event)"
-                        [disabled]="!canEdit(user) || !isEditing(user)"
-                      >
-                        @for (role of availableRoles(); track role) {
-                          <option [value]="role">{{ role.replace('_', ' ') }}</option>
-                        }
-                      </select>
-                    </app-form-field>
-                  </div>
-
-                  @if (user.role === 'community_manager') {
+                @if (isEditing(user)) {
+                  <div class="control-groups">
                     <div class="control-group">
-                      <app-form-field [label]="'admin.community' | transloco">
+                      <app-form-field [label]="'admin.role' | transloco">
                         <select appSelect size="sm"
-                          [ngModel]="getAssignedCommunityId(user)"
-                          (ngModelChange)="assignCommunity(user, $event)"
-                          [disabled]="!canEdit(user) || !isEditing(user)"
+                          [ngModel]="user.role"
+                          (ngModelChange)="changeRole(user, $event)"
                         >
-                          <option value="">{{ 'admin.none' | transloco }}</option>
-                          @for (c of allCommunities(); track c.id) {
-                            <option [value]="c.id">{{ c.name }}</option>
+                          @for (role of availableRoles(); track role) {
+                            <option [value]="role">{{ role.replace('_', ' ') }}</option>
                           }
                         </select>
                       </app-form-field>
                     </div>
-                  }
-                </div>
+
+                    @if (user.role === 'community_manager') {
+                      <div class="control-group">
+                        <app-form-field [label]="'admin.community' | transloco">
+                          <select appSelect size="sm"
+                            [ngModel]="getAssignedCommunityId(user)"
+                            (ngModelChange)="assignCommunity(user, $event)"
+                          >
+                            <option value="">{{ 'admin.none' | transloco }}</option>
+                            @for (c of allCommunities(); track c.id) {
+                              <option [value]="c.id">{{ c.name }}</option>
+                            }
+                          </select>
+                        </app-form-field>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div class="role-summary">
+                    <span class="role-summary__role">{{ user.role.replace('_', ' ') }}</span>
+                    @if (user.role === 'community_manager') {
+                      <span class="role-summary__community">{{ getAssignedCommunityName(user) || ('admin.none' | transloco) }}</span>
+                    }
+                  </div>
+                }
 
                 <div class="action-buttons">
                   @if (canEdit(user)) {

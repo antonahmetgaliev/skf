@@ -152,6 +152,12 @@ export class AdminComponent implements OnInit {
     return user.managedCommunityIds?.[0] ?? '';
   }
 
+  getAssignedCommunityName(user: AuthUser): string {
+    const id = this.getAssignedCommunityId(user);
+    if (!id) return '';
+    return this.allCommunities().find((c) => c.id === id)?.name ?? '';
+  }
+
   assignCommunity(user: AuthUser, communityId: string): void {
     const ids = communityId ? [communityId] : [];
     this.http

@@ -89,7 +89,7 @@
 
 .user-controls {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 1rem;
 }
 
@@ -105,8 +105,33 @@
   gap: 0.3rem;
 }
 
+.control-group app-form-field {
+  margin-bottom: 0;
+}
+
 .control-group select {
   text-transform: capitalize;
+}
+
+.role-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.75rem;
+  font-size: var(--text-md);
+  color: var(--ink);
+  text-transform: capitalize;
+}
+
+.role-summary__community {
+  color: var(--muted);
+  text-transform: none;
+
+  &::before {
+    content: '·';
+    margin-right: 0.5rem;
+    color: var(--muted);
+  }
 }
 
 .action-buttons {
