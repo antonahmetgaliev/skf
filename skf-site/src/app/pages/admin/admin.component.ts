@@ -39,6 +39,7 @@ export class AdminComponent implements OnInit {
   readonly cacheMessage = signal('');
 
   readonly allCommunities = signal<Community[]>([]);
+  readonly editingUserIds = signal(new Set<string>());
 
   ngOnInit(): void {
     this.loadUsers();
@@ -87,8 +88,31 @@ export class AdminComponent implements OnInit {
           this.users.update((list) =>
             list.map((u) => (u.id === updated.id ? updated : u))
           );
+          this.exitEdit(user.id);
         },
       });
+  }
+
+  isEditing(user: AuthUser): boolean {
+    return this.editingUserIds().has(user.id);
+  }
+
+  toggleEdit(user: AuthUser): void {
+    this.editingUserIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(user.id)) next.delete(user.id);
+      else next.add(user.id);
+      return next;
+    });
+  }
+
+  private exitEdit(userId: string): void {
+    this.editingUserIds.update((set) => {
+      if (!set.has(userId)) return set;
+      const next = new Set(set);
+      next.delete(userId);
+      return next;
+    });
   }
 
   toggleBlock(user: AuthUser): void {
@@ -137,6 +161,7 @@ export class AdminComponent implements OnInit {
           this.users.update((list) =>
             list.map((u) => (u.id === user.id ? { ...u, managedCommunityIds: result } : u))
           );
+          this.exitEdit(user.id);
         },
       });
   }

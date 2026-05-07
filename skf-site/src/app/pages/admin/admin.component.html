@@ -52,7 +52,7 @@
                       <select appSelect size="sm"
                         [ngModel]="user.role"
                         (ngModelChange)="changeRole(user, $event)"
-                        [disabled]="!canEdit(user)"
+                        [disabled]="!canEdit(user) || !isEditing(user)"
                       >
                         @for (role of availableRoles(); track role) {
                           <option [value]="role">{{ role.replace('_', ' ') }}</option>
@@ -67,7 +67,7 @@
                         <select appSelect size="sm"
                           [ngModel]="getAssignedCommunityId(user)"
                           (ngModelChange)="assignCommunity(user, $event)"
-                          [disabled]="!canEdit(user)"
+                          [disabled]="!canEdit(user) || !isEditing(user)"
                         >
                           <option value="">{{ 'admin.none' | transloco }}</option>
                           @for (c of allCommunities(); track c.id) {
@@ -80,6 +80,15 @@
                 </div>
 
                 <div class="action-buttons">
+                  @if (canEdit(user)) {
+                    <app-btn
+                      [variant]="isEditing(user) ? 'outline' : 'ghost'"
+                      size="sm"
+                      (click)="toggleEdit(user)"
+                    >
+                      {{ isEditing(user) ? ('admin.cancel' | transloco) : ('admin.edit' | transloco) }}
+                    </app-btn>
+                  }
                   @if (canEdit(user) && user.role !== 'super_admin') {
                     <app-btn
                       [variant]="user.blocked ? 'ghost' : 'danger'"
