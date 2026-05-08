@@ -210,13 +210,17 @@ def _parse_row(
     dsq = tr.find(attrs={"title": "Disqualified"}) is not None
 
     # -- Total points (last td) --
+    # The cell may include a footnote marker (e.g. "13†" when points were
+    # removed because the car was changed), so extract the leading number.
     total_points = 0.0
     if tds:
         pts_text = tds[-1].get_text(strip=True)
-        try:
-            total_points = float(pts_text)
-        except ValueError:
-            pass
+        m = re.search(r"-?\d+(?:\.\d+)?", pts_text)
+        if m:
+            try:
+                total_points = float(m.group())
+            except ValueError:
+                pass
 
     # -- Per-race results --
     # Race tds are the `race_count` cells before the final PTS cell.
