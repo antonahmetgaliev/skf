@@ -5,7 +5,10 @@ export type BadgeVariant =
   | 'open' | 'closed'
   | 'pending' | 'resolved' | 'applied' | 'bwp-pending'
   | 'upcoming' | 'past' | 'ongoing' | 'future'
-  | 'completed';
+  | 'completed'
+  | 'role-super-admin' | 'role-admin' | 'role-community-manager'
+  | 'role-moderator' | 'role-judge' | 'role-driver'
+  | 'blocked';
 
 @Component({
   selector: 'app-badge',

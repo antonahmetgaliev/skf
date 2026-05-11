@@ -1,0 +1,204 @@
+:host {
+  display: block;
+}
+
+.user-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: rgba(30, 30, 36, 0.92);
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.user-item--blocked {
+  opacity: 0.7;
+  border-color: rgba(185, 71, 46, 0.3);
+}
+
+.user-item__identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.user-item__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 214, 0, 0.4);
+}
+
+.user-item__avatar--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-dark);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.user-item__main {
+  min-width: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.user-item__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.user-item__name {
+  margin: 0;
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-item__community {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.user-item__meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.user-item__sep {
+  color: var(--border-subtle);
+}
+
+.user-item__controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.user-item__edit {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0.75rem;
+
+  app-form-field { margin-bottom: 0; }
+  select { text-transform: capitalize; }
+}
+
+.user-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+// Kebab menu
+.user-item__menu {
+  position: relative;
+}
+
+.user-item__menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &:hover,
+  &:focus-visible,
+  &.is-open {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--ink);
+    border-color: var(--border-subtle);
+    outline: none;
+  }
+}
+
+.user-item__menu-panel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 10;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  padding: 0.3rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: rgba(20, 20, 24, 0.98);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.user-item__menu-item {
+  text-align: left;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(255, 255, 255, 0.06);
+    outline: none;
+  }
+
+  &.is-danger {
+    color: var(--danger);
+
+    &:hover,
+    &:focus-visible {
+      background: rgba(185, 71, 46, 0.12);
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .user-item {
+    grid-template-columns: 1fr;
+  }
+
+  .user-item__controls {
+    justify-content: space-between;
+  }
+
+  .user-item__edit {
+    flex-direction: column;
+    align-items: stretch;
+    flex: 1;
+  }
+}

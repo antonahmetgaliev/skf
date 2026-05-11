@@ -32,95 +32,18 @@
       } @else {
         <div class="user-list">
           @for (user of filteredUsers(); track user.id) {
-            <article class="user-row" [class.blocked]="user.blocked">
-              <div class="user-identity">
-                @if (user.avatarUrl) {
-                  <img class="user-avatar" [src]="user.avatarUrl" alt="" />
-                } @else {
-                  <span class="user-avatar user-avatar--fallback">{{ user.displayName.charAt(0) || '?' }}</span>
-                }
-                <div>
-                  <h3>{{ user.displayName }}</h3>
-                  <p class="user-meta">&#64;{{ user.username }} · {{ user.discordId }}</p>
-                </div>
-              </div>
-
-              <div class="user-controls">
-                @if (isEditing(user)) {
-                  <div class="control-groups">
-                    <div class="control-group">
-                      <app-form-field [label]="'admin.role' | transloco">
-                        <select appSelect size="sm"
-                          [ngModel]="user.role"
-                          (ngModelChange)="changeRole(user, $event)"
-                        >
-                          @for (role of availableRoles(); track role) {
-                            <option [value]="role">{{ role.replace('_', ' ') }}</option>
-                          }
-                        </select>
-                      </app-form-field>
-                    </div>
-
-                    @if (user.role === 'community_manager') {
-                      <div class="control-group">
-                        <app-form-field [label]="'admin.community' | transloco">
-                          <select appSelect size="sm"
-                            [ngModel]="getAssignedCommunityId(user)"
-                            (ngModelChange)="assignCommunity(user, $event)"
-                          >
-                            <option value="">{{ 'admin.none' | transloco }}</option>
-                            @for (c of allCommunities(); track c.id) {
-                              <option [value]="c.id">{{ c.name }}</option>
-                            }
-                          </select>
-                        </app-form-field>
-                      </div>
-                    }
-                  </div>
-                } @else {
-                  <div class="role-summary">
-                    <span class="role-summary__role">{{ user.role.replace('_', ' ') }}</span>
-                    @if (user.role === 'community_manager') {
-                      <span class="role-summary__community">{{ getAssignedCommunityName(user) || ('admin.none' | transloco) }}</span>
-                    }
-                  </div>
-                }
-
-                <div class="action-buttons">
-                  @if (canEdit(user)) {
-                    <app-btn
-                      [variant]="isEditing(user) ? 'outline' : 'ghost'"
-                      size="sm"
-                      (click)="toggleEdit(user)"
-                    >
-                      {{ isEditing(user) ? ('admin.cancel' | transloco) : ('admin.edit' | transloco) }}
-                    </app-btn>
-                  }
-                  @if (canEdit(user) && user.role !== 'super_admin') {
-                    <app-btn
-                      [variant]="user.blocked ? 'ghost' : 'danger'"
-                      size="sm"
-                      (click)="toggleBlock(user)"
-                    >
-                      {{ user.blocked ? ('admin.unblock' | transloco) : ('admin.block' | transloco) }}
-                    </app-btn>
-                  }
-                  @if (canEdit(user)) {
-                    <app-btn variant="ghost" size="sm" (click)="forceLogout(user)">
-                      {{ 'admin.forceLogout' | transloco }}
-                    </app-btn>
-                  }
-                </div>
-              </div>
-
-              @if (user.blocked) {
-                <span class="blocked-badge">{{ 'admin.blocked' | transloco }}</span>
-              }
-
-              @if (user.lastLoginAt) {
-                <p class="last-login">{{ 'admin.lastLogin' | transloco }} {{ user.lastLoginAt | date:'medium' }}</p>
-              }
-            </article>
+            <app-user-item
+              [user]="user"
+              [editing]="isEditing(user)"
+              [canEdit]="canEdit(user)"
+              [availableRoles]="availableRoles()"
+              [communities]="allCommunities()"
+              (toggleEdit)="toggleEdit(user)"
+              (changeRole)="changeRole(user, $event)"
+              (assignCommunity)="assignCommunity(user, $event)"
+              (toggleBlock)="toggleBlock(user)"
+              (forceLogout)="forceLogout(user)"
+            />
           }
         </div>
       }

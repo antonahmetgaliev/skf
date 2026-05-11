@@ -46,9 +46,40 @@
   border: 1px solid rgba(220, 100, 30, 0.35);
 }
 
-// Blue: upcoming
-:host(.badge--upcoming) {
+// Blue: upcoming, community-manager
+:host(.badge--upcoming),
+:host(.badge--role-community-manager) {
   background: rgba(74, 159, 212, 0.15);
   color: #4a9fd4;
   border: 1px solid rgba(74, 159, 212, 0.3);
+}
+
+// Role: super-admin, blocked — strong red
+:host(.badge--role-super-admin),
+:host(.badge--blocked) {
+  background: rgba(185, 71, 46, 0.16);
+  color: var(--danger);
+  border: 1px solid rgba(185, 71, 46, 0.35);
+}
+
+// Role: admin — orange (matches bwp-pending family)
+:host(.badge--role-admin) {
+  background: rgba(220, 100, 30, 0.15);
+  color: #d4662a;
+  border: 1px solid rgba(220, 100, 30, 0.35);
+}
+
+// Role: moderator, judge — gold
+:host(.badge--role-moderator),
+:host(.badge--role-judge) {
+  background: rgba(255, 214, 0, 0.18);
+  color: var(--gold-deep);
+  border: 1px solid rgba(255, 214, 0, 0.35);
+}
+
+// Role: driver — neutral grey
+:host(.badge--role-driver) {
+  background: rgba(138, 128, 120, 0.12);
+  color: var(--muted);
+  border: 1px solid rgba(138, 128, 120, 0.25);
 }

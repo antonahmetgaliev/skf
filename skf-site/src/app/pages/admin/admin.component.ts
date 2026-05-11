@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { BtnComponent } from '../../components/btn/btn.component';
@@ -11,18 +10,18 @@ import { TabsComponent } from '../../components/tabs/tabs.component';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InputDirective } from '../../directives/input.directive';
-import { SelectDirective } from '../../directives/select.directive';
 import { AuthService, AuthUser, ROLES, Role } from '../../services/auth.service';
 import { CalendarApiService, Community } from '../../services/calendar-api.service';
 import { AdminCalendarTabComponent } from './admin-calendar-tab/admin-calendar-tab.component';
 import { AdminRegulationsTabComponent } from './admin-regulations-tab/admin-regulations-tab.component';
 import { AdminTranslationsTabComponent } from './admin-translations-tab/admin-translations-tab.component';
+import { UserItemComponent } from './user-item/user-item.component';
 
 type AdminTab = 'users' | 'site' | 'calendar' | 'translations' | 'regulations';
 
 @Component({
   selector: 'app-admin',
-  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, AdminCalendarTabComponent, AdminRegulationsTabComponent, AdminTranslationsTabComponent, BtnComponent, CardComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent],
+  imports: [FormsModule, TranslocoPipe, InputDirective, AdminCalendarTabComponent, AdminRegulationsTabComponent, AdminTranslationsTabComponent, BtnComponent, CardComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent, UserItemComponent],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',
 })
@@ -146,16 +145,6 @@ export class AdminComponent implements OnInit {
       return [ROLES.DRIVER, ROLES.JUDGE, ROLES.COMMUNITY_MANAGER, ROLES.ADMIN, ROLES.SUPER_ADMIN];
     }
     return [ROLES.DRIVER, ROLES.JUDGE, ROLES.COMMUNITY_MANAGER, ROLES.ADMIN];
-  }
-
-  getAssignedCommunityId(user: AuthUser): string {
-    return user.managedCommunityIds?.[0] ?? '';
-  }
-
-  getAssignedCommunityName(user: AuthUser): string {
-    const id = this.getAssignedCommunityId(user);
-    if (!id) return '';
-    return this.allCommunities().find((c) => c.id === id)?.name ?? '';
   }
 
   assignCommunity(user: AuthUser, communityId: string): void {

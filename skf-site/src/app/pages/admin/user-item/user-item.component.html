@@ -1,0 +1,118 @@
+@let u = user();
+<article class="user-item" [class.user-item--blocked]="u.blocked">
+  <div class="user-item__identity">
+    @if (u.avatarUrl) {
+      <img class="user-item__avatar" [src]="u.avatarUrl" alt="" />
+    } @else {
+      <span class="user-item__avatar user-item__avatar--fallback">{{ fallbackInitial() }}</span>
+    }
+
+    <div class="user-item__main">
+      <div class="user-item__heading">
+        <h3 class="user-item__name">{{ u.displayName }}</h3>
+        <app-badge [variant]="roleVariant()">{{ roleLabel() }}</app-badge>
+        @if (u.role === 'community_manager' && assignedCommunityName() && !editing()) {
+          <span class="user-item__community">{{ assignedCommunityName() }}</span>
+        }
+        @if (u.blocked) {
+          <app-badge variant="blocked">{{ 'admin.blocked' | transloco }}</app-badge>
+        }
+      </div>
+
+      <p class="user-item__meta">
+        <span>&#64;{{ u.username }}</span>
+        <span class="user-item__sep">·</span>
+        <span>{{ u.discordId }}</span>
+        @if (u.lastLoginAt) {
+          <span class="user-item__sep">·</span>
+          <span>{{ 'admin.lastLogin' | transloco }} {{ u.lastLoginAt | date:'mediumDate' }}</span>
+        }
+      </p>
+    </div>
+  </div>
+
+  <div class="user-item__controls">
+    @if (editing()) {
+      <div class="user-item__edit">
+        <app-form-field [label]="'admin.role' | transloco">
+          <select appSelect size="sm"
+            [ngModel]="u.role"
+            (ngModelChange)="onRoleChange($event)"
+          >
+            @for (r of availableRoles(); track r) {
+              <option [value]="r">{{ formatRole(r) }}</option>
+            }
+          </select>
+        </app-form-field>
+
+        @if (u.role === 'community_manager') {
+          <app-form-field [label]="'admin.community' | transloco">
+            <select appSelect size="sm"
+              [ngModel]="assignedCommunityId()"
+              (ngModelChange)="onCommunityChange($event)"
+            >
+              <option value="">{{ 'admin.none' | transloco }}</option>
+              @for (c of communities(); track c.id) {
+                <option [value]="c.id">{{ c.name }}</option>
+              }
+            </select>
+          </app-form-field>
+        }
+      </div>
+    }
+
+    @if (canEdit()) {
+      <div class="user-item__actions">
+        <app-btn
+          [variant]="editing() ? 'outline' : 'ghost'"
+          size="sm"
+          (click)="onToggleEdit()"
+        >
+          {{ editing() ? ('admin.cancel' | transloco) : ('admin.edit' | transloco) }}
+        </app-btn>
+
+        <div class="user-item__menu">
+          <button
+            type="button"
+            class="user-item__menu-trigger"
+            [class.is-open]="menuOpen()"
+            [attr.aria-label]="'common.actions' | transloco"
+            [attr.aria-expanded]="menuOpen()"
+            aria-haspopup="menu"
+            (click)="toggleMenu()"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="8" cy="3" r="1.4" fill="currentColor" />
+              <circle cx="8" cy="8" r="1.4" fill="currentColor" />
+              <circle cx="8" cy="13" r="1.4" fill="currentColor" />
+            </svg>
+          </button>
+
+          @if (menuOpen()) {
+            <div class="user-item__menu-panel" role="menu">
+              @if (canBlock()) {
+                <button
+                  type="button"
+                  role="menuitem"
+                  class="user-item__menu-item"
+                  [class.is-danger]="!u.blocked"
+                  (click)="onToggleBlock()"
+                >
+                  {{ u.blocked ? ('admin.unblock' | transloco) : ('admin.block' | transloco) }}
+                </button>
+              }
+              <button
+                type="button"
+                role="menuitem"
+                class="user-item__menu-item"
+                (click)="onForceLogout()"
+              >
+                {{ 'admin.forceLogout' | transloco }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</article>
