@@ -1,7 +1,7 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslocoService } from '@jsverse/transloco';
-import { Subscription } from 'rxjs';
+import { combineLatest, Subscription } from 'rxjs';
 import { CardComponent } from '../../components/card/card.component';
 import { EmptyComponent } from '../../components/empty/empty.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
@@ -39,25 +39,22 @@ export class RegulationPageComponent implements OnInit, OnDestroy {
   readonly loading = signal(true);
   readonly content = signal<RegulationContentOut | null>(null);
 
-  private langSub?: Subscription;
-  private slug = '';
+  private sub?: Subscription;
 
   ngOnInit(): void {
-    this.slug = this.route.snapshot.data['slug'] ?? this.route.snapshot.params['slug'] ?? 'general';
-    this.loadContent(this.transloco.getActiveLang());
-
-    this.langSub = this.transloco.langChanges$.subscribe((lang) => {
-      this.loadContent(lang);
+    this.sub = combineLatest([this.route.paramMap, this.transloco.langChanges$]).subscribe(([params, lang]) => {
+      const slug = params.get('slug') ?? this.route.snapshot.data['slug'] ?? 'general';
+      this.loadContent(slug, lang);
     });
   }
 
   ngOnDestroy(): void {
-    this.langSub?.unsubscribe();
+    this.sub?.unsubscribe();
   }
 
-  private loadContent(lang: string): void {
+  private loadContent(slug: string, lang: string): void {
     this.loading.set(true);
-    this.regulationApi.getPage(this.slug, lang).subscribe({
+    this.regulationApi.getPage(slug, lang).subscribe({
       next: (data) => {
         this.content.set(data);
         this.loading.set(false);
