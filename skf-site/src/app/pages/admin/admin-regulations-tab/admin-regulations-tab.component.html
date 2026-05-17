@@ -33,13 +33,24 @@
             <li
               class="page-item"
               [class.page-item--active]="selectedSlug() === page.slug"
+              [class.page-item--hidden]="!page.is_visible"
               (click)="selectPage(page.slug)"
             >
               <div class="page-item-info">
                 <span class="page-item-slug">{{ page.slug }}</span>
                 <span class="page-item-order">#{{ page.sortOrder }}</span>
               </div>
-              <button class="btn-link btn-link--danger" type="button" (click)="deletePage(page.slug); $event.stopPropagation()">×</button>
+              <div class="page-item-actions">
+                <button
+                  class="btn-link btn-link--toggle"
+                  type="button"
+                  [title]="page.is_visible ? 'Hide from public' : 'Show on public site'"
+                  (click)="toggleVisibility(page); $event.stopPropagation()"
+                >
+                  {{ page.is_visible ? 'Hide' : 'Show' }}
+                </button>
+                <button class="btn-link btn-link--danger" type="button" (click)="deletePage(page.slug); $event.stopPropagation()">×</button>
+              </div>
             </li>
           }
         </ul>
@@ -64,6 +75,11 @@
             <input appInput id="editSort" type="number" [(ngModel)]="editSortOrder" />
           </app-form-field>
         </div>
+
+        <label class="visibility-toggle">
+          <input type="checkbox" [(ngModel)]="editIsVisible" />
+          <span>Visible on public site</span>
+        </label>
 
         <!-- Language tabs -->
         <div class="lang-tabs">

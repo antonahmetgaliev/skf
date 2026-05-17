@@ -49,6 +49,7 @@ export class AdminRegulationsTabComponent implements OnInit {
   editContents: Record<string, RegulationContentUpdate> = {};
   editSlug = '';
   editSortOrder = 0;
+  editIsVisible = true;
 
   readonly currentEdit = computed(() => {
     const lang = this.activeLang();
@@ -79,6 +80,7 @@ export class AdminRegulationsTabComponent implements OnInit {
 
     this.editSlug = page.slug;
     this.editSortOrder = page.sortOrder;
+    this.editIsVisible = page.is_visible;
     this.editContents = {};
     for (const lang of this.availableLangs) {
       const c = page.contents[lang];
@@ -107,6 +109,7 @@ export class AdminRegulationsTabComponent implements OnInit {
     this.api.updatePage(slug, {
       slug: this.editSlug !== slug ? this.editSlug : undefined,
       sort_order: this.editSortOrder,
+      is_visible: this.editIsVisible,
       contents: this.editContents,
     }).subscribe({
       next: () => {
@@ -145,6 +148,20 @@ export class AdminRegulationsTabComponent implements OnInit {
       error: (err) => {
         this.saving.set(false);
         this.message.set(err?.error?.detail ?? 'Failed to create.');
+      },
+    });
+  }
+
+  toggleVisibility(page: RegulationPageOut): void {
+    const next = !page.is_visible;
+    this.api.updatePage(page.slug, { is_visible: next }).subscribe({
+      next: () => {
+        this.pages.update((list) =>
+          list.map((p) => (p.slug === page.slug ? { ...p, is_visible: next } : p)),
+        );
+        if (this.selectedSlug() === page.slug) {
+          this.editIsVisible = next;
+        }
       },
     });
   }

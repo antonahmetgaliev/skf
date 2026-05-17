@@ -48,7 +48,9 @@ async def list_regulations(
         return _cache[cache_key][1]
 
     result = await db.execute(
-        select(RegulationPage).order_by(RegulationPage.sort_order, RegulationPage.slug)
+        select(RegulationPage)
+        .where(RegulationPage.is_visible.is_(True))
+        .order_by(RegulationPage.sort_order, RegulationPage.slug)
     )
     pages = result.scalars().all()
 
@@ -68,6 +70,7 @@ async def list_regulations(
                 id=str(page.id),
                 slug=page.slug,
                 sort_order=page.sort_order,
+                is_visible=page.is_visible,
                 title=title,
             )
         )
@@ -92,7 +95,7 @@ async def get_regulation(
         select(RegulationPage).where(RegulationPage.slug == slug)
     )
     page = result.scalar_one_or_none()
-    if not page:
+    if not page or not page.is_visible:
         raise HTTPException(status_code=404, detail="Regulation page not found.")
 
     content = None
@@ -137,6 +140,7 @@ async def admin_list_regulations(
             id=str(p.id),
             slug=p.slug,
             sort_order=p.sort_order,
+            is_visible=p.is_visible,
             contents={
                 c.lang: RegulationContentOut(
                     lang=c.lang, title=c.title, subtitle=c.subtitle, content=c.content
@@ -161,7 +165,11 @@ async def create_regulation(
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="Slug already exists.")
 
-    page = RegulationPage(slug=body.slug, sort_order=body.sort_order)
+    page = RegulationPage(
+        slug=body.slug,
+        sort_order=body.sort_order,
+        is_visible=body.is_visible,
+    )
     for lang, content_data in body.contents.items():
         page.contents.append(
             RegulationContent(
@@ -180,6 +188,7 @@ async def create_regulation(
         id=str(page.id),
         slug=page.slug,
         sort_order=page.sort_order,
+        is_visible=page.is_visible,
         contents={
             c.lang: RegulationContentOut(
                 lang=c.lang, title=c.title, subtitle=c.subtitle, content=c.content
@@ -214,6 +223,9 @@ async def update_regulation(
     if body.sort_order is not None:
         page.sort_order = body.sort_order
 
+    if body.is_visible is not None:
+        page.is_visible = body.is_visible
+
     if body.contents is not None:
         existing_contents = {c.lang: c for c in page.contents}
         for lang, content_data in body.contents.items():
@@ -240,6 +252,7 @@ async def update_regulation(
         id=str(page.id),
         slug=page.slug,
         sort_order=page.sort_order,
+        is_visible=page.is_visible,
         contents={
             c.lang: RegulationContentOut(
                 lang=c.lang, title=c.title, subtitle=c.subtitle, content=c.content

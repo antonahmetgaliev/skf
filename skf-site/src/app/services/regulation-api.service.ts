@@ -13,6 +13,7 @@ export interface RegulationPageListItem {
   id: string;
   slug: string;
   sortOrder: number;
+  is_visible: boolean;
   title: string;
 }
 
@@ -20,6 +21,7 @@ export interface RegulationPageOut {
   id: string;
   slug: string;
   sortOrder: number;
+  is_visible: boolean;
   contents: Record<string, RegulationContentOut>;
 }
 
@@ -32,12 +34,14 @@ export interface RegulationContentUpdate {
 export interface RegulationPageCreate {
   slug: string;
   sort_order: number;
+  is_visible?: boolean;
   contents: Record<string, RegulationContentUpdate>;
 }
 
 export interface RegulationPageUpdate {
   slug?: string;
   sort_order?: number;
+  is_visible?: boolean;
   contents?: Record<string, RegulationContentUpdate>;
 }
 
