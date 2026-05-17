@@ -16,20 +16,24 @@ import { TranslocoService } from '@jsverse/transloco';
   `,
   styles: [`
     .lang-switcher-btn {
-      background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: inherit;
-      padding: 4px 8px;
+      background: var(--gold);
+      border: 1px solid var(--gold);
+      color: var(--text-on-gold);
+      padding: 4px 10px;
       border-radius: 4px;
       cursor: pointer;
       font-size: 0.8rem;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.5px;
-      transition: border-color 0.2s, background 0.2s;
+      transition: background 0.2s, border-color 0.2s, transform 0.1s;
 
       &:hover {
-        border-color: rgba(255, 255, 255, 0.6);
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--gold-deep);
+        border-color: var(--gold-deep);
+      }
+
+      &:active {
+        transform: translateY(1px);
       }
     }
   `],
