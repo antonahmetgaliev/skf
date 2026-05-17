@@ -97,6 +97,7 @@
       }
       <a routerLink="/incidents" routerLinkActive="active">{{ 'nav.incidents' | transloco }}</a>
       <div class="auth-zone auth-zone--mobile">
+        <app-lang-switcher></app-lang-switcher>
         @if (auth.isLoggedIn()) {
           <a routerLink="/profile" class="user-badge">
             @if (auth.user()?.avatarUrl) {
@@ -118,6 +119,7 @@
       </div>
     </nav>
     <div class="auth-zone auth-zone--desktop">
+      <app-lang-switcher></app-lang-switcher>
       @if (auth.isLoggedIn()) {
         <a routerLink="/profile" class="user-badge">
           @if (auth.user()?.avatarUrl) {
