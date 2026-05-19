@@ -162,22 +162,32 @@
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 0.35rem;
-  flex-wrap: wrap;
+}
+
+.calendar-header__side {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.calendar-header__side--start {
+  justify-content: flex-start;
+}
+
+.calendar-header__side--end {
+  justify-content: flex-end;
 }
 
 .month-label {
   margin: 0;
-  flex: 1;
+  flex: 0 1 auto;
   text-align: center;
   font-family: var(--font-display);
   font-size: var(--text-2xl);
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
-}
-
-.header-actions {
-  display: flex;
-  gap: 0.4rem;
 }
 
 // ── Calendar grid ───────────────────────────────────────────────────────────
@@ -772,12 +782,13 @@
   }
 
   .calendar-header {
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: wrap;
+    justify-content: center;
     text-align: center;
   }
 
-  .header-actions {
+  .calendar-header__side {
+    flex: 1 1 auto;
     justify-content: center;
   }
 

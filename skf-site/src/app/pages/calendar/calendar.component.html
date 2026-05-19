@@ -88,11 +88,13 @@
         <app-card class="calendar-card">
           <!-- Header with navigation -->
           <div class="calendar-header">
-            @if (canGoBack()) {
-              <app-btn variant="ghost" size="sm" (click)="navigateMonth(-1)">&larr; {{ 'calendar.prev' | transloco }}</app-btn>
-            }
+            <div class="calendar-header__side calendar-header__side--start">
+              @if (canGoBack()) {
+                <app-btn variant="ghost" size="sm" (click)="navigateMonth(-1)">&larr; {{ 'calendar.prev' | transloco }}</app-btn>
+              }
+            </div>
             <h2 class="month-label">{{ monthLabel() }}</h2>
-            <div class="header-actions">
+            <div class="calendar-header__side calendar-header__side--end">
               <app-btn variant="ghost" size="sm" (click)="goToToday()">{{ 'calendar.today' | transloco }}</app-btn>
               <app-btn variant="ghost" size="sm" (click)="navigateMonth(1)">{{ 'calendar.next' | transloco }} &rarr;</app-btn>
             </div>
@@ -148,9 +150,11 @@
         <div class="year-header-card">
           <app-card class="calendar-card">
             <div class="calendar-header">
-              <app-btn variant="ghost" size="sm" (click)="navigateYear(-1)">&larr; {{ 'calendar.prev' | transloco }}</app-btn>
+              <div class="calendar-header__side calendar-header__side--start">
+                <app-btn variant="ghost" size="sm" (click)="navigateYear(-1)">&larr; {{ 'calendar.prev' | transloco }}</app-btn>
+              </div>
               <h2 class="month-label">{{ yearLabel() }}</h2>
-              <div class="header-actions">
+              <div class="calendar-header__side calendar-header__side--end">
                 <app-btn variant="ghost" size="sm" (click)="navigateYear(1)">{{ 'calendar.next' | transloco }} &rarr;</app-btn>
               </div>
             </div>
