@@ -98,7 +98,7 @@ export class WeekCalendarComponent {
       const { monday, sunday } = this.getCurrentWeekBounds(now);
 
       const [events, broadcasts] = await Promise.all([
-        this.fetchEventsForRange(monday, sunday),
+        this.fetchEventsForYear(now, sunday),
         firstValueFrom(this.mediaApi.getTodayBroadcasts()).catch(() => [] as YouTubeVideo[]),
       ]);
 
@@ -148,16 +148,12 @@ export class WeekCalendarComponent {
     return { monday, sunday };
   }
 
-  private async fetchEventsForRange(start: Date, end: Date): Promise<CalendarEvent[]> {
-    const months = new Set<string>();
-    months.add(`${start.getFullYear()}-${start.getMonth() + 1}`);
-    months.add(`${end.getFullYear()}-${end.getMonth() + 1}`);
+  private async fetchEventsForYear(now: Date, sunday: Date): Promise<CalendarEvent[]> {
+    const years = new Set<number>([now.getFullYear()]);
+    if (sunday.getFullYear() !== now.getFullYear()) years.add(sunday.getFullYear());
+    if (now.getMonth() >= 9) years.add(now.getFullYear() + 1);
 
-    const fetches = [...months].map((key) => {
-      const [y, m] = key.split('-').map(Number);
-      return firstValueFrom(this.calendarApi.getEvents(y, m));
-    });
-
+    const fetches = [...years].map((y) => firstValueFrom(this.calendarApi.getYearEvents(y)));
     const results = await Promise.all(fetches);
     const seen = new Set<string>();
     const merged: CalendarEvent[] = [];
@@ -215,6 +211,7 @@ export class WeekCalendarComponent {
     const summaries: ChampionshipSummary[] = [];
 
     for (const ev of events) {
+      if (ev.source !== 'simgrid') continue;
       if (ev.eventType !== 'ongoing' && ev.eventType !== 'upcoming') continue;
 
       // Find next upcoming race and count completed
