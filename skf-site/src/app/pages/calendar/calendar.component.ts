@@ -184,16 +184,20 @@ export class CalendarComponent implements OnInit {
       addedIds.add(c.id);
     }
 
-    // Add empty columns for managed communities with no events
-    for (const mc of managedCommunities) {
-      if (!addedIds.has(mc.id)) {
-        columns.push({
-          id: mc.id,
-          name: mc.name,
-          color: mc.color ?? DEFAULT_COLOR,
-          discordUrl: mc.discordUrl,
-          events: [],
-        });
+    // Add empty columns for managed communities with no events.
+    // Skipped for plain admins, who manage every community — otherwise the
+    // year view would show an empty column for each community with no events.
+    if (!this.auth.isAdmin()) {
+      for (const mc of managedCommunities) {
+        if (!addedIds.has(mc.id)) {
+          columns.push({
+            id: mc.id,
+            name: mc.name,
+            color: mc.color ?? DEFAULT_COLOR,
+            discordUrl: mc.discordUrl,
+            events: [],
+          });
+        }
       }
     }
 
@@ -382,6 +386,10 @@ export class CalendarComponent implements OnInit {
       const viewId = this.auth.viewAsCommunityId();
       if (!viewId) return [];
       return this.communities().filter((c) => c.id === viewId);
+    }
+    // Admin (not impersonating) — outranks community manager, can manage every community
+    if (this.auth.isAdmin()) {
+      return this.communities();
     }
     // Real community manager — show assigned communities
     if (user.role === 'community_manager') {
