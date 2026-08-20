@@ -15,13 +15,23 @@
 .calendar-toolbar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.35rem;
 
   app-toggle {
     margin-bottom: 0;
     flex-shrink: 0;
+    margin-left: auto;
   }
+}
+
+.add-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
 .community-filters {

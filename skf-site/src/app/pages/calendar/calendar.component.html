@@ -44,10 +44,14 @@
       }
     </div>
 
-    @for (mc of managedCommunities(); track mc.id) {
-      <app-btn variant="accent" size="sm" (click)="openAddChampionship(mc.id)">
-        + {{ 'calendar.add' | transloco }}{{ managedCommunities().length > 1 ? ' to ' + mc.name : '' }}
-      </app-btn>
+    @if (managedCommunities().length) {
+      <div class="add-actions">
+        @for (mc of managedCommunities(); track mc.id) {
+          <app-btn variant="accent" size="sm" (click)="openAddChampionship(mc.id)">
+            + {{ 'calendar.add' | transloco }}{{ managedCommunities().length > 1 ? ' to ' + mc.name : '' }}
+          </app-btn>
+        }
+      </div>
     }
 
     <app-toggle
