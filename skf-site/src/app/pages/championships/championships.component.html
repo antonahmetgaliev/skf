@@ -233,7 +233,19 @@
           @if (standings().length === 0) {
             <app-empty>{{ 'championships.noParticipants' | transloco }}</app-empty>
           } @else {
-            <h3 class="section-title">{{ 'championships.registeredParticipants' | transloco }} ({{ standings().length }})</h3>
+            @if (isMulticlass()) {
+              <div class="class-tabs">
+                @for (cls of carClasses(); track cls) {
+                  <button
+                    type="button"
+                    [ngClass]="getClassTabClasses(cls)"
+                    (click)="selectedClass.set(cls)"
+                  >{{ cls }}</button>
+                }
+              </div>
+            }
+
+            <h3 class="section-title">{{ 'championships.registeredParticipants' | transloco }} ({{ visibleStandings().length }})</h3>
             <div class="table-wrap">
               <table class="standings-table participants-table">
                 <thead>
@@ -245,7 +257,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (entry of standings(); track entry.id; let i = $index) {
+                  @for (entry of visibleStandings(); track entry.id; let i = $index) {
                     <tr>
                       <td>{{ i + 1 }}</td>
                       <td class="driver-cell">
