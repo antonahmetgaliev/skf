@@ -102,11 +102,33 @@ class SimgridService:
             return ChampionshipStandingsData(**cached)
 
         try:
-            resp = await self._client.get(
-                f"/api/v1/championships/{championship_id}/standings"
-            )
-            resp.raise_for_status()
-            data = self._parse_standings(resp.json())
+            class_ids = await self._championship_car_class_ids(championship_id)
+            base = f"/api/v1/championships/{championship_id}/standings"
+
+            if len(class_ids) > 1:
+                # Multiclass: the default page only returns the first class, so
+                # fetch each class via ``?filter_class=<id>`` and merge entries.
+                merged: list[StandingEntry] = []
+                seen: set[int] = set()
+                races: list[StandingRace] = []
+                for ccid in class_ids:
+                    resp = await self._client.get(
+                        base, params={"filter_class": ccid}
+                    )
+                    resp.raise_for_status()
+                    parsed = self._parse_standings(resp.json())
+                    if not races:
+                        races = parsed.races
+                    for entry in parsed.entries:
+                        if entry.id not in seen:
+                            seen.add(entry.id)
+                            merged.append(entry)
+                data = ChampionshipStandingsData(entries=merged, races=races)
+            else:
+                resp = await self._client.get(base)
+                resp.raise_for_status()
+                data = self._parse_standings(resp.json())
+
             await write_cache(key, data.model_dump())
             return data
         except Exception:
@@ -119,6 +141,28 @@ class SimgridService:
                 mark_stale()
                 return ChampionshipStandingsData(**stale)
             raise
+
+    async def _championship_car_class_ids(
+        self, championship_id: int,
+    ) -> list[int]:
+        """Return the championship's car-class ids (empty on failure)."""
+        try:
+            resp = await self._client.get(
+                f"/api/v1/championships/{championship_id}"
+                "/championship_car_classes"
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return [
+                c["id"] for c in data
+                if isinstance(c, dict) and c.get("id") is not None
+            ]
+        except Exception:
+            logger.warning(
+                "Failed to fetch car classes for %s", championship_id,
+                exc_info=True,
+            )
+            return []
 
     @staticmethod
     def _parse_standings(raw: Any) -> ChampionshipStandingsData:
