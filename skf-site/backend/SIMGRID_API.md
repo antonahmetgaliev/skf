@@ -76,39 +76,48 @@ The Championship object represents any events on the platform, both single event
 ### List all championships
 `GET /championships?limit=200&offset=0`
 
-Response:
+Response (verified 2026-08): the list endpoint returns **only** `id` and `name` —
+no dates or status. Use the detail endpoint below for anything richer.
 ```json
-[{
-  "id": 710,
-  "name": "Championship Name",
-  "starts_at": "2024-01-01T19:00:00.000Z",
-  "ends_at": "2024-03-01T19:00:00.000Z",
-  "accepting_registrations": true,
-  "event_completed": false
-}]
+[
+  {"id": 21946, "name": "SKF: LMP2 Sprint"},
+  {"id": 21950, "name": "SKF LMU Euro Clash"}
+]
 ```
 
 ### Retrieve a championship
 `GET /championships/:id`
 
-Response: full championship detail object
+Response (verified 2026-08): full detail object. Note `start_date`/`end_date`
+(not `starts_at`/`ends_at`), and there is no `description`/`event_completed`.
+`round_number`/`all_rounds_number` give progress; `results_url` and `discord_url`
+are useful outbound links. `races[]` is embedded (each race carries a full
+`track` object).
 ```json
 {
-  "id": 710,
-  "name": "Championship Name",
-  "url": "https://www.thesimgrid.com/championships/710",
-  "description": "...",
-  "image": "https://...",
-  "start_date": "2024-01-01",
-  "capacity": 48,
-  "spots_taken": 32,
-  "host_name": "SimGrid",
-  "game_name": "Assetto Corsa Competizione",
+  "id": 21950,
+  "name": "SKF LMU Euro Clash",
+  "url": "https://www.thesimgrid.com/championships/21950",
+  "results_url": "https://www.thesimgrid.com/championships/21950/results",
+  "discord_url": "https://discord.gg/XhNsUerTFp",
+  "image": "https://cdn.thesimgrid.com/...",
+  "start_date": "2026-02-28T17:00:00.000Z",
+  "end_date": null,
+  "capacity": 38,
+  "spots_taken": 23,
+  "host_name": "SKF Racing Hub",
+  "game_name": "Le Mans Ultimate",
+  "round_number": null,
+  "all_rounds_number": 0,
+  "upcoming_race": null,
+  "in_progress_race": null,
   "accepting_registrations": true,
-  "event_completed": false,
-  "teams_enabled": true,
+  "teams_enabled": false,
   "entry_fee_required": false,
-  "entry_fee_cents": 0
+  "entry_fee_cents": null,
+  "co_hosted": false,
+  "scheduled_at": false,
+  "races": [{ "id": 165901, "race_name": "Euro Clash - Round 1", "track": { "name": "Silverstone (ELMS)" }, "...": "..." }]
 }
 ```
 
@@ -163,9 +172,35 @@ Note: `playerID` is Steam ID prefixed with "S". Response may be `{"entries": [..
 ### Standings
 `GET /championships/:id/standings`
 
-Response: array of 2 elements `[entries_array, races_array]`
-- entries_array: standings entries with `position_cache`, `display_name`, `championship_points`, `championship_penalties`, `championship_score`, `partial_standings`, `participant` (with `country_code`), `championship_car_class`, `user_id`, `car`, etc.
-- races_array: race metadata with `id`, `display_name`/`race_name`, `starts_at`, `results_available`, `ended`
+Response (verified 2026-08): a heterogeneous **5-element** array, not 2:
+- `[0]` **entries** — standings rows.
+- `[1]` **races** — race metadata (`id`, `display_name`/`race_name`, `starts_at`, `results_available`, `ended`).
+- `[2]` `null`.
+- `[3]` an object keyed by `user_id`.
+- `[4]` `{ "pagination": {...} }`.
+
+Each entry (`[0][i]`):
+```json
+{
+  "id": 999087,               // registration id (NOT the driver)
+  "user_id": 75640,           // the driver/user id — use this to link drivers
+  "position_cache": 1,
+  "display_name": "Anatolii Maksimyuk",
+  "championship_points": 50.0,
+  "championship_penalties": 0,
+  "championship_score": 50.0,
+  "car": "Aston Martin Valkyrie LMH",
+  "class": "Hypercar",
+  "championship_car_class": { "display_name": "Hypercar", "...": "..." },
+  "participant": { "country_code": "UA", "avatar": "..." },
+  "partial_standings": []     // ALWAYS EMPTY — per-race breakdown is not exposed
+}
+```
+
+**Important:** `partial_standings` is empty, so per-race results are not
+available via the API. We source only *overall* standings (position, points,
+score, driver, car class) from this endpoint — see
+`app/services/simgrid.py::_parse_standings`. There is no DSQ flag in the payload.
 
 ---
 
@@ -294,19 +329,22 @@ Response:
 ### List all races
 `GET /races?championship_id=:id`
 
-Response:
+Response (verified 2026-08): each race also carries `race_name`, `game_name`,
+`platform`, `published_at`, `championship_name`, and a full `track` object.
 ```json
 [{
-  "id": 261,
-  "display_name": "Race Name",
-  "starts_at": "2024-01-15T19:00:00.000Z",
-  "track": {"name": "Nurburgring"},
+  "id": 165892,
+  "display_name": "LMP2 Sprint - Round 5",
+  "race_name": "LMP2 Sprint - Round 5",
+  "starts_at": "2026-01-15T19:00:00.000Z",
+  "track": {"id": 3162, "name": "Circuit de Spa-Francorchamps", "in_game_name": "spa 2024 up", "photo": "https://..."},
   "results_available": true,
-  "ended": true
+  "ended": true,
+  "published_at": "2026-..."
 }]
 ```
 
-Note: `track` can be a dict `{"name": "..."}` or a plain string.
+Note: `track` can be a dict (with `name`, and extra fields) or a plain string.
 
 ### Retrieve a race
 `GET /races/:id`

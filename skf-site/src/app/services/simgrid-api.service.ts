@@ -23,6 +23,10 @@ export interface ChampionshipDetails {
   hostName: string;
   gameName: string;
   url: string;
+  resultsUrl: string;
+  discordUrl: string;
+  roundNumber: number | null;
+  allRoundsNumber: number | null;
 }
 
 export interface DriverRaceResult {
@@ -69,18 +73,6 @@ export interface ChampionshipRace {
   ended: boolean;
 }
 
-export interface PodiumEntry {
-  simgridDriverId: number | null;
-  displayName: string;
-  position: number;
-}
-
-export interface ChampionshipPodium {
-  championshipId: number;
-  championshipName: string;
-  podium: PodiumEntry[];
-}
-
 @Injectable({ providedIn: 'root' })
 export class SimgridApiService {
   private readonly http = inject(HttpClient);
@@ -106,10 +98,6 @@ export class SimgridApiService {
     return this.http.get<ChampionshipRace[]>(
       `${this.base}/${championshipId}/races`
     );
-  }
-
-  getChampionshipsPodium(): Observable<ChampionshipPodium[]> {
-    return this.http.get<ChampionshipPodium[]>(`${this.base}/podium`);
   }
 
   getActiveChampionships(): Observable<number[]> {

@@ -1,29 +1,17 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { BwpApiService } from './bwp-api.service';
-import { formatDate } from '../utils/format';
 import {
   ChampionshipDetails,
   ChampionshipListItem,
   ChampionshipRace,
   StandingEntry,
-  StandingRace,
 } from './simgrid-api.service';
 
 export interface ChampionshipEntry {
   key: string; // 'sg-123'
   name: string;
   simgridItem: ChampionshipListItem;
-}
-
-export interface RaceResultRow {
-  position: number | null;
-  displayName: string;
-  car: string;
-  carClass: string;
-  dns: boolean;
-  driverUuid: string | null;
-  simgridDriverId: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -82,86 +70,8 @@ export class ChampionshipService {
     return details.startDate.slice(0, 10) > today;
   }
 
-  getRaceResult(
-    entry: StandingEntry,
-    race: StandingRace,
-    raceIndex: number,
-  ): { points: number | null; position: number | null; dns: boolean } | null {
-    const byId = entry.raceResults.find(
-      (item) => item.raceId !== null && item.raceId === race.id,
-    );
-    if (byId) return byId;
-    return (
-      entry.raceResults.find((item) => item.raceIndex === raceIndex) ?? null
-    );
-  }
-
-  getRaceResultsForRace(
-    standings: StandingEntry[],
-    races: StandingRace[],
-    driverMap: Map<number, string>,
-    race: ChampionshipRace,
-    raceIndex: number,
-  ): RaceResultRow[] {
-    const standingRace = races.find((r) => r.id === race.id);
-    if (!standingRace) return [];
-    const standingRaceIndex = races.indexOf(standingRace);
-
-    return standings
-      .map((entry) => {
-        const result = this.getRaceResult(entry, standingRace, standingRaceIndex);
-        return {
-          position: result?.position ?? null,
-          displayName: entry.displayName,
-          car: entry.car,
-          carClass: entry.carClass,
-          dns: result?.dns ?? false,
-          driverUuid: driverMap.get(entry.id) ?? null,
-          simgridDriverId: entry.id,
-        };
-      })
-      .filter((row) => row.position !== null || row.dns)
-      .sort((a, b) => {
-        if (a.position === null && b.position === null) return 0;
-        if (a.position === null) return 1;
-        if (b.position === null) return -1;
-        return a.position - b.position;
-      });
-  }
-
-  formatRacePosition(
-    entry: StandingEntry,
-    race: StandingRace,
-    raceIndex: number,
-  ): string {
-    const result = this.getRaceResult(entry, race, raceIndex);
-    if (!result || result.position === null) {
-      return result?.dns ? 'DNS' : '-';
-    }
-    return String(result.position);
-  }
-
   getRaceStatus(race: ChampionshipRace): 'completed' | 'upcoming' {
     return race.ended || race.resultsAvailable ? 'completed' : 'upcoming';
-  }
-
-  hasRaceResults(race: ChampionshipRace, races: StandingRace[], standings: StandingEntry[]): boolean {
-    if (!races.some((r) => r.id === race.id)) return false;
-    const raceIndex = races.findIndex((r) => r.id === race.id);
-    return standings.some((e) =>
-      e.raceResults.some(
-        (rr) => (rr.raceId !== null && rr.raceId === race.id) || rr.raceIndex === raceIndex,
-      ),
-    );
-  }
-
-  getRaceLabel(index: number): string {
-    return `R${index + 1}`;
-  }
-
-  getRaceTitle(race: StandingRace, index: number): string {
-    const datePart = race.startsAt ? formatDate(race.startsAt) : 'TBD';
-    return `${this.getRaceLabel(index)} – ${race.displayName} (${datePart})`;
   }
 
   getPosition(
@@ -172,25 +82,6 @@ export class ChampionshipService {
   ): number {
     if (isMulticlass && hasClassFilter) return index + 1;
     return entry.position ?? index + 1;
-  }
-
-  computeEligibleDrivers(
-    standings: StandingEntry[],
-    minRaces: number,
-  ): { id: number; displayName: string; racesCount: number }[] {
-    return standings
-      .filter((e) => !e.dsq)
-      .map((e) => ({
-        id: e.id,
-        displayName: e.displayName,
-        racesCount: e.raceResults.filter((r) => r.position !== null).length,
-      }))
-      .filter((e) => e.racesCount >= minRaces)
-      .sort((a, b) =>
-        a.racesCount !== b.racesCount
-          ? b.racesCount - a.racesCount
-          : a.displayName.localeCompare(b.displayName),
-      );
   }
 
   toErrorMessage(error: unknown): string {

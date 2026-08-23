@@ -2,9 +2,8 @@
 
 Moves the API key and all parsing logic to the backend so the frontend
 never touches SimGrid directly.  Responses are cached in the database
-to avoid hammering the SimGrid API.  Standings are scraped from the
-HTML page (see ``simgrid_scraper``) since the REST API no longer
-populates ``partial_standings``.
+to avoid hammering the SimGrid API.  Everything is sourced from the REST
+API, including overall standings (per-race breakdown is not exposed).
 """
 
 from __future__ import annotations
@@ -17,28 +16,25 @@ import httpx
 
 from app.config import settings
 from app.middleware import mark_stale
-from app.services.simgrid_scraper import scrape_standings
 from app.schemas.championship import (
     ChampionshipDetails,
     ChampionshipListItem,
-    ChampionshipPodium,
     ChampionshipStandingsData,
-    DriverChampionshipResult,
     ParticipatingUser,
-    PodiumEntry,
+    StandingEntry,
+    StandingRace,
 )
 from app.services.cache import (
     invalidate_cache_by_keys,
     invalidate_cache_by_prefix,
-    read_all_by_prefix,
     read_cache,
     read_stale_cache,
     write_cache,
 )
 
-_TTL_STATIC = timedelta(days=1)     # championships list, details, races
-_TTL_LIVE = timedelta(minutes=10)   # participants
-_TTL_SCRAPE = timedelta(hours=1)    # standings (HTML scraping is heavier)
+_TTL_STATIC = timedelta(days=1)      # championships list, details, races
+_TTL_LIVE = timedelta(minutes=10)    # participants
+_TTL_STANDINGS = timedelta(hours=1)  # standings
 logger = logging.getLogger(__name__)
 
 
@@ -101,20 +97,21 @@ class SimgridService:
         self, championship_id: int,
     ) -> ChampionshipStandingsData:
         key = f"standings_{championship_id}"
-        cached = await read_cache(key, _TTL_SCRAPE)
+        cached = await read_cache(key, _TTL_STANDINGS)
         if cached is not None:
             return ChampionshipStandingsData(**cached)
 
         try:
-            data = await scrape_standings(championship_id)
-            if data is None:
-                raise RuntimeError("Scraping returned no data")
-            data = await self._enrich_races(championship_id, data)
+            resp = await self._client.get(
+                f"/api/v1/championships/{championship_id}/standings"
+            )
+            resp.raise_for_status()
+            data = self._parse_standings(resp.json())
             await write_cache(key, data.model_dump())
             return data
         except Exception:
             logger.warning(
-                "Scraping failed for %s, attempting stale cache fallback",
+                "Standings fetch failed for %s, attempting stale cache fallback",
                 key, exc_info=True,
             )
             stale = await read_stale_cache(key)
@@ -123,49 +120,65 @@ class SimgridService:
                 return ChampionshipStandingsData(**stale)
             raise
 
-    async def _enrich_races(
-        self,
-        championship_id: int,
-        data: ChampionshipStandingsData,
-    ) -> ChampionshipStandingsData:
-        """Fill race metadata (display_name, starts_at, ended) from the API."""
-        try:
-            api_races = await self.get_races(championship_id)
-            lookup = {r["id"]: r for r in api_races if isinstance(r, dict)}
-            enriched = []
-            for race in data.races:
-                info = lookup.get(race.id, {})
-                enriched.append(race.model_copy(update={
-                    "display_name": (
-                        info.get("display_name")
-                        or info.get("race_name")
-                        or race.display_name
-                    ),
-                    "starts_at": info.get("starts_at") or race.starts_at,
-                    "results_available": info.get(
-                        "results_available", race.results_available,
-                    ),
-                    "ended": info.get("ended", race.ended),
-                }))
-            # Sort races chronologically so R1 = earliest race.
-            enriched.sort(key=lambda r: r.starts_at or "")
-            race_id_to_index = {r.id: i for i, r in enumerate(enriched)}
-            reindexed_entries = []
-            for entry in data.entries:
-                new_results = sorted(
-                    entry.race_results,
-                    key=lambda rr: race_id_to_index.get(rr.race_id, rr.race_index),  # type: ignore[arg-type]
-                )
-                for i, rr in enumerate(new_results):
-                    rr.race_index = i
-                reindexed_entries.append(entry.model_copy(update={"race_results": new_results}))
-            return data.model_copy(update={"races": enriched, "entries": reindexed_entries})
-        except Exception:
-            logger.warning(
-                "Race enrichment failed for %d", championship_id,
-                exc_info=True,
+    @staticmethod
+    def _parse_standings(raw: Any) -> ChampionshipStandingsData:
+        """Map the REST standings payload into ``ChampionshipStandingsData``.
+
+        The endpoint returns a heterogeneous array whose first element is the
+        list of standings entries and second element is the race metadata.
+        Per-race results (``partial_standings``) are not populated by the API,
+        so ``StandingEntry.race_results`` is always empty.
+        """
+        entries_raw = raw[0] if isinstance(raw, list) and raw else []
+        races_raw = raw[1] if isinstance(raw, list) and len(raw) > 1 else []
+
+        entries: list[StandingEntry] = []
+        for e in entries_raw if isinstance(entries_raw, list) else []:
+            if not isinstance(e, dict):
+                continue
+            car_class = e.get("class") or ""
+            cc = e.get("championship_car_class")
+            if isinstance(cc, dict) and cc.get("display_name"):
+                car_class = cc["display_name"]
+            participant = e.get("participant")
+            country = (
+                participant.get("country_code", "")
+                if isinstance(participant, dict) else ""
             )
-            return data
+            entries.append(StandingEntry(
+                id=e.get("user_id") or e.get("id") or 0,
+                position=e.get("position_cache"),
+                display_name=e.get("display_name") or "",
+                country_code=country or "",
+                car=e.get("car") or "",
+                car_class=car_class,
+                points=e.get("championship_points") or 0,
+                penalties=e.get("championship_penalties") or 0,
+                score=e.get("championship_score") or 0,
+                race_results=[],
+            ))
+
+        races: list[StandingRace] = []
+        for r in races_raw if isinstance(races_raw, list) else []:
+            if not isinstance(r, dict):
+                continue
+            races.append(StandingRace(
+                id=r.get("id") or 0,
+                display_name=r.get("display_name") or r.get("race_name") or "",
+                starts_at=r.get("starts_at"),
+                results_available=bool(r.get("results_available")),
+                ended=bool(r.get("ended")),
+            ))
+        races.sort(key=lambda r: r.starts_at or "")
+
+        entries.sort(
+            key=lambda en: (
+                en.position if en.position is not None else float("inf"),
+                -en.score,
+                en.display_name,
+            ),
+        )
+        return ChampionshipStandingsData(entries=entries, races=races)
 
     async def get_participating_users(
         self, championship_id: int,
@@ -217,135 +230,6 @@ class SimgridService:
 
         data = await self._request("/api/v1/car_classes", key, params=params)
         return data if isinstance(data, list) else []
-
-    # ------------------------------------------------------------------
-    # Aggregate views derived from cached standings
-    # ------------------------------------------------------------------
-
-    async def build_champions_podiums(
-        self, active_ids: set[int],
-    ) -> list[ChampionshipPodium]:
-        """Return top-3 podiums for finished championships (not in *active_ids*).
-
-        Reads cached standings entries directly so completed seasons remain
-        viewable even after the SimGrid API drops them from active rotation.
-        """
-        cached_standings = await read_all_by_prefix("standings_")
-        champ_map = await self._championship_map()
-
-        podiums: list[ChampionshipPodium] = []
-        for cache_key, raw in cached_standings:
-            champ_id = self._championship_id_from_cache_key(cache_key)
-            if champ_id is None or champ_id in active_ids:
-                continue
-            standings = self._standings_from_cache(raw)
-            if standings is None:
-                continue
-
-            top3 = sorted(
-                (e for e in standings.entries if e.position in (1, 2, 3) and not e.dsq),
-                key=lambda e: e.position or 999,
-            )
-            if not top3:
-                continue
-
-            champ = champ_map.get(champ_id)
-            podiums.append(ChampionshipPodium(
-                championship_id=champ_id,
-                championship_name=champ.name if champ else f"Championship #{champ_id}",
-                podium=[
-                    PodiumEntry(
-                        simgrid_driver_id=e.id,
-                        display_name=e.display_name,
-                        position=e.position or 0,
-                    )
-                    for e in top3
-                ],
-            ))
-
-        podiums.sort(key=lambda p: -p.championship_id)
-        return podiums
-
-    async def find_driver_championship_results(
-        self, simgrid_driver_id: int,
-    ) -> list[DriverChampionshipResult]:
-        """Return per-championship results for *simgrid_driver_id* across all caches."""
-        cached_standings = await read_all_by_prefix("standings_")
-        champ_map = await self._championship_map()
-
-        results: list[DriverChampionshipResult] = []
-        for cache_key, raw in cached_standings:
-            champ_id = self._championship_id_from_cache_key(cache_key)
-            if champ_id is None:
-                continue
-            standings = self._standings_from_cache(raw)
-            if standings is None:
-                continue
-
-            entry = next(
-                (e for e in standings.entries if e.id == simgrid_driver_id), None
-            )
-            if entry is None:
-                continue
-
-            champ = champ_map.get(champ_id)
-            results.append(DriverChampionshipResult(
-                championship_id=champ_id,
-                championship_name=champ.name if champ else f"Championship #{champ_id}",
-                position=entry.position,
-                score=entry.score,
-                dsq=entry.dsq,
-                start_date=champ.start_date if champ else None,
-                end_date=champ.end_date if champ else None,
-                accepting_registrations=champ.accepting_registrations if champ else False,
-            ))
-
-        results.sort(
-            key=lambda r: (r.position is None, r.position or 999, -r.championship_id)
-        )
-        return results
-
-    async def find_simgrid_driver_info(
-        self, simgrid_driver_id: int,
-    ) -> tuple[str, str] | None:
-        """Return (display_name, country_code) from cached standings, or None if not found."""
-        cached_standings = await read_all_by_prefix("standings_")
-        for _, raw in cached_standings:
-            standings = self._standings_from_cache(raw)
-            if standings is None:
-                continue
-            entry = next(
-                (e for e in standings.entries if e.id == simgrid_driver_id), None
-            )
-            if entry is not None:
-                return entry.display_name, entry.country_code
-        return None
-
-    async def _championship_map(self) -> dict[int, ChampionshipListItem]:
-        """Build a championship-id → list-item lookup, tolerating upstream failures."""
-        try:
-            return {c.id: c for c in await self.get_championships()}
-        except Exception:
-            logger.warning(
-                "Failed to fetch championships for cache lookup", exc_info=True
-            )
-            return {}
-
-    @staticmethod
-    def _championship_id_from_cache_key(cache_key: str) -> int | None:
-        try:
-            return int(cache_key.split("_", 1)[1])
-        except (ValueError, IndexError):
-            return None
-
-    @staticmethod
-    def _standings_from_cache(raw: Any) -> ChampionshipStandingsData | None:
-        if not isinstance(raw, dict):
-            return None
-        try:
-            return ChampionshipStandingsData(**raw)
-        except Exception:
-            return None
 
     # ------------------------------------------------------------------
     # HTTP helper with stale-cache fallback

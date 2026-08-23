@@ -64,6 +64,10 @@ class ChampionshipDetails(CamelModel):
     host_name: str = ""
     game_name: str = ""
     url: str = ""
+    results_url: str = ""
+    discord_url: str = ""
+    round_number: int | None = None
+    all_rounds_number: int | None = None
 
 
 class DriverRaceResult(CamelModel):
@@ -131,29 +135,6 @@ class ChampionshipRace(CamelModel):
 class ChampionshipStandingsData(CamelModel):
     entries: list[StandingEntry] = []
     races: list[StandingRace] = []
-
-
-class DriverChampionshipResult(CamelModel):
-    championship_id: int
-    championship_name: str
-    position: int | None = None
-    score: float = 0
-    dsq: bool = False
-    start_date: str | None = None
-    end_date: str | None = None
-    accepting_registrations: bool = False
-
-
-class PodiumEntry(CamelModel):
-    simgrid_driver_id: int | None = None
-    display_name: str
-    position: int  # 1, 2, or 3
-
-
-class ChampionshipPodium(CamelModel):
-    championship_id: int
-    championship_name: str
-    podium: list[PodiumEntry] = []
 
 
 class ParticipatingUser(CamelModel):

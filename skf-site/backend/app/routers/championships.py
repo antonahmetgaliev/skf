@@ -15,10 +15,8 @@ from app.models.user import User
 from app.schemas.championship import (
     ChampionshipDetails,
     ChampionshipListItem,
-    ChampionshipPodium,
     ChampionshipRace,
     ChampionshipStandingsData,
-    DriverChampionshipResult,
 )
 from app.services.drivers import sync_drivers_from_standings
 from app.services.simgrid import simgrid_service
@@ -91,20 +89,6 @@ async def list_championships(
             for item in items
         ]
     return [item for item in items if item.id in active_ids]
-
-
-@router.get("/podium", response_model=list[ChampionshipPodium])
-async def get_champions_podium(db: AsyncSession = Depends(get_db)):
-    """Return top-3 finishers for each completed championship."""
-    active_result = await db.execute(select(ActiveChampionship.simgrid_id))
-    active_ids = set(active_result.scalars().all())
-    return await simgrid_service.build_champions_podiums(active_ids)
-
-
-@router.get("/driver/{simgrid_driver_id}/results", response_model=list[DriverChampionshipResult])
-async def get_driver_championship_results(simgrid_driver_id: int):
-    """Return all cached championship results for a specific SimGrid driver ID."""
-    return await simgrid_service.find_driver_championship_results(simgrid_driver_id)
 
 
 @router.get("/{championship_id}/races", response_model=list[ChampionshipRace])

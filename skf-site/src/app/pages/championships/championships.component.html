@@ -61,12 +61,6 @@
                       {{ isChampionshipActive(champId) ? ('championships.markFinished' | transloco) : ('championships.markActive' | transloco) }}
                     </app-btn>
                   }
-                  <app-btn variant="ghost" size="sm" (click)="giveawayOpen.set(true)">
-                    {{ 'championships.giveaway' | transloco }}
-                  </app-btn>
-                  <app-btn variant="ghost" size="sm" (click)="openStandingsExportPreview()">
-                    {{ 'championships.export16x9' | transloco }}
-                  </app-btn>
                   <app-btn variant="ghost" size="sm" [disabled]="refreshingCache()" (click)="refreshChampionshipCache(championship.id)">
                     {{ refreshingCache() ? ('championships.refreshing' | transloco) : ('championships.refreshData' | transloco) }}
                   </app-btn>
@@ -93,14 +87,34 @@
                   <span class="info-chip-value">{{ formatDate(championship.endDate) }}</span>
                 </span>
               }
+              @if (championship.allRoundsNumber) {
+                <span class="info-chip">
+                  <span class="info-chip-label">{{ 'championships.round' | transloco }}</span>
+                  <span class="info-chip-value">{{ championship.roundNumber ?? 0 }}/{{ championship.allRoundsNumber }}</span>
+                </span>
+              }
             </div>
 
-            @if (championship.url) {
-              <a class="simgrid-link" [href]="championship.url" target="_blank" rel="noopener noreferrer">
-                {{ 'championships.joinSimGrid' | transloco }}
-                <span class="simgrid-link-arrow">→</span>
-              </a>
-            }
+            <div class="championship-links">
+              @if (championship.url) {
+                <a class="simgrid-link" [href]="championship.url" target="_blank" rel="noopener noreferrer">
+                  {{ 'championships.joinSimGrid' | transloco }}
+                  <span class="simgrid-link-arrow">→</span>
+                </a>
+              }
+              @if (championship.resultsUrl) {
+                <a class="simgrid-link" [href]="championship.resultsUrl" target="_blank" rel="noopener noreferrer">
+                  {{ 'championships.viewResults' | transloco }}
+                  <span class="simgrid-link-arrow">→</span>
+                </a>
+              }
+              @if (championship.discordUrl) {
+                <a class="simgrid-link" [href]="championship.discordUrl" target="_blank" rel="noopener noreferrer">
+                  {{ 'championships.discord' | transloco }}
+                  <span class="simgrid-link-arrow">→</span>
+                </a>
+              }
+            </div>
 
             @if (isStaleData()) {
               <app-alert variant="warning">{{ 'championships.staleDataWarning' | transloco }}</app-alert>
@@ -142,17 +156,10 @@
                 <tr>
                   <th>{{ 'championships.pos' | transloco }}</th>
                   <th>{{ 'championships.driver' | transloco }}</th>
-                  <th>{{ 'championships.country' | transloco }}</th>
                   @if (isMulticlass()) {
                     <th>{{ 'championships.class' | transloco }}</th>
                   }
-                  <th>{{ 'championships.car' | transloco }}</th>
                   <th>{{ 'championships.score' | transloco }}</th>
-                  @if (hasRaceBreakdown()) {
-                    @for (race of races(); track race.id; let raceIndex = $index) {
-                      <th [attr.title]="getRaceTitle(race, raceIndex)">{{ getRaceLabel(raceIndex) }}</th>
-                    }
-                  }
                 </tr>
               </thead>
               <tbody>
@@ -172,17 +179,10 @@
                           <span class="dsq-badge">DSQ</span>
                         }
                       </td>
-                      <td>{{ entry.countryCode || '-' }}</td>
                       @if (isMulticlass()) {
                         <td><span class="class-badge" [ngClass]="'class-color-' + getClassIndex(entry.carClass)">{{ entry.carClass || '-' }}</span></td>
                       }
-                      <td>{{ entry.car || '-' }}</td>
                       <td>{{ formatNumber(entry.score) }}</td>
-                      @if (hasRaceBreakdown()) {
-                        @for (race of races(); track race.id; let raceIndex = $index) {
-                          <td class="race-position">{{ formatRacePosition(entry, race, raceIndex) }}</td>
-                        }
-                      }
                     </tr>
                   }
                 }
@@ -201,8 +201,7 @@
             <div class="races-list">
               @for (race of allRaces(); track race.id; let raceIndex = $index) {
                 <div class="race-card" [class.race-completed]="getRaceStatus(race) === 'completed'">
-                  <div class="race-card-header" (click)="hasRaceResults(race) ? toggleRaceExpansion(raceIndex) : null"
-                       [class.clickable]="hasRaceResults(race)">
+                  <div class="race-card-header">
                     <div class="race-card-info">
                       <span class="race-round">R{{ raceIndex + 1 }}</span>
                       <div class="race-card-details">
@@ -218,52 +217,11 @@
                     <div class="race-card-status">
                       @if (getRaceStatus(race) === 'completed') {
                         <app-badge variant="completed">{{ 'championships.completed' | transloco }}</app-badge>
-                        @if (hasRaceResults(race)) {
-                          <span class="race-expand-icon" [class.expanded]="expandedRaceIndex() === raceIndex">&#9662;</span>
-                        }
                       } @else {
                         <app-badge variant="upcoming">{{ 'championships.upcoming' | transloco }}</app-badge>
                       }
                     </div>
                   </div>
-
-                  @if (expandedRaceIndex() === raceIndex && hasRaceResults(race)) {
-                    <div class="race-results-panel">
-                      @if (isMulticlass()) {
-                        <div class="class-tabs class-tabs-sm">
-                          @for (cls of carClasses(); track cls) {
-                            <button
-                              type="button"
-                              [ngClass]="getRaceClassTabClasses(cls)"
-                              (click)="selectedRaceClass.set(cls)"
-                            >{{ cls }}</button>
-                          }
-                        </div>
-                      }
-                      <div class="table-wrap">
-                        <table class="standings-table race-results-table">
-                          <thead>
-                            <tr>
-                              <th>{{ 'championships.pos' | transloco }}</th>
-                              <th>{{ 'championships.driver' | transloco }}</th>
-                              <th>{{ 'championships.car' | transloco }}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @for (result of getVisibleRaceResults(race, raceIndex); track result.displayName; let i = $index) {
-                              <tr>
-                                <td>{{ result.dns ? 'DNS' : (result.position ?? '-') }}</td>
-                                <td class="driver-cell">
-                                  <a [routerLink]="['/drivers', result.driverUuid ?? result.simgridDriverId]" class="driver-link">{{ result.displayName }}</a>
-                                </td>
-                                <td>{{ result.car || '-' }}</td>
-                              </tr>
-                            }
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  }
                 </div>
               }
             </div>
@@ -313,14 +271,3 @@
     </section>
   </div>
 </app-page>
-
-<app-giveaway-modal [standings]="standings()" [(open)]="giveawayOpen" />
-
-@if (selectedChampionship(); as champ) {
-  <app-standings-export
-    [championship]="champ"
-    [standings]="standings()"
-    [races]="races()"
-    [(open)]="exportPreviewOpen"
-  />
-}

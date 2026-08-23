@@ -4,7 +4,6 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { filter } from 'rxjs/operators';
 import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
-import { DotdWidgetComponent } from './components/dotd-widget/dotd-widget.component';
 import { LangSwitcherComponent } from './components/lang-switcher/lang-switcher.component';
 import { AuthService } from './services/auth.service';
 import { CalendarApiService, Community } from './services/calendar-api.service';
@@ -12,7 +11,7 @@ import { RegulationApiService, RegulationPageListItem } from './services/regulat
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, TranslocoPipe, DotdWidgetComponent, LangSwitcherComponent, ConfirmDialogComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, TranslocoPipe, LangSwitcherComponent, ConfirmDialogComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

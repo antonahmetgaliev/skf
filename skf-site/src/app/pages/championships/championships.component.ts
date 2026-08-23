@@ -12,7 +12,7 @@ import {
   StandingRace,
 } from '../../services/simgrid-api.service';
 import { AuthService } from '../../services/auth.service';
-import { ChampionshipEntry, ChampionshipService, RaceResultRow } from '../../services/championship.service';
+import { ChampionshipEntry, ChampionshipService } from '../../services/championship.service';
 import { DataFreshnessService } from '../../services/data-freshness.service';
 import { formatDate, formatNumber } from '../../utils/format';
 import { AlertComponent } from '../../components/alert/alert.component';
@@ -20,11 +20,9 @@ import { BadgeComponent } from '../../components/badge/badge.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
 import { EmptyComponent } from '../../components/empty/empty.component';
-import { GiveawayModalComponent } from '../../components/giveaway-modal/giveaway-modal.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
-import { StandingsExportComponent } from '../../components/standings-export/standings-export.component';
 import { TabsComponent } from '../../components/tabs/tabs.component';
 
 @Component({
@@ -38,11 +36,9 @@ import { TabsComponent } from '../../components/tabs/tabs.component';
     BtnComponent,
     CardComponent,
     EmptyComponent,
-    GiveawayModalComponent,
     PageIntroComponent,
     PageLayoutComponent,
     SpinnerComponent,
-    StandingsExportComponent,
     TabsComponent,
   ],
   templateUrl: './championships.component.html',
@@ -68,7 +64,6 @@ export class ChampionshipsComponent {
   readonly loadingStandings = signal(false);
   readonly errorMessage = signal('');
   readonly activeTab = signal<'standings' | 'races' | 'participants'>('standings');
-  readonly expandedRaceIndex = signal<number | null>(null);
   readonly allRaces = signal<ChampionshipRace[]>([]);
   readonly loadingRaces = signal(false);
   readonly activeChampionshipIds = signal<Set<number>>(new Set());
@@ -80,9 +75,6 @@ export class ChampionshipsComponent {
     return this.freshness.hasStaleData('/api/championships');
   });
 
-  // Modal states
-  readonly exportPreviewOpen = signal(false);
-  readonly giveawayOpen = signal(false);
   readonly refreshingCache = signal(false);
 
   readonly isUpcomingChampionship = computed(() => {
@@ -107,9 +99,6 @@ export class ChampionshipsComponent {
     return classes.sort();
   });
   readonly isMulticlass = computed(() => this.carClasses().length > 1);
-  readonly hasRaceBreakdown = computed(() =>
-    this.standings().some((e) => e.raceResults.length > 0),
-  );
   readonly selectedClass = signal<string | null>(null);
   readonly activeClass = computed(() => {
     if (!this.isMulticlass()) return null;
@@ -154,52 +143,8 @@ export class ChampionshipsComponent {
     return this.cs.getPosition(entry, index, this.isMulticlass(), this.activeClass() !== null);
   }
 
-  formatRacePosition(entry: StandingEntry, race: StandingRace, raceIndex: number): string {
-    return this.cs.formatRacePosition(entry, race, raceIndex);
-  }
-
-  getRaceLabel(index: number): string {
-    return this.cs.getRaceLabel(index);
-  }
-
-  getRaceTitle(race: StandingRace, index: number): string {
-    return this.cs.getRaceTitle(race, index);
-  }
-
   getRaceStatus(race: ChampionshipRace): 'completed' | 'upcoming' {
     return this.cs.getRaceStatus(race);
-  }
-
-  hasRaceResults(race: ChampionshipRace): boolean {
-    return this.cs.hasRaceResults(race, this.races(), this.standings());
-  }
-
-  getRaceResultsForRace(race: ChampionshipRace, raceIndex: number) {
-    return this.cs.getRaceResultsForRace(
-      this.standings(), this.races(), this.cs.driverUuidBySimgridId(), race, raceIndex,
-    );
-  }
-
-  readonly selectedRaceClass = signal<string | null>(null);
-  readonly activeRaceClass = computed(() => {
-    if (!this.isMulticlass()) return null;
-    return this.selectedRaceClass() ?? this.carClasses()[0] ?? null;
-  });
-
-  getVisibleRaceResults(race: ChampionshipRace, raceIndex: number): RaceResultRow[] {
-    const all = this.getRaceResultsForRace(race, raceIndex);
-    const cls = this.activeRaceClass();
-    if (cls === null) return all;
-    return all.filter((r) => r.carClass === cls);
-  }
-
-  getRaceClassTabClasses(cls: string): Record<string, boolean> {
-    const idx = this.getClassIndex(cls);
-    return {
-      'class-tab': true,
-      active: this.activeRaceClass() === cls,
-      [`class-color-${idx}`]: true,
-    };
   }
 
   getClassIndex(carClass: string): number {
@@ -216,8 +161,7 @@ export class ChampionshipsComponent {
   }
 
   getOverallColspan(): number {
-    const raceCols = this.hasRaceBreakdown() ? this.races().length : 0;
-    return 5 + raceCols + (this.isMulticlass() ? 1 : 0);
+    return 3 + (this.isMulticlass() ? 1 : 0);
   }
 
   // ------------------------------------------------------------------
@@ -283,7 +227,6 @@ export class ChampionshipsComponent {
   private async selectAndLoad(key: string, replaceUrl: boolean): Promise<void> {
     this.selectedChampionshipKey.set(key);
     this.selectedClass.set(null);
-    this.expandedRaceIndex.set(null);
     this.errorMessage.set('');
 
     const entry = this.championships().find((e) => e.key === key);
@@ -306,17 +249,12 @@ export class ChampionshipsComponent {
 
   setActiveTab(tab: 'standings' | 'races' | 'participants'): void {
     this.activeTab.set(tab);
-    this.expandedRaceIndex.set(null);
     if (tab === 'races') {
       const simgridId = this.getSelectedSimgridId();
       if (simgridId !== null && this.allRaces().length === 0) {
         void this.loadAllRaces(simgridId);
       }
     }
-  }
-
-  toggleRaceExpansion(raceIndex: number): void {
-    this.expandedRaceIndex.set(this.expandedRaceIndex() === raceIndex ? null : raceIndex);
   }
 
   // ------------------------------------------------------------------
@@ -343,11 +281,6 @@ export class ChampionshipsComponent {
 
   isChampionshipActive(simgridId: number): boolean {
     return this.activeChampionshipIds().has(simgridId);
-  }
-
-  openStandingsExportPreview(): void {
-    if (this.loadingStandings() || !this.selectedChampionship() || this.standings().length === 0) return;
-    this.exportPreviewOpen.set(true);
   }
 
   async refreshChampionshipCache(championshipId: number): Promise<void> {
