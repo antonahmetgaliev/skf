@@ -34,6 +34,63 @@
   min-width: 0;
 }
 
+// ── "+ Add" community menu ──────────────────────────────────────────────────
+.add-menu {
+  position: relative;
+}
+
+.add-menu__chevron {
+  flex-shrink: 0;
+}
+
+.add-menu__panel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 20;
+  min-width: 200px;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0.3rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: rgba(20, 20, 24, 0.98);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.add-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  text-align: left;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  white-space: nowrap;
+
+  &::before {
+    content: '';
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--chip-color, var(--muted));
+  }
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(255, 255, 255, 0.06);
+    outline: none;
+  }
+}
+
 .community-filters {
   display: flex;
   align-items: center;

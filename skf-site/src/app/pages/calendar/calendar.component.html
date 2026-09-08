@@ -44,12 +44,39 @@
       }
     </div>
 
-    @if (managedCommunities().length) {
+    @if (managedCommunities().length === 1) {
       <div class="add-actions">
-        @for (mc of managedCommunities(); track mc.id) {
-          <app-btn variant="accent" size="sm" (click)="openAddChampionship(mc.id)">
-            + {{ 'calendar.add' | transloco }}{{ managedCommunities().length > 1 ? ' to ' + mc.name : '' }}
-          </app-btn>
+        <app-btn variant="accent" size="sm" (click)="openAddChampionship(managedCommunities()[0].id)">
+          + {{ 'calendar.add' | transloco }}
+        </app-btn>
+      </div>
+    } @else if (managedCommunities().length > 1) {
+      <div class="add-actions add-menu">
+        <app-btn
+          variant="accent"
+          size="sm"
+          aria-haspopup="menu"
+          [attr.aria-expanded]="addMenuOpen()"
+          (click)="toggleAddMenu()"
+        >
+          + {{ 'calendar.add' | transloco }}
+          <svg class="add-menu__chevron" width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
+            <path d="M1 3l4 4 4-4z"/>
+          </svg>
+        </app-btn>
+
+        @if (addMenuOpen()) {
+          <div class="add-menu__panel" role="menu">
+            @for (mc of managedCommunities(); track mc.id) {
+              <button
+                type="button"
+                role="menuitem"
+                class="add-menu__item"
+                [style.--chip-color]="mc.color"
+                (click)="selectAddCommunity(mc.id)"
+              >{{ mc.name }}</button>
+            }
+          </div>
         }
       </div>
     }

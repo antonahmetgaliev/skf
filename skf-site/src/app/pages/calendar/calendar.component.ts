@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, HostListener, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AlertComponent } from '../../components/alert/alert.component';
@@ -402,6 +402,28 @@ export class CalendarComponent implements OnInit {
   readonly editingChampId = signal<string | null>(null);
   readonly champCommunityId = signal<string | null>(null);
   readonly champModalOpen = signal(false);
+  readonly addMenuOpen = signal(false);
+
+  toggleAddMenu(): void {
+    this.addMenuOpen.update((v) => !v);
+  }
+
+  selectAddCommunity(communityId: string): void {
+    this.addMenuOpen.set(false);
+    this.openAddChampionship(communityId);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.addMenuOpen()) return;
+    const target = event.target as HTMLElement | null;
+    if (!target?.closest('.add-menu')) this.addMenuOpen.set(false);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.addMenuOpen.set(false);
+  }
 
   canManageCommunity(communityId: string | null): boolean {
     const user = this.auth.user();
