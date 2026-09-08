@@ -327,7 +327,7 @@ export class ChampionshipsComponent {
       this.standings.set(standingsData.entries);
       this.races.set(standingsData.races);
       if (!isUpcoming) {
-        this.cs.ensureDriverMapLoaded();
+        this.cs.refreshDriverMap();
       }
       if (isUpcoming && this.allRaces().length === 0) {
         void this.loadAllRaces(championshipId);

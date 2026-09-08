@@ -17,7 +17,8 @@ class UserOut(CamelModel):
     discord_id: str
     username: str
     display_name: str
-    guild_nickname: str | None = None
+    # Nickname on the SKF Discord server (stored as users.guild_nickname).
+    discord_nickname: str | None = None
     avatar_url: str | None = None
     role: str
     blocked: bool
@@ -30,10 +31,6 @@ class UserOut(CamelModel):
 class UserUpdate(CamelModel):
     role: str | None = None
     blocked: bool | None = None
-
-
-class GuildNicknameUpdate(CamelModel):
-    guild_nickname: str
 
 
 class AuthUrlOut(CamelModel):

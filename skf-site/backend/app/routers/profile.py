@@ -1,100 +1,29 @@
-"""Profile endpoints – links Discord users to their driver entries."""
+"""Profile endpoints – driver profiles for users and the public.
+
+Account↔driver linking is fully automatic (via SimGrid's discord_uid, see
+app.services.drivers) — there is no manual claim flow.
+"""
 
 from __future__ import annotations
 
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from sqlalchemy import or_, and_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_user
 from app.database import get_db
 from app.models.bwp import Driver
 from app.models.user import User
-from app.schemas.bwp import DriverOut, DriverPublicOut, LinkCandidateOut
+from app.schemas.bwp import DriverIndexEntry, DriverOut, DriverPublicOut
+from app.schemas.championship import CamelModel
 
 router = APIRouter(prefix="/profile", tags=["Profile"])
 
 
-class LinkDriverBody(BaseModel):
-    driver_id: uuid.UUID
-
-
-class PhotoUrlBody(BaseModel):
+class PhotoUrlBody(CamelModel):
     photo_url: str | None = None
-
-
-@router.get("/link-candidates", response_model=list[LinkCandidateOut])
-async def get_link_candidates(
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Return unlinked drivers whose name overlaps the user's SKF server nickname
-    (guild_nickname), falling back to global display name or username."""
-    search_name = (
-        user.guild_nickname or user.display_name or user.username or ""
-    ).strip()
-    if not search_name:
-        return []
-
-    term = f"%{search_name}%"
-    result = await db.execute(
-        select(Driver).where(
-            Driver.user_id.is_(None),
-            or_(
-                Driver.name.ilike(term),
-                and_(
-                    Driver.simgrid_display_name.isnot(None),
-                    Driver.simgrid_display_name.ilike(term),
-                ),
-            ),
-        )
-    )
-    return result.scalars().all()
-
-
-@router.post("/link-driver", status_code=status.HTTP_204_NO_CONTENT)
-async def link_driver(
-    body: LinkDriverBody,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Link the authenticated user to a driver entry."""
-    # Check if this user already has a linked driver
-    result = await db.execute(select(Driver).where(Driver.user_id == user.id))
-    if result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="You already have a linked driver.",
-        )
-
-    result = await db.execute(select(Driver).where(Driver.id == body.driver_id))
-    driver = result.scalar_one_or_none()
-    if not driver:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found.")
-    if driver.user_id is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This driver is already linked to another account.",
-        )
-
-    driver.user_id = user.id
-    await db.commit()
-
-
-@router.delete("/unlink-driver", status_code=status.HTTP_204_NO_CONTENT)
-async def unlink_driver(
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Remove the link between the authenticated user and their driver."""
-    result = await db.execute(select(Driver).where(Driver.user_id == user.id))
-    driver = result.scalar_one_or_none()
-    if driver:
-        driver.user_id = None
-        await db.commit()
 
 
 @router.get("/me/driver", response_model=DriverOut)
@@ -104,10 +33,26 @@ async def get_my_driver(
 ):
     """Return the driver linked to the authenticated user."""
     result = await db.execute(select(Driver).where(Driver.user_id == user.id))
-    driver = result.scalar_one_or_none()
+    driver = result.scalars().first()
     if not driver:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No linked driver.")
     return driver
+
+
+@router.get("/drivers", response_model=list[DriverPublicOut])
+async def list_public_drivers(db: AsyncSession = Depends(get_db)):
+    """Public driver directory (no user linkage exposed)."""
+    result = await db.execute(select(Driver).order_by(Driver.name))
+    return result.scalars().all()
+
+
+@router.get("/drivers-index", response_model=list[DriverIndexEntry])
+async def drivers_index(db: AsyncSession = Depends(get_db)):
+    """Slim public list for mapping SimGrid ids to driver UUIDs."""
+    result = await db.execute(
+        select(Driver).where(Driver.simgrid_driver_id.isnot(None))
+    )
+    return result.scalars().all()
 
 
 @router.get("/drivers/{driver_id}", response_model=DriverPublicOut)
@@ -132,7 +77,7 @@ async def get_public_driver(
         result = await db.execute(
             select(Driver).where(Driver.simgrid_driver_id == simgrid_id)
         )
-        driver = result.scalar_one_or_none()
+        driver = result.scalars().first()
 
     if not driver:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found.")
@@ -147,7 +92,7 @@ async def update_driver_photo(
 ):
     """Allow the linked user to set or clear their driver profile photo URL."""
     result = await db.execute(select(Driver).where(Driver.user_id == user.id))
-    driver = result.scalar_one_or_none()
+    driver = result.scalars().first()
     if not driver:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No linked driver.")
     if body.photo_url:
@@ -156,6 +101,11 @@ async def update_driver_photo(
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Photo URL must start with http:// or https://",
+            )
+        if len(url) > 500:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Photo URL must be at most 500 characters.",
             )
         driver.photo_url = url
     else:

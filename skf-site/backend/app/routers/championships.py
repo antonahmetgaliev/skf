@@ -127,8 +127,13 @@ async def get_standings(
     background_tasks: BackgroundTasks,
 ):
     try:
-        data = await simgrid_service.get_standings(championship_id)
-        background_tasks.add_task(sync_drivers_from_standings, data.entries)
+        data, fetched_live = await simgrid_service.get_standings(championship_id)
+        # Only sync when SimGrid was actually hit — cache hits and stale
+        # fallbacks cannot contain anything new.
+        if fetched_live:
+            background_tasks.add_task(
+                sync_drivers_from_standings, data.entries, championship_id
+            )
         return data
     except Exception:
         logger.warning("Failed to fetch standings for championship %s", championship_id, exc_info=True)

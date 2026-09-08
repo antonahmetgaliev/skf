@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 from app.auth import get_current_user, get_current_user_optional, require_admin, require_api_token, require_judge
 from app.database import get_db
 from app.models.bwp import BwpPoint, Driver
+from app.services.driver_matching import match_driver_id_by_name
 from app.services.simgrid import simgrid_service
 from app.models.incidents import (
     Incident, IncidentDriver, IncidentResolution, IncidentWindow, VerdictRule,
@@ -83,11 +84,7 @@ async def _get_incident_driver_or_404(
 
 async def _match_driver(name: str, db: AsyncSession) -> uuid.UUID | None:
     """Case-insensitive match of driver name against BWP Driver table."""
-    result = await db.execute(
-        select(Driver.id).where(func.lower(Driver.name) == name.lower())
-    )
-    row = result.scalar_one_or_none()
-    return row
+    return await match_driver_id_by_name(db, name)
 
 
 async def _update_incident_status(incident_id: uuid.UUID, db: AsyncSession) -> None:
@@ -297,7 +294,7 @@ async def ingest_incidents(
             driver_id = await _match_driver(driver_name, db)
             db.add(IncidentDriver(
                 incident_id=incident.id,
-                driver_name=driver_name,
+                driver_name=driver_name.strip(),
                 driver_id=driver_id,
                 sort_order=idx,
             ))
@@ -431,7 +428,7 @@ async def file_incident(
         driver_id = await _match_driver(driver_name, db)
         db.add(IncidentDriver(
             incident_id=incident.id,
-            driver_name=driver_name,
+            driver_name=driver_name.strip(),
             driver_id=driver_id,
             sort_order=idx,
         ))
@@ -725,26 +722,30 @@ async def apply_bwp(
             status_code=status.HTTP_409_CONFLICT,
             detail="No BWP points to apply.",
         )
+    if entry.resolution.bwp_applied:
+        # Idempotent: a double-click must not issue the penalty twice.
+        return entry
     entry.resolution.bwp_applied = True
 
     # If not already linked, try to match driver by name
     if not entry.driver_id:
-        matched = await db.execute(
-            select(Driver.id).where(func.lower(Driver.name) == entry.driver_name.lower())
-        )
-        matched_id = matched.scalar_one_or_none()
+        matched_id = await _match_driver(entry.driver_name, db)
         if matched_id:
             entry.driver_id = matched_id
 
     # Auto-create BwpPoint if driver is linked
     if entry.driver_id:
         today = date.today()
-        db.add(BwpPoint(
+        point = BwpPoint(
             driver_id=entry.driver_id,
             points=entry.resolution.bwp_points,
             issued_on=today,
             expires_on=today + timedelta(days=90),
-        ))
+        )
+        db.add(point)
+        await db.flush()
+        # Remember which point this apply created, so discard can undo it.
+        entry.resolution.applied_bwp_point_id = point.id
 
     await db.commit()
     return await _get_incident_driver_or_404(incident_driver_id, db)
@@ -765,6 +766,18 @@ async def discard_bwp(
             status_code=status.HTTP_409_CONFLICT,
             detail="Driver has not been resolved yet.",
         )
+    # Undo the BwpPoint a previous apply created — otherwise the penalty
+    # silently stays on the driver's license forever.
+    if entry.resolution.applied_bwp_point_id is not None:
+        point_result = await db.execute(
+            select(BwpPoint).where(
+                BwpPoint.id == entry.resolution.applied_bwp_point_id
+            )
+        )
+        point = point_result.scalar_one_or_none()
+        if point is not None:
+            await db.delete(point)
+        entry.resolution.applied_bwp_point_id = None
     entry.resolution.bwp_points = None
     entry.resolution.bwp_applied = False
     await db.commit()

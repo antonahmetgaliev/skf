@@ -38,7 +38,8 @@ export interface DriverRaceResult {
 }
 
 export interface StandingEntry {
-  id: number;
+  /** SimGrid user id; null when the standings payload lacks one. */
+  id: number | null;
   position: number | null;
   displayName: string;
   countryCode: string;

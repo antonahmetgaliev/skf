@@ -8,6 +8,8 @@ export interface BwpPoint {
   issuedOn: string;
   expiresOn: string;
   note: string | null;
+  /** Computed server-side — the single source of truth for expiry. */
+  expired: boolean;
 }
 
 export interface PenaltyClearance {
@@ -21,8 +23,13 @@ export interface Driver {
   id: string;
   name: string;
   simgridDriverId: number | null;
+  simgridDisplayName: string | null;
+  countryCode: string | null;
   photoUrl: string | null;
+  userId: string | null;
   createdAt: string;
+  /** Sum of non-expired BWP points, computed server-side. */
+  activeBwp: number;
   points: BwpPoint[];
   clearances: PenaltyClearance[];
 }

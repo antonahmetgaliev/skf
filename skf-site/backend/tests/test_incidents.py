@@ -524,6 +524,93 @@ class TestBwpApplyDiscard:
         assert bp.points == 3
 
     @pytest.mark.anyio
+    async def test_apply_bwp_twice_creates_only_one_point(
+        self, shared_client: AsyncClient, db: AsyncSession
+    ):
+        """apply-bwp is idempotent — a double-click must not double the penalty."""
+        from app.models.bwp import Driver, BwpPoint
+        ac = shared_client
+
+        drv = Driver(name="Double Apply")
+        db.add(drv)
+        await db.commit()
+        await db.refresh(drv)
+
+        _set_auth_user(ac._admin_user)
+        w_resp = await ac.post(
+            "/api/incidents/windows",
+            json={"raceName": "Double Apply Test", "intervalHours": 48},
+        )
+        window_id = w_resp.json()["id"]
+        await ac.post(
+            f"/api/incidents/windows/{window_id}/incidents",
+            json={"drivers": ["Double Apply"]},
+        )
+        w = await ac.get(f"/api/incidents/windows/{window_id}")
+        driver_entry_id = w.json()["incidents"][0]["drivers"][0]["id"]
+
+        _set_auth_user(ac._judge_user)
+        await ac.patch(
+            f"/api/incidents/drivers/{driver_entry_id}/resolve",
+            json={"verdict": "Drive Through", "bwpPoints": 3},
+        )
+
+        _set_auth_user(ac._admin_user)
+        first = await ac.patch(f"/api/incidents/drivers/{driver_entry_id}/apply-bwp")
+        second = await ac.patch(f"/api/incidents/drivers/{driver_entry_id}/apply-bwp")
+        assert first.status_code == 200
+        assert second.status_code == 200
+
+        result = await db.execute(
+            select(BwpPoint).where(BwpPoint.driver_id == drv.id)
+        )
+        points = result.scalars().all()
+        assert len(points) == 1
+
+    @pytest.mark.anyio
+    async def test_discard_after_apply_removes_bwp_point(
+        self, shared_client: AsyncClient, db: AsyncSession
+    ):
+        """Discarding an applied resolution deletes the BwpPoint it created."""
+        from app.models.bwp import Driver, BwpPoint
+        ac = shared_client
+
+        drv = Driver(name="Apply Then Discard")
+        db.add(drv)
+        await db.commit()
+        await db.refresh(drv)
+
+        _set_auth_user(ac._admin_user)
+        w_resp = await ac.post(
+            "/api/incidents/windows",
+            json={"raceName": "Apply Discard Test", "intervalHours": 48},
+        )
+        window_id = w_resp.json()["id"]
+        await ac.post(
+            f"/api/incidents/windows/{window_id}/incidents",
+            json={"drivers": ["Apply Then Discard"]},
+        )
+        w = await ac.get(f"/api/incidents/windows/{window_id}")
+        driver_entry_id = w.json()["incidents"][0]["drivers"][0]["id"]
+
+        _set_auth_user(ac._judge_user)
+        await ac.patch(
+            f"/api/incidents/drivers/{driver_entry_id}/resolve",
+            json={"verdict": "Warning", "bwpPoints": 2},
+        )
+
+        _set_auth_user(ac._admin_user)
+        await ac.patch(f"/api/incidents/drivers/{driver_entry_id}/apply-bwp")
+        resp = await ac.patch(f"/api/incidents/drivers/{driver_entry_id}/discard")
+        assert resp.status_code == 200
+        assert resp.json()["resolution"]["bwpApplied"] is False
+
+        result = await db.execute(
+            select(BwpPoint).where(BwpPoint.driver_id == drv.id)
+        )
+        assert result.scalars().all() == []
+
+    @pytest.mark.anyio
     async def test_apply_bwp_no_resolution(self, admin_client: AsyncClient):
         """Apply BWP before resolution → 409."""
         w_resp = await admin_client.post(

@@ -23,6 +23,14 @@
         <span>&#64;{{ u.username }}</span>
         <span class="user-item__sep">·</span>
         <span>{{ u.discordId }}</span>
+        @if (u.discordNickname && u.discordNickname !== u.displayName) {
+          <span class="user-item__sep">·</span>
+          <span>{{ u.discordNickname }}</span>
+        }
+        @if (u.driverId) {
+          <span class="user-item__sep">·</span>
+          <a class="user-item__driver-link" [routerLink]="['/drivers', u.driverId]">{{ 'profile.driverProfile' | transloco }}</a>
+        }
         @if (u.lastLoginAt) {
           <span class="user-item__sep">·</span>
           <span>{{ 'admin.lastLogin' | transloco }} {{ u.lastLoginAt | date:'mediumDate' }}</span>

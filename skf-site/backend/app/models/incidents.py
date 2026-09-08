@@ -141,6 +141,12 @@ class IncidentResolution(Base):
     bwp_points: Mapped[int | None] = mapped_column(Integer, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     bwp_applied: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # The BwpPoint created by apply-bwp, so discard can remove it again.
+    applied_bwp_point_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("bwp_points.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     resolved_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

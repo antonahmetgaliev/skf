@@ -8,10 +8,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import require_admin, require_role, get_managed_community_ids
+from app.auth import require_admin
 from app.database import get_db
+from app.models.bwp import Driver
 from app.models.community_manager import CommunityManager
 from app.models.user import Role, Session, User, ROLE_ADMIN, ROLE_SUPER_ADMIN, ROLE_COMMUNITY_MANAGER
+from app.routers.auth import build_user_out
 from app.schemas.auth import UserOut, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -32,17 +34,27 @@ async def list_users(
     for cm in all_assignments:
         user_communities.setdefault(cm.user_id, []).append(str(cm.community_id))
 
+    # Batch-load driver links so admins can audit the user↔driver mapping
+    drv_result = await db.execute(
+        select(Driver.id, Driver.user_id).where(Driver.user_id.isnot(None))
+    )
+    driver_by_user: dict[uuid.UUID, uuid.UUID] = {
+        user_id: driver_id for driver_id, user_id in drv_result.all()
+    }
+
     return [
         UserOut(
             id=u.id,
             discord_id=u.discord_id,
             username=u.username,
             display_name=u.display_name,
+            discord_nickname=u.guild_nickname,
             avatar_url=u.avatar_url,
             role=u.role.name,
             blocked=u.blocked,
             created_at=u.created_at,
             last_login_at=u.last_login_at,
+            driver_id=driver_by_user.get(u.id),
             managed_community_ids=user_communities.get(u.id, []),
         )
         for u in users
@@ -107,19 +119,7 @@ async def update_user(
     await db.commit()
     await db.refresh(target)
 
-    managed_ids = [str(cid) for cid in await get_managed_community_ids(target, db)]
-    return UserOut(
-        id=target.id,
-        discord_id=target.discord_id,
-        username=target.username,
-        display_name=target.display_name,
-        avatar_url=target.avatar_url,
-        role=target.role.name,
-        blocked=target.blocked,
-        created_at=target.created_at,
-        last_login_at=target.last_login_at,
-        managed_community_ids=managed_ids,
-    )
+    return await build_user_out(target, db)
 
 
 @router.delete(

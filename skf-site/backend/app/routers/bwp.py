@@ -61,7 +61,15 @@ async def _get_rule_or_404(rule_id: uuid.UUID, db: AsyncSession) -> PenaltyRule:
 
 
 @router.get("/drivers", response_model=list[DriverOut])
-async def list_drivers(db: AsyncSession = Depends(get_db)):
+async def list_drivers(
+    _: User = Depends(require_judge),
+    db: AsyncSession = Depends(get_db),
+):
+    """Full driver records for the BWP console (judges/admins only).
+
+    Public consumers use /api/profile/drivers (no user linkage) or
+    /api/profile/drivers-index instead.
+    """
     result = await db.execute(select(Driver).order_by(Driver.name))
     return result.scalars().all()
 

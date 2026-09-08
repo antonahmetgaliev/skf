@@ -7,7 +7,7 @@ import { PageIntroComponent } from '../../components/page-intro/page-intro.compo
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { InputDirective } from '../../directives/input.directive';
-import { BwpApiService, Driver } from '../../services/bwp-api.service';
+import { DriverPublic, ProfileApiService } from '../../services/profile-api.service';
 
 @Component({
   selector: 'app-drivers-list',
@@ -16,22 +16,26 @@ import { BwpApiService, Driver } from '../../services/bwp-api.service';
   styleUrl: './drivers-list.component.scss',
 })
 export class DriversListComponent {
-  private readonly api = inject(BwpApiService);
+  private readonly api = inject(ProfileApiService);
 
-  readonly drivers = signal<Driver[]>([]);
+  readonly drivers = signal<DriverPublic[]>([]);
   readonly loading = signal(true);
   readonly search = signal('');
 
   readonly filtered = computed(() => {
     const q = this.search().trim().toLowerCase();
     const list = q
-      ? this.drivers().filter((d) => d.name.toLowerCase().includes(q))
+      ? this.drivers().filter(
+          (d) =>
+            d.name.toLowerCase().includes(q) ||
+            (d.simgridDisplayName?.toLowerCase().includes(q) ?? false),
+        )
       : this.drivers();
     return [...list].sort((a, b) => a.name.localeCompare(b.name));
   });
 
   constructor() {
-    this.api.getDrivers().subscribe({
+    this.api.getPublicDrivers().subscribe({
       next: (drivers) => {
         this.drivers.set(drivers);
         this.loading.set(false);

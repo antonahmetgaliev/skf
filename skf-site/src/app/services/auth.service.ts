@@ -33,7 +33,8 @@ export interface AuthUser {
   discordId: string;
   username: string;
   displayName: string;
-  guildNickname: string | null;
+  /** Nickname on the SKF Discord server (auto-synced, unless set manually). */
+  discordNickname: string | null;
   avatarUrl: string | null;
   role: Role;
   blocked: boolean;
@@ -128,14 +129,9 @@ export class AuthService {
     });
   }
 
-  /** Re-fetch and store the user's SKF Racing Hub server nickname. */
-  refreshGuildNickname(): Observable<AuthUser> {
-    return this.http.post<AuthUser>('/api/auth/refresh-guild-nickname', null);
-  }
-
-  /** Manually set the user's racing/guild name. */
-  updateGuildNickname(name: string): Observable<AuthUser> {
-    return this.http.patch<AuthUser>('/api/auth/guild-nickname', { guildNickname: name });
+  /** Re-fetch and store the user's Discord server nickname. */
+  refreshDiscordNickname(): Observable<AuthUser> {
+    return this.http.post<AuthUser>('/api/auth/refresh-discord-nickname', null);
   }
 
   /** End the current session. */

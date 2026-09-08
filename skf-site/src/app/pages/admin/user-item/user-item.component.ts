@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, ElementRef, HostListener, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { BadgeComponent, BadgeVariant } from '../../../components/badge/badge.component';
 import { BtnComponent } from '../../../components/btn/btn.component';
@@ -21,7 +22,7 @@ const ROLE_BADGE_VARIANT: Record<Role, BadgeVariant> = {
 
 @Component({
   selector: 'app-user-item',
-  imports: [DatePipe, FormsModule, TranslocoPipe, BadgeComponent, BtnComponent, FormFieldComponent, SelectDirective],
+  imports: [DatePipe, FormsModule, RouterLink, TranslocoPipe, BadgeComponent, BtnComponent, FormFieldComponent, SelectDirective],
   templateUrl: './user-item.component.html',
   styleUrl: './user-item.component.scss',
 })

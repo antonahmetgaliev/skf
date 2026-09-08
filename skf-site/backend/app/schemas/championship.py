@@ -79,7 +79,9 @@ class DriverRaceResult(CamelModel):
 
 
 class StandingEntry(CamelModel):
-    id: int
+    # SimGrid user id. None when the payload lacks user_id — never fall back
+    # to the registration id, which is a different id space.
+    id: int | None = None
     position: int | None = None
     display_name: str
     country_code: str = ""

@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Date, DateTime, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -43,6 +43,19 @@ class Driver(Base):
         back_populates="driver", cascade="all, delete-orphan", lazy="selectin"
     )
 
+    @property
+    def active_bwp(self) -> int:
+        """Sum of not-yet-expired BWP points (expired = expires_on <= today,
+        matching the immediate-expire semantics in the BWP router)."""
+        today = date.today()
+        return sum(p.points for p in self.points if p.expires_on > today)
+
+
+# Case-insensitive uniqueness for driver names: "John Smith" and "john smith"
+# must not coexist (the sync inserts SimGrid casing directly, bypassing the
+# API-level ilike guard).
+Index("ux_drivers_name_lower", func.lower(Driver.name), unique=True)
+
 
 class BwpPoint(Base):
     __tablename__ = "bwp_points"
@@ -59,6 +72,10 @@ class BwpPoint(Base):
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     driver: Mapped["Driver"] = relationship(back_populates="points")
+
+    @property
+    def expired(self) -> bool:
+        return self.expires_on <= date.today()
 
 
 class PenaltyRule(Base):

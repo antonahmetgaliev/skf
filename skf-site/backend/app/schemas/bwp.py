@@ -23,6 +23,7 @@ class BwpPointOut(CamelModel):
     issued_on: date
     expires_on: date
     note: str | None = None
+    expired: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -60,6 +61,7 @@ class DriverOut(CamelModel):
     photo_url: str | None = None
     user_id: uuid.UUID | None = None
     created_at: datetime
+    active_bwp: int = 0
     points: list[BwpPointOut] = []
     clearances: list[PenaltyClearanceOut] = []
 
@@ -71,13 +73,14 @@ class DriverBrief(CamelModel):
     name: str
 
 
-class LinkCandidateOut(CamelModel):
+class DriverIndexEntry(CamelModel):
+    """Slim public entry for building the SimGrid-id → UUID link map."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
     name: str
-    simgrid_display_name: str | None = None
-    country_code: str | None = None
+    simgrid_driver_id: int | None = None
 
 
 class DriverPublicOut(CamelModel):
@@ -90,6 +93,7 @@ class DriverPublicOut(CamelModel):
     country_code: str | None = None
     photo_url: str | None = None
     created_at: datetime
+    active_bwp: int = 0
     points: list[BwpPointOut] = []
     clearances: list[PenaltyClearanceOut] = []
 

@@ -23,21 +23,15 @@ export class DriverProfileComponent implements OnInit {
   readonly error = signal('');
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id') ?? '';
-    this.profileApi.getPublicDriver(id).subscribe({
-      next: (d) => this.driver.set(d),
-      error: () => this.error.set('Driver profile not found.'),
+    // Subscribe (not snapshot) so navigating /drivers/a → /drivers/b reloads.
+    this.route.paramMap.subscribe((params) => {
+      const id = params.get('id') ?? '';
+      this.driver.set(null);
+      this.error.set('');
+      this.profileApi.getPublicDriver(id).subscribe({
+        next: (d) => this.driver.set(d),
+        error: () => this.error.set('Driver profile not found.'),
+      });
     });
-  }
-
-  getActiveBwp(driver: DriverPublic): number {
-    const today = new Date().toISOString().slice(0, 10);
-    return driver.points
-      .filter((p) => p.expiresOn >= today)
-      .reduce((sum, p) => sum + p.points, 0);
-  }
-
-  isExpired(expiresOn: string): boolean {
-    return expiresOn < new Date().toISOString().slice(0, 10);
   }
 }

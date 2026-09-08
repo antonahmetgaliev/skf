@@ -28,7 +28,7 @@
           </div>
         </div>
         <div class="bwp-summary">
-          <span class="bwp-value" [class.bwp-active]="getActiveBwp(d) > 0">{{ getActiveBwp(d) }}</span>
+          <span class="bwp-value" [class.bwp-active]="d.activeBwp > 0">{{ d.activeBwp }}</span>
           <span class="bwp-label">{{ 'driverProfile.activeBwp' | transloco }}</span>
         </div>
       </div>
@@ -46,12 +46,12 @@
               <span>{{ 'driverProfile.status' | transloco }}</span>
             </div>
             @for (point of d.points; track point.id) {
-              <div class="point-row" [class.expired]="isExpired(point.expiresOn)">
+              <div class="point-row" [class.expired]="point.expired">
                 <span class="point-value">{{ point.points }} BWP</span>
                 <span>{{ point.issuedOn | date:'dd MMM yyyy' }}</span>
                 <span>{{ point.expiresOn | date:'dd MMM yyyy' }}</span>
-                <app-badge [variant]="isExpired(point.expiresOn) ? 'closed' : 'open'">
-                  {{ isExpired(point.expiresOn) ? ('driverProfile.expired' | transloco) : ('driverProfile.active' | transloco) }}
+                <app-badge [variant]="point.expired ? 'closed' : 'open'">
+                  {{ point.expired ? ('driverProfile.expired' | transloco) : ('driverProfile.active' | transloco) }}
                 </app-badge>
               </div>
             }

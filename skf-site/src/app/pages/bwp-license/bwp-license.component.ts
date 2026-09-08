@@ -272,7 +272,8 @@ export class BwpLicenseComponent {
       return;
     }
 
-    const expiresDate = this.addMonths(issuedDate, 3);
+    // 90 days, matching the expiry the backend uses for incident-applied BWP
+    const expiresDate = this.addDays(issuedDate, 90);
     this.pointError = '';
 
     this.api
@@ -462,11 +463,11 @@ export class BwpLicenseComponent {
   }
 
   getActivePoints(driver: Driver): BwpPoint[] {
-    return driver.points.filter((p) => !this.isExpired(p));
+    return driver.points.filter((p) => !p.expired);
   }
 
   getTotalPoints(driver: Driver): number {
-    return this.getActivePoints(driver).reduce((sum, p) => sum + p.points, 0);
+    return driver.activeBwp;
   }
 
   getPenalty(driver: Driver): PenaltyRule | null {
@@ -491,11 +492,8 @@ export class BwpLicenseComponent {
   }
 
   isExpired(point: BwpPoint): boolean {
-    const expires = this.parseDate(point.expiresOn);
-    if (!expires) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return expires.getTime() < today.getTime();
+    // Server-computed, so admin console and public pages always agree.
+    return point.expired;
   }
 
   formatDate(value: string): string {
@@ -519,17 +517,9 @@ export class BwpLicenseComponent {
     return `${date.getFullYear()}-${month}-${day}`;
   }
 
-  private addMonths(date: Date, months: number): Date {
+  private addDays(date: Date, days: number): Date {
     const result = new Date(date);
-    const day = result.getDate();
-    result.setDate(1);
-    result.setMonth(result.getMonth() + months);
-    const daysInMonth = new Date(
-      result.getFullYear(),
-      result.getMonth() + 1,
-      0
-    ).getDate();
-    result.setDate(Math.min(day, daysInMonth));
+    result.setDate(result.getDate() + days);
     return result;
   }
 }

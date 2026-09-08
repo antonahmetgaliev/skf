@@ -31,12 +31,7 @@
         }
         <div class="detail-row">
           <span class="detail-label">{{ 'profile.nameInHub' | transloco }}</span>
-          <span class="detail-value guild-nickname-row">
-            <span>{{ user.guildNickname || '—' }}</span>
-            <app-btn variant="ghost" size="xs" [disabled]="syncingNickname()" (click)="syncGuildNickname()">
-              {{ syncingNickname() ? ('profile.syncing' | transloco) : ('profile.sync' | transloco) }}
-            </app-btn>
-          </span>
+          <span class="detail-value">{{ user.discordNickname || '—' }}</span>
         </div>
       </div>
 
@@ -68,8 +63,8 @@
                 @if (driver.simgridDisplayName && driver.simgridDisplayName !== driver.name) {
                   <p class="simgrid-name">SimGrid: {{ driver.simgridDisplayName }}</p>
                 }
-                <span class="bwp-badge" [class.bwp-active]="getActiveBwp(driver) > 0">
-                  {{ getActiveBwp(driver) }} BWP
+                <span class="bwp-badge" [class.bwp-active]="driver.activeBwp > 0">
+                  {{ driver.activeBwp }} BWP
                 </span>
               </div>
             </div>
@@ -109,12 +104,12 @@
                     <span>{{ 'profile.status' | transloco }}</span>
                   </div>
                   @for (point of driver.points; track point.id) {
-                    <div class="point-row" [class.expired]="isExpired(point.expiresOn)">
+                    <div class="point-row" [class.expired]="point.expired">
                       <span class="point-value">{{ point.points }} BWP</span>
                       <span>{{ point.issuedOn | date:'dd MMM yyyy' }}</span>
                       <span>{{ point.expiresOn | date:'dd MMM yyyy' }}</span>
-                      <app-badge [variant]="isExpired(point.expiresOn) ? 'closed' : 'open'">
-                        {{ isExpired(point.expiresOn) ? ('profile.expired' | transloco) : ('profile.active' | transloco) }}
+                      <app-badge [variant]="point.expired ? 'closed' : 'open'">
+                        {{ point.expired ? ('profile.expired' | transloco) : ('profile.active' | transloco) }}
                       </app-badge>
                     </div>
                   }
@@ -122,19 +117,11 @@
               </div>
             }
 
-            <div class="driver-actions">
-              <app-btn variant="ghost" size="sm" class="danger-ghost" (click)="unlinkDriver()">{{ 'profile.unlink' | transloco }}</app-btn>
-            </div>
           }
         } @else {
-          @if (loadingCandidates()) {
-            <app-spinner />
-          } @else {
-            <div class="no-driver">
-              <p class="hint">{{ 'profile.noDriverLinked' | transloco }}</p>
-              <app-btn variant="accent" size="sm" (click)="fetchLinkCandidates()">{{ 'profile.findMyProfile' | transloco }}</app-btn>
-            </div>
-          }
+          <div class="no-driver">
+            <p class="hint">{{ 'profile.noDriverLinked' | transloco }}</p>
+          </div>
         }
       </div>
 
@@ -149,37 +136,3 @@
     </app-card>
   }
 </app-page>
-
-<!-- Link Driver Modal -->
-<app-modal [title]="'profile.linkDriverProfile' | transloco" width="md" [(open)]="showLinkModal">
-  <p class="hint">{{ 'profile.linkDescription' | transloco }}</p>
-  <div class="candidates">
-    @for (candidate of linkCandidates(); track candidate.id) {
-      <div class="candidate">
-        <div class="candidate-info">
-          <span class="candidate-name">{{ candidate.name }}</span>
-          @if (candidate.simgridDisplayName && candidate.simgridDisplayName !== candidate.name) {
-            <span class="candidate-meta">SimGrid: {{ candidate.simgridDisplayName }}</span>
-          }
-          @if (candidate.countryCode) {
-            <span class="candidate-meta">{{ candidate.countryCode }}</span>
-          }
-        </div>
-        <app-btn
-          variant="accent"
-          size="sm"
-          [disabled]="linking()"
-          (click)="confirmLink(candidate.id)"
-        >
-          {{ linking() ? ('profile.linking' | transloco) : ('profile.link' | transloco) }}
-        </app-btn>
-      </div>
-    }
-  </div>
-  @if (linkError()) {
-    <app-form-field [error]="linkError()" />
-  }
-  <div modal-footer>
-    <app-btn variant="ghost" (click)="skipLink()">{{ 'profile.skipForNow' | transloco }}</app-btn>
-  </div>
-</app-modal>

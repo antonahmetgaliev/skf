@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { BwpApiService } from './bwp-api.service';
+import { ProfileApiService } from './profile-api.service';
 import {
   ChampionshipDetails,
   ChampionshipListItem,
@@ -16,23 +16,33 @@ export interface ChampionshipEntry {
 
 @Injectable({ providedIn: 'root' })
 export class ChampionshipService {
-  private readonly bwpApi = inject(BwpApiService);
+  private readonly profileApi = inject(ProfileApiService);
 
   readonly driverUuidBySimgridId = signal<Map<number, string>>(new Map());
-  private driverMapLoaded = false;
+  private driverMapLoading = false;
 
-  ensureDriverMapLoaded(): void {
-    if (this.driverMapLoaded) return;
-    this.driverMapLoaded = true;
-    this.bwpApi.getDrivers().subscribe({
+  /**
+   * (Re)load the SimGrid-id → driver-UUID map. Called on every standings
+   * load — the backend syncs new drivers in the background, so a one-shot
+   * latch would miss them (and a failed request would disable links for
+   * the whole session).
+   */
+  refreshDriverMap(): void {
+    if (this.driverMapLoading) return;
+    this.driverMapLoading = true;
+    this.profileApi.getDriversIndex().subscribe({
       next: (drivers) => {
         const map = new Map<number, string>();
         for (const d of drivers) {
-          if (d.simgridDriverId !== null) {
+          if (d.simgridDriverId) {
             map.set(d.simgridDriverId, d.id);
           }
         }
         this.driverUuidBySimgridId.set(map);
+        this.driverMapLoading = false;
+      },
+      error: () => {
+        this.driverMapLoading = false;
       },
     });
   }
