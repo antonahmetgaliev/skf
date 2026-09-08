@@ -60,9 +60,7 @@
       <span class="hamburger-line"></span>
     </button>
     <nav class="site-nav" [class.site-nav--open]="mobileMenuOpen()" aria-label="Primary">
-      <a routerLink="/home" routerLinkActive="active">{{ 'nav.home' | transloco }}</a>
       <a routerLink="/championships" routerLinkActive="active">{{ 'nav.championships' | transloco }}</a>
-      <a routerLink="/drivers" routerLinkActive="active">{{ 'nav.drivers' | transloco }}</a>
       <a routerLink="/calendar" routerLinkActive="active">{{ 'nav.calendar' | transloco }}</a>
       <a routerLink="/bwp-license" routerLinkActive="active">{{ 'nav.bwpLicense' | transloco }}</a>
       <div class="site-nav-dropdown" [class.open]="regulationsOpen()">
