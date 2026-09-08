@@ -1,18 +1,68 @@
 <app-page>
   @if (auth.user(); as user) {
     <app-card [animated]="true" class="profile-card">
+      <!-- Single identity header: SKF profile is the main identity; the
+           linked driver record only contributes photo, country and BWP. -->
       <div class="profile-header">
-        @if (user.avatarUrl) {
-          <img class="profile-avatar" [src]="user.avatarUrl" alt="Avatar" />
+        @if (linkedDriver(); as driver) {
+          <div class="avatar-wrap" (click)="startEditPhoto()" [title]="'profile.changePhoto' | transloco">
+            @if (driver.photoUrl) {
+              <img class="profile-avatar" [src]="driver.photoUrl" [alt]="user.displayName" />
+            } @else if (user.avatarUrl) {
+              <img class="profile-avatar" [src]="user.avatarUrl" alt="Avatar" />
+            } @else {
+              <span class="profile-avatar profile-avatar--fallback">{{ user.displayName.charAt(0) || '?' }}</span>
+            }
+            <span class="avatar-hint">{{ 'profile.change' | transloco }}</span>
+          </div>
         } @else {
-          <span class="profile-avatar profile-avatar--fallback">{{ user.displayName.charAt(0) || '?' }}</span>
+          @if (user.avatarUrl) {
+            <img class="profile-avatar" [src]="user.avatarUrl" alt="Avatar" />
+          } @else {
+            <span class="profile-avatar profile-avatar--fallback">{{ user.displayName.charAt(0) || '?' }}</span>
+          }
         }
         <div class="profile-info">
-          <h1>{{ user.displayName }}</h1>
+          <div class="profile-name-row">
+            <h1>{{ user.displayName }}</h1>
+            @if (linkedDriver()?.countryCode) {
+              <span class="driver-country">{{ linkedDriver()?.countryCode }}</span>
+            }
+          </div>
           <p class="profile-username">&#64;{{ user.username }}</p>
-          <span class="role-badge" [attr.data-role]="user.role">{{ user.role.replace('_', ' ') }}</span>
+          <div class="profile-badges">
+            <span class="role-badge" [attr.data-role]="user.role">{{ user.role.replace('_', ' ') }}</span>
+            @if (linkedDriver(); as driver) {
+              <span class="bwp-badge" [class.bwp-active]="driver.activeBwp > 0">
+                {{ driver.activeBwp }} BWP
+              </span>
+            }
+          </div>
         </div>
       </div>
+
+      <!-- Photo URL editor -->
+      @if (editingPhoto()) {
+        <div class="photo-edit-row">
+          <input appInput
+            type="url"
+            placeholder="https://example.com/your-photo.jpg"
+            [(ngModel)]="editPhotoValue"
+            (keydown.enter)="savePhoto()"
+            (keydown.escape)="cancelEditPhoto()"
+            autofocus
+          />
+          <div class="photo-edit-actions">
+            <app-btn variant="ghost" size="xs" [disabled]="savingPhoto()" (click)="savePhoto()">
+              {{ savingPhoto() ? ('profile.saving' | transloco) : ('profile.save' | transloco) }}
+            </app-btn>
+            <app-btn variant="ghost" size="xs" (click)="cancelEditPhoto()">{{ 'profile.cancel' | transloco }}</app-btn>
+            @if (linkedDriver()?.photoUrl) {
+              <app-btn variant="ghost" size="xs" class="danger-ghost" [disabled]="savingPhoto()" (click)="editPhotoValue = ''; savePhoto()">{{ 'profile.remove' | transloco }}</app-btn>
+            }
+          </div>
+        </div>
+      }
 
       <div class="profile-details">
         <div class="detail-row">
@@ -33,97 +83,53 @@
           <span class="detail-label">{{ 'profile.nameInHub' | transloco }}</span>
           <span class="detail-value">{{ user.discordNickname || '—' }}</span>
         </div>
-      </div>
-
-      <!-- Driver profile section (expanded inline) -->
-      <div class="driver-section">
-        <h2 class="section-title">{{ 'profile.driverProfile' | transloco }}</h2>
-        @if (user.driverId) {
-          @if (loadingDriver()) {
-            <app-spinner />
-          } @else if (linkedDriver(); as driver) {
-
-            <!-- Photo + identity header -->
-            <div class="driver-profile-head">
-              <div class="driver-photo-wrap" (click)="startEditPhoto()" [title]="'profile.changePhoto' | transloco">
-                @if (driver.photoUrl) {
-                  <img class="driver-photo" [src]="driver.photoUrl" alt="{{ driver.name }}" />
-                } @else {
-                  <span class="driver-photo driver-photo--fallback">{{ driver.name.charAt(0).toUpperCase() }}</span>
-                }
-                <span class="driver-photo-hint">{{ 'profile.change' | transloco }}</span>
-              </div>
-              <div class="driver-identity">
-                <div class="driver-identity-row">
-                  <span class="driver-display-name">{{ driver.name }}</span>
-                  @if (driver.countryCode) {
-                    <span class="driver-country">{{ driver.countryCode }}</span>
-                  }
-                </div>
-                @if (driver.simgridDisplayName && driver.simgridDisplayName !== driver.name) {
-                  <p class="simgrid-name">SimGrid: {{ driver.simgridDisplayName }}</p>
-                }
-                <span class="bwp-badge" [class.bwp-active]="driver.activeBwp > 0">
-                  {{ driver.activeBwp }} BWP
-                </span>
-              </div>
-            </div>
-
-            <!-- Photo URL editor -->
-            @if (editingPhoto()) {
-              <div class="photo-edit-row">
-                <input appInput
-                  type="url"
-                  placeholder="https://example.com/your-photo.jpg"
-                  [(ngModel)]="editPhotoValue"
-                  (keydown.enter)="savePhoto()"
-                  (keydown.escape)="cancelEditPhoto()"
-                  autofocus
-                />
-                <div class="photo-edit-actions">
-                  <app-btn variant="ghost" size="xs" [disabled]="savingPhoto()" (click)="savePhoto()">
-                    {{ savingPhoto() ? ('profile.saving' | transloco) : ('profile.save' | transloco) }}
-                  </app-btn>
-                  <app-btn variant="ghost" size="xs" (click)="cancelEditPhoto()">{{ 'profile.cancel' | transloco }}</app-btn>
-                  @if (driver.photoUrl) {
-                    <app-btn variant="ghost" size="xs" class="danger-ghost" [disabled]="savingPhoto()" (click)="editPhotoValue = ''; savePhoto()">{{ 'profile.remove' | transloco }}</app-btn>
-                  }
-                </div>
-              </div>
-            }
-
-            <!-- BWP History -->
-            @if (driver.points.length > 0) {
-              <div class="driver-detail-section">
-                <h3 class="detail-section-title">{{ 'profile.bwpHistory' | transloco }}</h3>
-                <div class="points-table">
-                  <div class="points-header" aria-hidden="true">
-                    <span>{{ 'profile.pts' | transloco }}</span>
-                    <span>{{ 'profile.issued' | transloco }}</span>
-                    <span>{{ 'profile.expires' | transloco }}</span>
-                    <span>{{ 'profile.status' | transloco }}</span>
-                  </div>
-                  @for (point of driver.points; track point.id) {
-                    <div class="point-row" [class.expired]="point.expired">
-                      <span class="point-value">{{ point.points }} BWP</span>
-                      <span>{{ point.issuedOn | date:'dd MMM yyyy' }}</span>
-                      <span>{{ point.expiresOn | date:'dd MMM yyyy' }}</span>
-                      <app-badge [variant]="point.expired ? 'closed' : 'open'">
-                        {{ point.expired ? ('profile.expired' | transloco) : ('profile.active' | transloco) }}
-                      </app-badge>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-
-          }
-        } @else {
-          <div class="no-driver">
-            <p class="hint">{{ 'profile.noDriverLinked' | transloco }}</p>
+        <!-- The linked SimGrid record, as a plain reference row -->
+        @if (linkedDriver()?.simgridDriverId) {
+          <div class="detail-row">
+            <span class="detail-label">SimGrid</span>
+            <a class="detail-value simgrid-link"
+              [href]="'https://www.thesimgrid.com/drivers/' + linkedDriver()?.simgridDriverId"
+              target="_blank" rel="noopener noreferrer">
+              {{ linkedDriver()?.simgridDisplayName || user.displayName }} ↗
+            </a>
           </div>
         }
       </div>
+
+      <!-- BWP license history -->
+      @if (user.driverId) {
+        @if (loadingDriver()) {
+          <div class="driver-section"><app-spinner /></div>
+        } @else if (linkedDriver(); as driver) {
+          @if (driver.points.length > 0) {
+            <div class="driver-section">
+              <h2 class="section-title">{{ 'profile.bwpHistory' | transloco }}</h2>
+              <div class="points-table">
+                <div class="points-header" aria-hidden="true">
+                  <span>{{ 'profile.pts' | transloco }}</span>
+                  <span>{{ 'profile.issued' | transloco }}</span>
+                  <span>{{ 'profile.expires' | transloco }}</span>
+                  <span>{{ 'profile.status' | transloco }}</span>
+                </div>
+                @for (point of driver.points; track point.id) {
+                  <div class="point-row" [class.expired]="point.expired">
+                    <span class="point-value">{{ point.points }} BWP</span>
+                    <span>{{ point.issuedOn | date:'dd MMM yyyy' }}</span>
+                    <span>{{ point.expiresOn | date:'dd MMM yyyy' }}</span>
+                    <app-badge [variant]="point.expired ? 'closed' : 'open'">
+                      {{ point.expired ? ('profile.expired' | transloco) : ('profile.active' | transloco) }}
+                    </app-badge>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        }
+      } @else {
+        <div class="driver-section">
+          <p class="hint">{{ 'profile.noDriverLinked' | transloco }}</p>
+        </div>
+      }
 
       <div class="profile-actions">
         <app-btn variant="danger" (click)="logout()">{{ 'profile.logout' | transloco }}</app-btn>

@@ -38,6 +38,48 @@
   font-size: 2rem;
 }
 
+/* Avatar becomes the photo editor entry point when a driver is linked */
+.avatar-wrap {
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover .avatar-hint {
+    opacity: 1;
+  }
+}
+
+.avatar-hint {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-normal);
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-xs);
+  opacity: 0;
+  transition: opacity 0.18s;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.profile-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.profile-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .profile-info h1 {
   margin: 0 0 0.25rem;
   font-family: var(--font-display);
@@ -106,13 +148,6 @@
   color: var(--ink);
 }
 
-.guild-nickname-row {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-
 .profile-actions {
   display: flex;
   gap: 0.75rem;
@@ -138,86 +173,6 @@
   color: var(--muted);
 }
 
-/* Driver photo + identity */
-.driver-profile-head {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.driver-photo-wrap {
-  position: relative;
-  cursor: pointer;
-  flex-shrink: 0;
-
-  &:hover .driver-photo-hint {
-    opacity: 1;
-  }
-}
-
-.driver-photo {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid rgba(255, 214, 0, 0.4);
-  display: block;
-}
-
-.driver-photo--fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-dark);
-  color: #fff;
-  font-weight: 700;
-  font-size: 1.5rem;
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-}
-
-.driver-photo-hint {
-  position: absolute;
-  bottom: -2px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.72);
-  color: #fff;
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  letter-spacing: var(--tracking-normal);
-  text-transform: uppercase;
-  padding: 0.1rem 0.35rem;
-  border-radius: var(--radius-xs);
-  opacity: 0;
-  transition: opacity 0.18s;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.driver-identity {
-  display: grid;
-  gap: 0.3rem;
-  align-self: center;
-}
-
-.driver-identity-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.driver-display-name {
-  font-family: var(--font-display);
-  font-size: var(--text-2xl);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-normal);
-  color: var(--ink);
-}
-
 .driver-country {
   font-size: var(--text-sm);
   font-weight: 600;
@@ -226,10 +181,13 @@
   text-transform: uppercase;
 }
 
-.simgrid-name {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--muted);
+.simgrid-link {
+  color: var(--ink);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .bwp-badge {
@@ -263,22 +221,6 @@
 .photo-edit-actions {
   display: flex;
   gap: 0.4rem;
-}
-
-/* Sub-sections (BWP history, championships) */
-.driver-detail-section {
-  margin-top: 1rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.detail-section-title {
-  margin: 0 0 0.55rem;
-  font-family: var(--font-display);
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
-  color: var(--muted);
 }
 
 /* BWP points table */
@@ -319,61 +261,6 @@
 }
 
 
-.driver-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.no-driver {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.loading-row {
-  font-size: var(--text-md);
-  color: var(--muted);
-  font-style: italic;
-}
-
-/* ── Modal content ── */
-
-.candidates {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.candidate {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-
-.candidate-info {
-  display: grid;
-  gap: 0.15rem;
-}
-
-.candidate-name {
-  font-weight: 700;
-  font-size: var(--text-lg);
-  color: var(--ink);
-}
-
-.candidate-meta {
-  font-size: var(--text-sm);
-  color: var(--muted);
-  letter-spacing: var(--tracking-normal);
-  text-transform: uppercase;
-}
-
 .hint {
   font-size: var(--text-md);
   color: var(--muted);
@@ -412,17 +299,8 @@
     gap: 0.25rem;
   }
 
-  .guild-nickname-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
   .profile-actions {
     flex-wrap: wrap;
-  }
-
-  .driver-profile-head {
-    flex-direction: column;
   }
 
   .points-header {
@@ -432,10 +310,5 @@
   .point-row {
     grid-template-columns: 1fr;
     gap: 0.2rem;
-  }
-
-  .candidate {
-    flex-direction: column;
-    align-items: flex-start;
   }
 }
