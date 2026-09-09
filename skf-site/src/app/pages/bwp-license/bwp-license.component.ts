@@ -14,9 +14,9 @@ import { RouterLink } from '@angular/router';
 import {
   BwpApiService,
   BwpPoint,
-  Driver,
   PenaltyRule
 } from '../../services/bwp-api.service';
+import { DriverPublic, ProfileApiService } from '../../services/profile-api.service';
 import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 
@@ -30,11 +30,12 @@ type SortMode = 'bwp-desc' | 'bwp-asc' | 'name-asc' | 'name-desc';
 })
 export class BwpLicenseComponent {
   private readonly api = inject(BwpApiService);
+  private readonly profileApi = inject(ProfileApiService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly transloco = inject(TranslocoService);
   readonly auth = inject(AuthService);
 
-  readonly drivers = signal<Driver[]>([]);
+  readonly drivers = signal<DriverPublic[]>([]);
   readonly sortedDrivers = computed(() =>
     [...this.drivers()].sort((a, b) => a.name.localeCompare(b.name))
   );
@@ -113,7 +114,9 @@ export class BwpLicenseComponent {
   // ── Data loading ─────────────────────────────────────────────────
 
   private loadData(): void {
-    this.api.getDrivers().subscribe({
+    // Public directory endpoint — the BWP standings are readable by everyone,
+    // only the mutating controls above are role-gated.
+    this.profileApi.getPublicDrivers().subscribe({
       next: (drivers) => {
         this.drivers.set(drivers);
         this.collapsedDrivers.set(new Set(drivers.map((d) => d.id)));
@@ -133,7 +136,7 @@ export class BwpLicenseComponent {
   }
 
   private refreshDrivers(): void {
-    this.api.getDrivers().subscribe({
+    this.profileApi.getPublicDrivers().subscribe({
       next: (drivers) => this.drivers.set(drivers)
     });
   }
@@ -377,11 +380,11 @@ export class BwpLicenseComponent {
 
   // ── Penalty Clearances ───────────────────────────────────────────
 
-  isClearedPenalty(driver: Driver, ruleId: string): boolean {
+  isClearedPenalty(driver: DriverPublic, ruleId: string): boolean {
     return driver.clearances?.some((c) => c.penaltyRuleId === ruleId) ?? false;
   }
 
-  toggleClearance(driver: Driver, ruleId: string): void {
+  toggleClearance(driver: DriverPublic, ruleId: string): void {
     const isCleared = this.isClearedPenalty(driver, ruleId);
     if (isCleared) {
       this.api.removeClearance(driver.id, ruleId).subscribe({
@@ -409,7 +412,7 @@ export class BwpLicenseComponent {
   }
 
   /** Get the highest un-cleared penalty the driver has reached. */
-  getActivePenalty(driver: Driver): PenaltyRule | null {
+  getActivePenalty(driver: DriverPublic): PenaltyRule | null {
     const total = this.getTotalPoints(driver);
     if (total <= 0) return null;
     const rules = [...this.sortedPenaltyRules()].reverse();
@@ -422,7 +425,7 @@ export class BwpLicenseComponent {
   }
 
   /** Progress percentage (0–100) for the bar. */
-  getProgressPercent(driver: Driver): number {
+  getProgressPercent(driver: DriverPublic): number {
     const max = this.maxThreshold();
     if (max <= 0) return 0;
     const total = this.getTotalPoints(driver);
@@ -462,15 +465,15 @@ export class BwpLicenseComponent {
     return this.collapsedDrivers().has(driverId);
   }
 
-  getActivePoints(driver: Driver): BwpPoint[] {
+  getActivePoints(driver: DriverPublic): BwpPoint[] {
     return driver.points.filter((p) => !p.expired);
   }
 
-  getTotalPoints(driver: Driver): number {
+  getTotalPoints(driver: DriverPublic): number {
     return driver.activeBwp;
   }
 
-  getPenalty(driver: Driver): PenaltyRule | null {
+  getPenalty(driver: DriverPublic): PenaltyRule | null {
     const total = this.getTotalPoints(driver);
     if (total <= 0) return null;
     let match: PenaltyRule | null = null;
@@ -481,11 +484,11 @@ export class BwpLicenseComponent {
     return match ? { ...match, label: match.label.trim() || 'Penalty' } : null;
   }
 
-  sortedPoints(driver: Driver): BwpPoint[] {
+  sortedPoints(driver: DriverPublic): BwpPoint[] {
     return [...driver.points].sort((a, b) => a.issuedOn.localeCompare(b.issuedOn));
   }
 
-  getVisiblePoints(driver: Driver): BwpPoint[] {
+  getVisiblePoints(driver: DriverPublic): BwpPoint[] {
     const points = this.sortedPoints(driver);
     if (!this.isExpiredHidden(driver.id)) return points;
     return points.filter((p) => !this.isExpired(p));
