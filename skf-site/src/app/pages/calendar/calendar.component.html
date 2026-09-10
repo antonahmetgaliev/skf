@@ -86,6 +86,13 @@
       [activeKey]="viewMode()"
       (keyChange)="setViewMode($event)"
     />
+
+    <div class="calendar-request">
+      <span class="calendar-request__text">{{ 'calendar.requestCommunityText' | transloco }}</span>
+      <app-btn variant="outline" size="sm" (click)="openRequestModal()">
+        {{ 'calendar.requestCommunityBtn' | transloco }}
+      </app-btn>
+    </div>
   </div>
 
   <!-- ── Layout: sidebar + calendar ── -->
@@ -343,6 +350,77 @@
       <app-btn variant="primary" size="sm" (click)="calChampFormRef.onSave()">
         {{ editingChampId() ? ('calendar.update' | transloco) : ('calendar.addBtn' | transloco) }}
       </app-btn>
+    </div>
+  </app-modal>
+
+  <!-- ── Community join request modal ── -->
+  <app-modal
+    [title]="'calendar.requestCommunityTitle' | transloco"
+    width="md"
+    [(open)]="requestModalOpen"
+  >
+    @if (reqSent()) {
+      <p class="request-sent">{{ 'calendar.requestCommunitySent' | transloco }}</p>
+    } @else {
+      <div class="request-form">
+        <app-form-field [label]="'calendar.requestCommunityName' | transloco" fieldId="reqName">
+          <input appInput
+            id="reqName"
+            type="text"
+            maxlength="200"
+            [ngModel]="reqName()"
+            (ngModelChange)="reqName.set($event)"
+            autocomplete="off"
+          />
+        </app-form-field>
+
+        <app-form-field [label]="'calendar.requestCommunityDiscord' | transloco" fieldId="reqDiscordUrl">
+          <input appInput
+            id="reqDiscordUrl"
+            type="url"
+            maxlength="500"
+            placeholder="https://discord.gg/..."
+            [ngModel]="reqDiscordUrl()"
+            (ngModelChange)="reqDiscordUrl.set($event)"
+            autocomplete="off"
+          />
+        </app-form-field>
+
+        <app-form-field
+          [label]="'calendar.requestCommunityDescription' | transloco"
+          fieldId="reqDescription"
+          [error]="reqError() ?? undefined"
+        >
+          <textarea appTextarea
+            id="reqDescription"
+            rows="4"
+            maxlength="2000"
+            [ngModel]="reqDescription()"
+            (ngModelChange)="reqDescription.set($event)"
+          ></textarea>
+        </app-form-field>
+      </div>
+    }
+
+    <div modal-footer>
+      @if (reqSent()) {
+        <app-btn variant="primary" size="sm" (click)="requestModalOpen.set(false)">
+          {{ 'calendar.close' | transloco }}
+        </app-btn>
+      } @else {
+        <app-btn variant="ghost" size="sm" (click)="requestModalOpen.set(false)">
+          {{ 'calendar.cancel' | transloco }}
+        </app-btn>
+        <app-btn
+          variant="primary"
+          size="sm"
+          [disabled]="!canSubmitRequest()"
+          [loading]="reqSubmitting()"
+          (click)="submitRequest()"
+        >
+          {{ 'calendar.requestCommunitySubmit' | transloco }}
+        </app-btn>
+      }
     </div>
   </app-modal>
 </app-page>

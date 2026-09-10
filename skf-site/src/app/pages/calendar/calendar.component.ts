@@ -5,11 +5,14 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AlertComponent } from '../../components/alert/alert.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
+import { FormFieldComponent } from '../../components/form-field/form-field.component';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { ToggleComponent } from '../../components/toggle/toggle.component';
+import { InputDirective } from '../../directives/input.directive';
 import { SelectDirective } from '../../directives/select.directive';
+import { TextareaDirective } from '../../directives/textarea.directive';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -59,7 +62,7 @@ const VIEW_TABS: { key: string; label: string }[] = [
 
 @Component({
   selector: 'app-calendar',
-  imports: [NgTemplateOutlet, FormsModule, RouterLink, TranslocoPipe, SelectDirective, AlertComponent, BtnComponent, CardComponent, ChampionshipFormComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
+  imports: [NgTemplateOutlet, FormsModule, RouterLink, TranslocoPipe, InputDirective, SelectDirective, TextareaDirective, AlertComponent, BtnComponent, CardComponent, ChampionshipFormComponent, FormFieldComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
 
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
@@ -403,6 +406,61 @@ export class CalendarComponent implements OnInit {
   readonly champCommunityId = signal<string | null>(null);
   readonly champModalOpen = signal(false);
   readonly addMenuOpen = signal(false);
+
+  // ── Community join request ──
+  readonly requestModalOpen = signal(false);
+  readonly reqName = signal('');
+  readonly reqDiscordUrl = signal('');
+  readonly reqDescription = signal('');
+  readonly reqSubmitting = signal(false);
+  readonly reqError = signal<string | null>(null);
+  readonly reqSent = signal(false);
+
+  readonly canSubmitRequest = computed(
+    () =>
+      !this.reqSubmitting() &&
+      this.reqName().trim().length >= 2 &&
+      this.reqDescription().trim().length >= 10,
+  );
+
+  /** Open the request form, sending the user through Discord login first if needed. */
+  openRequestModal(): void {
+    if (!this.auth.user()) {
+      this.auth.login();
+      return;
+    }
+    this.reqName.set('');
+    this.reqDiscordUrl.set('');
+    this.reqDescription.set('');
+    this.reqError.set(null);
+    this.reqSent.set(false);
+    this.requestModalOpen.set(true);
+  }
+
+  async submitRequest(): Promise<void> {
+    if (!this.canSubmitRequest()) return;
+    this.reqSubmitting.set(true);
+    this.reqError.set(null);
+    try {
+      await firstValueFrom(
+        this.calendarApi.requestCommunity({
+          name: this.reqName().trim(),
+          discordUrl: this.reqDiscordUrl().trim() || null,
+          description: this.reqDescription().trim(),
+        }),
+      );
+      this.reqSent.set(true);
+    } catch (err: unknown) {
+      const status = (err as { status?: number })?.status;
+      const key =
+        status === 429
+          ? 'calendar.requestCommunityTooSoon'
+          : 'calendar.requestCommunityError';
+      this.reqError.set(this.transloco.translate(key));
+    } finally {
+      this.reqSubmitting.set(false);
+    }
+  }
 
   toggleAddMenu(): void {
     this.addMenuOpen.update((v) => !v);

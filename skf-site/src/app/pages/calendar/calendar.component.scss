@@ -34,6 +34,34 @@
   min-width: 0;
 }
 
+// ── "Request to join" call-out ──────────────────────────────────────────────
+// Takes its own row inside the wrapping toolbar so it never crowds the chips.
+.calendar-request {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.calendar-request__text {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.request-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.request-sent {
+  margin: 0;
+  color: var(--muted);
+}
+
 // ── "+ Add" community menu ──────────────────────────────────────────────────
 .add-menu {
   position: relative;

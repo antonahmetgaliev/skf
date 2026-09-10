@@ -47,6 +47,16 @@ class CommunityOut(CamelModel):
     created_at: datetime
 
 
+# ── Community join request ───────────────────────────────────────────────────
+
+class CommunityRequestCreate(CamelModel):
+    """A visitor's request to have their community added to the calendar."""
+
+    name: str = Field(min_length=2, max_length=200)
+    discord_url: str | None = Field(default=None, max_length=500)
+    description: str = Field(min_length=10, max_length=2000)
+
+
 # ── Game CRUD schemas ────────────────────────────────────────────────────────
 
 class GameCreate(CamelModel):

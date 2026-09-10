@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from calendar import monthrange
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import (
     check_community_access,
+    get_current_user,
     get_managed_community_ids,
     is_admin,
     require_admin,
@@ -30,6 +31,7 @@ from app.schemas.calendar import (
     CalendarRace,
     CommunityCreate,
     CommunityOut,
+    CommunityRequestCreate,
     CommunityUpdate,
     CustomChampionshipCreate,
     CustomChampionshipOut,
@@ -38,6 +40,11 @@ from app.schemas.calendar import (
     CustomRaceOut,
     CustomRaceSync,
     CustomRaceUpdate,
+)
+from app.services.discord import (
+    DiscordNotConfigured,
+    DiscordSendFailed,
+    send_community_request,
 )
 from app.services.simgrid import simgrid_service
 
@@ -215,6 +222,59 @@ async def list_communities_admin(
             .order_by(Community.name)
         )
     return result.scalars().all()
+
+
+# ── Community join requests ──────────────────────────────────────────────────
+
+_REQUEST_COOLDOWN = timedelta(minutes=10)
+# In-process only: resets on restart and is per-worker. That is enough to blunt
+# double-submits and casual spam, which is all this needs to do.
+_last_request_at: dict[uuid.UUID, datetime] = {}
+
+
+@router.post("/community-requests", status_code=status.HTTP_202_ACCEPTED)
+async def request_community(
+    body: CommunityRequestCreate,
+    user: User = Depends(get_current_user),
+):
+    """Forward a logged-in user's community request to the SKF Discord.
+
+    Nothing is persisted – the Discord message is the record.
+    """
+    now = datetime.now(timezone.utc)
+
+    # Drop expired entries so the dict cannot grow unbounded.
+    for uid, sent_at in list(_last_request_at.items()):
+        if now - sent_at > _REQUEST_COOLDOWN:
+            del _last_request_at[uid]
+
+    last_sent = _last_request_at.get(user.id)
+    if last_sent is not None and now - last_sent < _REQUEST_COOLDOWN:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="You have already sent a request recently. Please wait a little.",
+        )
+
+    discord_url = body.discord_url.strip() if body.discord_url else None
+    try:
+        await send_community_request(
+            name=body.name.strip(),
+            description=body.description.strip(),
+            discord_url=discord_url or None,
+            user=user,
+        )
+    except DiscordNotConfigured:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="DISCORD_COMMUNITY_REQUEST_WEBHOOK_URL is not configured on the server.",
+        )
+    except DiscordSendFailed:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Could not deliver the request to Discord. Please try again later.",
+        )
+
+    _last_request_at[user.id] = now
 
 
 # ── Simulators & Car Classes (from SimGrid API) ─────────────────────────────

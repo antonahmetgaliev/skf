@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     discord_guild_id: str = ""
     discord_bot_token: str = ""
 
+    # Incoming webhook that receives new-community requests from the calendar page
+    discord_community_request_webhook_url: str = ""
+
     # Incident ingestion API token (shared with external tool)
     incident_api_token: str = ""
 

@@ -114,6 +114,12 @@ export interface CommunityUpdate {
   isVisible?: boolean;
 }
 
+export interface CommunityRequest {
+  name: string;
+  discordUrl: string | null;
+  description: string;
+}
+
 
 @Injectable({ providedIn: 'root' })
 export class CalendarApiService {
@@ -154,6 +160,11 @@ export class CalendarApiService {
 
   deleteCommunity(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/communities/${id}`);
+  }
+
+  /** Forward a community's request to join the calendar to the SKF Discord. */
+  requestCommunity(payload: CommunityRequest): Observable<void> {
+    return this.http.post<void>(`${this.base}/community-requests`, payload);
   }
 
   // ── Simulators & Car Classes (from SimGrid) ──
