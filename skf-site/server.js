@@ -34,6 +34,23 @@ try {
 // Health check endpoint (Railway uses this to verify the app is alive)
 app.get('/healthz', (req, res) => res.status(200).send('ok'));
 
+// Runtime browser config, read by src/app/env.ts. Served to every visitor, so it must only ever
+// carry public values — never secrets. Registered before express.static so it wins over any
+// public/env.js that a local build copied into dist.
+const BROWSER_ENV = {
+  GA_MEASUREMENT_ID: process.env.GA_MEASUREMENT_ID || '',
+};
+
+console.log(
+  `[startup] GA_MEASUREMENT_ID=${BROWSER_ENV.GA_MEASUREMENT_ID || '(unset — analytics disabled)'}`
+);
+
+app.get('/env.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  res.send(`window.SKF_ENV = ${JSON.stringify(BROWSER_ENV)};`);
+});
+
 // Proxy /api requests to the Python backend
 console.log(`[startup] BACKEND_URL=${BACKEND_URL}`);
 

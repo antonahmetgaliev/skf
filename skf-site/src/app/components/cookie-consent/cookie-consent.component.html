@@ -1,0 +1,16 @@
+@if (visible()) {
+  <div class="cookie-banner" role="region" [attr.aria-label]="'cookies.title' | transloco">
+    <div class="cookie-copy">
+      <h2 class="cookie-title">{{ 'cookies.title' | transloco }}</h2>
+      <p class="cookie-message">{{ 'cookies.message' | transloco }}</p>
+    </div>
+    <div class="cookie-actions">
+      <app-btn variant="ghost" size="sm" (click)="decline()">
+        {{ 'cookies.decline' | transloco }}
+      </app-btn>
+      <app-btn variant="accent" size="sm" (click)="accept()">
+        {{ 'cookies.accept' | transloco }}
+      </app-btn>
+    </div>
+  </div>
+}
