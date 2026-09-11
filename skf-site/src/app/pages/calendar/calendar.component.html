@@ -8,135 +8,113 @@
 </ng-template>
 
 <app-page>
-  <!-- ── Toolbar: filters + view toggle ── -->
-  <div class="calendar-toolbar">
-    <div class="community-filters">
-      <button
-        type="button"
-        class="filter-toggle-btn"
-        [class.active]="filtersOpen() || hasActiveFilters()"
-        (click)="toggleFilters()"
-        [title]="'calendar.toggleFilters' | transloco"
-      >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M1 2a1 1 0 011-1h12a1 1 0 01.8 1.6L10 9.3V13a1 1 0 01-.5.9l-2 1A1 1 0 016 14V9.3L1.2 2.6A1 1 0 011 2z"/>
-        </svg>
-        {{ 'calendar.filters' | transloco }}
-        @if (hasActiveFilters()) {
-          <span class="filter-badge">!</span>
-        }
-      </button>
-
-      <button
-        type="button"
-        class="community-chip"
-        [class.active]="selectedCommunityIds().size === 0"
-        (click)="toggleCommunity(null)"
-      >{{ 'calendar.all' | transloco }}</button>
-      @for (c of communities(); track c.id) {
-        <button
-          type="button"
-          class="community-chip"
-          [class.active]="isCommunitySelected(c.id)"
-          [style.--chip-color]="c.color"
-          (click)="toggleCommunity(c.id)"
-        >{{ c.name }}</button>
-      }
-    </div>
-
-    @if (managedCommunities().length === 1) {
-      <div class="add-actions">
-        <app-btn variant="accent" size="sm" (click)="openAddChampionship(managedCommunities()[0].id)">
-          + {{ 'calendar.add' | transloco }}
-        </app-btn>
-      </div>
-    } @else if (managedCommunities().length > 1) {
-      <div class="add-actions add-menu">
-        <app-btn
-          variant="accent"
-          size="sm"
-          aria-haspopup="menu"
-          [attr.aria-expanded]="addMenuOpen()"
-          (click)="toggleAddMenu()"
-        >
-          + {{ 'calendar.add' | transloco }}
-          <svg class="add-menu__chevron" width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
-            <path d="M1 3l4 4 4-4z"/>
-          </svg>
-        </app-btn>
-
-        @if (addMenuOpen()) {
-          <div class="add-menu__panel" role="menu">
-            @for (mc of managedCommunities(); track mc.id) {
-              <button
-                type="button"
-                role="menuitem"
-                class="add-menu__item"
-                [style.--chip-color]="mc.color"
-                (click)="selectAddCommunity(mc.id)"
-              >{{ mc.name }}</button>
-            }
-          </div>
-        }
-      </div>
+  <!-- ── Layout: filter sidebar + calendar ── -->
+  <div class="calendar-layout">
+    @if (filtersOpen()) {
+      <div class="filter-backdrop" (click)="filtersOpen.set(false)"></div>
     }
 
-    <app-toggle
-      [options]="viewTabs"
-      [activeKey]="viewMode()"
-      (keyChange)="setViewMode($event)"
+    <app-calendar-sidebar
+      [class.open]="filtersOpen()"
+      [communities]="communities()"
+      [selectedCommunityIds]="selectedCommunityIds()"
+      [simulators]="availableSimulators()"
+      [selectedSimulator]="selectedSimulator()"
+      [hasActiveFilters]="hasActiveFilters()"
+      (toggleCommunity)="toggleCommunity($event)"
+      (simulatorChange)="selectedSimulator.set($event)"
+      (clearFilters)="clearFilters()"
+      (requestJoin)="openRequestModal()"
+      (close)="filtersOpen.set(false)"
     />
 
-    <div class="calendar-request">
-      <span class="calendar-request__text">{{ 'calendar.requestCommunityText' | transloco }}</span>
-      <app-btn variant="outline" size="sm" (click)="openRequestModal()">
-        {{ 'calendar.requestCommunityBtn' | transloco }}
-      </app-btn>
-    </div>
-  </div>
+    <div class="calendar-main">
+      <!-- ── Top bar: shared by month and year views ── -->
+      <div class="calendar-topbar">
+        <button
+          type="button"
+          class="filter-toggle-btn"
+          [class.active]="hasActiveFilters()"
+          [attr.aria-expanded]="filtersOpen()"
+          (click)="toggleFilters()"
+          [title]="'calendar.toggleFilters' | transloco"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M1 2a1 1 0 011-1h12a1 1 0 01.8 1.6L10 9.3V13a1 1 0 01-.5.9l-2 1A1 1 0 016 14V9.3L1.2 2.6A1 1 0 011 2z"/>
+          </svg>
+          {{ 'calendar.filters' | transloco }}
+          @if (hasActiveFilters()) {
+            <span class="filter-badge">!</span>
+          }
+        </button>
 
-  <!-- ── Layout: sidebar + calendar ── -->
-  <div class="calendar-layout">
-    <!-- Collapsible filter sidebar -->
-    @if (filtersOpen()) {
-      <aside class="filter-sidebar">
-        <div class="filter-section">
-          <label class="filter-label" for="simulatorFilter">{{ 'calendar.simulator' | transloco }}</label>
-          <select appSelect size="sm"
-            id="simulatorFilter"
-            [ngModel]="selectedSimulator()"
-            (ngModelChange)="selectedSimulator.set($event || null)"
-          >
-            <option [ngValue]="null">{{ 'calendar.allSimulators' | transloco }}</option>
-            @for (sim of availableSimulators(); track sim) {
-              <option [ngValue]="sim">{{ sim }}</option>
-            }
-          </select>
+        <div class="calendar-nav">
+          <app-btn
+            variant="ghost"
+            size="sm"
+            [disabled]="!canNavigateBack()"
+            (click)="navigatePeriod(-1)"
+            [title]="'calendar.prev' | transloco"
+          >&larr;<span class="nav-label">{{ 'calendar.prev' | transloco }}</span></app-btn>
+          <h2 class="period-label">{{ periodLabel() }}</h2>
+          <app-btn
+            variant="ghost"
+            size="sm"
+            (click)="navigatePeriod(1)"
+            [title]="'calendar.next' | transloco"
+          ><span class="nav-label">{{ 'calendar.next' | transloco }}</span>&rarr;</app-btn>
+          <app-btn variant="ghost" size="sm" (click)="goToToday()">{{ 'calendar.today' | transloco }}</app-btn>
         </div>
 
-        @if (hasActiveFilters()) {
-          <app-btn variant="ghost" size="sm" (click)="clearFilters()">{{ 'calendar.clearFilters' | transloco }}</app-btn>
-        }
-      </aside>
-    }
+        <div class="calendar-topbar__end">
+          @if (managedCommunities().length === 1) {
+            <div class="add-actions">
+              <app-btn variant="accent" size="sm" (click)="openAddChampionship(managedCommunities()[0].id)">
+                + {{ 'calendar.add' | transloco }}
+              </app-btn>
+            </div>
+          } @else if (managedCommunities().length > 1) {
+            <div class="add-actions add-menu">
+              <app-btn
+                variant="accent"
+                size="sm"
+                aria-haspopup="menu"
+                [attr.aria-expanded]="addMenuOpen()"
+                (click)="toggleAddMenu()"
+              >
+                + {{ 'calendar.add' | transloco }}
+                <svg class="add-menu__chevron" width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
+                  <path d="M1 3l4 4 4-4z"/>
+                </svg>
+              </app-btn>
 
-    <div class="calendar-main">
+              @if (addMenuOpen()) {
+                <div class="add-menu__panel" role="menu">
+                  @for (mc of managedCommunities(); track mc.id) {
+                    <button
+                      type="button"
+                      role="menuitem"
+                      class="add-menu__item"
+                      [style.--chip-color]="mc.color"
+                      (click)="selectAddCommunity(mc.id)"
+                    >{{ mc.name }}</button>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <app-toggle
+            [options]="viewTabs"
+            [activeKey]="viewMode()"
+            (keyChange)="setViewMode($event)"
+          />
+        </div>
+      </div>
+
       <!-- ── Month View ── -->
       @if (viewMode() === 'month') {
         <app-card class="calendar-card">
-          <!-- Header with navigation -->
-          <div class="calendar-header">
-            <div class="calendar-header__side calendar-header__side--start">
-              @if (canGoBack()) {
-                <app-btn variant="ghost" size="sm" (click)="navigateMonth(-1)">&larr; {{ 'calendar.prev' | transloco }}</app-btn>
-              }
-            </div>
-            <h2 class="month-label">{{ monthLabel() }}</h2>
-            <div class="calendar-header__side calendar-header__side--end">
-              <app-btn variant="ghost" size="sm" (click)="goToToday()">{{ 'calendar.today' | transloco }}</app-btn>
-              <app-btn variant="ghost" size="sm" (click)="navigateMonth(1)">{{ 'calendar.next' | transloco }} &rarr;</app-btn>
-            </div>
-          </div>
 
           @if (loading()) {
             <app-spinner />
@@ -185,20 +163,6 @@
 
       <!-- ── Year View ── -->
       @if (viewMode() === 'year') {
-        <div class="year-header-card">
-          <app-card class="calendar-card">
-            <div class="calendar-header">
-              <div class="calendar-header__side calendar-header__side--start">
-                <app-btn variant="ghost" size="sm" (click)="navigateYear(-1)">&larr; {{ 'calendar.prev' | transloco }}</app-btn>
-              </div>
-              <h2 class="month-label">{{ yearLabel() }}</h2>
-              <div class="calendar-header__side calendar-header__side--end">
-                <app-btn variant="ghost" size="sm" (click)="navigateYear(1)">{{ 'calendar.next' | transloco }} &rarr;</app-btn>
-              </div>
-            </div>
-          </app-card>
-        </div>
-
         @if (yearLoading()) {
           <app-spinner />
         } @else if (yearError()) {

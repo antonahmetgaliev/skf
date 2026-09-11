@@ -1,5 +1,8 @@
 :host {
   display: block;
+  // Vertical space taken by everything outside .calendar-grid:
+  // site header + page padding + top bar + card padding. Measured, not derived.
+  --calendar-chrome: 10rem;
 }
 
 // ── Management ──────────────────────────────────────────────────────────────
@@ -10,20 +13,37 @@
 }
 
 
-// ���─ Community filter chips ─────────────────────────────────────────────────
-// ── Toolbar (filters + view toggle in one row) ────────────────────────────
-.calendar-toolbar {
+// ── Top bar (shared by month + year views) ──────────────────────────────────
+.calendar-topbar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.calendar-topbar__end {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  flex-shrink: 0;
 
   app-toggle {
-    margin-bottom: 0;
     flex-shrink: 0;
-    margin-left: auto;
   }
+}
+
+// The sidebar is permanent on desktop, so its scrim is mobile-only.
+.filter-backdrop {
+  display: none;
 }
 
 .add-actions {
@@ -32,23 +52,6 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   min-width: 0;
-}
-
-// ── "Request to join" call-out ──────────────────────────────────────────────
-// Takes its own row inside the wrapping toolbar so it never crowds the chips.
-.calendar-request {
-  flex-basis: 100%;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem 0.75rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--border-subtle);
-}
-
-.calendar-request__text {
-  font-size: var(--text-xs);
-  color: var(--muted);
 }
 
 .request-form {
@@ -74,7 +77,7 @@
 .add-menu__panel {
   position: absolute;
   top: calc(100% + 0.35rem);
-  left: 0;
+  right: 0;
   z-index: 20;
   min-width: 200px;
   max-height: 320px;
@@ -119,55 +122,9 @@
   }
 }
 
-.community-filters {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  flex: 1;
-  min-width: 0;
-}
-
-.community-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.3rem 0.7rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(30, 30, 36, 0.6);
-  color: var(--ink-soft);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-
-  &::before {
-    content: '';
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--chip-color, var(--muted));
-  }
-
-  &:first-child::before {
-    display: none; // "All" chip has no dot
-  }
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.08);
-  }
-
-  &.active {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: var(--chip-color, var(--gold));
-    color: var(--ink);
-  }
-}
-
 .filter-toggle-btn {
-  display: inline-flex;
+  // Sidebar is permanent on desktop — the trigger only exists in drawer mode.
+  display: none;
   align-items: center;
   gap: 0.3rem;
   padding: 0.3rem 0.65rem;
@@ -206,7 +163,7 @@
   line-height: 1;
 }
 
-::ng-deep .calendar-card {
+app-card.calendar-card {
   padding: 0.75rem;
 }
 
@@ -217,72 +174,20 @@
   align-items: flex-start;
 }
 
-.filter-sidebar {
-  width: 200px;
-  flex-shrink: 0;
-  padding: 0.75rem;
-  border-radius: var(--radius-card);
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-}
-
-.filter-section {
-  margin-bottom: 0.75rem;
-
-  &:last-of-type {
-    margin-bottom: 0.5rem;
-  }
-}
-
-.filter-label {
-  display: block;
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  margin-bottom: 0.3rem;
-}
-
-
 .calendar-main {
   flex: 1;
   min-width: 0;
 }
 
 
-// ── Calendar header ─────────────────────────────────────────────────────────
-.calendar-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.35rem;
-}
-
-.calendar-header__side {
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.calendar-header__side--start {
-  justify-content: flex-start;
-}
-
-.calendar-header__side--end {
-  justify-content: flex-end;
-}
-
-.month-label {
+.period-label {
   margin: 0;
-  flex: 0 1 auto;
-  text-align: center;
   font-family: var(--font-display);
   font-size: var(--text-2xl);
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
+  white-space: nowrap;
+  padding: 0 0.35rem;
 }
 
 // ── Calendar grid ───────────────────────────────────────────────────────────
@@ -291,7 +196,7 @@
   grid-template-columns: repeat(7, minmax(0, 1fr));
   grid-template-rows: auto;
   grid-auto-rows: 1fr;
-  min-height: calc(100vh - 16rem);
+  min-height: calc(100vh - var(--calendar-chrome));
   gap: 1px;
   background: rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-md);
@@ -703,10 +608,6 @@
 }
 
 // ── Year view ──────────────────────────────────────────────────────────────
-.year-header-card {
-  margin-bottom: 0.75rem;
-}
-
 .year-columns {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -835,27 +736,43 @@
 
 // Tablet / small laptop
 @media (max-width: 768px) {
+  :host {
+    --calendar-chrome: 9rem;
+  }
+
+  // Sidebar leaves the flow and becomes a drawer, so the grid gets full width.
   .calendar-layout {
-    flex-direction: column;
-    align-items: stretch;
+    display: block;
   }
 
-  .filter-sidebar {
-    width: 100%;
-    display: flex;
-    gap: 0.5rem;
-    align-items: flex-end;
-    flex-wrap: wrap;
-
-    .filter-section {
-      flex: 1;
-      min-width: 120px;
-      margin-bottom: 0;
-    }
+  .filter-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease;
   }
 
-  .calendar-grid {
-    min-height: calc(100vh - 18rem);
+  // Row 1: [Filters] … [+ Add] [Month|Year]   ·   Row 2: period nav, centred
+  .calendar-topbar {
+    justify-content: space-between;
+  }
+
+  .filter-toggle-btn {
+    display: inline-flex;
+    order: 0;
+  }
+
+  .calendar-topbar__end {
+    order: 1;
+  }
+
+  .calendar-nav {
+    order: 2;
+    flex-basis: 100%;
+    justify-content: center;
   }
 
   .calendar-cell {
@@ -874,17 +791,6 @@
   .calendar-cell.today .day-number {
     width: 1.35rem;
     height: 1.35rem;
-  }
-
-  .calendar-header {
-    flex-wrap: wrap;
-    justify-content: center;
-    text-align: center;
-  }
-
-  .calendar-header__side {
-    flex: 1 1 auto;
-    justify-content: center;
   }
 
   .year-columns {
@@ -915,14 +821,8 @@
 
 // Mobile
 @media (max-width: 480px) {
-  .community-filters {
-    gap: 0.35rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .community-chip {
-    padding: 0.25rem 0.55rem;
-    font-size: var(--text-2xs);
+  :host {
+    --calendar-chrome: 8.25rem;
   }
 
   .filter-toggle-btn {
@@ -930,8 +830,9 @@
     font-size: var(--text-2xs);
   }
 
-  .calendar-grid {
-    min-height: calc(100vh - 20rem);
+  // Prev/Next collapse to bare arrows; the label survives in [title]
+  .nav-label {
+    display: none;
   }
 
   .calendar-cell {
@@ -961,7 +862,7 @@
     font-size: var(--text-2xs);
   }
 
-  .month-label {
+  .period-label {
     font-size: var(--text-xl);
   }
 

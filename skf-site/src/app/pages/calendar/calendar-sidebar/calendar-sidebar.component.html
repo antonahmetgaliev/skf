@@ -1,0 +1,65 @@
+<div class="sidebar-head">
+  <h3 class="sidebar-title">{{ 'calendar.communities' | transloco }}</h3>
+  <button
+    type="button"
+    class="filters-close"
+    (click)="close.emit()"
+    [title]="'calendar.close' | transloco"
+  >&times;</button>
+</div>
+
+<ul class="community-list">
+  <li>
+    <label class="community-row">
+      <input
+        type="checkbox"
+        class="community-row__box"
+        [checked]="allSelected()"
+        (change)="toggleCommunity.emit(null)"
+      />
+      <span class="community-row__dot community-row__dot--none"></span>
+      <span class="community-row__name">{{ 'calendar.all' | transloco }}</span>
+    </label>
+  </li>
+  @for (c of communities(); track c.id) {
+    <li>
+      <label class="community-row">
+        <input
+          type="checkbox"
+          class="community-row__box"
+          [checked]="isSelected(c.id)"
+          (change)="toggleCommunity.emit(c.id)"
+        />
+        <span class="community-row__dot" [style.--dot-color]="c.color"></span>
+        <span class="community-row__name">{{ c.name }}</span>
+      </label>
+    </li>
+  }
+</ul>
+
+<div class="sidebar-cta">
+  <p class="sidebar-cta__text">{{ 'calendar.requestCommunityShort' | transloco }}</p>
+  <app-btn variant="outline" size="sm" (click)="requestJoin.emit()">
+    {{ 'calendar.requestCommunityBtn' | transloco }}
+  </app-btn>
+</div>
+
+<div class="filter-section">
+  <label class="filter-label" for="simulatorFilter">{{ 'calendar.simulator' | transloco }}</label>
+  <select appSelect size="sm"
+    id="simulatorFilter"
+    [ngModel]="selectedSimulator()"
+    (ngModelChange)="simulatorChange.emit($event || null)"
+  >
+    <option [ngValue]="null">{{ 'calendar.allSimulators' | transloco }}</option>
+    @for (sim of simulators(); track sim) {
+      <option [ngValue]="sim">{{ sim }}</option>
+    }
+  </select>
+</div>
+
+@if (hasActiveFilters()) {
+  <app-btn variant="ghost" size="sm" (click)="clearFilters.emit()">
+    {{ 'calendar.clearFilters' | transloco }}
+  </app-btn>
+}

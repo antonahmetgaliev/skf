@@ -11,7 +11,6 @@ import { PageLayoutComponent } from '../../components/page-layout/page-layout.co
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { ToggleComponent } from '../../components/toggle/toggle.component';
 import { InputDirective } from '../../directives/input.directive';
-import { SelectDirective } from '../../directives/select.directive';
 import { TextareaDirective } from '../../directives/textarea.directive';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -28,6 +27,7 @@ import {
 import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { LocaleService } from '../../services/locale.service';
+import { CalendarSidebarComponent } from './calendar-sidebar/calendar-sidebar.component';
 import { toLocalDateStr, toLocalDatetimeLocal, withLocalTzOffset } from '../../utils/date';
 
 interface CalendarDay {
@@ -62,7 +62,7 @@ const VIEW_TABS: { key: string; label: string }[] = [
 
 @Component({
   selector: 'app-calendar',
-  imports: [NgTemplateOutlet, FormsModule, RouterLink, TranslocoPipe, InputDirective, SelectDirective, TextareaDirective, AlertComponent, BtnComponent, CardComponent, ChampionshipFormComponent, FormFieldComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
+  imports: [NgTemplateOutlet, FormsModule, RouterLink, TranslocoPipe, InputDirective, TextareaDirective, AlertComponent, BtnComponent, CalendarSidebarComponent, CardComponent, ChampionshipFormComponent, FormFieldComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
 
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
@@ -98,6 +98,10 @@ export class CalendarComponent implements OnInit {
   readonly filtersOpen = signal(false);
   readonly selectedSimulator = signal<string | null>(null);
 
+  readonly hasActiveFilters = computed(
+    () => this.selectedCommunityIds().size > 0 || this.selectedSimulator() !== null,
+  );
+
   readonly monthLabel = computed(() => {
     const d = new Date(this.currentYear(), this.currentMonth() - 1, 1);
     return d.toLocaleString(this.locale.locale, { month: 'long', year: 'numeric' });
@@ -110,6 +114,10 @@ export class CalendarComponent implements OnInit {
       (this.currentYear() === now.getFullYear() && this.currentMonth() > now.getMonth() + 1)
     );
   });
+
+  readonly canNavigateBack = computed(() =>
+    this.viewMode() === 'year' ? true : this.canGoBack(),
+  );
 
   // Filtered events for month view
   readonly filteredEvents = computed(() => this.applyFilters(this.events()));
@@ -153,6 +161,11 @@ export class CalendarComponent implements OnInit {
   });
 
   readonly yearLabel = computed(() => String(this.currentYear()));
+
+  /** Label for the shared top bar — month name or year, per active view. */
+  readonly periodLabel = computed(() =>
+    this.viewMode() === 'month' ? this.monthLabel() : this.yearLabel(),
+  );
 
   readonly yearCommunityColumns = computed<YearCommunityColumn[]>(() => {
     const events = this.filteredYearEvents();
@@ -274,6 +287,16 @@ export class CalendarComponent implements OnInit {
     this.loadYearEvents();
   }
 
+  /** Single entry point for the shared top bar — dispatches on the active view. */
+  navigatePeriod(delta: number): void {
+    if (delta < 0 && !this.canNavigateBack()) return;
+    if (this.viewMode() === 'year') {
+      this.navigateYear(delta);
+    } else {
+      this.navigateMonth(delta);
+    }
+  }
+
   sortedRaces(races: CalendarEvent['races']): CalendarEvent['races'] {
     return [...races].sort((a, b) => {
       if (!a.date && !b.date) return 0;
@@ -347,10 +370,7 @@ export class CalendarComponent implements OnInit {
 
   clearFilters(): void {
     this.selectedSimulator.set(null);
-  }
-
-  hasActiveFilters(): boolean {
-    return this.selectedSimulator() !== null;
+    this.selectedCommunityIds.set(new Set());
   }
 
 
@@ -480,7 +500,17 @@ export class CalendarComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    this.addMenuOpen.set(false);
+    // Modals own Escape while they are open.
+    if (this.champModalOpen() || this.requestModalOpen()) return;
+    if (this.addMenuOpen()) {
+      this.addMenuOpen.set(false);
+      return;
+    }
+    if (this.selectedDay() !== null) {
+      this.selectedDay.set(null);
+      return;
+    }
+    this.filtersOpen.set(false);
   }
 
   canManageCommunity(communityId: string | null): boolean {

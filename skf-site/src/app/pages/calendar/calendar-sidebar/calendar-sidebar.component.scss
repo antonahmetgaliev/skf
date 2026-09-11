@@ -1,0 +1,173 @@
+:host {
+  display: block;
+  width: 210px;
+  flex-shrink: 0;
+  // No align-self here: .calendar-layout already sets align-items: flex-start,
+  // and an explicit value would stop the fixed drawer from filling the viewport.
+  padding: 0.75rem;
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+}
+
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+// Visible only in the mobile drawer mode
+.filters-close {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 1.35rem;
+  line-height: 1;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--ink);
+  }
+}
+
+.community-list {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.community-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.35rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--ink);
+  }
+
+  &:focus-within {
+    outline: 1px solid var(--border-strong);
+  }
+}
+
+.community-row__box {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--gold);
+}
+
+.community-row__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--dot-color, var(--muted));
+}
+
+// "All" row keeps the slot so labels stay aligned, but shows no colour
+.community-row__dot--none {
+  background: transparent;
+}
+
+.community-row__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-section {
+  margin-bottom: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.filter-label {
+  display: block;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 0.3rem;
+}
+
+.sidebar-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  padding: 0 0.35rem;
+}
+
+.sidebar-cta__text {
+  margin: 0;
+  font-size: var(--text-2xs);
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+// ── Off-canvas drawer ───────────────────────────────────────────────────────
+@media (max-width: 768px) {
+  :host {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 151;
+    width: 260px;
+    max-width: 82vw;
+    border-radius: 0;
+    border-top: none;
+    border-bottom: none;
+    border-left: none;
+    background: var(--sand); // opaque: --card-bg is translucent
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+  }
+
+  :host(.open) {
+    transform: none;
+  }
+
+  .filters-close {
+    display: inline-flex;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host {
+    transition: none;
+  }
+}
