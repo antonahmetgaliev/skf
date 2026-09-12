@@ -14,19 +14,25 @@
       <div class="filter-backdrop" (click)="filtersOpen.set(false)"></div>
     }
 
-    <app-calendar-sidebar
-      [class.open]="filtersOpen()"
-      [communities]="communities()"
-      [selectedCommunityIds]="selectedCommunityIds()"
-      [simulators]="availableSimulators()"
-      [selectedSimulator]="selectedSimulator()"
-      [hasActiveFilters]="hasActiveFilters()"
-      (toggleCommunity)="toggleCommunity($event)"
-      (simulatorChange)="selectedSimulator.set($event)"
-      (clearFilters)="clearFilters()"
-      (requestJoin)="openRequestModal()"
-      (close)="filtersOpen.set(false)"
-    />
+    <div class="calendar-side">
+      <div class="calendar-side__head">
+        <h2 class="column-label">{{ 'calendar.filters' | transloco }}</h2>
+      </div>
+
+      <app-calendar-sidebar
+        [class.open]="filtersOpen()"
+        [communities]="communities()"
+        [selectedCommunityIds]="selectedCommunityIds()"
+        [simulators]="availableSimulators()"
+        [selectedSimulator]="selectedSimulator()"
+        [hasActiveFilters]="hasActiveFilters()"
+        (toggleCommunity)="toggleCommunity($event)"
+        (simulatorChange)="selectedSimulator.set($event)"
+        (clearFilters)="clearFilters()"
+        (requestJoin)="openRequestModal()"
+        (close)="filtersOpen.set(false)"
+      />
+    </div>
 
     <div class="calendar-main">
       <!-- ── Top bar: shared by month and year views ── -->
