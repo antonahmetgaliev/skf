@@ -1,5 +1,16 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, effect, HostListener, inject, OnInit, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  HostListener,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AlertComponent } from '../../components/alert/alert.component';
@@ -67,12 +78,16 @@ const VIEW_TABS: { key: string; label: string }[] = [
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
 })
-export class CalendarComponent implements OnInit {
+export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly calendarApi = inject(CalendarApiService);
   private readonly locale = inject(LocaleService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly transloco = inject(TranslocoService);
   readonly auth = inject(AuthService);
+
+  private chromeObserver?: ResizeObserver;
+  private gridChrome = '';
 
   readonly weekDays = WEEK_DAY_KEYS.map((d) => `calendar.day.${d}`);
   readonly weekDaysShort = WEEK_DAY_KEYS.map((d) => `calendar.dayShort.${d}`);
@@ -242,6 +257,39 @@ export class CalendarComponent implements OnInit {
   ngOnInit(): void {
     this.loadCommunities();
     this.loadYearEvents();
+  }
+
+  ngAfterViewInit(): void {
+    if (typeof ResizeObserver === 'undefined') return;
+    this.chromeObserver = new ResizeObserver(() => this.syncGridHeight());
+    this.chromeObserver.observe(this.host.nativeElement);
+  }
+
+  ngOnDestroy(): void {
+    this.chromeObserver?.disconnect();
+  }
+
+  // The month grid fills exactly what the viewport has left, so it never scrolls.
+  // Measured instead of hardcoded: everything above it — site header, admin
+  // "view as" bar, page padding, top bar — changes height with role, locale and
+  // wrapping, and any guess is wrong for somebody.
+  private syncGridHeight(): void {
+    const grid = this.host.nativeElement.querySelector<HTMLElement>('.calendar-grid');
+    if (!grid) return;
+
+    const above = grid.getBoundingClientRect().top + window.scrollY;
+    let below = 0;
+    for (let el = grid.parentElement; el && el !== document.body; el = el.parentElement) {
+      const cs = getComputedStyle(el);
+      below +=
+        parseFloat(cs.paddingBottom) + parseFloat(cs.borderBottomWidth) + parseFloat(cs.marginBottom);
+    }
+
+    // Round up: a sub-pixel shortfall is enough to bring the scrollbar back.
+    const chrome = `${Math.ceil(above + below)}px`;
+    if (chrome === this.gridChrome) return; // guard the observer's own feedback loop
+    this.gridChrome = chrome;
+    this.host.nativeElement.style.setProperty('--calendar-chrome', chrome);
   }
 
   navigateMonth(delta: number): void {

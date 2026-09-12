@@ -1,6 +1,8 @@
 :host {
   display: block;
-  min-height: 100vh;
+  // No min-height here: .app-shell already fills the viewport and .site-main
+  // stretches. A 100vh here sits *below* the site header, so it would add a
+  // header-tall phantom scroll to every page.
   padding: clamp(0.75rem, 2.5vw, 3rem);
   overflow-x: hidden;
 }
