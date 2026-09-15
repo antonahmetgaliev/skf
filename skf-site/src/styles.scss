@@ -372,3 +372,32 @@ pre {
 
   &.center { text-align: center; }
 }
+
+// ── Tooltip ─────────────────────────────────────────────────────────────────
+// Rendered into <body> by TooltipDirective so it escapes clipping ancestors,
+// which puts it outside every component's style scope — hence global.
+.app-tooltip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1200;
+  max-width: 22rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: rgba(20, 20, 24, 0.98);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: pre-line;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+
+  &.app-tooltip--visible {
+    opacity: 1;
+  }
+}

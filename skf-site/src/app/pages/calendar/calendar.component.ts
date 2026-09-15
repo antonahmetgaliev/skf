@@ -23,6 +23,7 @@ import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { ToggleComponent } from '../../components/toggle/toggle.component';
 import { InputDirective } from '../../directives/input.directive';
 import { TextareaDirective } from '../../directives/textarea.directive';
+import { TooltipDirective } from '../../directives/tooltip.directive';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -73,7 +74,7 @@ const VIEW_TABS: { key: string; label: string }[] = [
 
 @Component({
   selector: 'app-calendar',
-  imports: [NgTemplateOutlet, FormsModule, RouterLink, TranslocoPipe, InputDirective, TextareaDirective, AlertComponent, BtnComponent, CalendarSidebarComponent, CardComponent, ChampionshipFormComponent, FormFieldComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
+  imports: [NgTemplateOutlet, FormsModule, RouterLink, TranslocoPipe, InputDirective, TextareaDirective, TooltipDirective, AlertComponent, BtnComponent, CalendarSidebarComponent, CardComponent, ChampionshipFormComponent, FormFieldComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
 
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',

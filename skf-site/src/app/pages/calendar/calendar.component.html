@@ -151,10 +151,13 @@
                     @if (day.isCurrentMonth && day.events.length > 0) {
                       <div class="cell-events">
                         @for (event of day.events; track event.id) {
-                          <div
+                          <button
+                            type="button"
                             class="cell-event-label"
                             [style.--band-color]="event.communityColor || '#555'"
-                          ><span>{{ event.name }}</span></div>
+                            [appTooltip]="event.name"
+                            tooltipWhenTruncated
+                          ><span>{{ event.name }}</span></button>
                         }
                       </div>
                     }
