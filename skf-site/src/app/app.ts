@@ -6,13 +6,14 @@ import { filter } from 'rxjs/operators';
 import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 import { CookieConsentComponent } from './components/cookie-consent/cookie-consent.component';
 import { LangSwitcherComponent } from './components/lang-switcher/lang-switcher.component';
+import { LoadingBarComponent } from './components/loading-bar/loading-bar.component';
 import { AuthService } from './services/auth.service';
 import { CalendarApiService, Community } from './services/calendar-api.service';
 import { RegulationApiService, RegulationPageListItem } from './services/regulation-api.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, TranslocoPipe, LangSwitcherComponent, ConfirmDialogComponent, CookieConsentComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, TranslocoPipe, LangSwitcherComponent, ConfirmDialogComponent, CookieConsentComponent, LoadingBarComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

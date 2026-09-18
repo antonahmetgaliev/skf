@@ -1,0 +1,55 @@
+.loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 1000;
+  overflow: hidden;
+  pointer-events: none;
+  background: rgba(255, 214, 0, 0.12);
+
+  // Held invisible for the first moments so that the many requests which
+  // finish quickly never paint at all — the bar is a signal that something is
+  // taking a while, not a strobe on every call.
+  opacity: 0;
+  animation: loading-bar-appear 0.2s ease-out 0.18s forwards;
+}
+
+.loading-bar__track {
+  display: block;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  animation: loading-bar-sweep 1.1s ease-in-out infinite;
+}
+
+@keyframes loading-bar-appear {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes loading-bar-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+// Without motion, a sweeping bar is the wrong answer; a steady tinted rule
+// still says "busy" without animating anything.
+@media (prefers-reduced-motion: reduce) {
+  .loading-bar {
+    opacity: 1;
+    animation: none;
+  }
+
+  .loading-bar__track {
+    width: 100%;
+    background: var(--gold-deep);
+    animation: none;
+  }
+}

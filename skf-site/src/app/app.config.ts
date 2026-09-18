@@ -10,6 +10,7 @@ import { provideRouter } from '@angular/router';
 import { provideTransloco } from '@jsverse/transloco';
 import { appRoutes } from './app.routes';
 import { authInterceptor } from './interceptors/auth.interceptor';
+import { loadingInterceptor } from './interceptors/loading.interceptor';
 import { stalenessInterceptor } from './interceptors/staleness.interceptor';
 import { AnalyticsService } from './services/analytics.service';
 import { TranslocoHttpLoader } from './transloco-loader';
@@ -17,7 +18,9 @@ import { TranslocoHttpLoader } from './transloco-loader';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideHttpClient(withInterceptors([authInterceptor, stalenessInterceptor])),
+    provideHttpClient(
+      withInterceptors([loadingInterceptor, authInterceptor, stalenessInterceptor]),
+    ),
     provideRouter(appRoutes),
     provideTransloco({
       config: {
