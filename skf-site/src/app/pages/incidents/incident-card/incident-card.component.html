@@ -34,11 +34,7 @@
     }
 
     <div class="incident-status">
-      @if (incident().status === 'resolved') {
-        <app-badge variant="resolved">{{ 'incidents.resolved' | transloco }}</app-badge>
-      } @else {
-        <app-badge variant="pending">{{ 'incidents.statusOpen' | transloco }}</app-badge>
-      }
+      <app-badge [variant]="statusChip().variant">{{ statusChip().label | transloco }}</app-badge>
     </div>
     <span class="incident-chevron" [class.incident-chevron--open]="expanded()">▸</span>
   </div>
@@ -52,15 +48,21 @@
         </div>
       }
 
+      @if (showsPendingNotice()) {
+        <p class="pending-notice">{{ 'incidents.verdictsPendingPublication' | transloco }}</p>
+      }
+
       <div class="driver-rows">
         @for (drv of incident().drivers; track drv.id) {
           <div class="driver-row">
             <div class="driver-row-header">
               <span class="driver-name">{{ drv.driverName }}</span>
-              @if (!drv.driverId) {
-                <app-badge variant="bwp-pending">{{ 'incidents.notLinked' | transloco }}</app-badge>
+              @if (showsStewardDetail()) {
+                @if (!drv.driverId) {
+                  <app-badge variant="bwp-pending">{{ 'incidents.notLinked' | transloco }}</app-badge>
+                }
+                <app-badge [variant]="statusBadge(drv).variant">{{ statusBadge(drv).label | transloco }}</app-badge>
               }
-              <app-badge [variant]="statusBadge(drv).variant">{{ statusBadge(drv).label | transloco }}</app-badge>
               <span class="driver-row-spacer"></span>
               @if (canJudge() && incident().drivers.length > 1) {
                 <button class="row-remove" type="button"

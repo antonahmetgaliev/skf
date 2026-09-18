@@ -20,6 +20,12 @@ import {
   IncidentDriver,
   VerdictRule,
 } from '../../../services/incidents-api.service';
+import {
+  incidentStatusChip,
+  showsPendingNotice,
+  showsStewardDetail,
+  StatusChip,
+} from '../incident-visibility';
 
 interface DriverDraft {
   verdict: string;
@@ -149,6 +155,21 @@ export class IncidentCardComponent {
       .drivers.filter((d) => d.resolution && d.resolution.verdict !== fallback)
       .map((d) => `${d.driverName} ${d.resolution!.verdict}`)
       .join(' · ');
+  }
+
+  /** The incident status as this viewer should understand it. */
+  statusChip(): StatusChip {
+    return incidentStatusChip(this.incident(), this.canJudge());
+  }
+
+  /** Row chrome that only means something to a steward. */
+  showsStewardDetail(): boolean {
+    return showsStewardDetail(this.canJudge());
+  }
+
+  /** True when the viewer needs telling why there is no verdict to read. */
+  showsPendingNotice(): boolean {
+    return showsPendingNotice(this.incident(), this.canJudge());
   }
 
   statusBadge(driver: IncidentDriver): { variant: BadgeVariant; label: string } {

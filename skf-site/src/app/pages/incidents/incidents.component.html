@@ -152,12 +152,16 @@
         </div>
 
         <div class="incidents-toolbar">
-          @if (w.incidents.length > 0) {
+          @if (w.incidents.length === 0) {
+            <span class="incident-count">{{ 'incidents.noIncidents' | transloco }}</span>
+          } @else if (auth.isJudge()) {
             <span class="incident-count">
               {{ 'incidents.resolvedOfTotal' | transloco:{ resolved: resolvedCount(w), total: w.incidents.length } }}
             </span>
           } @else {
-            <span class="incident-count">{{ 'incidents.noIncidents' | transloco }}</span>
+            <span class="incident-count">
+              {{ 'incidents.incidentCount' | transloco:{ count: w.incidents.length } }}
+            </span>
           }
           @if (auth.isAdmin() || auth.isJudge()) {
             <app-btn variant="ghost" size="sm" (click)="showSettingsModal.set(true)">
@@ -183,9 +187,13 @@
 
         <!-- Hidden-ness is a property of the round, so it is stated once here
              rather than repeated as a badge on every card. -->
-        @if (auth.isJudge() && w.incidents.length > 0 && hasUnpublished(w)) {
+        @if (w.incidents.length > 0 && hasUnpublished(w)) {
           <div class="window-notice">
-            <span>{{ 'incidents.windowVerdictsHidden' | transloco }}</span>
+            @if (auth.isJudge()) {
+              <span>{{ 'incidents.windowVerdictsHidden' | transloco }}</span>
+            } @else {
+              <span>{{ 'incidents.verdictsPendingPublication' | transloco }}</span>
+            }
           </div>
         }
 
