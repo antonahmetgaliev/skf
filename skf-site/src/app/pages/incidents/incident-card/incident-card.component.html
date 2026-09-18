@@ -166,14 +166,13 @@
 
       <div class="incident-card-footer">
         <span class="incident-filed">{{ 'incidents.filed' | transloco }} {{ incident().createdAt | date:'dd MMM yyyy HH:mm' }}</span>
-        <div class="footer-actions">
-          <button class="btn-link" type="button" (click)="openDetail.emit()">{{ 'incidents.fullDetail' | transloco }}</button>
-          @if (canJudge()) {
+        @if (canJudge()) {
+          <div class="footer-actions">
             <button class="btn-link" type="button"
               (click)="addDriverShown.set(!addDriverShown())">{{ 'incidents.addDriver' | transloco }}</button>
             <button class="btn-link" type="button" (click)="duplicate.emit()">{{ 'incidents.duplicate' | transloco }}</button>
-          }
-        </div>
+          </div>
+        }
       </div>
     </div>
   }

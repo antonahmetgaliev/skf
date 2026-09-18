@@ -238,8 +238,7 @@
                   (resolve)="submitResolveIncident(inc, $event)"
                   (addDriver)="addIncidentDriver(inc.id, $event)"
                   (removeDriver)="removeIncidentDriver($event)"
-                  (duplicate)="duplicateIncident(inc.id)"
-                  (openDetail)="openDetailModal(inc)" />
+                  (duplicate)="duplicateIncident(inc.id)" />
               }
               @if (group.filedItems.length > 0) {
                 <div class="incident-subgroup-label">{{ 'incidents.reports' | transloco }}</div>
@@ -260,8 +259,7 @@
                   (resolve)="submitResolveIncident(inc, $event)"
                   (addDriver)="addIncidentDriver(inc.id, $event)"
                   (removeDriver)="removeIncidentDriver($event)"
-                  (duplicate)="duplicateIncident(inc.id)"
-                  (openDetail)="openDetailModal(inc)" />
+                  (duplicate)="duplicateIncident(inc.id)" />
               }
             }
           </div>
@@ -685,70 +683,6 @@
       (click)="submitIncident()"
     >
       {{ niSubmitting ? ('incidents.submitting' | transloco) : ('incidents.submitIncident' | transloco) }}
-    </app-btn>
-  </div>
-</app-modal>
-
-<!-- ── Incident Detail Modal ─────────────────────────────────────────────── -->
-<app-modal [title]="'incidents.incidentDetail' | transloco" width="lg" [(open)]="showDetailModal">
-  @if (detailIncident(); as inc) {
-    <app-detail-list>
-      @if (inc.sessionName) {
-        <dt>{{ 'incidents.session' | transloco }}</dt><dd>{{ inc.sessionName }}</dd>
-      }
-      @if (inc.time) {
-        <dt>{{ 'incidents.time' | transloco }}</dt><dd>{{ inc.time }}</dd>
-      }
-      @if (inc.lap) {
-        <dt>{{ 'incidents.lap' | transloco }}</dt><dd>{{ inc.lap }}</dd>
-      }
-      @if (inc.corner) {
-        <dt>{{ 'incidents.corner' | transloco }}</dt><dd>{{ inc.corner }}</dd>
-      }
-      @if (inc.description) {
-        <dt>{{ 'incidents.description' | transloco }}</dt><dd class="desc-cell">{{ inc.description }}</dd>
-      }
-      <dt>{{ 'incidents.filed' | transloco }}</dt><dd>{{ inc.createdAt | date:'dd MMM yyyy HH:mm' }}</dd>
-      <dt>{{ 'incidents.status' | transloco }}</dt>
-      <dd>
-        @if (inc.status === 'resolved') {
-          <app-badge variant="resolved">{{ 'incidents.resolved' | transloco }}</app-badge>
-        } @else {
-          <app-badge variant="pending">{{ 'incidents.statusOpen' | transloco }}</app-badge>
-        }
-      </dd>
-    </app-detail-list>
-
-    @for (drv of inc.drivers; track drv.id) {
-      <div class="resolution-block">
-        <h4 class="resolution-heading">{{ drv.driverName }}</h4>
-        @if (drv.resolution; as r) {
-          <app-detail-list>
-            <dt>{{ 'incidents.verdict' | transloco }}</dt><dd class="desc-cell">{{ r.verdict }}</dd>
-            @if (r.bwpPoints !== null) {
-              <dt>{{ 'incidents.bwpPoints' | transloco }}</dt>
-              <dd>
-                {{ r.bwpPoints }}
-                @if (r.bwpApplied) {
-                  <app-badge variant="applied">{{ 'incidents.bwpApplied' | transloco }}</app-badge>
-                }
-              </dd>
-            }
-            @if (r.description) {
-              <dt>{{ 'incidents.decision' | transloco }}</dt><dd class="desc-cell">{{ r.description }}</dd>
-            }
-            <dt>{{ 'incidents.resolved' | transloco }}</dt><dd>{{ r.resolvedAt | date:'dd MMM yyyy HH:mm' }}</dd>
-          </app-detail-list>
-        } @else {
-          <p class="no-resolution">{{ 'incidents.notYetResolved' | transloco }}</p>
-        }
-      </div>
-    }
-  }
-
-  <div modal-footer>
-    <app-btn variant="accent" (click)="showDetailModal.set(false)">
-      {{ 'incidents.close' | transloco }}
     </app-btn>
   </div>
 </app-modal>

@@ -57,7 +57,6 @@ export class IncidentCardComponent {
   readonly addDriver = output<string>();
   readonly removeDriver = output<string>();
   readonly duplicate = output<void>();
-  readonly openDetail = output<void>();
 
   /** Chips with the default pinned first, so muscle memory has a stable target. */
   readonly orderedRules = computed(() =>

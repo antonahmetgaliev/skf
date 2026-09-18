@@ -7,7 +7,6 @@ import { SelectDirective } from '../../directives/select.directive';
 import { TextareaDirective } from '../../directives/textarea.directive';
 import { BadgeComponent, BadgeVariant } from '../../components/badge/badge.component';
 import { CardComponent } from '../../components/card/card.component';
-import { DetailListComponent } from '../../components/detail-list/detail-list.component';
 import { FormFieldComponent } from '../../components/form-field/form-field.component';
 import { EmptyComponent } from '../../components/empty/empty.component';
 import { PageIntroComponent } from '../../components/page-intro/page-intro.component';
@@ -51,7 +50,7 @@ export interface PendingPenalty {
 
 @Component({
   selector: 'app-incidents',
-  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, TextareaDirective, BadgeComponent, CardComponent, DetailListComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent, TabsComponent, IncidentCardComponent],
+  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, TextareaDirective, BadgeComponent, CardComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent, TabsComponent, IncidentCardComponent],
   templateUrl: './incidents.component.html',
   styleUrl: './incidents.component.scss',
 })
@@ -172,8 +171,6 @@ export class IncidentsComponent implements OnInit {
   // ── Modal visibility ──────────────────────────────────────────────
   readonly showNewWindowModal = signal(false);
   readonly showNewIncidentModal = signal(false);
-  readonly showDetailModal = signal(false);
-  readonly detailIncident = signal<Incident | null>(null);
 
   // ── Expanded incidents (for inline resolution) ────────────────────
   readonly expandedIncidentId = signal<string | null>(null);
@@ -563,13 +560,6 @@ export class IncidentsComponent implements OnInit {
     await firstValueFrom(this.incidentsApi.removeDriverFromIncident(incidentDriverId));
     const windowId = this.windowDetail()?.id;
     if (windowId) await this.selectWindow(windowId, true);
-  }
-
-  // ── Detail modal ───────────────────────────────────────────────────
-
-  openDetailModal(incident: Incident): void {
-    this.detailIncident.set(incident);
-    this.showDetailModal.set(true);
   }
 
   // ── Helpers ───────────────────────────────────────────────────────
