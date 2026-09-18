@@ -1,0 +1,339 @@
+// Card chrome mirrors the incident list on the Incidents page; only the driver
+// row differs, which is the whole point of this component.
+:host {
+  display: block;
+}
+
+.incident-card {
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card-sm);
+  background: var(--card-bg);
+  overflow: hidden;
+
+  &--resolved {
+    border-color: rgba(46, 174, 100, 0.25);
+  }
+}
+
+.incident-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.7rem 0.95rem;
+  cursor: pointer;
+  flex-wrap: wrap;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.02);
+  }
+}
+
+.incident-num {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.incident-source {
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  padding: 0.18rem 0.45rem;
+  border-radius: var(--radius-xs);
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--ink-soft);
+}
+
+.incident-header-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.incident-drivers {
+  font-weight: 600;
+  font-size: var(--text-md);
+}
+
+// Penalties only — a summary of "everyone got the default" is pure noise.
+.incident-penalties {
+  font-size: var(--text-base);
+  color: var(--gold);
+  font-weight: 500;
+}
+
+.incident-header-desc {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  font-style: italic;
+}
+
+.incident-session,
+.incident-time {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  letter-spacing: var(--tracking-tight);
+}
+
+.incident-status {
+  margin-left: auto;
+}
+
+.incident-chevron {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  transition: transform 0.15s ease;
+
+  &--open {
+    transform: rotate(90deg);
+  }
+}
+
+.incident-card-body {
+  padding: 0 0.95rem 0.6rem;
+  border-top: 1px solid var(--separator);
+}
+
+.incident-description {
+  padding: 0.6rem 0;
+
+  .desc-cell {
+    margin: 0.2rem 0 0;
+    font-size: var(--text-base);
+  }
+}
+
+// ── Driver rows ───────────────────────────────────────────────────────────
+.driver-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.6rem 0 0.85rem;
+}
+
+.driver-row {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.7rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.driver-row-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.driver-name {
+  font-weight: 600;
+  font-size: var(--text-md);
+  color: var(--ink);
+}
+
+.driver-row-spacer {
+  margin-left: auto;
+}
+
+// Destructive, so it stays quiet until the row is hovered or focused.
+.row-remove {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: var(--text-xl);
+  line-height: 1;
+  padding: 0 0.25rem;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease;
+
+  .driver-row:hover &,
+  &:focus-visible {
+    opacity: 1;
+  }
+
+  &:hover {
+    color: var(--danger);
+  }
+}
+
+// ── Verdict chips ─────────────────────────────────────────────────────────
+.verdict-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.chip {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  color: var(--ink-soft);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    border-color: var(--border-strong);
+    color: var(--ink);
+  }
+
+  // The price of a penalty, printed on the thing that applies it.
+  sup {
+    font-size: var(--text-2xs);
+    color: #d4662a;
+    font-weight: 700;
+  }
+
+  &--selected {
+    background: rgba(255, 214, 0, 0.16);
+    border-color: rgba(255, 214, 0, 0.5);
+    color: var(--gold);
+    font-weight: 600;
+  }
+}
+
+// Rendered only when the verdict actually carries points.
+.bwp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  width: 70px;
+  flex: none;
+}
+
+.custom-verdict {
+  margin-top: 0.4rem;
+}
+
+// ── Read-only resolution (non-judges) ─────────────────────────────────────
+.driver-resolution {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: var(--text-base);
+}
+
+.resolution-verdict {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.resolution-bwp {
+  color: var(--gold-deep);
+  font-weight: 700;
+  font-size: var(--text-sm);
+}
+
+.resolution-description {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-style: italic;
+}
+
+// ── Footers ───────────────────────────────────────────────────────────────
+.add-driver-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--separator);
+}
+
+.incident-resolve-footer {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--separator);
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.resolve-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  &--description {
+    flex: 1;
+    min-width: 200px;
+  }
+}
+
+.resolve-error {
+  margin: 0.3rem 0 0;
+  font-size: var(--text-sm);
+  color: var(--danger);
+}
+
+.incident-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+  margin-top: 0.6rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.06);
+}
+
+.incident-filed {
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+}
+
+.label-eyebrow {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.btn-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+
+  &--muted {
+    color: var(--muted);
+  }
+}

@@ -15,6 +15,7 @@ import { PageLayoutComponent } from '../../components/page-layout/page-layout.co
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { ModalComponent } from '../../components/modal/modal.component';
+import { IncidentCardComponent } from './incident-card/incident-card.component';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { BwpApiService, Driver } from '../../services/bwp-api.service';
@@ -32,13 +33,14 @@ import {
   IncidentsApiService,
   VerdictRule,
   DescriptionPreset,
+  BulkResolveIncident,
   BwpAuditEntry,
   BwpBackfillResult,
 } from '../../services/incidents-api.service';
 
 @Component({
   selector: 'app-incidents',
-  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, TextareaDirective, BadgeComponent, CardComponent, DetailListComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent],
+  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, TextareaDirective, BadgeComponent, CardComponent, DetailListComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent, IncidentCardComponent],
   templateUrl: './incidents.component.html',
   styleUrl: './incidents.component.scss',
 })
@@ -52,6 +54,18 @@ export class IncidentsComponent implements OnInit {
 
   readonly verdictRules = signal<VerdictRule[]>([]);
   readonly verdictPresets = computed(() => this.verdictRules().map(r => r.verdict));
+
+  /** The verdict pre-selected for every unresolved driver. */
+  readonly defaultRule = computed(
+    () => this.verdictRules().find(r => r.isDefault) ?? null
+  );
+
+  /** Verdict chips, default pinned first so muscle memory has a stable target. */
+  readonly orderedRules = computed(() =>
+    [...this.verdictRules()].sort(
+      (a, b) => Number(b.isDefault) - Number(a.isDefault) || a.sortOrder - b.sortOrder
+    )
+  );
 
   readonly descriptionPresets = signal<DescriptionPreset[]>([]);
   readonly descriptionPresetTexts = computed(() => this.descriptionPresets().map(p => p.text));
@@ -158,18 +172,9 @@ export class IncidentsComponent implements OnInit {
   niSubmitting = false;
   niError = '';
 
-  // ── Per-driver resolve state (keyed by incidentDriverId) ──────────
-  rvVerdicts: Record<string, string> = {};
-  rvBwpPoints: Record<string, number | null> = {};
-
-  // ── Per-incident resolve state (keyed by incidentId) ──────────────
-  rvDescriptions: Record<string, string> = {};
+  // ── Per-incident request state (drafts live inside the card) ──────
   rvIncSubmitting: Record<string, boolean> = {};
   rvIncError: Record<string, string> = {};
-
-  // ── Add driver state (keyed by incidentId) ─────────────────────────
-  addDriverName: Record<string, string> = {};
-  addDriverShown: Record<string, boolean> = {};
 
   private judgeDataLoaded = false;
   private adminDataLoaded = false;
@@ -388,59 +393,20 @@ export class IncidentsComponent implements OnInit {
 
   // ── Per-driver resolve ─────────────────────────────────────────────
 
-  initResolveFields(incident: Incident): void {
-    for (const driver of incident.drivers) {
-      if (this.rvVerdicts[driver.id] === undefined) {
-        this.rvVerdicts[driver.id] = driver.resolution?.verdict ?? '';
-        this.rvBwpPoints[driver.id] = driver.resolution?.bwpPoints ?? null;
-      }
-    }
-    if (this.rvDescriptions[incident.id] === undefined) {
-      const existing = incident.drivers.find(d => d.resolution?.description)?.resolution?.description;
-      this.rvDescriptions[incident.id] = existing ?? '';
-    }
-  }
-
-  onVerdictChange(driverId: string, verdict: string): void {
-    const rule = this.verdictRules().find(r => r.verdict === verdict);
-    if (rule) {
-      this.rvBwpPoints[driverId] = rule.defaultBwp;
-    }
-  }
-
-  async submitResolveIncident(incident: Incident): Promise<void> {
-    const drivers = incident.drivers.map(d => ({
-      incidentDriverId: d.id,
-      verdict: (this.rvVerdicts[d.id] ?? '').trim(),
-      bwpPoints: this.rvBwpPoints[d.id],
-    }));
-    const missing = drivers.filter(d => !d.verdict);
-    if (missing.length > 0) {
-      this.rvIncError[incident.id] = 'Verdict is required for all drivers.';
-      return;
-    }
+  async submitResolveIncident(incident: Incident, payload: BulkResolveIncident): Promise<void> {
     this.rvIncSubmitting[incident.id] = true;
     this.rvIncError[incident.id] = '';
     try {
-      await firstValueFrom(
-        this.incidentsApi.bulkResolveIncident(incident.id, {
-          description: this.rvDescriptions[incident.id]?.trim() || undefined,
-          drivers,
-        })
-      );
-      for (const d of incident.drivers) {
-        delete this.rvVerdicts[d.id];
-        delete this.rvBwpPoints[d.id];
-      }
-      delete this.rvDescriptions[incident.id];
+      await firstValueFrom(this.incidentsApi.bulkResolveIncident(incident.id, payload));
       const windowId = this.windowDetail()?.id;
       if (windowId) await this.selectWindow(windowId, true);
     } catch {
-      this.rvIncError[incident.id] = 'Failed to save verdicts.';
+      this.rvIncError[incident.id] = this.transloco.translate('incidents.saveFailed');
     } finally {
       this.rvIncSubmitting[incident.id] = false;
     }
   }
+
 
   // ── Publish / Duplicate / Add-Remove Driver ────────────────────────
 
@@ -459,16 +425,13 @@ export class IncidentsComponent implements OnInit {
     if (windowId) await this.selectWindow(windowId, true);
   }
 
-  async addIncidentDriver(incidentId: string): Promise<void> {
-    const name = (this.addDriverName[incidentId] ?? '').trim();
-    if (!name) return;
-    await firstValueFrom(this.incidentsApi.addDriverToIncident(incidentId, name));
-    this.addDriverName[incidentId] = '';
-    this.addDriverShown[incidentId] = false;
-    // Clear resolve state for this incident so initResolveFields re-runs
+  async addIncidentDriver(incidentId: string, name: string): Promise<void> {
+    if (!name.trim()) return;
+    await firstValueFrom(this.incidentsApi.addDriverToIncident(incidentId, name.trim()));
     const windowId = this.windowDetail()?.id;
     if (windowId) await this.selectWindow(windowId, true);
   }
+
 
   async removeIncidentDriver(incidentDriverId: string): Promise<void> {
     const ok = await this.confirmSvc.confirm({
@@ -491,18 +454,6 @@ export class IncidentsComponent implements OnInit {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────
-
-  driverNames(incident: Incident): string {
-    return incident.drivers.map((d) => d.driverName).join(', ');
-  }
-
-  driverStatusBadge(driver: IncidentDriver): { variant: BadgeVariant; label: string } {
-    if (!driver.resolution) return { variant: 'pending', label: 'Open' };
-    if (driver.resolution.verdict === 'NFA') return { variant: 'resolved', label: 'NFA' };
-    if (driver.resolution.bwpApplied) return { variant: 'applied', label: 'BWP Applied' };
-    if (driver.resolution.bwpPoints) return { variant: 'bwp-pending', label: 'BWP Pending' };
-    return { variant: 'resolved', label: 'Resolved' };
-  }
 
   // ── Copy decisions for Discord ─────────────────────────────────────
 

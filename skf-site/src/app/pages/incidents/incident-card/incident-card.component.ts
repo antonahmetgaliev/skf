@@ -1,0 +1,183 @@
+import { DatePipe } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  linkedSignal,
+  output,
+  signal,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { BadgeComponent, BadgeVariant } from '../../../components/badge/badge.component';
+import { BtnComponent } from '../../../components/btn/btn.component';
+import { InputDirective } from '../../../directives/input.directive';
+import { Driver } from '../../../services/bwp-api.service';
+import {
+  BulkResolveIncident,
+  Incident,
+  IncidentDriver,
+  VerdictRule,
+} from '../../../services/incidents-api.service';
+
+interface DriverDraft {
+  verdict: string;
+  bwpPoints: number | null;
+}
+
+@Component({
+  selector: 'app-incident-card',
+  standalone: true,
+  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, BadgeComponent, BtnComponent],
+  templateUrl: './incident-card.component.html',
+  styleUrl: './incident-card.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class IncidentCardComponent {
+  readonly incident = input.required<Incident>();
+  readonly index = input.required<number>();
+  readonly expanded = input(false);
+  readonly verdictRules = input<VerdictRule[]>([]);
+  readonly defaultRule = input<VerdictRule | null>(null);
+  readonly descriptionPresets = input<string[]>([]);
+  readonly knownDrivers = input<Driver[]>([]);
+  readonly canJudge = input(false);
+  readonly submitting = input(false);
+  readonly error = input('');
+
+  readonly toggle = output<void>();
+  readonly resolve = output<BulkResolveIncident>();
+  readonly addDriver = output<string>();
+  readonly removeDriver = output<string>();
+  readonly duplicate = output<void>();
+  readonly openDetail = output<void>();
+
+  /** Chips with the default pinned first, so muscle memory has a stable target. */
+  readonly orderedRules = computed(() =>
+    [...this.verdictRules()].sort(
+      (a, b) => Number(b.isDefault) - Number(a.isDefault) || a.sortOrder - b.sortOrder,
+    ),
+  );
+
+  /** Draft verdicts, reseeded whenever the incident is reloaded from the server.
+   *
+   * Unresolved drivers start on the default verdict, so pressing Save without
+   * touching anything resolves the whole incident correctly.
+   */
+  readonly drafts = linkedSignal<Incident, Record<string, DriverDraft>>({
+    source: this.incident,
+    computation: (incident) => {
+      const fallback = this.defaultRule();
+      const seeded: Record<string, DriverDraft> = {};
+      for (const d of incident.drivers) {
+        seeded[d.id] = {
+          verdict: d.resolution?.verdict ?? fallback?.verdict ?? '',
+          bwpPoints: d.resolution?.bwpPoints ?? fallback?.defaultBwp ?? null,
+        };
+      }
+      return seeded;
+    },
+  });
+
+  readonly description = linkedSignal<Incident, string>({
+    source: this.incident,
+    computation: (incident) =>
+      incident.drivers.find((d) => d.resolution?.description)?.resolution?.description ?? '',
+  });
+
+  readonly addDriverShown = signal(false);
+  readonly addDriverName = signal('');
+  readonly menuOpen = signal(false);
+
+  // ── Verdict selection ─────────────────────────────────────────────
+
+  draftFor(driverId: string): DriverDraft {
+    return this.drafts()[driverId] ?? { verdict: '', bwpPoints: null };
+  }
+
+  isSelected(driverId: string, rule: VerdictRule): boolean {
+    return this.draftFor(driverId).verdict === rule.verdict;
+  }
+
+  /** Picking a chip is an explicit choice, so it resets BWP to the rule's price. */
+  selectVerdict(driverId: string, rule: VerdictRule): void {
+    this.patch(driverId, { verdict: rule.verdict, bwpPoints: rule.defaultBwp });
+  }
+
+  setBwp(driverId: string, value: number | null): void {
+    this.patch(driverId, { bwpPoints: value });
+  }
+
+  setCustomVerdict(driverId: string, verdict: string): void {
+    this.patch(driverId, { verdict });
+  }
+
+  private patch(driverId: string, change: Partial<DriverDraft>): void {
+    this.drafts.update((all) => ({
+      ...all,
+      [driverId]: { ...this.draftFor(driverId), ...change },
+    }));
+  }
+
+  /** True when the chosen verdict is off-list, i.e. typed by hand. */
+  isCustom(driverId: string): boolean {
+    const v = this.draftFor(driverId).verdict;
+    return !!v && !this.verdictRules().some((r) => r.verdict === v);
+  }
+
+  /** BWP only earns a field when it is actually non-zero. */
+  showsBwp(driverId: string): boolean {
+    return !!this.draftFor(driverId).bwpPoints;
+  }
+
+  // ── Display helpers ───────────────────────────────────────────────
+
+  driverNames(): string {
+    return this.incident().drivers.map((d) => d.driverName).join(', ');
+  }
+
+  /** Penalties only: when everyone got the default there is nothing worth saying. */
+  penaltySummary(): string {
+    const fallback = this.defaultRule()?.verdict;
+    return this.incident()
+      .drivers.filter((d) => d.resolution && d.resolution.verdict !== fallback)
+      .map((d) => `${d.driverName} ${d.resolution!.verdict}`)
+      .join(' · ');
+  }
+
+  statusBadge(driver: IncidentDriver): { variant: BadgeVariant; label: string } {
+    // Deliberately blind to the verdict text: a league may rename or delete any
+    // rule, so behaviour keys off BWP, which is what actually has consequences.
+    if (!driver.resolution) return { variant: 'pending', label: 'incidents.statusOpen' };
+    if (driver.resolution.bwpApplied) return { variant: 'applied', label: 'incidents.bwpApplied' };
+    if (driver.resolution.bwpPoints) return { variant: 'bwp-pending', label: 'incidents.bwpPending' };
+    return { variant: 'resolved', label: 'incidents.resolved' };
+  }
+
+  // ── Actions ───────────────────────────────────────────────────────
+
+  submit(): void {
+    const drafts = this.drafts();
+    this.resolve.emit({
+      description: this.description().trim() || undefined,
+      // A blank verdict goes out as undefined so the server applies the default.
+      drivers: this.incident().drivers.map((d) => {
+        const verdict = (drafts[d.id]?.verdict ?? '').trim();
+        return {
+          incidentDriverId: d.id,
+          verdict: verdict || undefined,
+          bwpPoints: verdict ? drafts[d.id]?.bwpPoints : undefined,
+        };
+      }),
+    });
+  }
+
+  confirmAddDriver(): void {
+    const name = this.addDriverName().trim();
+    if (!name) return;
+    this.addDriver.emit(name);
+    this.addDriverName.set('');
+    this.addDriverShown.set(false);
+  }
+}

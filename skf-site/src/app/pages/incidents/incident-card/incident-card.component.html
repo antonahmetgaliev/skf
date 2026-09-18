@@ -1,0 +1,178 @@
+<div class="incident-card"
+  [class.incident-card--resolved]="incident().status === 'resolved'"
+  [class.incident-card--filed]="incident().source === 'filed'">
+
+  <div class="incident-card-header" (click)="toggle.emit()">
+    <span class="incident-num">#{{ index() }}</span>
+    @if (incident().source === 'filed') {
+      <span class="incident-source incident-source--filed">{{ 'incidents.report' | transloco }}</span>
+    } @else {
+      <span class="incident-source incident-source--ingested">{{ 'incidents.auto' | transloco }}</span>
+    }
+
+    <div class="incident-header-main">
+      <span class="incident-drivers">{{ driverNames() }}</span>
+      @if (penaltySummary(); as summary) {
+        <span class="incident-penalties">· {{ summary }}</span>
+      }
+      @if (incident().description && !expanded()) {
+        <span class="incident-header-desc">{{ incident().description }}</span>
+      }
+    </div>
+
+    @if (incident().sessionName) {
+      <span class="incident-session">{{ incident().sessionName }}</span>
+    }
+    @if (incident().time) {
+      <span class="incident-time">{{ incident().time }}</span>
+    }
+    @if (incident().lap) {
+      <span class="incident-session">{{ 'incidents.lap' | transloco }} {{ incident().lap }}</span>
+    }
+    @if (incident().corner) {
+      <span class="incident-time">{{ incident().corner }}</span>
+    }
+
+    <div class="incident-status">
+      @if (incident().status === 'resolved') {
+        <app-badge variant="resolved">{{ 'incidents.resolved' | transloco }}</app-badge>
+      } @else {
+        <app-badge variant="pending">{{ 'incidents.statusOpen' | transloco }}</app-badge>
+      }
+    </div>
+    <span class="incident-chevron" [class.incident-chevron--open]="expanded()">▸</span>
+  </div>
+
+  @if (expanded()) {
+    <div class="incident-card-body">
+      @if (incident().description) {
+        <div class="incident-description">
+          <span class="label-eyebrow">{{ 'incidents.description' | transloco }}</span>
+          <p class="desc-cell">{{ incident().description }}</p>
+        </div>
+      }
+
+      <div class="driver-rows">
+        @for (drv of incident().drivers; track drv.id) {
+          <div class="driver-row">
+            <div class="driver-row-header">
+              <span class="driver-name">{{ drv.driverName }}</span>
+              @if (!drv.driverId) {
+                <app-badge variant="bwp-pending">{{ 'incidents.notLinked' | transloco }}</app-badge>
+              }
+              <app-badge [variant]="statusBadge(drv).variant">{{ statusBadge(drv).label | transloco }}</app-badge>
+              <span class="driver-row-spacer"></span>
+              @if (canJudge() && incident().drivers.length > 1) {
+                <button class="row-remove" type="button"
+                  [attr.aria-label]="'incidents.removeFromIncident' | transloco"
+                  [title]="'incidents.removeFromIncident' | transloco"
+                  (click)="removeDriver.emit(drv.id)">×</button>
+              }
+            </div>
+
+            @if (canJudge()) {
+              <div class="verdict-row">
+                <div class="chips" role="radiogroup" [attr.aria-label]="'incidents.verdict' | transloco">
+                  @for (rule of orderedRules(); track rule.id) {
+                    <button class="chip" type="button" role="radio"
+                      [class.chip--selected]="isSelected(drv.id, rule)"
+                      [attr.aria-checked]="isSelected(drv.id, rule)"
+                      [attr.tabindex]="isSelected(drv.id, rule) ? 0 : -1"
+                      (click)="selectVerdict(drv.id, rule)">
+                      {{ rule.verdict }}@if (rule.defaultBwp) {<sup>{{ rule.defaultBwp }}</sup>}
+                    </button>
+                  }
+                </div>
+
+                @if (showsBwp(drv.id)) {
+                  <div class="bwp-field">
+                    <label class="label-eyebrow" [for]="'rv-bwp-' + drv.id">BWP</label>
+                    <input appInput size="sm" type="number" min="0"
+                      [id]="'rv-bwp-' + drv.id"
+                      [ngModel]="draftFor(drv.id).bwpPoints"
+                      (ngModelChange)="setBwp(drv.id, $event)" />
+                  </div>
+                }
+              </div>
+
+              @if (isCustom(drv.id)) {
+                <input appInput size="sm" type="text" class="custom-verdict"
+                  [ngModel]="draftFor(drv.id).verdict"
+                  (ngModelChange)="setCustomVerdict(drv.id, $event)"
+                  [placeholder]="'incidents.customVerdict' | transloco" />
+              }
+            } @else if (drv.resolution) {
+              <div class="driver-resolution">
+                <span class="resolution-verdict">{{ drv.resolution.verdict }}</span>
+                @if (drv.resolution.bwpPoints) {
+                  <span class="resolution-bwp">{{ drv.resolution.bwpPoints }} BWP</span>
+                }
+                @if (drv.resolution.description) {
+                  <span class="resolution-description">{{ drv.resolution.description }}</span>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      @if (canJudge()) {
+        @if (addDriverShown()) {
+          <div class="add-driver-row">
+            <input type="text" appInput size="sm"
+              [attr.list]="'add-drv-list-' + incident().id"
+              [ngModel]="addDriverName()"
+              (ngModelChange)="addDriverName.set($event)"
+              [placeholder]="'incidents.driverNamePlaceholder' | transloco"
+              autocomplete="off" />
+            <datalist [id]="'add-drv-list-' + incident().id">
+              @for (d of knownDrivers(); track d.id) {
+                <option [value]="d.name"></option>
+              }
+            </datalist>
+            <app-btn variant="accent" size="sm" (click)="confirmAddDriver()"
+              [disabled]="!addDriverName().trim()">{{ 'incidents.add' | transloco }}</app-btn>
+            <button class="btn-link btn-link--muted" type="button"
+              (click)="addDriverShown.set(false)">{{ 'incidents.cancel' | transloco }}</button>
+          </div>
+        }
+
+        <div class="incident-resolve-footer">
+          <div class="resolve-field resolve-field--description">
+            <label class="label-eyebrow" [for]="'rv-desc-' + incident().id">{{ 'incidents.decisionDescription' | transloco }}</label>
+            <input appInput size="sm" type="text"
+              [id]="'rv-desc-' + incident().id"
+              [attr.list]="'desc-options-' + incident().id"
+              [ngModel]="description()"
+              (ngModelChange)="description.set($event)"
+              [placeholder]="'incidents.chooseOrTypeDescription' | transloco"
+              autocomplete="off" />
+            <datalist [id]="'desc-options-' + incident().id">
+              @for (opt of descriptionPresets(); track opt) {
+                <option [value]="opt"></option>
+              }
+            </datalist>
+          </div>
+          <app-btn variant="accent" size="sm" [disabled]="submitting()" (click)="submit()">
+            {{ submitting() ? ('incidents.saving' | transloco) : ('incidents.save' | transloco) }}
+          </app-btn>
+          @if (error()) {
+            <p class="resolve-error">{{ error() }}</p>
+          }
+        </div>
+      }
+
+      <div class="incident-card-footer">
+        <span class="incident-filed">{{ 'incidents.filed' | transloco }} {{ incident().createdAt | date:'dd MMM yyyy HH:mm' }}</span>
+        <div class="footer-actions">
+          <button class="btn-link" type="button" (click)="openDetail.emit()">{{ 'incidents.fullDetail' | transloco }}</button>
+          @if (canJudge()) {
+            <button class="btn-link" type="button"
+              (click)="addDriverShown.set(!addDriverShown())">{{ 'incidents.addDriver' | transloco }}</button>
+            <button class="btn-link" type="button" (click)="duplicate.emit()">{{ 'incidents.duplicate' | transloco }}</button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>
