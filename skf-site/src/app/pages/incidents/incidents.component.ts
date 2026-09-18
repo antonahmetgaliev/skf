@@ -625,11 +625,13 @@ export class IncidentsComponent implements OnInit {
 
   readonly showSettingsModal = signal(false);
   readonly settingsTab = signal('verdicts');
-  readonly settingsTabs = [
+  // Judges share this modal with admins, but the BWP audit is admin-only work.
+  // Offering them the tab would just open an empty panel.
+  readonly settingsTabs = computed(() => [
     { key: 'verdicts', label: 'incidents.tabVerdicts' },
     { key: 'descriptions', label: 'incidents.tabDescriptions' },
-    { key: 'unlinked', label: 'incidents.unlinkedPenalties' },
-  ];
+    ...(this.auth.isAdmin() ? [{ key: 'unlinked', label: 'incidents.unlinkedPenalties' }] : []),
+  ]);
 
   async loadVerdictRules(): Promise<void> {
     try {

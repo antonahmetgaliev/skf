@@ -277,7 +277,7 @@
      season, the race list changes every round, and they were competing for the
      same 260px column. -->
 <app-modal [title]="'incidents.settings' | transloco" width="lg" [(open)]="showSettingsModal">
-  <app-tabs [tabs]="settingsTabs" [activeTab]="settingsTab()" (tabChange)="settingsTab.set($event)" />
+  <app-tabs [tabs]="settingsTabs()" [activeTab]="settingsTab()" (tabChange)="settingsTab.set($event)" />
 
   @if (settingsTab() === 'verdicts') {
     <div class="settings-panel">
