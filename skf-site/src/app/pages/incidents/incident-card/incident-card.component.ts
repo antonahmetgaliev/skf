@@ -65,10 +65,15 @@ export class IncidentCardComponent {
    * Unresolved drivers start on the default verdict, so pressing Save without
    * touching anything resolves the whole incident correctly.
    */
-  readonly drafts = linkedSignal<Incident, Record<string, DriverDraft>>({
-    source: this.incident,
-    computation: (incident) => {
-      const fallback = this.defaultRule();
+  readonly drafts = linkedSignal<
+    { incident: Incident; fallback: VerdictRule | null },
+    Record<string, DriverDraft>
+  >({
+    // Keyed on the default rule as well as the incident: verdict rules load
+    // asynchronously, and seeding before they arrive would leave every driver
+    // blank with no second chance to pre-select.
+    source: () => ({ incident: this.incident(), fallback: this.defaultRule() }),
+    computation: ({ incident, fallback }) => {
       const seeded: Record<string, DriverDraft> = {};
       for (const d of incident.drivers) {
         seeded[d.id] = {
