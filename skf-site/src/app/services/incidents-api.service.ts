@@ -58,6 +58,11 @@ export interface IncidentWindowOut extends IncidentWindowListItem {
   incidents: Incident[];
 }
 
+export interface ResolveRemainingResult extends IncidentWindowOut {
+  /** How many drivers the default verdict was just applied to. */
+  resolvedCount: number;
+}
+
 export interface PublishWindowResult extends IncidentWindowOut {
   /** Penalties that reached no licence because the driver name never matched. */
   unlinkedCount: number;
@@ -181,6 +186,14 @@ export class IncidentsApiService {
     return this.http.post<Incident>(
       `${this.base}/windows/${windowId}/incidents`,
       payload
+    );
+  }
+
+  /** Applies the default verdict to everyone in the window still awaiting one. */
+  resolveRemaining(windowId: string): Observable<ResolveRemainingResult> {
+    return this.http.post<ResolveRemainingResult>(
+      `${this.base}/windows/${windowId}/resolve-remaining`,
+      {}
     );
   }
 

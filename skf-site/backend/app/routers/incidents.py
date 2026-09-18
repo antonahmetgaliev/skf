@@ -34,6 +34,7 @@ from app.schemas.incidents import (
     IncidentWindowOut,
     IncidentWindowUpdate,
     PublishWindowOut,
+    ResolveRemainingOut,
     ResolveDriverIncident,
     VerdictRuleCreate,
     VerdictRuleOut,
@@ -735,6 +736,71 @@ async def bulk_resolve_incident(
         .where(Incident.id == incident_id)
     )
     return result.scalar_one()
+
+
+# ── Resolve everything still open in a window ────────────────────────────────
+
+@router.post(
+    "/windows/{window_id}/resolve-remaining",
+    response_model=ResolveRemainingOut,
+)
+async def resolve_remaining_in_window(
+    window_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_judge),
+):
+    """Apply the default verdict to every driver in the window still awaiting one.
+
+    One request for the whole round rather than one per incident: a steward
+    closing out a race weekend should not be firing dozens of calls, and this
+    way the round is resolved atomically or not at all. Drivers that already
+    have a resolution are left exactly as the judge left them.
+    """
+    window = await _get_window_or_404(window_id, db)
+
+    unresolved = [
+        drv
+        for incident in window.incidents
+        for drv in incident.drivers
+        if drv.resolution is None
+    ]
+    if not unresolved:
+        return ResolveRemainingOut(
+            **IncidentWindowOut.model_validate(window).model_dump(by_alias=False),
+            resolved_count=0,
+        )
+
+    default_rule = await _get_default_verdict_rule(db)
+    if default_rule is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="No default verdict is configured.",
+        )
+
+    for drv in unresolved:
+        db.add(IncidentResolution(
+            incident_driver_id=drv.id,
+            judge_user_id=user.id,
+            # The verdict text, never a reference — renaming the rule later
+            # must not rewrite decisions already handed down.
+            verdict=default_rule.verdict,
+            bwp_points=default_rule.default_bwp,
+        ))
+
+    await db.flush()
+    for incident in window.incidents:
+        await _update_incident_status(incident.id, db)
+    await db.commit()
+
+    db.expire(window)
+    result = await db.execute(
+        _window_with_incidents_query().where(IncidentWindow.id == window_id)
+    )
+    refreshed = result.scalar_one()
+    return ResolveRemainingOut(
+        **IncidentWindowOut.model_validate(refreshed).model_dump(by_alias=False),
+        resolved_count=len(unresolved),
+    )
 
 
 # ── Publish all incidents in a window ────────────────────────────────────────

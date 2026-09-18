@@ -193,8 +193,12 @@
           <div class="window-notice window-notice--warn">
             <span>{{ 'incidents.unresolvedRemaining' | transloco:{ count: unresolvedCount(w) } }}</span>
             @if (defaultRule(); as rule) {
-              <app-btn variant="outline" size="sm" (click)="resolveRemaining(w)">
-                {{ 'incidents.resolveRemainingAs' | transloco:{ verdict: rule.verdict } }}
+              <app-btn variant="outline" size="sm"
+                [disabled]="resolvingRemaining()"
+                (click)="resolveRemaining(w)">
+                {{ resolvingRemaining()
+                    ? ('incidents.resolving' | transloco)
+                    : ('incidents.resolveRemainingAs' | transloco:{ verdict: rule.verdict }) }}
               </app-btn>
             } @else {
               <span class="notice-hint">{{ 'incidents.noDefaultVerdictConfigured' | transloco }}</span>

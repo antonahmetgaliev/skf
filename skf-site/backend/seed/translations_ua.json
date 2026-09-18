@@ -342,6 +342,7 @@
   "incidents.resolveRemainingAs": "Розсудити решту як {{verdict}}",
   "incidents.resolved": "Вирішено",
   "incidents.resolvedOfTotal": "{{resolved}} з {{total}} розсуджено",
+  "incidents.resolving": "Розсуджую…",
   "incidents.save": "Зберегти",
   "incidents.saveFailed": "Не вдалося зберегти вердикти.",
   "incidents.saving": "Збереження…",

@@ -1085,6 +1085,89 @@ class TestBulkResolveDefaults:
 
 
 # =====================================================================
+# Resolve the rest of a window in one request
+# =====================================================================
+
+class TestResolveRemaining:
+    """Closing out a round is one call, not one call per incident."""
+
+    @pytest.mark.anyio
+    async def test_resolves_every_unresolved_driver(self, shared_client: AsyncClient):
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        await ac.post(RULES_URL, json={"verdict": "NFA", "defaultBwp": 0, "isDefault": True})
+        w_resp = await ac.post(
+            "/api/incidents/windows", json={"raceName": "Close Out", "intervalHours": 48}
+        )
+        window_id = w_resp.json()["id"]
+        for drivers in (["A1", "A2"], ["B1"], ["C1", "C2", "C3"]):
+            await ac.post(
+                f"/api/incidents/windows/{window_id}/incidents", json={"drivers": drivers}
+            )
+
+        # One incident already judged — it must not be overwritten.
+        w = await ac.get(f"/api/incidents/windows/{window_id}")
+        first = w.json()["incidents"][0]
+        _set_auth_user(ac._judge_user)
+        await ac.patch(
+            f"/api/incidents/{first['id']}/resolve",
+            json={
+                "drivers": [
+                    {"incidentDriverId": first["drivers"][0]["id"], "verdict": "DT", "bwpPoints": 6},
+                    {"incidentDriverId": first["drivers"][1]["id"], "verdict": "NFA", "bwpPoints": 0},
+                ]
+            },
+        )
+
+        resp = await ac.post(f"/api/incidents/windows/{window_id}/resolve-remaining")
+        assert resp.status_code == 200
+        assert resp.json()["resolvedCount"] == 4
+
+        detail = await ac.get(f"/api/incidents/windows/{window_id}")
+        for inc in detail.json()["incidents"]:
+            assert inc["status"] == "resolved"
+            for d in inc["drivers"]:
+                assert d["resolution"] is not None
+        judged = next(i for i in detail.json()["incidents"] if i["id"] == first["id"])
+        assert judged["drivers"][0]["resolution"]["verdict"] == "DT"
+        assert judged["drivers"][0]["resolution"]["bwpPoints"] == 6
+
+    @pytest.mark.anyio
+    async def test_without_default_rule_409(self, shared_client: AsyncClient):
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        w_resp = await ac.post(
+            "/api/incidents/windows", json={"raceName": "No Rule", "intervalHours": 48}
+        )
+        window_id = w_resp.json()["id"]
+        await ac.post(
+            f"/api/incidents/windows/{window_id}/incidents", json={"drivers": ["X"]}
+        )
+        _set_auth_user(ac._judge_user)
+        resp = await ac.post(f"/api/incidents/windows/{window_id}/resolve-remaining")
+        assert resp.status_code == 409
+
+    @pytest.mark.anyio
+    async def test_noop_when_everything_resolved(self, shared_client: AsyncClient):
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        await ac.post(RULES_URL, json={"verdict": "NFA", "defaultBwp": 0, "isDefault": True})
+        w_resp = await ac.post(
+            "/api/incidents/windows", json={"raceName": "Already Done", "intervalHours": 48}
+        )
+        window_id = w_resp.json()["id"]
+        _set_auth_user(ac._judge_user)
+        resp = await ac.post(f"/api/incidents/windows/{window_id}/resolve-remaining")
+        assert resp.status_code == 200
+        assert resp.json()["resolvedCount"] == 0
+
+    @pytest.mark.anyio
+    async def test_requires_judge(self, client: AsyncClient):
+        resp = await client.post(f"{WINDOWS_URL}/{uuid.uuid4()}/resolve-remaining")
+        assert resp.status_code in (401, 403)
+
+
+# =====================================================================
 # Description presets CRUD
 # =====================================================================
 

@@ -342,6 +342,7 @@
   "incidents.resolveRemainingAs": "Resolve remaining as {{verdict}}",
   "incidents.resolved": "Resolved",
   "incidents.resolvedOfTotal": "{{resolved}} of {{total}} resolved",
+  "incidents.resolving": "Resolving…",
   "incidents.save": "Save",
   "incidents.saveFailed": "Failed to save verdicts.",
   "incidents.saving": "Saving…",

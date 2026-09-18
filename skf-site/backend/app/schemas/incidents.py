@@ -186,6 +186,11 @@ class IncidentWindowOut(IncidentWindowListItem):
     incidents: list[IncidentOut] = []
 
 
+class ResolveRemainingOut(IncidentWindowOut):
+    # How many drivers the default verdict was just applied to.
+    resolved_count: int = 0
+
+
 class PublishWindowOut(IncidentWindowOut):
     # Penalties that could not reach a licence because the driver name never
     # matched a record. Reported out loud rather than lost in silence.

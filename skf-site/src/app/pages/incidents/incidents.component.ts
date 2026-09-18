@@ -156,6 +156,8 @@ export class IncidentsComponent implements OnInit {
       }));
   });
 
+  readonly resolvingRemaining = signal(false);
+
   // ── Publish preview ───────────────────────────────────────────────
   readonly showPublishPreview = signal(false);
   readonly publishing = signal(false);
@@ -520,19 +522,21 @@ export class IncidentsComponent implements OnInit {
     }
   }
 
-  /** Resolve every driver still lacking a verdict, using the default rule. */
+  /** Resolve every driver still lacking a verdict, using the default rule.
+   *
+   * One request for the whole round: the server walks the window, so a steward
+   * closing out a race weekend is not firing dozens of calls.
+   */
   async resolveRemaining(w: IncidentWindowOut): Promise<void> {
-    for (const inc of w.incidents) {
-      const unresolved = inc.drivers.filter(d => !d.resolution);
-      if (unresolved.length === 0) continue;
-      await firstValueFrom(
-        this.incidentsApi.bulkResolveIncident(inc.id, {
-          drivers: unresolved.map(d => ({ incidentDriverId: d.id })),
-        })
-      );
+    this.resolvingRemaining.set(true);
+    try {
+      await firstValueFrom(this.incidentsApi.resolveRemaining(w.id));
+      await this.selectWindow(w.id, true);
+    } finally {
+      this.resolvingRemaining.set(false);
     }
-    await this.selectWindow(w.id, true);
   }
+
 
   async duplicateIncident(incidentId: string): Promise<void> {
     await firstValueFrom(this.incidentsApi.duplicateIncident(incidentId));
