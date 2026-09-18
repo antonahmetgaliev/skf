@@ -954,6 +954,136 @@ class TestBulkResolve:
 
 
 # =====================================================================
+# Bulk resolve falls back to the default verdict rule
+# =====================================================================
+
+async def _window_with_drivers(ac: AsyncClient, name: str, drivers: list[str]):
+    """Create a window + one filed incident; return (window_id, incident_id, drivers)."""
+    _set_auth_user(ac._admin_user)
+    w_resp = await ac.post(
+        "/api/incidents/windows", json={"raceName": name, "intervalHours": 48}
+    )
+    window_id = w_resp.json()["id"]
+    await ac.post(
+        f"/api/incidents/windows/{window_id}/incidents", json={"drivers": drivers}
+    )
+    w = await ac.get(f"/api/incidents/windows/{window_id}")
+    inc = w.json()["incidents"][0]
+    return window_id, inc["id"], inc["drivers"]
+
+
+class TestBulkResolveDefaults:
+    """A steward names the exceptions; the server fills in the innocents."""
+
+    @pytest.mark.anyio
+    async def test_omitted_verdict_uses_default_rule(self, shared_client: AsyncClient):
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        await ac.post(RULES_URL, json={"verdict": "NFA", "defaultBwp": 0, "isDefault": True})
+
+        _, incident_id, drivers = await _window_with_drivers(
+            ac, "Five Car Pileup", ["D1", "D2", "D3", "D4", "D5"]
+        )
+
+        _set_auth_user(ac._judge_user)
+        resp = await ac.patch(
+            f"/api/incidents/{incident_id}/resolve",
+            json={
+                "drivers": [
+                    {"incidentDriverId": drivers[0]["id"], "verdict": "TP +10s", "bwpPoints": 2},
+                    {"incidentDriverId": drivers[1]["id"]},
+                    {"incidentDriverId": drivers[2]["id"]},
+                    {"incidentDriverId": drivers[3]["id"]},
+                    {"incidentDriverId": drivers[4]["id"]},
+                ],
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "resolved"
+        assert data["drivers"][0]["resolution"]["verdict"] == "TP +10s"
+        assert data["drivers"][0]["resolution"]["bwpPoints"] == 2
+        for d in data["drivers"][1:]:
+            assert d["resolution"]["verdict"] == "NFA"
+            assert d["resolution"]["bwpPoints"] == 0
+
+    @pytest.mark.anyio
+    async def test_omitted_verdict_without_default_rule_409(self, shared_client: AsyncClient):
+        ac = shared_client
+        _, incident_id, drivers = await _window_with_drivers(ac, "No Default", ["D1"])
+
+        _set_auth_user(ac._judge_user)
+        resp = await ac.patch(
+            f"/api/incidents/{incident_id}/resolve",
+            json={"drivers": [{"incidentDriverId": drivers[0]["id"]}]},
+        )
+        assert resp.status_code == 409
+
+    @pytest.mark.anyio
+    async def test_stored_verdict_is_text_not_reference(self, shared_client: AsyncClient):
+        """Renaming a rule must not rewrite verdicts already handed down."""
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        rule = (await ac.post(
+            RULES_URL, json={"verdict": "NFA", "defaultBwp": 0, "isDefault": True}
+        )).json()
+
+        window_id, incident_id, drivers = await _window_with_drivers(
+            ac, "Rename Later", ["D1"]
+        )
+
+        _set_auth_user(ac._judge_user)
+        await ac.patch(
+            f"/api/incidents/{incident_id}/resolve",
+            json={"drivers": [{"incidentDriverId": drivers[0]["id"]}]},
+        )
+
+        _set_auth_user(ac._admin_user)
+        await ac.patch(f"{RULES_URL}/{rule['id']}", json={"verdict": "No Further Action"})
+
+        resp = await ac.get(f"/api/incidents/windows/{window_id}")
+        inc = next(i for i in resp.json()["incidents"] if i["id"] == incident_id)
+        assert inc["drivers"][0]["resolution"]["verdict"] == "NFA"
+
+    @pytest.mark.anyio
+    async def test_partial_payload_does_not_wipe_description(
+        self, shared_client: AsyncClient
+    ):
+        """Saving one driver must not blank the decision text for the incident."""
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        await ac.post(RULES_URL, json={"verdict": "NFA", "defaultBwp": 0, "isDefault": True})
+
+        _, incident_id, drivers = await _window_with_drivers(ac, "Keep Desc", ["D1", "D2"])
+
+        _set_auth_user(ac._judge_user)
+        await ac.patch(
+            f"/api/incidents/{incident_id}/resolve",
+            json={
+                "description": "Causing a collision",
+                "drivers": [
+                    {"incidentDriverId": drivers[0]["id"], "verdict": "DT", "bwpPoints": 6},
+                    {"incidentDriverId": drivers[1]["id"]},
+                ],
+            },
+        )
+
+        # Second save omits description entirely — it must survive.
+        resp = await ac.patch(
+            f"/api/incidents/{incident_id}/resolve",
+            json={
+                "drivers": [
+                    {"incidentDriverId": drivers[0]["id"], "verdict": "TP +30s", "bwpPoints": 5},
+                ],
+            },
+        )
+        assert resp.status_code == 200
+        target = next(d for d in resp.json()["drivers"] if d["id"] == drivers[0]["id"])
+        assert target["resolution"]["verdict"] == "TP +30s"
+        assert target["resolution"]["description"] == "Causing a collision"
+
+
+# =====================================================================
 # Description presets CRUD
 # =====================================================================
 

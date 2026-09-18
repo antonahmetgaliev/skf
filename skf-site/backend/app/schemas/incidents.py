@@ -61,7 +61,9 @@ class ResolveDriverIncident(CamelModel):
 
 class ResolveDriverItem(CamelModel):
     incident_driver_id: uuid.UUID
-    verdict: str = Field(min_length=1)
+    # Omitted verdict means "apply the default rule" — the steward names the
+    # exceptions, the server fills in everyone else.
+    verdict: str | None = Field(default=None, min_length=1)
     bwp_points: int | None = Field(default=None, ge=0)
 
 

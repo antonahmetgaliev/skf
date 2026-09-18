@@ -675,6 +675,20 @@ async def bulk_resolve_incident(
     driver_map = {d.id: d for d in incident.drivers}
     now = datetime.now(timezone.utc)
 
+    # One lookup per request, and only when something actually needs it.
+    default_rule: VerdictRule | None = None
+    if any(p.verdict is None for p in payload.drivers):
+        default_rule = await _get_default_verdict_rule(db)
+        if default_rule is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="No default verdict is configured.",
+            )
+
+    # Only touch the description when it was actually sent. Writing it
+    # unconditionally let a partial save blank the text for the whole incident.
+    description_sent = "description" in payload.model_fields_set
+
     for drv_payload in payload.drivers:
         entry = driver_map.get(drv_payload.incident_driver_id)
         if entry is None:
@@ -682,19 +696,29 @@ async def bulk_resolve_incident(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Driver {drv_payload.incident_driver_id} not in this incident.",
             )
+        # Store the verdict *text*, never a reference: a published verdict must
+        # not change when the rule is later renamed or re-priced.
+        if drv_payload.verdict is None:
+            verdict = default_rule.verdict
+            bwp_points = default_rule.default_bwp
+        else:
+            verdict = drv_payload.verdict
+            bwp_points = drv_payload.bwp_points
+
         if entry.resolution is not None:
-            entry.resolution.verdict = drv_payload.verdict
-            entry.resolution.bwp_points = drv_payload.bwp_points
-            entry.resolution.description = payload.description
+            entry.resolution.verdict = verdict
+            entry.resolution.bwp_points = bwp_points
+            if description_sent:
+                entry.resolution.description = payload.description
             entry.resolution.judge_user_id = user.id
             entry.resolution.resolved_at = now
         else:
             db.add(IncidentResolution(
                 incident_driver_id=entry.id,
                 judge_user_id=user.id,
-                verdict=drv_payload.verdict,
-                bwp_points=drv_payload.bwp_points,
-                description=payload.description,
+                verdict=verdict,
+                bwp_points=bwp_points,
+                description=payload.description if description_sent else None,
             ))
 
     await db.flush()
