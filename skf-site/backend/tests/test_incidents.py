@@ -765,6 +765,106 @@ class TestVerdictRules:
 
 
 # =====================================================================
+# Default verdict rule (is_default)
+# =====================================================================
+
+class TestVerdictRuleDefault:
+    """Exactly one rule may be the default, and the DB itself enforces it."""
+
+    @pytest.mark.anyio
+    async def test_create_rule_with_is_default_demotes_previous(
+        self, admin_client: AsyncClient
+    ):
+        first = await admin_client.post(
+            RULES_URL, json={"verdict": "First Default", "defaultBwp": 0, "isDefault": True}
+        )
+        assert first.status_code == 201
+        assert first.json()["isDefault"] is True
+
+        second = await admin_client.post(
+            RULES_URL, json={"verdict": "Second Default", "defaultBwp": 0, "isDefault": True}
+        )
+        assert second.status_code == 201
+        assert second.json()["isDefault"] is True
+
+        rules = (await admin_client.get(RULES_URL)).json()
+        defaults = [r for r in rules if r["isDefault"]]
+        assert len(defaults) == 1
+        assert defaults[0]["verdict"] == "Second Default"
+
+    @pytest.mark.anyio
+    async def test_patch_is_default_true_moves_default(self, admin_client: AsyncClient):
+        a = (await admin_client.post(
+            RULES_URL, json={"verdict": "Rule A", "defaultBwp": 0, "isDefault": True}
+        )).json()
+        b = (await admin_client.post(
+            RULES_URL, json={"verdict": "Rule B", "defaultBwp": 2}
+        )).json()
+
+        resp = await admin_client.patch(f"{RULES_URL}/{b['id']}", json={"isDefault": True})
+        assert resp.status_code == 200
+        assert resp.json()["isDefault"] is True
+
+        rules = {r["id"]: r for r in (await admin_client.get(RULES_URL)).json()}
+        assert rules[a["id"]]["isDefault"] is False
+        assert rules[b["id"]]["isDefault"] is True
+
+    @pytest.mark.anyio
+    async def test_patch_is_default_false_rejected(self, admin_client: AsyncClient):
+        """Demoting directly would leave the league with no default at all."""
+        rule = (await admin_client.post(
+            RULES_URL, json={"verdict": "Sole Default", "defaultBwp": 0, "isDefault": True}
+        )).json()
+
+        resp = await admin_client.patch(f"{RULES_URL}/{rule['id']}", json={"isDefault": False})
+        assert resp.status_code == 400
+
+    @pytest.mark.anyio
+    async def test_delete_default_rule_conflicts(self, admin_client: AsyncClient):
+        rule = (await admin_client.post(
+            RULES_URL, json={"verdict": "Protected", "defaultBwp": 0, "isDefault": True}
+        )).json()
+
+        resp = await admin_client.delete(f"{RULES_URL}/{rule['id']}")
+        assert resp.status_code == 409
+
+    @pytest.mark.anyio
+    async def test_two_defaults_rejected_at_db_level(self, db: AsyncSession):
+        """Proves the partial unique index, not just the router logic."""
+        from sqlalchemy.exc import IntegrityError
+        from app.models.incidents import VerdictRule
+
+        db.add(VerdictRule(verdict="DB One", default_bwp=0, sort_order=1, is_default=True))
+        await db.commit()
+
+        db.add(VerdictRule(verdict="DB Two", default_bwp=0, sort_order=2, is_default=True))
+        with pytest.raises(IntegrityError):
+            await db.commit()
+        await db.rollback()
+
+    @pytest.mark.anyio
+    async def test_reorder_rules(self, admin_client: AsyncClient):
+        a = (await admin_client.post(RULES_URL, json={"verdict": "Ord A", "defaultBwp": 0})).json()
+        b = (await admin_client.post(RULES_URL, json={"verdict": "Ord B", "defaultBwp": 0})).json()
+        c = (await admin_client.post(RULES_URL, json={"verdict": "Ord C", "defaultBwp": 0})).json()
+
+        resp = await admin_client.put(
+            f"{RULES_URL}/order", json={"ids": [c["id"], a["id"], b["id"]]}
+        )
+        assert resp.status_code == 200
+
+        rules = (await admin_client.get(RULES_URL)).json()
+        verdicts = [r["verdict"] for r in rules if r["verdict"].startswith("Ord ")]
+        assert verdicts == ["Ord C", "Ord A", "Ord B"]
+
+    @pytest.mark.anyio
+    async def test_reorder_requires_judge(self, client: AsyncClient):
+        resp = await client.put(f"{RULES_URL}/order", json={"ids": []})
+        assert resp.status_code in (401, 403)
+
+
+
+# =====================================================================
 # Bulk resolve (one button per incident)
 # =====================================================================
 

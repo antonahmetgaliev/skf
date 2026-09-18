@@ -6,7 +6,7 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -34,6 +34,7 @@ from app.schemas.incidents import (
     ResolveDriverIncident,
     VerdictRuleCreate,
     VerdictRuleOut,
+    VerdictRuleReorder,
     VerdictRuleUpdate,
     DescriptionPresetCreate,
     DescriptionPresetOut,
@@ -104,6 +105,30 @@ async def _update_incident_status(incident_id: uuid.UUID, db: AsyncSession) -> N
     incident.status = "resolved" if all_resolved else "open"
 
 
+async def _promote_default_rule(rule_id: uuid.UUID, db: AsyncSession) -> None:
+    """Make *rule_id* the one default verdict.
+
+    Clear-then-set as two statements so the partial unique index is satisfied
+    at every statement boundary, not just at commit.
+    """
+    await db.execute(
+        update(VerdictRule)
+        .where(VerdictRule.is_default.is_(True))
+        .values(is_default=False)
+    )
+    await db.flush()
+    await db.execute(
+        update(VerdictRule).where(VerdictRule.id == rule_id).values(is_default=True)
+    )
+
+
+async def _get_default_verdict_rule(db: AsyncSession) -> VerdictRule | None:
+    result = await db.execute(
+        select(VerdictRule).where(VerdictRule.is_default.is_(True))
+    )
+    return result.scalar_one_or_none()
+
+
 # ── Verdict rules ────────────────────────────────────────────────────────────
 
 @router.get("/verdict-rules", response_model=list[VerdictRuleOut])
@@ -136,9 +161,33 @@ async def create_verdict_rule(
         sort_order=max_order + 1,
     )
     db.add(rule)
+    await db.flush()
+    if payload.is_default:
+        await _promote_default_rule(rule.id, db)
     await db.commit()
     await db.refresh(rule)
     return rule
+
+
+# Registered before the parameterised route so "order" is never read as an id.
+@router.put("/verdict-rules/order", response_model=list[VerdictRuleOut])
+async def reorder_verdict_rules(
+    payload: VerdictRuleReorder,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_judge),
+):
+    """Reassign sort_order to match the given id order.
+
+    sort_order has always existed and has always been the ORDER BY, but until
+    now the only way to change it was to delete a rule and recreate it.
+    """
+    for index, rule_id in enumerate(payload.ids):
+        await db.execute(
+            update(VerdictRule).where(VerdictRule.id == rule_id).values(sort_order=index)
+        )
+    await db.commit()
+    result = await db.execute(select(VerdictRule).order_by(VerdictRule.sort_order))
+    return result.scalars().all()
 
 
 @router.patch("/verdict-rules/{rule_id}", response_model=VerdictRuleOut)
@@ -156,6 +205,15 @@ async def update_verdict_rule(
         rule.verdict = payload.verdict
     if payload.default_bwp is not None:
         rule.default_bwp = payload.default_bwp
+    if payload.is_default is False:
+        # Demoting directly would leave the league with no default at all.
+        # The only way out of default is for another rule to take the role.
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Set another verdict rule as the default instead.",
+        )
+    if payload.is_default:
+        await _promote_default_rule(rule.id, db)
     await db.commit()
     await db.refresh(rule)
     return rule
@@ -171,6 +229,11 @@ async def delete_verdict_rule(
     rule = result.scalar_one_or_none()
     if rule is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Verdict rule not found.")
+    if rule.is_default:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Set another verdict rule as the default before deleting this one.",
+        )
     await db.delete(rule)
     await db.commit()
 

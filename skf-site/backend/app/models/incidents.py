@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text, func, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -163,6 +163,25 @@ class VerdictRule(Base):
     verdict: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     default_bwp: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # The verdict pre-selected for every driver in every incident. "At most one"
+    # is guaranteed by the partial unique index below rather than by app code,
+    # so a racing write cannot leave the league with two defaults.
+    is_default: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
+
+    __table_args__ = (
+        # Rows with is_default=false are unconstrained; at most one true.
+        # The sqlite_where twin matters: tests build the schema from metadata
+        # on SQLite, and without it the DB-level guarantee is untested.
+        Index(
+            "uq_verdict_rules_single_default",
+            "is_default",
+            unique=True,
+            postgresql_where=text("is_default"),
+            sqlite_where=text("is_default"),
+        ),
+    )
 
 
 class DescriptionPreset(Base):

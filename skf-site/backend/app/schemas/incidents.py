@@ -79,16 +79,23 @@ class VerdictRuleOut(CamelModel):
     verdict: str
     default_bwp: int
     sort_order: int
+    is_default: bool
 
 
 class VerdictRuleCreate(CamelModel):
     verdict: str = Field(min_length=1, max_length=100)
     default_bwp: int = Field(default=0, ge=0)
+    is_default: bool = False
 
 
 class VerdictRuleUpdate(CamelModel):
     verdict: str | None = Field(default=None, min_length=1, max_length=100)
     default_bwp: int | None = Field(default=None, ge=0)
+    is_default: bool | None = None
+
+
+class VerdictRuleReorder(CamelModel):
+    ids: list[uuid.UUID]
 
 
 # ── Description preset schemas ──────────────────────────────────────────────
