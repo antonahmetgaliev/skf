@@ -961,9 +961,14 @@
 }
 
 .col-bwp {
-  width: 72px;
+  width: 80px;
 
+  // The name column asks for 100%, which makes the browser squeeze every other
+  // column to its minimum content width. An explicit width on the input itself
+  // is what actually holds this column open — a width on the cell alone loses
+  // that fight and the number ends up clipped to nothing.
   input {
+    width: 68px;
     text-align: center;
   }
 }
