@@ -203,7 +203,11 @@
 .incidents-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  // The actions sit together as one group rather than being spread across the
+  // full width — they belong to each other, and a wide screen shouldn't put
+  // metres between "Copy for Discord" and "Publish".
+  gap: 0.5rem;
+  flex-wrap: wrap;
   margin-bottom: 0.85rem;
   padding-bottom: 0.6rem;
   border-bottom: 1px dashed var(--border-subtle);
@@ -215,6 +219,8 @@
   letter-spacing: var(--tracking-wide);
   color: var(--muted);
   font-weight: 600;
+  // Pushes the whole action group to the right edge.
+  margin-right: auto;
 }
 
 // ── Incident Cards ────────────────────────────────────────────────────────
