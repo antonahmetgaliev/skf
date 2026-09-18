@@ -730,3 +730,126 @@
   max-height: 60vh;
   overflow-y: auto;
 }
+
+// ── Window-level notices ──────────────────────────────────────────────────
+// Verdict visibility is a property of the round, so it is stated once above
+// the list instead of as a badge repeated on every card.
+.window-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0.85rem;
+  margin-bottom: 0.7rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--ink-soft);
+
+  &--warn {
+    background: rgba(255, 214, 0, 0.08);
+    border-color: rgba(255, 214, 0, 0.3);
+  }
+}
+
+.notice-hint {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+// ── Publish preview ───────────────────────────────────────────────────────
+.publish-summary {
+  margin: 0 0 0.6rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--separator);
+  font-size: var(--text-md);
+  color: var(--ink-soft);
+}
+
+// Capped so a 30-incident round cannot push the buttons off screen.
+.publish-list {
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin-bottom: 0.6rem;
+}
+
+.publish-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 100px 70px;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.35rem;
+  border-radius: var(--radius-xs);
+  font-size: var(--text-base);
+
+  &:nth-child(odd) {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  &--warn {
+    background: rgba(220, 100, 30, 0.1);
+
+    .publish-who {
+      color: #d4662a;
+    }
+  }
+}
+
+.publish-who {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.publish-session {
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.publish-verdict {
+  color: var(--ink-soft);
+}
+
+.publish-points {
+  color: var(--gold-deep);
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.publish-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.25rem 0.35rem 0.6rem 1rem;
+  font-size: var(--text-sm);
+  color: #d4662a;
+
+  input {
+    max-width: 220px;
+  }
+}
+
+.publish-rest,
+.publish-warn {
+  margin: 0.4rem 0 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.publish-warn {
+  color: #d4662a;
+}
+
+.publish-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.1rem;
+}

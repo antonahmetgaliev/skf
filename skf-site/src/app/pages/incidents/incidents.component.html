@@ -288,14 +288,22 @@
         </div>
 
         <div class="incidents-toolbar">
-          <span class="incident-count">{{ w.incidents.length }} incident{{ w.incidents.length !== 1 ? 's' : '' }}</span>
+          @if (w.incidents.length > 0) {
+            <span class="incident-count">
+              {{ 'incidents.resolvedOfTotal' | transloco:{ resolved: resolvedCount(w), total: w.incidents.length } }}
+            </span>
+          } @else {
+            <span class="incident-count">{{ 'incidents.noIncidents' | transloco }}</span>
+          }
           @if (auth.isAdmin() || auth.isJudge()) {
             <app-btn variant="ghost" size="sm" (click)="openDiscordPreview(w)">
               {{ 'incidents.copyForDiscord' | transloco }}
             </app-btn>
           }
           @if (auth.isJudge() && w.incidents.length > 0 && hasUnpublished(w)) {
-            <app-btn variant="accent" size="sm" (click)="publishAllIncidents(w.id)">
+            <app-btn variant="accent" size="sm"
+              [disabled]="unresolvedCount(w) > 0"
+              (click)="openPublishPreview(w)">
               {{ 'incidents.publishAllVerdicts' | transloco }}
             </app-btn>
           }
@@ -305,6 +313,27 @@
             </app-btn>
           }
         </div>
+
+        <!-- Hidden-ness is a property of the round, so it is stated once here
+             rather than repeated as a badge on every card. -->
+        @if (auth.isJudge() && w.incidents.length > 0 && hasUnpublished(w)) {
+          <div class="window-notice">
+            <span>{{ 'incidents.windowVerdictsHidden' | transloco }}</span>
+          </div>
+        }
+
+        @if (auth.isJudge() && unresolvedCount(w) > 0) {
+          <div class="window-notice window-notice--warn">
+            <span>{{ 'incidents.unresolvedRemaining' | transloco:{ count: unresolvedCount(w) } }}</span>
+            @if (defaultRule(); as rule) {
+              <button class="btn-link" type="button" (click)="resolveRemaining(w)">
+                {{ 'incidents.resolveRemainingAs' | transloco:{ verdict: rule.verdict } }}
+              </button>
+            } @else {
+              <span class="notice-hint">{{ 'incidents.noDefaultVerdictConfigured' | transloco }}</span>
+            }
+          </div>
+        }
 
         @if (w.incidents.length === 0) {
           <app-empty>{{ 'incidents.noIncidents' | transloco }}</app-empty>
@@ -363,6 +392,57 @@
     </section>
   </div>
 </app-page>
+
+<!-- ── Publish Preview Modal ─────────────────────────────────────────────── -->
+<app-modal [title]="'incidents.publishPreviewTitle' | transloco" width="lg" [(open)]="showPublishPreview">
+  <p class="publish-summary">
+    {{ 'incidents.publishPreviewSummary' | transloco:{ verdicts: publishVerdictCount(), points: publishBwpTotal() } }}
+  </p>
+
+  @if (publishPenalties().length > 0) {
+    <div class="publish-list">
+      @for (row of publishPenalties(); track row.incidentDriverId) {
+        <div class="publish-row" [class.publish-row--warn]="!row.linked">
+          <span class="publish-who">{{ row.driverName }}</span>
+          <span class="publish-session">{{ row.session }}</span>
+          <span class="publish-verdict">{{ row.verdict }}</span>
+          <span class="publish-points">{{ row.bwpPoints }} BWP</span>
+        </div>
+        @if (!row.linked) {
+          <div class="publish-note">
+            <span>{{ 'incidents.driverNotMatched' | transloco }}</span>
+            <input appInput size="sm" type="text"
+              [attr.list]="'link-drv-' + row.incidentDriverId"
+              [placeholder]="'incidents.driverNamePlaceholder' | transloco"
+              (change)="linkPenaltyDriver(row, $any($event.target).value)"
+              autocomplete="off" />
+            <datalist [id]="'link-drv-' + row.incidentDriverId">
+              @for (d of bwpDrivers(); track d.id) {
+                <option [value]="d.name"></option>
+              }
+            </datalist>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  @if (publishNoPenaltyCount() > 0) {
+    <p class="publish-rest">
+      {{ 'incidents.publishPreviewRestCount' | transloco:{ count: publishNoPenaltyCount() } }}
+    </p>
+  }
+  <p class="publish-warn">{{ 'incidents.publishPreviewWarning' | transloco }}</p>
+
+  <div class="publish-actions">
+    <app-btn variant="ghost" (click)="showPublishPreview.set(false)">
+      {{ 'incidents.cancel' | transloco }}
+    </app-btn>
+    <app-btn variant="accent" [disabled]="publishing()" (click)="confirmPublish()">
+      {{ publishing() ? ('incidents.publishing' | transloco) : ('incidents.publishAllVerdicts' | transloco) }}
+    </app-btn>
+  </div>
+</app-modal>
 
 <!-- ── New Window Modal ──────────────────────────────────────────────────── -->
 <app-modal [title]="'incidents.openIncidentWindow' | transloco" width="md" [(open)]="showNewWindowModal">

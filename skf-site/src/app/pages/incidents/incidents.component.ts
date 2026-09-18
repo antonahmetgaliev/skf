@@ -38,6 +38,16 @@ import {
   BwpBackfillResult,
 } from '../../services/incidents-api.service';
 
+/** A penalty about to be written to a licence by publishing. */
+export interface PendingPenalty {
+  driverName: string;
+  session: string;
+  verdict: string;
+  bwpPoints: number;
+  linked: boolean;
+  incidentDriverId: string;
+}
+
 @Component({
   selector: 'app-incidents',
   imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, TextareaDirective, BadgeComponent, CardComponent, DetailListComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent, IncidentCardComponent],
@@ -144,6 +154,17 @@ export class IncidentsComponent implements OnInit {
         filedItems: items.filter(i => i.source === 'filed').sort(sortByLapCorner),
       }));
   });
+
+  // ── Publish preview ───────────────────────────────────────────────
+  readonly showPublishPreview = signal(false);
+  readonly publishing = signal(false);
+  readonly publishPenalties = signal<PendingPenalty[]>([]);
+  readonly publishBwpTotal = signal(0);
+  readonly publishVerdictCount = signal(0);
+  readonly publishNoPenaltyCount = signal(0);
+  readonly hasUnlinkedPenalty = computed(() =>
+    this.publishPenalties().some(p => !p.linked)
+  );
 
   // ── Modal visibility ──────────────────────────────────────────────
   readonly showNewWindowModal = signal(false);
@@ -414,9 +435,102 @@ export class IncidentsComponent implements OnInit {
     return w.incidents.some(inc => !inc.isPublished);
   }
 
-  async publishAllIncidents(windowId: string): Promise<void> {
-    await firstValueFrom(this.incidentsApi.publishAllIncidents(windowId));
-    await this.selectWindow(windowId, true);
+  unresolvedCount(w: IncidentWindowOut): number {
+    return w.incidents.filter(inc => inc.status !== 'resolved').length;
+  }
+
+  resolvedCount(w: IncidentWindowOut): number {
+    return w.incidents.length - this.unresolvedCount(w);
+  }
+
+  /** Every penalty that publishing would irreversibly write to a licence. */
+  pendingPenalties(w: IncidentWindowOut): PendingPenalty[] {
+    const rows: PendingPenalty[] = [];
+    for (const inc of w.incidents) {
+      for (const drv of inc.drivers) {
+        const res = drv.resolution;
+        if (!res || !res.bwpPoints || res.bwpApplied) continue;
+        rows.push({
+          driverName: drv.driverName,
+          session: inc.sessionName ?? '',
+          verdict: res.verdict,
+          bwpPoints: res.bwpPoints,
+          linked: drv.driverId !== null,
+          incidentDriverId: drv.id,
+        });
+      }
+    }
+    return rows;
+  }
+
+  /** Verdicts going public that carry no penalty — named, not listed. */
+  pendingWithoutPenalty(w: IncidentWindowOut): number {
+    let count = 0;
+    for (const inc of w.incidents) {
+      for (const drv of inc.drivers) {
+        const res = drv.resolution;
+        if (res && !res.bwpPoints) count++;
+      }
+    }
+    return count;
+  }
+
+  totalPendingBwp(w: IncidentWindowOut): number {
+    return this.pendingPenalties(w)
+      .filter(p => p.linked)
+      .reduce((sum, p) => sum + p.bwpPoints, 0);
+  }
+
+  openPublishPreview(w: IncidentWindowOut): void {
+    this.publishPenalties.set(this.pendingPenalties(w));
+    this.publishBwpTotal.set(this.totalPendingBwp(w));
+    this.publishVerdictCount.set(
+      w.incidents.reduce((n, i) => n + i.drivers.filter(d => d.resolution).length, 0)
+    );
+    this.publishNoPenaltyCount.set(this.pendingWithoutPenalty(w));
+    this.showPublishPreview.set(true);
+  }
+
+  async confirmPublish(): Promise<void> {
+    const windowId = this.windowDetail()?.id;
+    if (!windowId) return;
+    this.publishing.set(true);
+    try {
+      await firstValueFrom(this.incidentsApi.publishAllIncidents(windowId));
+      this.showPublishPreview.set(false);
+      await this.selectWindow(windowId, true);
+    } finally {
+      this.publishing.set(false);
+    }
+  }
+
+  /** Attach an unmatched name to a real driver so the penalty can be issued. */
+  async linkPenaltyDriver(row: PendingPenalty, driverName: string): Promise<void> {
+    const driver = this.bwpDrivers().find(d => d.name === driverName);
+    if (!driver) return;
+    await firstValueFrom(
+      this.incidentsApi.linkIncidentDriver(row.incidentDriverId, driver.id)
+    );
+    const windowId = this.windowDetail()?.id;
+    if (windowId) {
+      await this.selectWindow(windowId, true);
+      const w = this.windowDetail();
+      if (w) this.openPublishPreview(w);
+    }
+  }
+
+  /** Resolve every driver still lacking a verdict, using the default rule. */
+  async resolveRemaining(w: IncidentWindowOut): Promise<void> {
+    for (const inc of w.incidents) {
+      const unresolved = inc.drivers.filter(d => !d.resolution);
+      if (unresolved.length === 0) continue;
+      await firstValueFrom(
+        this.incidentsApi.bulkResolveIncident(inc.id, {
+          drivers: unresolved.map(d => ({ incidentDriverId: d.id })),
+        })
+      );
+    }
+    await this.selectWindow(w.id, true);
   }
 
   async duplicateIncident(incidentId: string): Promise<void> {
