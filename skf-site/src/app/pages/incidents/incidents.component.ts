@@ -15,6 +15,7 @@ import { PageLayoutComponent } from '../../components/page-layout/page-layout.co
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { ModalComponent } from '../../components/modal/modal.component';
+import { TabsComponent } from '../../components/tabs/tabs.component';
 import { IncidentCardComponent } from './incident-card/incident-card.component';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
@@ -50,7 +51,7 @@ export interface PendingPenalty {
 
 @Component({
   selector: 'app-incidents',
-  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, TextareaDirective, BadgeComponent, CardComponent, DetailListComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent, IncidentCardComponent],
+  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, TextareaDirective, BadgeComponent, CardComponent, DetailListComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent, TabsComponent, IncidentCardComponent],
   templateUrl: './incidents.component.html',
   styleUrl: './incidents.component.scss',
 })
@@ -611,9 +612,20 @@ export class IncidentsComponent implements OnInit {
 
   newRuleVerdict = '';
   newRuleDefaultBwp = 0;
-  editingRuleId: string | null = null;
-  editRuleVerdict = '';
-  editRuleDefaultBwp = 0;
+
+  // Config is read-only until Edit is pressed: a stray click must not be able
+  // to rewrite the rules the whole league is judged against. Inside the mode
+  // every change saves immediately, so Done only locks it back.
+  readonly rulesEditMode = signal(false);
+  readonly presetsEditMode = signal(false);
+
+  readonly showSettingsModal = signal(false);
+  readonly settingsTab = signal('verdicts');
+  readonly settingsTabs = [
+    { key: 'verdicts', label: 'incidents.tabVerdicts' },
+    { key: 'descriptions', label: 'incidents.tabDescriptions' },
+    { key: 'unlinked', label: 'incidents.unlinkedPenalties' },
+  ];
 
   async loadVerdictRules(): Promise<void> {
     try {
@@ -635,26 +647,41 @@ export class IncidentsComponent implements OnInit {
     await this.loadVerdictRules();
   }
 
-  startEditRule(rule: VerdictRule): void {
-    this.editingRuleId = rule.id;
-    this.editRuleVerdict = rule.verdict;
-    this.editRuleDefaultBwp = rule.defaultBwp;
-  }
-
-  cancelEditRule(): void {
-    this.editingRuleId = null;
-  }
-
-  async saveEditRule(): Promise<void> {
-    if (!this.editingRuleId) return;
-    await firstValueFrom(
-      this.incidentsApi.updateVerdictRule(this.editingRuleId, {
-        verdict: this.editRuleVerdict.trim(),
-        defaultBwp: this.editRuleDefaultBwp,
-      })
-    );
-    this.editingRuleId = null;
+  async saveRuleVerdict(rule: VerdictRule, verdict: string): Promise<void> {
+    const trimmed = verdict.trim();
+    if (!trimmed || trimmed === rule.verdict) return;
+    await firstValueFrom(this.incidentsApi.updateVerdictRule(rule.id, { verdict: trimmed }));
     await this.loadVerdictRules();
+  }
+
+  async saveRuleBwp(rule: VerdictRule, value: string): Promise<void> {
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed < 0 || parsed === rule.defaultBwp) return;
+    await firstValueFrom(this.incidentsApi.updateVerdictRule(rule.id, { defaultBwp: parsed }));
+    await this.loadVerdictRules();
+  }
+
+  async setDefaultRule(rule: VerdictRule): Promise<void> {
+    if (rule.isDefault) return;
+    await firstValueFrom(this.incidentsApi.updateVerdictRule(rule.id, { isDefault: true }));
+    await this.loadVerdictRules();
+  }
+
+  /** Move a rule one slot; sort_order has existed all along with no way to set it. */
+  async moveRule(index: number, delta: number): Promise<void> {
+    const ids = this.verdictRules().map(r => r.id);
+    const target = index + delta;
+    if (target < 0 || target >= ids.length) return;
+    [ids[index], ids[target]] = [ids[target], ids[index]];
+    await firstValueFrom(this.incidentsApi.reorderVerdictRules(ids));
+    await this.loadVerdictRules();
+  }
+
+  async savePresetText(preset: DescriptionPreset, text: string): Promise<void> {
+    const trimmed = text.trim();
+    if (!trimmed || trimmed === preset.text) return;
+    await firstValueFrom(this.incidentsApi.updateDescriptionPreset(preset.id, { text: trimmed }));
+    await this.loadDescriptionPresets();
   }
 
   async deleteVerdictRule(id: string): Promise<void> {
@@ -672,8 +699,6 @@ export class IncidentsComponent implements OnInit {
   // ── Description presets CRUD ───────────────────────────────────────
 
   newPresetText = '';
-  editingPresetId: string | null = null;
-  editPresetText = '';
 
   async loadDescriptionPresets(): Promise<void> {
     try {
@@ -688,26 +713,6 @@ export class IncidentsComponent implements OnInit {
       this.incidentsApi.createDescriptionPreset({ text: this.newPresetText.trim() })
     );
     this.newPresetText = '';
-    await this.loadDescriptionPresets();
-  }
-
-  startEditPreset(preset: DescriptionPreset): void {
-    this.editingPresetId = preset.id;
-    this.editPresetText = preset.text;
-  }
-
-  cancelEditPreset(): void {
-    this.editingPresetId = null;
-  }
-
-  async saveEditPreset(): Promise<void> {
-    if (!this.editingPresetId) return;
-    await firstValueFrom(
-      this.incidentsApi.updateDescriptionPreset(this.editingPresetId, {
-        text: this.editPresetText.trim(),
-      })
-    );
-    this.editingPresetId = null;
     await this.loadDescriptionPresets();
   }
 
