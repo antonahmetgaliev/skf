@@ -183,10 +183,14 @@ pre {
     color: var(--muted);
   }
 
+  /* Compact control for dense contexts — settings tables, inline row editors,
+     toolbars. Only the box shrinks; the text stays at --text-sm so a smaller
+     control never costs legibility. Textarea keeps its auto height, set below. */
   &--sm {
-    height: 2.5rem;
-    padding: 0.5rem 0.75rem;
+    height: 2.1rem;
+    padding: 0.35rem 0.6rem;
     font-size: var(--text-sm);
+    border-radius: var(--radius-sm);
   }
 }
 
