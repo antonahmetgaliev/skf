@@ -14,6 +14,7 @@ from app.auth import get_current_user, get_current_user_optional, require_admin,
 from app.database import get_db
 from app.models.bwp import BwpPoint, Driver
 from app.services.driver_matching import match_driver_id_by_name
+from app.services.incident_bwp import apply_resolution_bwp
 from app.services.simgrid import simgrid_service
 from app.models.incidents import (
     Incident, IncidentDriver, IncidentResolution, IncidentWindow, VerdictRule,
@@ -24,6 +25,7 @@ from app.schemas.incidents import (
     BulkResolveIncident,
     IncidentBatchCreate,
     IncidentDriverAdd,
+    IncidentDriverLink,
     IncidentFileCreate,
     IncidentOut,
     IncidentDriverOut,
@@ -31,6 +33,7 @@ from app.schemas.incidents import (
     IncidentWindowListItem,
     IncidentWindowOut,
     IncidentWindowUpdate,
+    PublishWindowOut,
     ResolveDriverIncident,
     VerdictRuleCreate,
     VerdictRuleOut,
@@ -738,16 +741,35 @@ async def bulk_resolve_incident(
 
 @router.post(
     "/windows/{window_id}/publish-all",
-    response_model=IncidentWindowOut,
+    response_model=PublishWindowOut,
 )
 async def publish_all_incidents(
     window_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_judge),
 ):
+    """Reveal every verdict in the window and issue the BWP they carry.
+
+    Publishing is the single point where verdicts become visible and penalties
+    reach licences, so both happen in one transaction. Re-publishing is safe:
+    apply_resolution_bwp short-circuits on already-applied resolutions.
+    """
     window = await _get_window_or_404(window_id, db)
+    if not window.incidents:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This window has no incidents to publish.",
+        )
+
+    unlinked = 0
     for incident in window.incidents:
         incident.is_published = True
+        for drv in incident.drivers:
+            await apply_resolution_bwp(drv, db)
+            res = drv.resolution
+            if res is not None and res.bwp_points and not res.bwp_applied:
+                unlinked += 1
+
     await db.commit()
     db.expire(window)
     result = await db.execute(
@@ -759,114 +781,40 @@ async def publish_all_incidents(
         )
         .where(IncidentWindow.id == window_id)
     )
-    return result.scalar_one()
+    published = result.scalar_one()
+    return PublishWindowOut(
+        **IncidentWindowOut.model_validate(published).model_dump(by_alias=False),
+        unlinked_count=unlinked,
+    )
 
 
-# ── Publish incident ──────────────────────────────────────────────────────────
+# ── Link an incident driver to a driver record ───────────────────────────────
 
-@router.post(
-    "/{incident_id}/publish",
-    response_model=IncidentOut,
+@router.patch(
+    "/drivers/{incident_driver_id}/link",
+    response_model=IncidentDriverOut,
 )
-async def publish_incident(
-    incident_id: uuid.UUID,
+async def link_incident_driver(
+    incident_driver_id: uuid.UUID,
+    payload: IncidentDriverLink,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_judge),
 ):
-    result = await db.execute(
-        select(Incident)
-        .options(selectinload(Incident.drivers).selectinload(IncidentDriver.resolution))
-        .where(Incident.id == incident_id)
-    )
-    incident = result.scalar_one_or_none()
-    if incident is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incident not found.")
-    incident.is_published = True
-    await db.commit()
-    await db.refresh(incident)
-    return incident
+    """Attach a free-text incident driver to an actual driver record.
 
-
-# ── BWP apply / discard ─────────────────────────────────────────────────────
-
-@router.patch(
-    "/drivers/{incident_driver_id}/apply-bwp",
-    response_model=IncidentDriverOut,
-)
-async def apply_bwp(
-    incident_driver_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_admin),
-):
+    Names arrive as free text from the ingest bot and from whoever files an
+    incident, and are matched by exact (case-insensitive) equality. Anything
+    the matcher misses — a typo, a nickname, a transliteration — needs a human
+    to say who this is; backfill cannot, because it matches by the same rule
+    that already failed.
+    """
     entry = await _get_incident_driver_or_404(incident_driver_id, db)
-    if entry.resolution is None:
+    driver = await db.get(Driver, payload.driver_id)
+    if driver is None:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Driver has not been resolved yet.",
+            status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found."
         )
-    if not entry.resolution.bwp_points:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="No BWP points to apply.",
-        )
-    if entry.resolution.bwp_applied:
-        # Idempotent: a double-click must not issue the penalty twice.
-        return entry
-    entry.resolution.bwp_applied = True
-
-    # If not already linked, try to match driver by name
-    if not entry.driver_id:
-        matched_id = await _match_driver(entry.driver_name, db)
-        if matched_id:
-            entry.driver_id = matched_id
-
-    # Auto-create BwpPoint if driver is linked
-    if entry.driver_id:
-        today = date.today()
-        point = BwpPoint(
-            driver_id=entry.driver_id,
-            points=entry.resolution.bwp_points,
-            issued_on=today,
-            expires_on=today + timedelta(days=90),
-        )
-        db.add(point)
-        await db.flush()
-        # Remember which point this apply created, so discard can undo it.
-        entry.resolution.applied_bwp_point_id = point.id
-
-    await db.commit()
-    return await _get_incident_driver_or_404(incident_driver_id, db)
-
-
-@router.patch(
-    "/drivers/{incident_driver_id}/discard",
-    response_model=IncidentDriverOut,
-)
-async def discard_bwp(
-    incident_driver_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_admin),
-):
-    entry = await _get_incident_driver_or_404(incident_driver_id, db)
-    if entry.resolution is None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Driver has not been resolved yet.",
-        )
-    # Undo the BwpPoint a previous apply created — otherwise the penalty
-    # silently stays on the driver's license forever.
-    if entry.resolution.applied_bwp_point_id is not None:
-        point_result = await db.execute(
-            select(BwpPoint).where(
-                BwpPoint.id == entry.resolution.applied_bwp_point_id
-            )
-        )
-        point = point_result.scalar_one_or_none()
-        if point is not None:
-            await db.delete(point)
-        entry.resolution.applied_bwp_point_id = None
-    entry.resolution.bwp_points = None
-    entry.resolution.bwp_applied = False
+    entry.driver_id = driver.id
     await db.commit()
     return await _get_incident_driver_or_404(incident_driver_id, db)
 
@@ -931,12 +879,17 @@ async def bwp_backfill(
         bwp_pts = inc_drv.resolution.bwp_points or 0
         if bwp_pts:
             today = date.today()
-            db.add(BwpPoint(
+            point = BwpPoint(
                 driver_id=drv.id,
                 points=bwp_pts,
                 issued_on=today,
                 expires_on=today + timedelta(days=90),
-            ))
+            )
+            db.add(point)
+            await db.flush()
+            # Without this link the backfilled point could never be traced
+            # back to the resolution that caused it.
+            inc_drv.resolution.applied_bwp_point_id = point.id
         fixed += 1
 
     await db.commit()

@@ -453,12 +453,6 @@ export class IncidentsComponent implements OnInit {
     await this.selectWindow(windowId, true);
   }
 
-  async publishIncident(incidentId: string): Promise<void> {
-    await firstValueFrom(this.incidentsApi.publishIncident(incidentId));
-    const windowId = this.windowDetail()?.id;
-    if (windowId) await this.selectWindow(windowId, true);
-  }
-
   async duplicateIncident(incidentId: string): Promise<void> {
     await firstValueFrom(this.incidentsApi.duplicateIncident(incidentId));
     const windowId = this.windowDetail()?.id;
@@ -489,27 +483,6 @@ export class IncidentsComponent implements OnInit {
     if (windowId) await this.selectWindow(windowId, true);
   }
 
-  // ── Apply / Discard BWP ────────────────────────────────────────────
-
-  async applyDriverBwp(driverId: string): Promise<void> {
-    await firstValueFrom(this.incidentsApi.applyDriverBwp(driverId));
-    const windowId = this.windowDetail()?.id;
-    if (windowId) await this.selectWindow(windowId, true);
-  }
-
-  async discardDriverBwp(driverId: string): Promise<void> {
-    const ok = await this.confirmSvc.confirm({
-      title: this.transloco.translate('common.confirm.title'),
-      message: this.transloco.translate('incidents.discardBwpConfirm'),
-      confirmLabel: this.transloco.translate('common.confirm.confirm'),
-      danger: true,
-    });
-    if (!ok) return;
-    await firstValueFrom(this.incidentsApi.discardDriverBwp(driverId));
-    const windowId = this.windowDetail()?.id;
-    if (windowId) await this.selectWindow(windowId, true);
-  }
-
   // ── Detail modal ───────────────────────────────────────────────────
 
   openDetailModal(incident: Incident): void {
@@ -521,11 +494,6 @@ export class IncidentsComponent implements OnInit {
 
   driverNames(incident: Incident): string {
     return incident.drivers.map((d) => d.driverName).join(', ');
-  }
-
-  /** Returns drivers that have a resolution with BWP points (for the always-visible BWP strip). */
-  bwpResolvedDrivers(incident: Incident): IncidentDriver[] {
-    return incident.drivers.filter(d => d.resolution && d.resolution.bwpPoints);
   }
 
   driverStatusBadge(driver: IncidentDriver): { variant: BadgeVariant; label: string } {

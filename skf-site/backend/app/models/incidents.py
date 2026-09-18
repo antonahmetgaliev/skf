@@ -76,7 +76,9 @@ class Incident(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     source: Mapped[str] = mapped_column(String(20), nullable=False, default="filed")
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
-    is_published: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # Everything starts hidden; publishing a window is the only way verdicts
+    # go public, so hidden-ness is a property of the round, not of a card.
+    is_published: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

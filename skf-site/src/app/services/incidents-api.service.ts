@@ -58,6 +58,11 @@ export interface IncidentWindowOut extends IncidentWindowListItem {
   incidents: Incident[];
 }
 
+export interface PublishWindowResult extends IncidentWindowOut {
+  /** Penalties that reached no licence because the driver name never matched. */
+  unlinkedCount: number;
+}
+
 // ── Input types ────────────────────────────────────────────────────────────
 
 export interface IncidentWindowCreate {
@@ -84,7 +89,8 @@ export interface ResolveDriverIncident {
 
 export interface BulkResolveDriverItem {
   incidentDriverId: string;
-  verdict: string;
+  /** Omit to let the server apply the default verdict rule. */
+  verdict?: string | null;
   bwpPoints?: number | null;
 }
 
@@ -98,11 +104,14 @@ export interface VerdictRule {
   verdict: string;
   defaultBwp: number;
   sortOrder: number;
+  /** Pre-selected for every driver in every incident. Exactly one rule has it. */
+  isDefault: boolean;
 }
 
 export interface VerdictRuleCreate {
   verdict: string;
   defaultBwp: number;
+  isDefault?: boolean;
 }
 
 export interface DescriptionPreset {
@@ -175,16 +184,13 @@ export class IncidentsApiService {
     );
   }
 
-  publishAllIncidents(windowId: string): Observable<IncidentWindowOut> {
-    return this.http.post<IncidentWindowOut>(`${this.base}/windows/${windowId}/publish-all`, {});
+  /** Reveals every verdict in the window and issues the BWP they carry. */
+  publishAllIncidents(windowId: string): Observable<PublishWindowResult> {
+    return this.http.post<PublishWindowResult>(`${this.base}/windows/${windowId}/publish-all`, {});
   }
 
   duplicateIncident(incidentId: string): Observable<Incident> {
     return this.http.post<Incident>(`${this.base}/${incidentId}/duplicate`, {});
-  }
-
-  publishIncident(incidentId: string): Observable<Incident> {
-    return this.http.post<Incident>(`${this.base}/${incidentId}/publish`, {});
   }
 
   addDriverToIncident(incidentId: string, driverName: string): Observable<Incident> {
@@ -209,17 +215,11 @@ export class IncidentsApiService {
     );
   }
 
-  applyDriverBwp(incidentDriverId: string): Observable<IncidentDriver> {
+  /** Attach a free-text incident driver to a real driver record. */
+  linkIncidentDriver(incidentDriverId: string, driverId: string): Observable<IncidentDriver> {
     return this.http.patch<IncidentDriver>(
-      `${this.base}/drivers/${incidentDriverId}/apply-bwp`,
-      {}
-    );
-  }
-
-  discardDriverBwp(incidentDriverId: string): Observable<IncidentDriver> {
-    return this.http.patch<IncidentDriver>(
-      `${this.base}/drivers/${incidentDriverId}/discard`,
-      {}
+      `${this.base}/drivers/${incidentDriverId}/link`,
+      { driverId }
     );
   }
 
@@ -231,6 +231,11 @@ export class IncidentsApiService {
 
   createVerdictRule(payload: VerdictRuleCreate): Observable<VerdictRule> {
     return this.http.post<VerdictRule>(`${this.base}/verdict-rules`, payload);
+  }
+
+  /** Reassign sort_order to match the given id order. */
+  reorderVerdictRules(ids: string[]): Observable<VerdictRule[]> {
+    return this.http.put<VerdictRule[]>(`${this.base}/verdict-rules/order`, { ids });
   }
 
   updateVerdictRule(id: string, payload: Partial<VerdictRuleCreate>): Observable<VerdictRule> {

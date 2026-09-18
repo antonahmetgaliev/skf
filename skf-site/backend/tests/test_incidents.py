@@ -465,202 +465,203 @@ class TestResolveDriver:
 
 
 # =====================================================================
-# BWP apply / discard
+# Publishing issues BWP
 # =====================================================================
 
-class TestBwpApplyDiscard:
+async def _resolved_window(ac: AsyncClient, name: str, rows: list[tuple[str, str, int]]):
+    """Window + one incident per row, each resolved with the given verdict/points.
+
+    rows: (driver_name, verdict, bwp_points)
+    """
+    _set_auth_user(ac._admin_user)
+    w_resp = await ac.post(
+        "/api/incidents/windows", json={"raceName": name, "intervalHours": 48}
+    )
+    window_id = w_resp.json()["id"]
+    for driver_name, _verdict, _pts in rows:
+        await ac.post(
+            f"/api/incidents/windows/{window_id}/incidents",
+            json={"drivers": [driver_name]},
+        )
+
+    w = await ac.get(f"/api/incidents/windows/{window_id}")
+    incidents = w.json()["incidents"]
+
+    _set_auth_user(ac._judge_user)
+    for inc, (_name, verdict, pts) in zip(incidents, rows):
+        await ac.patch(
+            f"/api/incidents/{inc['id']}/resolve",
+            json={
+                "drivers": [
+                    {
+                        "incidentDriverId": inc["drivers"][0]["id"],
+                        "verdict": verdict,
+                        "bwpPoints": pts,
+                    }
+                ]
+            },
+        )
+    return window_id
+
+
+class TestPublishAppliesBwp:
+    """BWP reaches the licence when the window is published, not by hand."""
+
     @pytest.mark.anyio
-    async def test_apply_bwp_creates_bwp_point(
+    async def test_publish_all_creates_bwp_points(
         self, shared_client: AsyncClient, db: AsyncSession
     ):
         from app.models.bwp import Driver, BwpPoint
-        ac = shared_client
 
-        # Create a BWP driver to link
-        drv = Driver(name="Apply Target")
-        db.add(drv)
+        db.add_all([
+            Driver(id=uuid.uuid4(), name="Penalised One"),
+            Driver(id=uuid.uuid4(), name="Penalised Two"),
+            Driver(id=uuid.uuid4(), name="Innocent"),
+        ])
         await db.commit()
-        await db.refresh(drv)
 
-        # Window + incident as admin
-        _set_auth_user(ac._admin_user)
-        w_resp = await ac.post(
-            "/api/incidents/windows",
-            json={"raceName": "BWP Test", "intervalHours": 48},
-        )
-        assert w_resp.status_code == 201
-        window_id = w_resp.json()["id"]
-        await ac.post(
-            f"/api/incidents/windows/{window_id}/incidents",
-            json={"drivers": ["Apply Target"]},
-        )
-        w = await ac.get(f"/api/incidents/windows/{window_id}")
-        driver_entry = w.json()["incidents"][0]["drivers"][0]
-        driver_entry_id = driver_entry["id"]
-        # Should have matched BWP driver
-        assert driver_entry["driverId"] == str(drv.id)
+        ac = shared_client
+        window_id = await _resolved_window(ac, "Issue BWP", [
+            ("Penalised One", "TP +5s", 2),
+            ("Penalised Two", "DT", 6),
+            ("Innocent", "NFA", 0),
+        ])
 
-        # Judge resolves with BWP
         _set_auth_user(ac._judge_user)
-        await ac.patch(
-            f"/api/incidents/drivers/{driver_entry_id}/resolve",
-            json={"verdict": "Drive Through", "bwpPoints": 3},
-        )
-
-        # Admin applies BWP
-        _set_auth_user(ac._admin_user)
-        resp = await ac.patch(
-            f"/api/incidents/drivers/{driver_entry_id}/apply-bwp",
-        )
+        resp = await ac.post(f"/api/incidents/windows/{window_id}/publish-all")
         assert resp.status_code == 200
-        assert resp.json()["resolution"]["bwpApplied"] is True
 
-        # Verify BwpPoint was created
-        result = await db.execute(
-            select(BwpPoint).where(BwpPoint.driver_id == drv.id)
-        )
-        bp = result.scalar_one_or_none()
-        assert bp is not None
-        assert bp.points == 3
+        points = (await db.execute(select(BwpPoint))).scalars().all()
+        assert sorted(p.points for p in points) == [2, 6]
+        for p in points:
+            assert (p.expires_on - p.issued_on).days == 90
+
+        for inc in resp.json()["incidents"]:
+            assert inc["isPublished"] is True
 
     @pytest.mark.anyio
-    async def test_apply_bwp_twice_creates_only_one_point(
+    async def test_publish_all_is_idempotent(
         self, shared_client: AsyncClient, db: AsyncSession
     ):
-        """apply-bwp is idempotent — a double-click must not double the penalty."""
+        """Republishing a window must not double anyone's penalty."""
         from app.models.bwp import Driver, BwpPoint
-        ac = shared_client
 
-        drv = Driver(name="Double Apply")
-        db.add(drv)
+        db.add(Driver(id=uuid.uuid4(), name="Twice Published"))
         await db.commit()
-        await db.refresh(drv)
 
-        _set_auth_user(ac._admin_user)
-        w_resp = await ac.post(
-            "/api/incidents/windows",
-            json={"raceName": "Double Apply Test", "intervalHours": 48},
+        ac = shared_client
+        window_id = await _resolved_window(
+            ac, "Twice", [("Twice Published", "TP +30s", 5)]
         )
-        window_id = w_resp.json()["id"]
-        await ac.post(
-            f"/api/incidents/windows/{window_id}/incidents",
-            json={"drivers": ["Double Apply"]},
-        )
-        w = await ac.get(f"/api/incidents/windows/{window_id}")
-        driver_entry_id = w.json()["incidents"][0]["drivers"][0]["id"]
 
         _set_auth_user(ac._judge_user)
-        await ac.patch(
-            f"/api/incidents/drivers/{driver_entry_id}/resolve",
-            json={"verdict": "Drive Through", "bwpPoints": 3},
-        )
+        await ac.post(f"/api/incidents/windows/{window_id}/publish-all")
+        await ac.post(f"/api/incidents/windows/{window_id}/publish-all")
 
-        _set_auth_user(ac._admin_user)
-        first = await ac.patch(f"/api/incidents/drivers/{driver_entry_id}/apply-bwp")
-        second = await ac.patch(f"/api/incidents/drivers/{driver_entry_id}/apply-bwp")
-        assert first.status_code == 200
-        assert second.status_code == 200
-
-        result = await db.execute(
-            select(BwpPoint).where(BwpPoint.driver_id == drv.id)
-        )
-        points = result.scalars().all()
+        points = (await db.execute(select(BwpPoint))).scalars().all()
         assert len(points) == 1
+        assert points[0].points == 5
 
     @pytest.mark.anyio
-    async def test_discard_after_apply_removes_bwp_point(
+    async def test_publish_links_driver_by_name(
         self, shared_client: AsyncClient, db: AsyncSession
     ):
-        """Discarding an applied resolution deletes the BwpPoint it created."""
+        """A driver created after the incident was filed still gets matched."""
         from app.models.bwp import Driver, BwpPoint
-        ac = shared_client
+        from app.models.incidents import IncidentDriver
 
-        drv = Driver(name="Apply Then Discard")
-        db.add(drv)
+        ac = shared_client
+        window_id = await _resolved_window(ac, "Late Driver", [("Late Arrival", "DT", 6)])
+
+        # Nothing to link against at filing time.
+        entries = (await db.execute(select(IncidentDriver))).scalars().all()
+        assert all(e.driver_id is None for e in entries)
+
+        db.add(Driver(id=uuid.uuid4(), name="late arrival"))  # case-insensitive match
         await db.commit()
-        await db.refresh(drv)
-
-        _set_auth_user(ac._admin_user)
-        w_resp = await ac.post(
-            "/api/incidents/windows",
-            json={"raceName": "Apply Discard Test", "intervalHours": 48},
-        )
-        window_id = w_resp.json()["id"]
-        await ac.post(
-            f"/api/incidents/windows/{window_id}/incidents",
-            json={"drivers": ["Apply Then Discard"]},
-        )
-        w = await ac.get(f"/api/incidents/windows/{window_id}")
-        driver_entry_id = w.json()["incidents"][0]["drivers"][0]["id"]
 
         _set_auth_user(ac._judge_user)
-        await ac.patch(
-            f"/api/incidents/drivers/{driver_entry_id}/resolve",
-            json={"verdict": "Warning", "bwpPoints": 2},
-        )
+        await ac.post(f"/api/incidents/windows/{window_id}/publish-all")
 
-        _set_auth_user(ac._admin_user)
-        await ac.patch(f"/api/incidents/drivers/{driver_entry_id}/apply-bwp")
-        resp = await ac.patch(f"/api/incidents/drivers/{driver_entry_id}/discard")
-        assert resp.status_code == 200
-        assert resp.json()["resolution"]["bwpApplied"] is False
+        points = (await db.execute(select(BwpPoint))).scalars().all()
+        assert len(points) == 1
+        assert points[0].points == 6
 
-        result = await db.execute(
-            select(BwpPoint).where(BwpPoint.driver_id == drv.id)
-        )
-        assert result.scalars().all() == []
+
+class TestUnlinkedDriverBwp:
+    """The silent-loss bug: a penalty must never be marked applied with no point."""
 
     @pytest.mark.anyio
-    async def test_apply_bwp_no_resolution(self, admin_client: AsyncClient):
-        """Apply BWP before resolution → 409."""
-        w_resp = await admin_client.post(
-            "/api/incidents/windows",
-            json={"raceName": "No Resolve", "intervalHours": 48},
-        )
-        window_id = w_resp.json()["id"]
-        await admin_client.post(
-            f"/api/incidents/windows/{window_id}/incidents",
-            json={"drivers": ["Unresolved"]},
-        )
-        w = await admin_client.get(f"/api/incidents/windows/{window_id}")
-        driver_id = w.json()["incidents"][0]["drivers"][0]["id"]
+    async def test_unlinked_driver_is_not_marked_applied(
+        self, shared_client: AsyncClient, db: AsyncSession
+    ):
+        from app.models.bwp import BwpPoint
+        from app.models.incidents import IncidentResolution
 
-        resp = await admin_client.patch(f"/api/incidents/drivers/{driver_id}/apply-bwp")
-        assert resp.status_code == 409
-
-    @pytest.mark.anyio
-    async def test_discard_bwp(self, shared_client: AsyncClient):
         ac = shared_client
-        _set_auth_user(ac._admin_user)
-        w_resp = await ac.post(
-            "/api/incidents/windows",
-            json={"raceName": "Discard Test", "intervalHours": 48},
-        )
-        assert w_resp.status_code == 201
-        window_id = w_resp.json()["id"]
-        await ac.post(
-            f"/api/incidents/windows/{window_id}/incidents",
-            json={"drivers": ["Discard Target"]},
-        )
-        w = await ac.get(f"/api/incidents/windows/{window_id}")
-        driver_id = w.json()["incidents"][0]["drivers"][0]["id"]
+        window_id = await _resolved_window(ac, "Unlinked", [("Nobody Knows Me", "DT", 6)])
 
-        # Judge resolves
         _set_auth_user(ac._judge_user)
-        await ac.patch(
-            f"/api/incidents/drivers/{driver_id}/resolve",
-            json={"verdict": "Warning", "bwpPoints": 1},
-        )
-
-        # Admin discards
-        _set_auth_user(ac._admin_user)
-        resp = await ac.patch(
-            f"/api/incidents/drivers/{driver_id}/discard",
-        )
+        resp = await ac.post(f"/api/incidents/windows/{window_id}/publish-all")
         assert resp.status_code == 200
-        res = resp.json()["resolution"]
-        assert res["bwpPoints"] is None
-        assert res["bwpApplied"] is False
+
+        assert (await db.execute(select(BwpPoint))).scalars().all() == []
+        resolutions = (await db.execute(select(IncidentResolution))).scalars().all()
+        assert len(resolutions) == 1
+        # The penalty is still owed, not silently written off.
+        assert resolutions[0].bwp_applied is False
+        assert resolutions[0].bwp_points == 6
+
+    @pytest.mark.anyio
+    async def test_publish_reports_unlinked_count(self, shared_client: AsyncClient):
+        ac = shared_client
+        window_id = await _resolved_window(ac, "Report", [("Ghost Driver", "DT", 6)])
+
+        _set_auth_user(ac._judge_user)
+        resp = await ac.post(f"/api/incidents/windows/{window_id}/publish-all")
+        assert resp.status_code == 200
+        assert resp.json()["unlinkedCount"] == 1
+
+    @pytest.mark.anyio
+    async def test_link_then_republish_issues_the_point(
+        self, shared_client: AsyncClient, db: AsyncSession
+    ):
+        from app.models.bwp import Driver, BwpPoint
+        from app.models.incidents import IncidentDriver
+
+        ac = shared_client
+        window_id = await _resolved_window(ac, "Link Me", [("Mystery Name", "TP +30s", 5)])
+
+        _set_auth_user(ac._judge_user)
+        await ac.post(f"/api/incidents/windows/{window_id}/publish-all")
+        assert (await db.execute(select(BwpPoint))).scalars().all() == []
+
+        driver_id = uuid.uuid4()
+        db.add(Driver(id=driver_id, name="Actual Driver"))
+        await db.commit()
+
+        entry = (await db.execute(select(IncidentDriver))).scalars().first()
+        link = await ac.patch(
+            f"/api/incidents/drivers/{entry.id}/link",
+            json={"driverId": str(driver_id)},
+        )
+        assert link.status_code == 200
+
+        resp = await ac.post(f"/api/incidents/windows/{window_id}/publish-all")
+        assert resp.json()["unlinkedCount"] == 0
+
+        points = (await db.execute(select(BwpPoint))).scalars().all()
+        assert len(points) == 1
+        assert points[0].points == 5
+        assert points[0].driver_id == driver_id
+
+    @pytest.mark.anyio
+    async def test_link_requires_judge(self, client: AsyncClient):
+        resp = await client.patch(
+            f"/api/incidents/drivers/{uuid.uuid4()}/link",
+            json={"driverId": str(uuid.uuid4())},
+        )
+        assert resp.status_code in (401, 403)
 
 
 # =====================================================================
@@ -1162,17 +1163,14 @@ class TestDescriptionPresets:
 WINDOWS_URL = "/api/incidents/windows"
 
 
-class TestPublishIncident:
+class TestPublishWindow:
     @pytest.mark.anyio
-    async def test_ingested_incidents_hidden_from_public(self, shared_client: AsyncClient):
-        """Incidents ingested via /ingest start unpublished; public can't see them."""
+    async def test_unpublished_verdicts_hidden_from_public(self, shared_client: AsyncClient):
+        """Unpublished incidents stay visible; only their verdicts are withheld."""
         ac = shared_client
         _set_auth_user(ac._admin_user)
-        # Create window so ingest can attach to it
-        w_resp = await ac.post(WINDOWS_URL, json={"raceName": "Pub Test", "intervalHours": 48})
-        window_id = w_resp.json()["id"]
+        await ac.post(WINDOWS_URL, json={"raceName": "Pub Test", "intervalHours": 48})
 
-        # Ingest an incident (token auth, so bypass normal auth)
         from app.main import app
         from app.auth import require_api_token
         app.dependency_overrides[require_api_token] = lambda: None
@@ -1188,42 +1186,44 @@ class TestPublishIncident:
         )
         del app.dependency_overrides[require_api_token]
         assert resp.status_code == 201
-        ingest_window_id = resp.json()["id"]
-        inc_id = resp.json()["incidents"][0]["id"]
-        assert resp.json()["incidents"][0]["isPublished"] is False
+        window_id = resp.json()["id"]
+        inc = resp.json()["incidents"][0]
+        assert inc["isPublished"] is False
+        drivers = inc["drivers"]
 
-        # Public (no auth) cannot see it
+        _set_auth_user(ac._judge_user)
+        await ac.post(RULES_URL, json={"verdict": "NFA", "defaultBwp": 0, "isDefault": True})
+        await ac.patch(
+            f"/api/incidents/{inc['id']}/resolve",
+            json={"drivers": [{"incidentDriverId": d["id"]} for d in drivers]},
+        )
+
+        # Public sees the incident but no verdicts.
         from app.auth import get_current_user, get_current_user_optional
         app.dependency_overrides[get_current_user] = lambda: None
         app.dependency_overrides[get_current_user_optional] = lambda: None
-        pub_resp = await ac.get(f"{WINDOWS_URL}/{ingest_window_id}")
-        assert pub_resp.status_code == 200
-        assert pub_resp.json()["incidents"] == []
-
-        # Restore auth
-        _set_auth_user(ac._judge_user)
-
-        # Judge can still see it
-        judge_resp = await ac.get(f"{WINDOWS_URL}/{ingest_window_id}")
-        assert len(judge_resp.json()["incidents"]) == 1
-
-        # Judge publishes it
-        pub = await ac.post(f"/api/incidents/{inc_id}/publish")
+        pub = await ac.get(f"{WINDOWS_URL}/{window_id}")
         assert pub.status_code == 200
-        assert pub.json()["isPublished"] is True
+        assert len(pub.json()["incidents"]) == 1
+        assert all(d["resolution"] is None for d in pub.json()["incidents"][0]["drivers"])
 
-        # Now public can see it
+        # A judge sees them.
+        _set_auth_user(ac._judge_user)
+        judge = await ac.get(f"{WINDOWS_URL}/{window_id}")
+        assert all(d["resolution"] is not None for d in judge.json()["incidents"][0]["drivers"])
+
+        # Publishing the window reveals them to everyone.
+        assert (await ac.post(f"{WINDOWS_URL}/{window_id}/publish-all")).status_code == 200
         app.dependency_overrides[get_current_user] = lambda: None
         app.dependency_overrides[get_current_user_optional] = lambda: None
-        after_pub = await ac.get(f"{WINDOWS_URL}/{ingest_window_id}")
-        assert len(after_pub.json()["incidents"]) == 1
+        after = await ac.get(f"{WINDOWS_URL}/{window_id}")
+        assert all(d["resolution"] is not None for d in after.json()["incidents"][0]["drivers"])
 
-        # Restore auth
         _set_auth_user(ac._admin_user)
 
     @pytest.mark.anyio
-    async def test_filed_incidents_published_by_default(self, shared_client: AsyncClient):
-        """Manually filed incidents start published."""
+    async def test_filed_incidents_start_unpublished(self, shared_client: AsyncClient):
+        """Everything starts hidden, so one banner can speak for the whole round."""
         ac = shared_client
         _set_auth_user(ac._admin_user)
         w_resp = await ac.post(WINDOWS_URL, json={"raceName": "Filed Pub", "intervalHours": 48})
@@ -1233,7 +1233,23 @@ class TestPublishIncident:
             json={"drivers": ["Driver X", "Driver Y"]},
         )
         assert inc_resp.status_code == 201
-        assert inc_resp.json()["isPublished"] is True
+        assert inc_resp.json()["isPublished"] is False
+
+    @pytest.mark.anyio
+    async def test_publish_all_requires_judge(self, client: AsyncClient):
+        resp = await client.post(f"{WINDOWS_URL}/{uuid.uuid4()}/publish-all")
+        assert resp.status_code in (401, 403)
+
+    @pytest.mark.anyio
+    async def test_publish_empty_window_conflicts(self, shared_client: AsyncClient):
+        ac = shared_client
+        _set_auth_user(ac._admin_user)
+        w_resp = await ac.post(WINDOWS_URL, json={"raceName": "Empty", "intervalHours": 48})
+        window_id = w_resp.json()["id"]
+        _set_auth_user(ac._judge_user)
+        resp = await ac.post(f"{WINDOWS_URL}/{window_id}/publish-all")
+        assert resp.status_code == 409
+        _set_auth_user(ac._admin_user)
 
 
 # =====================================================================

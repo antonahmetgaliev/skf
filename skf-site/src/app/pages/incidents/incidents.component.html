@@ -354,27 +354,6 @@
                   <span class="incident-chevron" [class.incident-chevron--open]="expandedIncidentId() === inc.id">▸</span>
                 </div>
 
-                <!-- BWP strip: always visible for admins, shows pending/applied BWP per driver -->
-                @if (auth.isAdmin() && inc.status === 'resolved') {
-                  @let bwpDrvs = bwpResolvedDrivers(inc);
-                  @if (bwpDrvs.length > 0) {
-                    <div class="bwp-strip">
-                      @for (drv of bwpDrvs; track drv.id) {
-                        <div class="bwp-strip-row">
-                          <span class="bwp-strip-name">{{ drv.driverName }}</span>
-                          <span class="bwp-strip-verdict">{{ drv.resolution!.verdict }}</span>
-                          <span class="bwp-strip-pts">{{ drv.resolution!.bwpPoints }} BWP</span>
-                          @if (!drv.resolution!.bwpApplied) {
-                            <button class="btn-link btn-link--bwp" type="button" (click)="applyDriverBwp(drv.id); $event.stopPropagation()">{{ 'incidents.applyBwp' | transloco }}</button>
-                          } @else {
-                            <app-badge variant="applied">{{ 'incidents.applied' | transloco }}</app-badge>
-                            <button class="btn-link btn-link--danger" type="button" (click)="discardDriverBwp(drv.id); $event.stopPropagation()">{{ 'incidents.discard' | transloco }}</button>
-                          }
-                        </div>
-                      }
-                    </div>
-                  }
-                }
 
                 @if (expandedIncidentId() === inc.id) {
                   <div class="incident-card-body">
@@ -402,14 +381,6 @@
                               }
                               @if (drv.resolution.description) {
                                 <span class="resolution-description">{{ drv.resolution.description }}</span>
-                              }
-                              @if (auth.isAdmin() && drv.resolution.bwpPoints) {
-                                @if (!drv.resolution.bwpApplied) {
-                                  <button class="btn-link btn-link--bwp" type="button" (click)="applyDriverBwp(drv.id)">{{ 'incidents.applyBwp' | transloco }}</button>
-                                } @else {
-                                  <app-badge variant="applied">{{ 'incidents.applied' | transloco }}</app-badge>
-                                  <button class="btn-link btn-link--danger" type="button" (click)="discardDriverBwp(drv.id)">{{ 'incidents.discard' | transloco }}</button>
-                                }
                               }
                             </div>
                           }
@@ -520,9 +491,6 @@
                       @if (auth.isJudge()) {
                         <button class="btn-link" type="button" (click)="addDriverShown[inc.id] = !addDriverShown[inc.id]">{{ 'incidents.addDriver' | transloco }}</button>
                         <button class="btn-link" type="button" (click)="duplicateIncident(inc.id)">{{ 'incidents.duplicate' | transloco }}</button>
-                        @if (!inc.isPublished) {
-                          <button class="btn-link btn-link--bwp" type="button" (click)="publishIncident(inc.id)">{{ 'incidents.publishVerdict' | transloco }}</button>
-                        }
                       }
                     </div>
                   </div>
@@ -572,27 +540,6 @@
                   <span class="incident-chevron" [class.incident-chevron--open]="expandedIncidentId() === inc.id">▸</span>
                 </div>
 
-                <!-- BWP strip: always visible for admins, shows pending/applied BWP per driver -->
-                @if (auth.isAdmin() && inc.status === 'resolved') {
-                  @let bwpDrvs = bwpResolvedDrivers(inc);
-                  @if (bwpDrvs.length > 0) {
-                    <div class="bwp-strip">
-                      @for (drv of bwpDrvs; track drv.id) {
-                        <div class="bwp-strip-row">
-                          <span class="bwp-strip-name">{{ drv.driverName }}</span>
-                          <span class="bwp-strip-verdict">{{ drv.resolution!.verdict }}</span>
-                          <span class="bwp-strip-pts">{{ drv.resolution!.bwpPoints }} BWP</span>
-                          @if (!drv.resolution!.bwpApplied) {
-                            <button class="btn-link btn-link--bwp" type="button" (click)="applyDriverBwp(drv.id); $event.stopPropagation()">{{ 'incidents.applyBwp' | transloco }}</button>
-                          } @else {
-                            <app-badge variant="applied">{{ 'incidents.applied' | transloco }}</app-badge>
-                            <button class="btn-link btn-link--danger" type="button" (click)="discardDriverBwp(drv.id); $event.stopPropagation()">{{ 'incidents.discard' | transloco }}</button>
-                          }
-                        </div>
-                      }
-                    </div>
-                  }
-                }
 
                 @if (expandedIncidentId() === inc.id) {
                   <div class="incident-card-body">
@@ -620,14 +567,6 @@
                               }
                               @if (drv.resolution.description) {
                                 <span class="resolution-description">{{ drv.resolution.description }}</span>
-                              }
-                              @if (auth.isAdmin() && drv.resolution.bwpPoints) {
-                                @if (!drv.resolution.bwpApplied) {
-                                  <button class="btn-link btn-link--bwp" type="button" (click)="applyDriverBwp(drv.id)">{{ 'incidents.applyBwp' | transloco }}</button>
-                                } @else {
-                                  <app-badge variant="applied">{{ 'incidents.applied' | transloco }}</app-badge>
-                                  <button class="btn-link btn-link--danger" type="button" (click)="discardDriverBwp(drv.id)">{{ 'incidents.discard' | transloco }}</button>
-                                }
                               }
                             </div>
                           }
@@ -738,9 +677,6 @@
                       @if (auth.isJudge()) {
                         <button class="btn-link" type="button" (click)="addDriverShown[inc.id] = !addDriverShown[inc.id]">{{ 'incidents.addDriver' | transloco }}</button>
                         <button class="btn-link" type="button" (click)="duplicateIncident(inc.id)">{{ 'incidents.duplicate' | transloco }}</button>
-                        @if (!inc.isPublished) {
-                          <button class="btn-link btn-link--bwp" type="button" (click)="publishIncident(inc.id)">{{ 'incidents.publish' | transloco }}</button>
-                        }
                       }
                     </div>
                   </div>

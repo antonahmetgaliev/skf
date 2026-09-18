@@ -52,6 +52,10 @@ class IncidentDriverAdd(CamelModel):
     driver_name: str = Field(min_length=1, max_length=200)
 
 
+class IncidentDriverLink(CamelModel):
+    driver_id: uuid.UUID
+
+
 # ── Per-driver resolve ──────────────────────────────────────────────────────
 
 class ResolveDriverIncident(CamelModel):
@@ -180,6 +184,12 @@ class IncidentWindowListItem(CamelModel):
 
 class IncidentWindowOut(IncidentWindowListItem):
     incidents: list[IncidentOut] = []
+
+
+class PublishWindowOut(IncidentWindowOut):
+    # Penalties that could not reach a licence because the driver name never
+    # matched a record. Reported out loud rather than lost in silence.
+    unlinked_count: int = 0
 
 
 class BwpAuditEntry(CamelModel):
