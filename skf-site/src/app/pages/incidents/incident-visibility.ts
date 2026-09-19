@@ -1,5 +1,5 @@
 import { BadgeVariant } from '../../components/badge/badge.component';
-import { Incident } from '../../services/incidents-api.service';
+import { Incident, IncidentDriver } from '../../services/incidents-api.service';
 
 /**
  * What each role is allowed to learn about an incident.
@@ -51,4 +51,36 @@ export function showsStewardDetail(canJudge: boolean): boolean {
 /** True when the viewer needs telling why there is no verdict to read. */
 export function showsPendingNotice(incident: Incident, canJudge: boolean): boolean {
   return !showsVerdicts(incident, canJudge);
+}
+
+/**
+ * The badge for one driver's row, or null when it would only repeat what the
+ * row already shows.
+ *
+ * The row carries the selected verdict chip and, when it matters, the BWP
+ * field; the card header carries the incident's own status. So a per-driver
+ * "Resolved" is said three times over and earns nothing. What the row cannot
+ * otherwise show is where the penalty *went*: decided but not yet on the
+ * licence, or issued. Those get a badge; the rest do not.
+ */
+export function driverStatusBadge(
+  driver: IncidentDriver,
+  incident: Incident,
+): StatusChip | null {
+  // Deliberately blind to the verdict text: a league may rename or delete any
+  // rule, so behaviour keys off BWP, which is what actually has consequences.
+  if (!driver.resolution) {
+    // Only worth flagging when it contradicts the header — an incident counted
+    // as resolved that still holds a driver nobody has judged.
+    return incident.status === 'resolved'
+      ? { variant: 'pending', label: 'incidents.statusOpen' }
+      : null;
+  }
+  if (driver.resolution.bwpApplied) {
+    return { variant: 'applied', label: 'incidents.bwpApplied' };
+  }
+  if (driver.resolution.bwpPoints) {
+    return { variant: 'bwp-pending', label: 'incidents.bwpPending' };
+  }
+  return null;
 }

@@ -61,7 +61,9 @@
                 @if (!drv.driverId) {
                   <app-badge variant="bwp-pending">{{ 'incidents.notLinked' | transloco }}</app-badge>
                 }
-                <app-badge [variant]="statusBadge(drv).variant">{{ statusBadge(drv).label | transloco }}</app-badge>
+                @if (statusBadge(drv); as badge) {
+                  <app-badge [variant]="badge.variant">{{ badge.label | transloco }}</app-badge>
+                }
               }
               <span class="driver-row-spacer"></span>
               @if (canJudge() && incident().drivers.length > 1) {

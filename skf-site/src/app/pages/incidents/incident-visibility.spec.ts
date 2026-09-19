@@ -1,10 +1,11 @@
 import {
+  driverStatusBadge,
   incidentStatusChip,
   showsPendingNotice,
   showsStewardDetail,
   showsVerdicts,
 } from './incident-visibility';
-import { Incident } from '../../services/incidents-api.service';
+import { Incident, IncidentDriver } from '../../services/incidents-api.service';
 
 function incident(overrides: Partial<Incident> = {}): Incident {
   return {
@@ -111,5 +112,60 @@ describe('showsPendingNotice', () => {
 
   it('never nags a judge, who can already see everything', () => {
     expect(showsPendingNotice(incident({ isPublished: false }), JUDGE)).toBe(false);
+  });
+});
+
+describe('driverStatusBadge', () => {
+  function driver(resolution: IncidentDriver['resolution'] = null): IncidentDriver {
+    return {
+      id: 'drv-1',
+      driverName: 'Bohdan Tseliuk',
+      driverId: 'driver-1',
+      sortOrder: 0,
+      resolution,
+    };
+  }
+
+  function resolution(over: Partial<NonNullable<IncidentDriver['resolution']>> = {}) {
+    return {
+      id: 'res-1',
+      incidentDriverId: 'drv-1',
+      judgeUserId: null,
+      verdict: 'NFA',
+      bwpPoints: null,
+      description: null,
+      bwpApplied: false,
+      resolvedAt: '2026-09-13T10:00:00Z',
+      ...over,
+    };
+  }
+
+  it('says nothing for a judged driver with no penalty', () => {
+    // The chip row already shows the verdict and the header already says
+    // Resolved; a third "Resolved" here was pure repetition.
+    expect(driverStatusBadge(driver(resolution()), incident())).toBeNull();
+  });
+
+  it('says nothing for an unjudged driver in an open incident', () => {
+    expect(driverStatusBadge(driver(), incident({ status: 'open' }))).toBeNull();
+  });
+
+  it('flags a driver left unjudged inside a resolved incident', () => {
+    // The one case the row cannot otherwise reveal: it contradicts the header.
+    const badge = driverStatusBadge(driver(), incident({ status: 'resolved' }));
+    expect(badge?.label).toBe('incidents.statusOpen');
+  });
+
+  it('reports a penalty still to reach the licence', () => {
+    const badge = driverStatusBadge(driver(resolution({ bwpPoints: 2 })), incident());
+    expect(badge?.label).toBe('incidents.bwpPending');
+  });
+
+  it('reports a penalty already issued', () => {
+    const badge = driverStatusBadge(
+      driver(resolution({ bwpPoints: 2, bwpApplied: true })),
+      incident(),
+    );
+    expect(badge?.label).toBe('incidents.bwpApplied');
   });
 });

@@ -21,6 +21,7 @@ import {
   VerdictRule,
 } from '../../../services/incidents-api.service';
 import {
+  driverStatusBadge,
   incidentStatusChip,
   showsPendingNotice,
   showsStewardDetail,
@@ -171,13 +172,9 @@ export class IncidentCardComponent {
     return showsPendingNotice(this.incident(), this.canJudge());
   }
 
-  statusBadge(driver: IncidentDriver): { variant: BadgeVariant; label: string } {
-    // Deliberately blind to the verdict text: a league may rename or delete any
-    // rule, so behaviour keys off BWP, which is what actually has consequences.
-    if (!driver.resolution) return { variant: 'pending', label: 'incidents.statusOpen' };
-    if (driver.resolution.bwpApplied) return { variant: 'applied', label: 'incidents.bwpApplied' };
-    if (driver.resolution.bwpPoints) return { variant: 'bwp-pending', label: 'incidents.bwpPending' };
-    return { variant: 'resolved', label: 'incidents.resolved' };
+  /** Null when a badge would only repeat the chip row or the card header. */
+  statusBadge(driver: IncidentDriver): StatusChip | null {
+    return driverStatusBadge(driver, this.incident());
   }
 
   // ── Actions ───────────────────────────────────────────────────────
