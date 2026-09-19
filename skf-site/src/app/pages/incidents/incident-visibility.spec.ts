@@ -1,7 +1,8 @@
 import {
   driverStatusBadge,
+  incidentPenalties,
   incidentStatusChip,
-  penaltySummary,
+  sharedDecisionDescription,
   showsStewardDetail,
   showsVerdicts,
 } from './incident-visibility';
@@ -101,7 +102,7 @@ describe('showsStewardDetail', () => {
   });
 });
 
-describe('penaltySummary', () => {
+describe('incidentPenalties', () => {
   const penalised = {
     id: 'drv-2',
     driverName: 'Oleksandr Dovmat',
@@ -119,13 +120,20 @@ describe('penaltySummary', () => {
     },
   };
 
+  const withVerdict = (id: string, name: string, verdict: string): IncidentDriver => ({
+    ...penalised,
+    id,
+    driverName: name,
+    resolution: { ...penalised.resolution, incidentDriverId: id, verdict },
+  });
+
   it('names the penalties on a published round', () => {
-    const summary = penaltySummary(
+    const penalties = incidentPenalties(
       incident({ isPublished: true, drivers: [penalised] }),
       'NFA',
       DRIVER,
     );
-    expect(summary).toBe('Oleksandr Dovmat TP +15s');
+    expect(penalties).toEqual([{ driverName: 'Oleksandr Dovmat', verdict: 'TP +15s' }]);
   });
 
   it('stays silent when everyone got the default', () => {
@@ -133,7 +141,27 @@ describe('penaltySummary', () => {
       ...penalised,
       resolution: { ...penalised.resolution, verdict: 'NFA', bwpPoints: null },
     };
-    expect(penaltySummary(incident({ isPublished: true, drivers: [nfa] }), 'NFA', DRIVER)).toBe('');
+    expect(incidentPenalties(incident({ isPublished: true, drivers: [nfa] }), 'NFA', DRIVER))
+      .toEqual([]);
+  });
+
+  it('names only the driver who was penalised, not the rest of the incident', () => {
+    // The complaint this exists to prevent: a five-driver incident printing
+    // "NFA" four times to say one driver got a time penalty.
+    const drivers = [
+      withVerdict('drv-1', 'Bohdan Tseliuk', 'NFA'),
+      penalised,
+      withVerdict('drv-3', 'Andrii Mochulskyi', 'NFA'),
+    ];
+    expect(incidentPenalties(incident({ isPublished: true, drivers }), 'NFA', DRIVER))
+      .toEqual([{ driverName: 'Oleksandr Dovmat', verdict: 'TP +15s' }]);
+  });
+
+  it('skips drivers nobody has judged', () => {
+    const unjudged = { ...penalised, id: 'drv-9', driverName: 'Arsen Budzyk', resolution: null };
+    expect(
+      incidentPenalties(incident({ isPublished: true, drivers: [penalised, unjudged] }), 'NFA', DRIVER),
+    ).toEqual([{ driverName: 'Oleksandr Dovmat', verdict: 'TP +15s' }]);
   });
 
   it('leaks nothing from a withheld round', () => {
@@ -141,14 +169,73 @@ describe('penaltySummary', () => {
     // driver still holds real resolutions in memory. The header must not print
     // what the card body is refusing to show.
     expect(
-      penaltySummary(incident({ isPublished: false, drivers: [penalised] }), 'NFA', DRIVER),
-    ).toBe('');
+      incidentPenalties(incident({ isPublished: false, drivers: [penalised] }), 'NFA', DRIVER),
+    ).toEqual([]);
   });
 
   it('still shows a judge the penalties before publication', () => {
     expect(
-      penaltySummary(incident({ isPublished: false, drivers: [penalised] }), 'NFA', JUDGE),
-    ).toBe('Oleksandr Dovmat TP +15s');
+      incidentPenalties(incident({ isPublished: false, drivers: [penalised] }), 'NFA', JUDGE),
+    ).toEqual([{ driverName: 'Oleksandr Dovmat', verdict: 'TP +15s' }]);
+  });
+
+  describe('with no default verdict to compare against', () => {
+    it('says nothing when one verdict covers everyone', () => {
+      // A league can delete the rule flagged default, and the rules request can
+      // simply fail. Neither should resurrect the row of repeated NFAs.
+      const drivers = [
+        withVerdict('drv-1', 'Kostiantyn Kryvenko', 'NFA'),
+        withVerdict('drv-2', 'Bohdan Hulobov', 'NFA'),
+      ];
+      expect(incidentPenalties(incident({ isPublished: true, drivers }), undefined, DRIVER))
+        .toEqual([]);
+    });
+
+    it('names everyone when the decision was split', () => {
+      // Without a baseline there is no telling which half is the penalty, and
+      // hiding a real one is the worse failure.
+      const drivers = [withVerdict('drv-1', 'Bohdan Tseliuk', 'NFA'), penalised];
+      expect(incidentPenalties(incident({ isPublished: true, drivers }), undefined, DRIVER))
+        .toEqual([
+          { driverName: 'Bohdan Tseliuk', verdict: 'NFA' },
+          { driverName: 'Oleksandr Dovmat', verdict: 'TP +15s' },
+        ]);
+    });
+  });
+});
+
+describe('sharedDecisionDescription', () => {
+  const judged = (id: string, description: string | null): IncidentDriver => ({
+    id,
+    driverName: `Driver ${id}`,
+    driverId: `driver-${id}`,
+    sortOrder: 0,
+    resolution: {
+      id: `res-${id}`,
+      incidentDriverId: id,
+      judgeUserId: null,
+      verdict: 'NFA',
+      bwpPoints: null,
+      description,
+      bwpApplied: false,
+      resolvedAt: '2026-09-13T10:00:00Z',
+    },
+  });
+
+  it('returns the reason the whole incident shares', () => {
+    // The server copies one authored reason onto every driver's row, so the
+    // card prints it once instead of once per driver.
+    const drivers = [judged('a', 'Avoidable contact'), judged('b', 'Avoidable contact')];
+    expect(sharedDecisionDescription(incident({ drivers }))).toBe('Avoidable contact');
+  });
+
+  it('returns null when no reason was given', () => {
+    expect(sharedDecisionDescription(incident({ drivers: [judged('a', null)] }))).toBeNull();
+  });
+
+  it('returns null when the rows disagree, leaving them to speak for themselves', () => {
+    const drivers = [judged('a', 'Avoidable contact'), judged('b', 'Unsafe rejoin')];
+    expect(sharedDecisionDescription(incident({ drivers }))).toBeNull();
   });
 });
 

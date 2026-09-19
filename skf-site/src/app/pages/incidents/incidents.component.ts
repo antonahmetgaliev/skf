@@ -207,7 +207,7 @@ export class IncidentsComponent implements OnInit {
 
       if (canJudge && !this.judgeDataLoaded) {
         this.judgeDataLoaded = true;
-        void this.loadVerdictRules();
+        // Presets are an authoring aid; only a judge ever types a decision.
         void this.loadDescriptionPresets();
       }
 
@@ -225,6 +225,9 @@ export class IncidentsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadWindows();
+    // Every viewer needs the default verdict to tell a penalty from "no action"
+    // on an incident tile, so the rules are not judge-only data.
+    void this.loadVerdictRules();
   }
 
   // ── Windows ───────────────────────────────────────────────────────

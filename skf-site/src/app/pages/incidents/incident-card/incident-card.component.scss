@@ -1,5 +1,5 @@
-// Card chrome mirrors the incident list on the Incidents page; only the driver
-// row differs, which is the whole point of this component.
+// The collapsed tile reads as three bands — meta, participants, result — so
+// that none of the three has to compete for space with the other two.
 :host {
   display: block;
 }
@@ -17,15 +17,29 @@
 
 .incident-card-header {
   display: flex;
-  align-items: center;
-  gap: 0.55rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.3rem;
+  width: 100%;
   padding: 0.7rem 0.95rem;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
   cursor: pointer;
-  flex-wrap: wrap;
 
   &:hover {
     background: rgba(255, 255, 255, 0.02);
   }
+}
+
+// Band 1 — everything about the incident itself, plus the status on the right.
+.incident-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
 }
 
 .incident-num {
@@ -46,28 +60,48 @@
   color: var(--ink-soft);
 }
 
-.incident-header-main {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-.incident-drivers {
+// Band 2 — who was involved.
+.incident-participants {
+  display: block;
   font-weight: 600;
   font-size: var(--text-md);
 }
 
-// Penalties only — a summary of "everyone got the default" is pure noise.
-.incident-penalties {
+// Band 3 — what the stewards decided, named only for the drivers it cost
+// something. Absent entirely when everyone got the default verdict.
+.incident-outcome {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.5rem;
   font-size: var(--text-base);
+}
+
+.outcome-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+
+  &:not(:last-child)::after {
+    content: '·';
+    color: var(--muted);
+    margin-left: 0.15rem;
+  }
+}
+
+.outcome-driver {
+  color: var(--ink-soft);
+}
+
+.outcome-verdict {
   color: var(--gold);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .incident-header-desc {
+  margin-left: 0.4rem;
   font-size: var(--text-sm);
+  font-weight: 400;
   color: var(--muted);
   font-style: italic;
 }
@@ -81,6 +115,7 @@
 
 .incident-status {
   margin-left: auto;
+  display: inline-flex;
 }
 
 .incident-chevron {
@@ -107,6 +142,19 @@
   }
 }
 
+// ── Stewards' decision ────────────────────────────────────────────────────
+// The reason is authored once for the whole incident, so it is printed once,
+// heading the rows rather than repeating inside each of them.
+.decision-section {
+  padding: 0.6rem 0 0;
+
+  .decision-reason {
+    margin: 0.2rem 0 0;
+    font-size: var(--text-base);
+    color: var(--ink-soft);
+  }
+}
+
 // ── Driver rows ───────────────────────────────────────────────────────────
 .driver-rows {
   display: flex;
@@ -120,11 +168,17 @@
   border-radius: var(--radius-sm);
   padding: 0.55rem 0.7rem;
   background: rgba(255, 255, 255, 0.02);
+
+  // Nothing to edit, so name and verdict share one line.
+  &--single .driver-row-header {
+    margin-bottom: 0;
+  }
 }
 
 .driver-row-header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.45rem;
 }
@@ -227,8 +281,9 @@
 }
 
 // ── Read-only resolution (non-judges) ─────────────────────────────────────
+// Sits after the row spacer, so the verdicts line up down the right edge.
 .driver-resolution {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;

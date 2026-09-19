@@ -2,42 +2,55 @@
   [class.incident-card--resolved]="incident().status === 'resolved'"
   [class.incident-card--filed]="incident().source === 'filed'">
 
-  <div class="incident-card-header" (click)="toggle.emit()">
-    <span class="incident-num">#{{ index() }}</span>
-    @if (incident().source === 'filed') {
-      <span class="incident-source incident-source--filed">{{ 'incidents.report' | transloco }}</span>
-    } @else {
-      <span class="incident-source incident-source--ingested">{{ 'incidents.auto' | transloco }}</span>
-    }
+  <button class="incident-card-header" type="button"
+    [attr.aria-expanded]="expanded()" (click)="toggle.emit()">
 
-    <div class="incident-header-main">
-      <span class="incident-drivers">{{ driverNames() }}</span>
-      @if (penaltySummary(); as summary) {
-        <span class="incident-penalties">· {{ summary }}</span>
+    <span class="incident-meta">
+      <span class="incident-num">#{{ index() }}</span>
+      @if (incident().source === 'filed') {
+        <span class="incident-source incident-source--filed">{{ 'incidents.report' | transloco }}</span>
+      } @else {
+        <span class="incident-source incident-source--ingested">{{ 'incidents.auto' | transloco }}</span>
       }
+
+      @if (incident().sessionName) {
+        <span class="incident-session">{{ incident().sessionName }}</span>
+      }
+      @if (incident().time) {
+        <span class="incident-time">{{ incident().time }}</span>
+      }
+      @if (incident().lap) {
+        <span class="incident-session">{{ 'incidents.lap' | transloco }} {{ incident().lap }}</span>
+      }
+      @if (incident().corner) {
+        <span class="incident-time">{{ incident().corner }}</span>
+      }
+
+      <span class="incident-status">
+        <app-badge [variant]="statusChip().variant">{{ statusChip().label | transloco }}</app-badge>
+      </span>
+      <span class="incident-chevron" [class.incident-chevron--open]="expanded()">&#9656;</span>
+    </span>
+
+    <span class="incident-participants">
+      {{ driverNames() }}
       @if (incident().description && !expanded()) {
         <span class="incident-header-desc">{{ incident().description }}</span>
       }
-    </div>
+    </span>
 
-    @if (incident().sessionName) {
-      <span class="incident-session">{{ incident().sessionName }}</span>
+    <!-- Penalties only. Everyone on the default verdict leaves this band out. -->
+    @if (penalties().length) {
+      <span class="incident-outcome">
+        @for (penalty of penalties(); track penalty.driverName) {
+          <span class="outcome-item">
+            <span class="outcome-driver">{{ penalty.driverName }}</span>
+            <span class="outcome-verdict">{{ penalty.verdict }}</span>
+          </span>
+        }
+      </span>
     }
-    @if (incident().time) {
-      <span class="incident-time">{{ incident().time }}</span>
-    }
-    @if (incident().lap) {
-      <span class="incident-session">{{ 'incidents.lap' | transloco }} {{ incident().lap }}</span>
-    }
-    @if (incident().corner) {
-      <span class="incident-time">{{ incident().corner }}</span>
-    }
-
-    <div class="incident-status">
-      <app-badge [variant]="statusChip().variant">{{ statusChip().label | transloco }}</app-badge>
-    </div>
-    <span class="incident-chevron" [class.incident-chevron--open]="expanded()">▸</span>
-  </div>
+  </button>
 
   @if (expanded()) {
     <div class="incident-card-body">
@@ -48,9 +61,20 @@
         </div>
       }
 
+      @if (decisionSectionShown()) {
+        <div class="decision-section">
+          <span class="label-eyebrow">{{ 'incidents.stewardsDecision' | transloco }}</span>
+          @if (decisionDescription(); as reason) {
+            <p class="decision-reason">{{ reason }}</p>
+          }
+        </div>
+      }
+
       <div class="driver-rows">
         @for (drv of incident().drivers; track drv.id) {
-          <div class="driver-row">
+          <!-- Without the judging controls the row is a single line: the name,
+               and, pushed right, what it earned them. -->
+          <div class="driver-row" [class.driver-row--single]="!canJudge()">
             <div class="driver-row-header">
               <span class="driver-name">{{ drv.driverName }}</span>
               @if (showsStewardDetail()) {
@@ -66,7 +90,19 @@
                 <button class="row-remove" type="button"
                   [attr.aria-label]="'incidents.removeFromIncident' | transloco"
                   [title]="'incidents.removeFromIncident' | transloco"
-                  (click)="removeDriver.emit(drv.id)">×</button>
+                  (click)="removeDriver.emit(drv.id)">&times;</button>
+              }
+              @if (!canJudge() && showsVerdicts() && drv.resolution) {
+                <span class="driver-resolution">
+                  <span class="resolution-verdict">{{ drv.resolution.verdict }}</span>
+                  @if (drv.resolution.bwpPoints) {
+                    <span class="resolution-bwp">{{ drv.resolution.bwpPoints }} BWP</span>
+                  }
+                  <!-- Only when the rows disagree — a shared reason is printed once above. -->
+                  @if (!decisionDescription() && drv.resolution.description) {
+                    <span class="resolution-description">{{ drv.resolution.description }}</span>
+                  }
+                </span>
               }
             </div>
 
@@ -101,16 +137,6 @@
                   (ngModelChange)="setCustomVerdict(drv.id, $event)"
                   [placeholder]="'incidents.customVerdict' | transloco" />
               }
-            } @else if (showsVerdicts() && drv.resolution) {
-              <div class="driver-resolution">
-                <span class="resolution-verdict">{{ drv.resolution.verdict }}</span>
-                @if (drv.resolution.bwpPoints) {
-                  <span class="resolution-bwp">{{ drv.resolution.bwpPoints }} BWP</span>
-                }
-                @if (drv.resolution.description) {
-                  <span class="resolution-description">{{ drv.resolution.description }}</span>
-                }
-              </div>
             }
           </div>
         }

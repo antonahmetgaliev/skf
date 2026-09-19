@@ -48,24 +48,61 @@ export function showsStewardDetail(canJudge: boolean): boolean {
   return canJudge;
 }
 
+/** One named penalty on the collapsed tile. */
+export interface IncidentPenalty {
+  driverName: string;
+  verdict: string;
+}
+
 /**
- * The penalties worth naming in the collapsed header, or '' when there is
+ * The penalties worth naming on the collapsed tile, or [] when there is
  * nothing to say.
  *
- * Only non-default verdicts appear: "everyone got NFA" is noise. Withheld
- * rounds return '' regardless — the header must not leak what the card body
- * refuses to show.
+ * Only non-default verdicts appear: "everyone got NFA" is noise, and the
+ * verdict text alone cannot distinguish a judge who chose the default from one
+ * who never touched the row — both store the same string. Withheld rounds
+ * return [] regardless: the tile must not leak what the card body refuses to
+ * show.
  */
-export function penaltySummary(
+export function incidentPenalties(
   incident: Incident,
   defaultVerdict: string | undefined,
   canJudge: boolean,
-): string {
-  if (!showsVerdicts(incident, canJudge)) return '';
-  return incident.drivers
-    .filter((d) => d.resolution && d.resolution.verdict !== defaultVerdict)
-    .map((d) => `${d.driverName} ${d.resolution!.verdict}`)
-    .join(' · ');
+): IncidentPenalty[] {
+  if (!showsVerdicts(incident, canJudge)) return [];
+
+  const judged = incident.drivers.filter((d) => d.resolution);
+  const named = (drivers: IncidentDriver[]): IncidentPenalty[] =>
+    drivers.map((d) => ({ driverName: d.driverName, verdict: d.resolution!.verdict }));
+
+  if (defaultVerdict !== undefined) {
+    return named(judged.filter((d) => d.resolution!.verdict !== defaultVerdict));
+  }
+
+  // No default to compare against — the rules failed to load, or the league
+  // deleted the rule that was flagged default. One verdict shared by everyone
+  // is a collective outcome and says nothing a tile needs; a split decision
+  // still gets named in full rather than silently swallowed.
+  const distinct = new Set(judged.map((d) => d.resolution!.verdict));
+  return distinct.size <= 1 ? [] : named(judged);
+}
+
+/**
+ * The one decision reason shared by every judged driver, or null when the rows
+ * disagree.
+ *
+ * A reason is authored once per incident and fanned out onto each driver's
+ * resolution by the server, so printing it per row repeats the same sentence N
+ * times. Divergence is unreachable through the judge UI but the column allows
+ * it, and null lets the caller fall back to per-row rendering.
+ */
+export function sharedDecisionDescription(incident: Incident): string | null {
+  const descriptions = new Set(
+    incident.drivers
+      .map((d) => d.resolution?.description)
+      .filter((text): text is string => !!text),
+  );
+  return descriptions.size === 1 ? [...descriptions][0] : null;
 }
 
 /**

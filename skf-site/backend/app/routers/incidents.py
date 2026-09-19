@@ -138,7 +138,9 @@ async def _get_default_verdict_rule(db: AsyncSession) -> VerdictRule | None:
 @router.get("/verdict-rules", response_model=list[VerdictRuleOut])
 async def list_verdict_rules(
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
+    # The catalogue is public knowledge — it is printed in the regulations, and
+    # every viewer needs the default rule to tell a penalty from "no action".
+    _: User | None = Depends(get_current_user_optional),
 ):
     result = await db.execute(
         select(VerdictRule).order_by(VerdictRule.sort_order)

@@ -703,6 +703,14 @@ class TestVerdictRules:
         assert isinstance(resp.json(), list)
 
     @pytest.mark.anyio
+    async def test_anonymous_can_list_verdict_rules(self, client: AsyncClient):
+        # A logged-out visitor reads incidents, so it must be able to tell a
+        # penalty from the default verdict. The catalogue carries no secrets.
+        resp = await client.get(RULES_URL)
+        assert resp.status_code == 200
+        assert isinstance(resp.json(), list)
+
+    @pytest.mark.anyio
     async def test_create_verdict_rule(self, admin_client: AsyncClient):
         resp = await admin_client.post(
             RULES_URL,

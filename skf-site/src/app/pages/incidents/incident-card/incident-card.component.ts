@@ -22,8 +22,9 @@ import {
 } from '../../../services/incidents-api.service';
 import {
   driverStatusBadge,
+  incidentPenalties,
   incidentStatusChip,
-  penaltySummary,
+  sharedDecisionDescription,
   showsStewardDetail,
   showsVerdicts,
   StatusChip,
@@ -145,29 +146,35 @@ export class IncidentCardComponent {
 
   // ── Display helpers ───────────────────────────────────────────────
 
-  driverNames(): string {
-    return this.incident().drivers.map((d) => d.driverName).join(', ');
-  }
+  readonly driverNames = computed(() =>
+    this.incident().drivers.map((d) => d.driverName).join(', '),
+  );
 
   /** Penalties only, and nothing at all while the round is withheld. */
-  penaltySummary(): string {
-    return penaltySummary(this.incident(), this.defaultRule()?.verdict, this.canJudge());
-  }
+  readonly penalties = computed(() =>
+    incidentPenalties(this.incident(), this.defaultRule()?.verdict, this.canJudge()),
+  );
 
   /** The incident status as this viewer should understand it. */
-  statusChip(): StatusChip {
-    return incidentStatusChip(this.incident(), this.canJudge());
-  }
+  readonly statusChip = computed(() => incidentStatusChip(this.incident(), this.canJudge()));
 
   /** Row chrome that only means something to a steward. */
-  showsStewardDetail(): boolean {
-    return showsStewardDetail(this.canJudge());
-  }
+  readonly showsStewardDetail = computed(() => showsStewardDetail(this.canJudge()));
 
   /** True when this viewer may read verdicts on this incident at all. */
-  showsVerdicts(): boolean {
-    return showsVerdicts(this.incident(), this.canJudge());
-  }
+  readonly showsVerdicts = computed(() => showsVerdicts(this.incident(), this.canJudge()));
+
+  /** The decision reason, printed once per card instead of once per driver. */
+  readonly decisionDescription = computed(() => sharedDecisionDescription(this.incident()));
+
+  /** Labels the verdict rows for a reader. Judges get the authoring footer
+   *  instead, and an unjudged incident has nothing to head. */
+  readonly decisionSectionShown = computed(
+    () =>
+      !this.canJudge() &&
+      this.showsVerdicts() &&
+      this.incident().drivers.some((d) => d.resolution),
+  );
 
   /** Null when a badge would only repeat the chip row or the card header. */
   statusBadge(driver: IncidentDriver): StatusChip | null {
