@@ -338,14 +338,3 @@
   }
 }
 
-// Shown to a driver while the round is unpublished: without it the expanded
-// card is a list of surnames with no hint of what is being waited for.
-.pending-notice {
-  margin: 0.6rem 0 0;
-  padding: 0.5rem 0.7rem;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-subtle);
-  font-size: var(--text-base);
-  color: var(--ink-soft);
-}

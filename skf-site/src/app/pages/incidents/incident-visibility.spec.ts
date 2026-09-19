@@ -1,7 +1,7 @@
 import {
   driverStatusBadge,
   incidentStatusChip,
-  showsPendingNotice,
+  penaltySummary,
   showsStewardDetail,
   showsVerdicts,
 } from './incident-visibility';
@@ -101,17 +101,54 @@ describe('showsStewardDetail', () => {
   });
 });
 
-describe('showsPendingNotice', () => {
-  it('explains the absence of a verdict to a waiting driver', () => {
-    expect(showsPendingNotice(incident({ isPublished: false }), DRIVER)).toBe(true);
+describe('penaltySummary', () => {
+  const penalised = {
+    id: 'drv-2',
+    driverName: 'Oleksandr Dovmat',
+    driverId: 'driver-2',
+    sortOrder: 1,
+    resolution: {
+      id: 'res-2',
+      incidentDriverId: 'drv-2',
+      judgeUserId: null,
+      verdict: 'TP +15s',
+      bwpPoints: 2,
+      description: null,
+      bwpApplied: false,
+      resolvedAt: '2026-09-13T10:00:00Z',
+    },
+  };
+
+  it('names the penalties on a published round', () => {
+    const summary = penaltySummary(
+      incident({ isPublished: true, drivers: [penalised] }),
+      'NFA',
+      DRIVER,
+    );
+    expect(summary).toBe('Oleksandr Dovmat TP +15s');
   });
 
-  it('says nothing once the verdict is readable', () => {
-    expect(showsPendingNotice(incident({ isPublished: true }), DRIVER)).toBe(false);
+  it('stays silent when everyone got the default', () => {
+    const nfa = {
+      ...penalised,
+      resolution: { ...penalised.resolution, verdict: 'NFA', bwpPoints: null },
+    };
+    expect(penaltySummary(incident({ isPublished: true, drivers: [nfa] }), 'NFA', DRIVER)).toBe('');
   });
 
-  it('never nags a judge, who can already see everything', () => {
-    expect(showsPendingNotice(incident({ isPublished: false }), JUDGE)).toBe(false);
+  it('leaks nothing from a withheld round', () => {
+    // Role preview is a client-side simulation, so an admin previewing as a
+    // driver still holds real resolutions in memory. The header must not print
+    // what the card body is refusing to show.
+    expect(
+      penaltySummary(incident({ isPublished: false, drivers: [penalised] }), 'NFA', DRIVER),
+    ).toBe('');
+  });
+
+  it('still shows a judge the penalties before publication', () => {
+    expect(
+      penaltySummary(incident({ isPublished: false, drivers: [penalised] }), 'NFA', JUDGE),
+    ).toBe('Oleksandr Dovmat TP +15s');
   });
 });
 

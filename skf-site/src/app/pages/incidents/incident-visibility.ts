@@ -48,9 +48,24 @@ export function showsStewardDetail(canJudge: boolean): boolean {
   return canJudge;
 }
 
-/** True when the viewer needs telling why there is no verdict to read. */
-export function showsPendingNotice(incident: Incident, canJudge: boolean): boolean {
-  return !showsVerdicts(incident, canJudge);
+/**
+ * The penalties worth naming in the collapsed header, or '' when there is
+ * nothing to say.
+ *
+ * Only non-default verdicts appear: "everyone got NFA" is noise. Withheld
+ * rounds return '' regardless — the header must not leak what the card body
+ * refuses to show.
+ */
+export function penaltySummary(
+  incident: Incident,
+  defaultVerdict: string | undefined,
+  canJudge: boolean,
+): string {
+  if (!showsVerdicts(incident, canJudge)) return '';
+  return incident.drivers
+    .filter((d) => d.resolution && d.resolution.verdict !== defaultVerdict)
+    .map((d) => `${d.driverName} ${d.resolution!.verdict}`)
+    .join(' · ');
 }
 
 /**

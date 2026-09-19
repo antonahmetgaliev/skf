@@ -48,10 +48,6 @@
         </div>
       }
 
-      @if (showsPendingNotice()) {
-        <p class="pending-notice">{{ 'incidents.verdictsPendingPublication' | transloco }}</p>
-      }
-
       <div class="driver-rows">
         @for (drv of incident().drivers; track drv.id) {
           <div class="driver-row">
@@ -105,7 +101,7 @@
                   (ngModelChange)="setCustomVerdict(drv.id, $event)"
                   [placeholder]="'incidents.customVerdict' | transloco" />
               }
-            } @else if (drv.resolution) {
+            } @else if (showsVerdicts() && drv.resolution) {
               <div class="driver-resolution">
                 <span class="resolution-verdict">{{ drv.resolution.verdict }}</span>
                 @if (drv.resolution.bwpPoints) {

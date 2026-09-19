@@ -23,8 +23,9 @@ import {
 import {
   driverStatusBadge,
   incidentStatusChip,
-  showsPendingNotice,
+  penaltySummary,
   showsStewardDetail,
+  showsVerdicts,
   StatusChip,
 } from '../incident-visibility';
 
@@ -148,13 +149,9 @@ export class IncidentCardComponent {
     return this.incident().drivers.map((d) => d.driverName).join(', ');
   }
 
-  /** Penalties only: when everyone got the default there is nothing worth saying. */
+  /** Penalties only, and nothing at all while the round is withheld. */
   penaltySummary(): string {
-    const fallback = this.defaultRule()?.verdict;
-    return this.incident()
-      .drivers.filter((d) => d.resolution && d.resolution.verdict !== fallback)
-      .map((d) => `${d.driverName} ${d.resolution!.verdict}`)
-      .join(' · ');
+    return penaltySummary(this.incident(), this.defaultRule()?.verdict, this.canJudge());
   }
 
   /** The incident status as this viewer should understand it. */
@@ -167,9 +164,9 @@ export class IncidentCardComponent {
     return showsStewardDetail(this.canJudge());
   }
 
-  /** True when the viewer needs telling why there is no verdict to read. */
-  showsPendingNotice(): boolean {
-    return showsPendingNotice(this.incident(), this.canJudge());
+  /** True when this viewer may read verdicts on this incident at all. */
+  showsVerdicts(): boolean {
+    return showsVerdicts(this.incident(), this.canJudge());
   }
 
   /** Null when a badge would only repeat the chip row or the card header. */
