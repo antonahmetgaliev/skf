@@ -1,8 +1,17 @@
-[build]
-builder = "nixpacks"
+# No [build] section: Railway's default builder (Railpack) picks Python up from
+# requirements.txt and runtime.txt. The service used to pin builder = "nixpacks",
+# which Railway now marks deprecated — and which built the whole Python toolchain
+# from source on every deploy (12+ minutes), including Sphinx, whose own test
+# suite is flaky. One deploy failed on it and the next succeeded from the very
+# same nixpkgs pin, so every release was a coin flip. The `front` service has
+# always used Railpack without a nixpacks.toml.
+#
+# The start command must not name an interpreter path: the old one pointed at
+# /app/.venv, a directory created by nixpacks.toml, which no longer exists.
+# Railpack puts the virtualenv on PATH instead.
 
 [deploy]
-startCommand = "/app/.venv/bin/python -m app.migrate && /app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+startCommand = "python -m app.migrate && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
 healthcheckPath = "/healthz"
 healthcheckTimeout = 120
 restartPolicyType = "on_failure"
