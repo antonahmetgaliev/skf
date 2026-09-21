@@ -1,0 +1,207 @@
+<app-card [animated]="true">
+  <h3 class="section-title">{{ 'giveaway.importTitle' | transloco }}</h3>
+  <p class="section-description">{{ 'giveaway.importDescription' | transloco }}</p>
+
+  <app-form-field [label]="'giveaway.championship' | transloco" fieldId="giveawayChampionship">
+    @if (championshipsLoading()) {
+      <app-spinner />
+    } @else {
+      <select appSelect id="giveawayChampionship"
+        [ngModel]="selectedChampionshipId()"
+        (ngModelChange)="selectChampionship($event)">
+        <option [ngValue]="null">{{ 'giveaway.choosePlaceholder' | transloco }}</option>
+        @for (champ of championships(); track champ.id) {
+          <option [ngValue]="champ.id">{{ champ.name }}</option>
+        }
+      </select>
+    }
+  </app-form-field>
+
+  @if (selectedChampionshipId() !== null) {
+    @if (dataLoading()) {
+      <app-spinner />
+    } @else {
+      <div class="round-list">
+        @for (round of rounds(); track round.id) {
+          @let record = importForRound(round.id);
+          <div class="round-row" [class.round-row--imported]="record">
+            <div class="round-main">
+              <span class="round-name">{{ round.name }}</span>
+              @if (round.startsAt) {
+                <span class="round-date">{{ round.startsAt | date: 'dd.MM.yyyy' }}</span>
+              }
+            </div>
+            @if (record) {
+              <span class="round-status">
+                {{ record.entryCount }} {{ 'giveaway.driversImported' | transloco }}
+                @if (record.unmatchedCount > 0) {
+                  <span class="round-warn">
+                    · {{ record.unmatchedCount }} {{ 'giveaway.unlinked' | transloco }}
+                  </span>
+                }
+              </span>
+              <app-btn variant="danger" size="xs" (click)="deleteImport(record)">
+                {{ 'common.confirm.delete' | transloco }}
+              </app-btn>
+            } @else {
+              <span class="round-status round-status--missing">
+                {{ 'giveaway.noResults' | transloco }}
+              </span>
+              <label class="upload-btn">
+                <input type="file" accept=".xml,text/xml,application/xml"
+                  [disabled]="uploading()"
+                  (click)="uploadRoundId.set(round.id)"
+                  (change)="onFileSelected($event)" />
+                <span>{{ 'giveaway.upload' | transloco }}</span>
+              </label>
+            }
+          </div>
+        } @empty {
+          <app-empty>{{ 'giveaway.noRounds' | transloco }}</app-empty>
+        }
+      </div>
+
+      @if (uploading()) {
+        <app-spinner />
+      }
+      @if (uploadError()) {
+        <p class="upload-error">{{ uploadError() }}</p>
+      }
+    }
+  }
+</app-card>
+
+@if (unmatched().length > 0) {
+  <app-card [animated]="true">
+    <h3 class="section-title">{{ 'giveaway.unmatchedTitle' | transloco }}</h3>
+    <p class="section-description">{{ 'giveaway.unmatchedDescription' | transloco }}</p>
+
+    <div class="unmatched-list">
+      @for (name of unmatched(); track name.normalizedName) {
+        <div class="unmatched-row">
+          <div class="unmatched-main">
+            <span class="unmatched-name">{{ name.rawName }}</span>
+            <span class="unmatched-meta">
+              {{ name.rounds }} {{ 'giveaway.roundsShort' | transloco }}
+            </span>
+          </div>
+
+          @if (aliasTarget()?.normalizedName === name.normalizedName) {
+            <div class="alias-form">
+              <input appInput size="sm" type="text"
+                [placeholder]="'giveaway.canonicalPlaceholder' | transloco"
+                [ngModel]="aliasCanonical()"
+                (ngModelChange)="aliasCanonical.set($event)" />
+              @if (name.suggestions.length > 0) {
+                <div class="alias-suggestions">
+                  @for (suggestion of name.suggestions; track suggestion) {
+                    <button type="button" class="alias-chip"
+                      (click)="aliasCanonical.set(suggestion)">{{ suggestion }}</button>
+                  }
+                </div>
+              }
+              <div class="alias-actions">
+                <app-btn variant="accent" size="xs"
+                  [disabled]="!aliasCanonical().trim()"
+                  (click)="confirmAlias()">{{ 'giveaway.merge' | transloco }}</app-btn>
+                <app-btn variant="ghost" size="xs" (click)="cancelAlias()">
+                  {{ 'giveaway.cancel' | transloco }}
+                </app-btn>
+              </div>
+            </div>
+          } @else {
+            <app-btn variant="ghost" size="xs" (click)="startAlias(name)">
+              {{ 'giveaway.mergeInto' | transloco }}
+            </app-btn>
+          }
+        </div>
+      }
+    </div>
+  </app-card>
+}
+
+@if (selectedChampionshipId() !== null) {
+  <app-card [animated]="true">
+    <h3 class="section-title">{{ 'giveaway.drawTitle' | transloco }}</h3>
+    <p class="section-description">{{ 'giveaway.drawDescription' | transloco }}</p>
+
+    <div class="rules-row">
+      <app-form-field [label]="'giveaway.minDistance' | transloco" fieldId="minDistancePct">
+        <input appInput size="sm" id="minDistancePct" type="number" min="0" max="100"
+          [ngModel]="minDistancePct()"
+          (ngModelChange)="minDistancePct.set($event)"
+          (change)="onRulesChanged()" />
+      </app-form-field>
+      <app-form-field [label]="'giveaway.minRounds' | transloco" fieldId="minRounds">
+        <input appInput size="sm" id="minRounds" type="number" min="1"
+          [ngModel]="minRounds()"
+          (ngModelChange)="minRounds.set($event)"
+          (change)="onRulesChanged()" />
+      </app-form-field>
+    </div>
+
+    @if (notEnoughRounds()) {
+      <p class="rules-warning">
+        {{ 'giveaway.notEnoughRounds' | transloco }}
+        ({{ eligibility()!.importedRounds }} / {{ eligibility()!.minRounds }})
+      </p>
+    }
+
+    @if (eligibilityLoading()) {
+      <app-spinner />
+    } @else if (eligibility(); as data) {
+      @if (carClasses().length > 1) {
+        <div class="class-switch">
+          @for (carClass of carClasses(); track carClass) {
+            <button type="button" class="class-chip"
+              [class.active]="selectedClass() === carClass"
+              (click)="selectClass(carClass)">{{ carClass }}</button>
+          }
+        </div>
+      }
+
+      @if (winner(); as w) {
+        <div class="winner">
+          <span class="winner-label">{{ 'giveaway.winner' | transloco }}</span>
+          <span class="winner-name">{{ w.displayName }}</span>
+          <span class="winner-meta">
+            {{ w.carClass }} · {{ w.qualifyingRounds }} {{ 'giveaway.roundsShort' | transloco }}
+          </span>
+        </div>
+      }
+
+      <div class="draw-row">
+        <app-btn variant="accent" size="sm"
+          [disabled]="poolForSelectedClass().length === 0"
+          (click)="draw()">{{ 'giveaway.getRandom' | transloco }}</app-btn>
+        <span class="draw-count">
+          {{ poolForSelectedClass().length }} {{ 'giveaway.driversEligible' | transloco }}
+        </span>
+      </div>
+
+      @if (poolForSelectedClass().length === 0) {
+        <app-empty>{{ 'giveaway.noDriversMatch' | transloco }}</app-empty>
+      } @else {
+        <div class="driver-list">
+          @for (driver of poolForSelectedClass(); track driver.identity + driver.carClass; let i = $index) {
+            <div class="driver-row">
+              <span class="driver-rank">{{ i + 1 }}</span>
+              <span class="driver-name">{{ driver.displayName }}</span>
+              <span class="driver-rounds">
+                {{ driver.qualifyingRounds }} {{ 'giveaway.roundsShort' | transloco }}
+              </span>
+              <span class="driver-breakdown">
+                @for (round of driver.rounds; track round.roundKey) {
+                  <span class="lap-pct" [class.lap-pct--out]="!round.qualifies"
+                    [title]="round.roundLabel + ': ' + round.laps + '/' + round.classLeaderLaps">
+                    {{ round.distancePct }}%
+                  </span>
+                }
+              </span>
+            </div>
+          }
+        </div>
+      }
+    }
+  </app-card>
+}

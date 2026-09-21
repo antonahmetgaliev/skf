@@ -8,6 +8,7 @@ from app.models.custom_championship import CustomChampionship, CustomRace
 from app.models.active_championship import ActiveChampionship
 from app.models.translation import Language, Translation
 from app.models.regulation import RegulationPage, RegulationContent
+from app.models.race_result import RaceResultImport, RaceResultEntry, GiveawayNameAlias
 
 __all__ = [
     "Driver", "BwpPoint", "PenaltyRule", "PenaltyClearance", "SimgridCache",
@@ -20,4 +21,5 @@ __all__ = [
     "ActiveChampionship",
     "Language", "Translation",
     "RegulationPage", "RegulationContent",
+    "RaceResultImport", "RaceResultEntry", "GiveawayNameAlias",
 ]

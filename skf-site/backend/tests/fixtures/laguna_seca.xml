@@ -1,0 +1,463 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rFactorXML version="1.0">
+<RaceResults>
+<Setting>Multiplayer</Setting>
+<ServerName />
+<ClientFuelVisible>2</ClientFuelVisible>
+<PlayerFile>Settings</PlayerFile>
+<DateTime>1789232660</DateTime>
+<TimeString>2026/09/12 19:04:20</TimeString>
+<TrackVenue>WeatherTech Raceway Laguna Seca</TrackVenue>
+<TrackCourse>WeatherTech Raceway Laguna Seca</TrackCourse>
+<TrackEvent>WeatherTech Raceway Laguna Seca</TrackEvent>
+<TrackData>D:\Steam\steamapps\common\Le Mans Ultimate\Installed\Locations\LagunaSeca_2026\1.03\layoutLaguna.mas</TrackData>
+<TrackLength>3590.4</TrackLength>
+<GameVersion>1.4130</GameVersion>
+<Dedicated>0</Dedicated>
+<ConnectionType upload="1000" download="8100">ADSL2+ 16M</ConnectionType>
+<RaceLaps>0</RaceLaps>
+<RaceTime>70</RaceTime>
+<MechFailRate>0</MechFailRate>
+<DamageMult>100</DamageMult>
+<FuelMult>1</FuelMult>
+<TireMult>1</TireMult>
+<VehiclesAllowed>Peugeot_9x8,</VehiclesAllowed>
+<ParcFerme>3</ParcFerme>
+<FixedSetups>0</FixedSetups>
+<FreeSettings>2147483647</FreeSettings>
+<FixedUpgrades>0</FixedUpgrades>
+<TireWarmers>1</TireWarmers>
+<Race>
+<DateTime>1789236836</DateTime>
+<TimeString>2026/09/12 20:13:56</TimeString>
+<Laps>2147483647</Laps>
+<Minutes>70</Minutes>
+<FormationAndStart>1</FormationAndStart>
+<MostLapsCompleted>55</MostLapsCompleted>
+<Driver>
+<Name>Max Tarasenko</Name>
+<Connected>1</Connected>
+<VehFile>397_25_9X8W.VEH</VehFile>
+<UpgradeCode>40080000 00000000 00000000 00000000</UpgradeCode>
+<VehName>9x8 Wing Custom Team 2025 #397</VehName>
+<Category>WEC 2025, Hypercar, Peugeot 9x8</Category>
+<CarType>Peugeot 9x8</CarType>
+<CarClass>Hyper</CarClass>
+<CarNumber>13</CarNumber>
+<TeamName>kurkabeinracing Racing</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>1</GridPos>
+<Position>1</Position>
+<ClassGridPos>1</ClassGridPos>
+<ClassPosition>1</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>74.3646</BestLapTime>
+<FinishTime>4201.9826</FinishTime>
+<Laps>55</Laps>
+<Pitstops>1</Pitstops>
+<FinishStatus>Finished Normally</FinishStatus>
+<ControlAndAids startLap="1" endLap="55">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Vladyslav Mykhailenko</Name>
+<Connected>1</Connected>
+<VehFile>15_26_WRT_37164931.VEH</VehFile>
+<UpgradeCode>20040000 00000000 00000000 00000000</UpgradeCode>
+<VehName>BMW M Team WRT 2026 #15:WEC</VehName>
+<Category>WEC 2026, Hypercar, BMW M Hybrid V8</Category>
+<CarType>BMW M Hybrid V8</CarType>
+<CarClass>Hyper</CarClass>
+<CarNumber>15</CarNumber>
+<TeamName>BMW M Team WRT</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>2</GridPos>
+<Position>2</Position>
+<ClassGridPos>2</ClassGridPos>
+<ClassPosition>2</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>74.8085</BestLapTime>
+<FinishTime>4202.3974</FinishTime>
+<Laps>55</Laps>
+<Pitstops>1</Pitstops>
+<FinishStatus>Finished Normally</FinishStatus>
+<ControlAndAids startLap="1" endLap="55">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Arsen Petrosian</Name>
+<Connected>1</Connected>
+<VehFile>94_26_PEUG80967432.VEH</VehFile>
+<UpgradeCode>40080000 00000000 00000000 00000000</UpgradeCode>
+<VehName>Peugeot TotalEnergies 2026 #94:WEC</VehName>
+<Category>WEC 2026, Hypercar, Peugeot 9x8</Category>
+<CarType>Peugeot 9x8</CarType>
+<CarClass>Hyper</CarClass>
+<CarNumber>94</CarNumber>
+<TeamName>Peugeot TotalEnergies</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>3</GridPos>
+<Position>3</Position>
+<ClassGridPos>3</ClassGridPos>
+<ClassPosition>3</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>75.1472</BestLapTime>
+<FinishTime>4218.9375</FinishTime>
+<Laps>55</Laps>
+<Pitstops>1</Pitstops>
+<FinishStatus>Finished Normally</FinishStatus>
+<ControlAndAids startLap="1" endLap="55">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Sergiy Gaydabura</Name>
+<Connected>1</Connected>
+<VehFile>17_26_GENE34E4954B.VEH</VehFile>
+<UpgradeCode>40080000 00000000 00000000 00000000</UpgradeCode>
+<VehName>Genesis Magma Racing 2026 #17:LM</VehName>
+<Category>WEC 2026, Hypercar, Genesis GMR001</Category>
+<CarType>Genesis GMR001</CarType>
+<CarClass>Hyper</CarClass>
+<CarNumber>17</CarNumber>
+<TeamName>Genesis Magma Racing</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>5</GridPos>
+<Position>15</Position>
+<ClassGridPos>5</ClassGridPos>
+<ClassPosition>4</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>75.7286</BestLapTime>
+<Laps>45</Laps>
+<Pitstops>3</Pitstops>
+<FinishStatus>DNF</FinishStatus>
+<DNFReason>Suspension</DNFReason>
+<ControlAndAids startLap="1" endLap="45">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Ars Ilanovich</Name>
+<Connected>1</Connected>
+<VehFile>397_26_GR010.VEH</VehFile>
+<UpgradeCode>40080000 00000000 00000000 00000000</UpgradeCode>
+<VehName>Toyota TR010 Custom Team 2026 #397</VehName>
+<Category>WEC 2026, Hypercar, Toyota TR010</Category>
+<CarType>Toyota TR010</CarType>
+<CarClass>Hyper</CarClass>
+<CarNumber>69</CarNumber>
+<TeamName>OINQQ RACING DAILY</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>4</GridPos>
+<Position>17</Position>
+<ClassGridPos>4</ClassGridPos>
+<ClassPosition>5</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>76.9680</BestLapTime>
+<Laps>22</Laps>
+<Pitstops>2</Pitstops>
+<FinishStatus>DNF</FinishStatus>
+<DNFReason>Suspension</DNFReason>
+<ControlAndAids startLap="1" endLap="22">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Arsen Budzyk</Name>
+<Connected>1</Connected>
+<VehFile>87_26_AKKO74271960.VEH</VehFile>
+<UpgradeCode>1e631000 00000000 00000000 00000000</UpgradeCode>
+<VehName>Akkodis ASP Team 2026 #87:WEC</VehName>
+<Category>WEC 2026, GT3, Lexus RCF LMGT3</Category>
+<CarType>Lexus RCF LMGT3</CarType>
+<CarClass>GT3</CarClass>
+<CarNumber>87</CarNumber>
+<TeamName>Akkodis ASP Team</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>9</GridPos>
+<Position>5</Position>
+<ClassGridPos>4</ClassGridPos>
+<ClassPosition>2</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>83.7168</BestLapTime>
+<FinishTime>4213.9775</FinishTime>
+<Laps>49</Laps>
+<Pitstops>2</Pitstops>
+<FinishStatus>Finished Normally</FinishStatus>
+<ControlAndAids startLap="1" endLap="49">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Oleksandr Dovmat</Name>
+<Connected>1</Connected>
+<VehFile>397_26_BMW.VEH</VehFile>
+<UpgradeCode>1e631000 00000000 00000000 00000000</UpgradeCode>
+<VehName>BMW GT3 Custom Team 2026 #397</VehName>
+<Category>WEC 2026, GT3, BMW M4 LMGT3</Category>
+<CarType>BMW M4 LMGT3</CarType>
+<CarClass>GT3</CarClass>
+<CarNumber>13</CarNumber>
+<TeamName>Black Tea13</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>6</GridPos>
+<Position>8</Position>
+<ClassGridPos>1</ClassGridPos>
+<ClassPosition>5</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>83.8054</BestLapTime>
+<FinishTime>4244.2575</FinishTime>
+<Laps>49</Laps>
+<Pitstops>1</Pitstops>
+<FinishStatus>Finished Normally</FinishStatus>
+<ControlAndAids startLap="1" endLap="49">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Artem Reshodko</Name>
+<Connected>1</Connected>
+<VehFile>32_26_WRT_83524148.VEH</VehFile>
+<UpgradeCode>1e631000 00000000 00000000 00000000</UpgradeCode>
+<VehName>Team WRT 2026 #32:WEC</VehName>
+<Category>WEC 2026, GT3, BMW M4 LMGT3</Category>
+<CarType>BMW M4 LMGT3</CarType>
+<CarClass>GT3</CarClass>
+<CarNumber>32</CarNumber>
+<TeamName>Team WRT</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>10</GridPos>
+<Position>7</Position>
+<ClassGridPos>5</ClassGridPos>
+<ClassPosition>4</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>83.9123</BestLapTime>
+<FinishTime>4235.0976</FinishTime>
+<Laps>49</Laps>
+<Pitstops>1</Pitstops>
+<FinishStatus>Finished Normally</FinishStatus>
+<ControlAndAids startLap="1" endLap="49">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Bohdan Tseliuk</Name>
+<Connected>1</Connected>
+<VehFile>397_24_BMW.VEH</VehFile>
+<UpgradeCode>1e631000 00000000 00000000 00000000</UpgradeCode>
+<VehName>BMW GT3 Custom Team #397</VehName>
+<Category>WEC 2024, GT3, BMW M4 LMGT3</Category>
+<CarType>BMW M4 LMGT3</CarType>
+<CarClass>GT3</CarClass>
+<CarNumber>42</CarNumber>
+<TeamName>Pandemonium Team</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>7</GridPos>
+<Position>4</Position>
+<ClassGridPos>2</ClassGridPos>
+<ClassPosition>1</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>83.9315</BestLapTime>
+<FinishTime>4278.7976</FinishTime>
+<Laps>50</Laps>
+<Pitstops>1</Pitstops>
+<FinishStatus>Finished Normally</FinishStatus>
+<ControlAndAids startLap="1" endLap="50">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Andrii Mochulskyi</Name>
+<Connected>1</Connected>
+<VehFile>397_26_911GT3R.VEH</VehFile>
+<UpgradeCode>1e631000 00000000 00000000 00000000</UpgradeCode>
+<VehName>911GT3R Custom Team 2026 #397</VehName>
+<Category>WEC 2026, GT3, Porsche 911 GT3 R LMGT3</Category>
+<CarType>Porsche 911 GT3 R LMGT3</CarType>
+<CarClass>GT3</CarClass>
+<CarNumber>071</CarNumber>
+<TeamName>Fly On Kerb RT</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>8</GridPos>
+<Position>6</Position>
+<ClassGridPos>3</ClassGridPos>
+<ClassPosition>3</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>83.9677</BestLapTime>
+<FinishTime>4214.4575</FinishTime>
+<Laps>49</Laps>
+<Pitstops>1</Pitstops>
+<FinishStatus>Finished Normally</FinishStatus>
+<ControlAndAids startLap="1" endLap="49">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Pavlo Miroshnikov</Name>
+<Connected>1</Connected>
+<VehFile>397_24_HURACAN.VEH</VehFile>
+<UpgradeCode>3cc62000 00000000 00000000 00000000</UpgradeCode>
+<VehName>Huracan Custom Team 2024 #397</VehName>
+<Category>WEC 2024, GT3, Lamborghini Huracan LMGT3 Evo2</Category>
+<CarType>Lamborghini Huracan LMGT3 Evo2</CarType>
+<CarClass>GT3</CarClass>
+<CarNumber>77</CarNumber>
+<TeamName>Speed Section Team</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>11</GridPos>
+<Position>9</Position>
+<ClassGridPos>6</ClassGridPos>
+<ClassPosition>6</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>84.4807</BestLapTime>
+<FinishTime>4247.5976</FinishTime>
+<Laps>49</Laps>
+<Pitstops>1</Pitstops>
+<FinishStatus>Finished Normally</FinishStatus>
+<ControlAndAids startLap="1" endLap="49">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Roma Fedin</Name>
+<Connected>1</Connected>
+<VehFile>397_25_BMW.VEH</VehFile>
+<UpgradeCode>1e631000 00000000 00000000 00000000</UpgradeCode>
+<VehName>BMW GT3 Custom Team 2025 #397</VehName>
+<Category>WEC 2025, GT3, BMW M4 LMGT3</Category>
+<CarType>BMW M4 LMGT3</CarType>
+<CarClass>GT3</CarClass>
+<CarNumber>13</CarNumber>
+<TeamName>Race Room Performance RRP</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>16</GridPos>
+<Position>12</Position>
+<ClassGridPos>11</ClassGridPos>
+<ClassPosition>9</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>84.6299</BestLapTime>
+<FinishTime>4235.8774</FinishTime>
+<Laps>48</Laps>
+<Pitstops>1</Pitstops>
+<FinishStatus>Finished Normally</FinishStatus>
+<ControlAndAids startLap="1" endLap="48">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Kostiantyn Kryvenko</Name>
+<Connected>1</Connected>
+<VehFile>31_25_WRT_FB7E8382.VEH</VehFile>
+<UpgradeCode>1e631000 00000000 00000000 00000000</UpgradeCode>
+<VehName>The Bend Team WRT 2025 #31:BRZ</VehName>
+<Category>WEC 2025, GT3, BMW M4 LMGT3</Category>
+<CarType>BMW M4 LMGT3</CarType>
+<CarClass>GT3</CarClass>
+<CarNumber>31</CarNumber>
+<TeamName>The Bend Team WRT</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>14</GridPos>
+<Position>10</Position>
+<ClassGridPos>9</ClassGridPos>
+<ClassPosition>7</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>84.6475</BestLapTime>
+<FinishTime>4259.2976</FinishTime>
+<Laps>49</Laps>
+<Pitstops>1</Pitstops>
+<FinishStatus>Finished Normally</FinishStatus>
+<ControlAndAids startLap="1" endLap="49">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Sergii Shcherbyna</Name>
+<Connected>1</Connected>
+<VehFile>31_24_WRT_F2B895A5.VEH</VehFile>
+<UpgradeCode>1e631000 00000000 00000000 00000000</UpgradeCode>
+<VehName>Team WRT 2024 #31:LM</VehName>
+<Category>WEC 2024, GT3, BMW M4 LMGT3</Category>
+<CarType>BMW M4 LMGT3</CarType>
+<CarClass>GT3</CarClass>
+<CarNumber>31</CarNumber>
+<TeamName>Team WRT</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>13</GridPos>
+<Position>11</Position>
+<ClassGridPos>8</ClassGridPos>
+<ClassPosition>8</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>84.8695</BestLapTime>
+<FinishTime>4278.6574</FinishTime>
+<Laps>49</Laps>
+<Pitstops>1</Pitstops>
+<FinishStatus>Finished Normally</FinishStatus>
+<ControlAndAids startLap="1" endLap="49">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Vitalii Kakadii</Name>
+<Connected>1</Connected>
+<VehFile>58_26_GARA17941687.VEH</VehFile>
+<UpgradeCode>3cc62000 00000000 00000000 00000000</UpgradeCode>
+<VehName>Garage 59 2026 #58:WEC</VehName>
+<Category>WEC 2026, GT3, McLaren 720S LMGT3 Evo</Category>
+<CarType>McLaren 720S LMGT3 Evo</CarType>
+<CarClass>GT3</CarClass>
+<CarNumber>58</CarNumber>
+<TeamName>Garage 59</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>15</GridPos>
+<Position>13</Position>
+<ClassGridPos>10</ClassGridPos>
+<ClassPosition>10</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>84.9979</BestLapTime>
+<FinishTime>4268.2976</FinishTime>
+<Laps>48</Laps>
+<Pitstops>1</Pitstops>
+<FinishStatus>Finished Normally</FinishStatus>
+<ControlAndAids startLap="1" endLap="48">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Andrii lotochynskyi</Name>
+<Connected>1</Connected>
+<VehFile>397_25_BMW.VEH</VehFile>
+<UpgradeCode>1e631000 00000000 00000000 00000000</UpgradeCode>
+<VehName>BMW GT3 Custom Team 2025 #397</VehName>
+<Category>WEC 2025, GT3, BMW M4 LMGT3</Category>
+<CarType>BMW M4 LMGT3</CarType>
+<CarClass>GT3</CarClass>
+<CarNumber>97</CarNumber>
+<TeamName>Race TeamUa</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>17</GridPos>
+<Position>14</Position>
+<ClassGridPos>12</ClassGridPos>
+<ClassPosition>11</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>85.4625</BestLapTime>
+<FinishTime>4246.7375</FinishTime>
+<Laps>44</Laps>
+<Pitstops>3</Pitstops>
+<FinishStatus>Finished Normally</FinishStatus>
+<ControlAndAids startLap="1" endLap="44">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+<Driver>
+<Name>Bohdan Hulobov</Name>
+<Connected>1</Connected>
+<VehFile>66_24_JMW_3051A6BA.VEH</VehFile>
+<UpgradeCode>3cc62000 00000000 00000000 00000000</UpgradeCode>
+<VehName>JMW Motorsport 2024 2024 #66:LM</VehName>
+<Category>WEC 2024, GT3, Ferrari 296 LMGT3</Category>
+<CarType>Ferrari 296 LMGT3</CarType>
+<CarClass>GT3</CarClass>
+<CarNumber>66</CarNumber>
+<TeamName>JMW Motorsport</TeamName>
+<isPlayer>1</isPlayer>
+<ServerScored>1</ServerScored>
+<GridPos>12</GridPos>
+<Position>16</Position>
+<ClassGridPos>7</ClassGridPos>
+<ClassPosition>12</ClassPosition>
+<LapRankIncludingDiscos>18</LapRankIncludingDiscos>
+<BestLapTime>84.9144</BestLapTime>
+<Laps>30</Laps>
+<Pitstops>0</Pitstops>
+<FinishStatus>DQ</FinishStatus>
+<ControlAndAids startLap="1" endLap="30">PlayerControl,Clutch,AutoBlip</ControlAndAids>
+</Driver>
+</Race>
+</RaceResults>
+</rFactorXML>

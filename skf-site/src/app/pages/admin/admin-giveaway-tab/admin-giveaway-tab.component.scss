@@ -1,0 +1,318 @@
+:host {
+  display: contents;
+}
+
+.section-title {
+  margin: 0 0 0.4rem;
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+}
+
+.section-description {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: var(--text-md);
+  line-height: 1.5;
+}
+
+// ── Rounds and imports ────────────────────────────────────────────────────
+
+.round-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 1rem;
+}
+
+.round-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid transparent;
+}
+
+.round-row--imported {
+  border-left-color: var(--gold);
+}
+
+.round-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.round-name {
+  font-size: var(--text-md);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.round-date,
+.round-status {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.round-status--missing {
+  font-style: italic;
+}
+
+.round-warn {
+  color: var(--gold);
+}
+
+.upload-btn {
+  cursor: pointer;
+
+  input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  span {
+    display: inline-block;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-xs);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+  }
+
+  &:hover span {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+}
+
+.upload-error {
+  margin: 0.75rem 0 0;
+  color: var(--danger, #ff6b6b);
+  font-size: var(--text-sm);
+}
+
+// ── Unmatched names ───────────────────────────────────────────────────────
+
+.unmatched-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.unmatched-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.unmatched-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.unmatched-meta {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.alias-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.alias-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.alias-chip {
+  padding: 0.2rem 0.5rem;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-xs);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+}
+
+.alias-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+// ── Draw ──────────────────────────────────────────────────────────────────
+
+.rules-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.rules-warning {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: rgba(245, 190, 45, 0.08);
+  color: var(--gold);
+  font-size: var(--text-sm);
+}
+
+.class-switch {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.class-chip {
+  padding: 0.3rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-xs);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  cursor: pointer;
+
+  &.active {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+}
+
+.winner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--radius-md);
+  background: rgba(245, 190, 45, 0.08);
+  text-align: center;
+}
+
+.winner-label {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.winner-name {
+  color: var(--gold);
+  font-size: var(--text-2xl);
+}
+
+.winner-meta {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.draw-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.draw-count {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.driver-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.driver-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-xs);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: var(--text-sm);
+}
+
+.driver-rank {
+  min-width: 1.5rem;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.driver-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.driver-rounds {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.driver-breakdown {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.lap-pct {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  cursor: help;
+}
+
+// A round that fell short of the distance bar, shown so the count is auditable.
+.lap-pct--out {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+@media (max-width: 640px) {
+  .round-row,
+  .unmatched-row,
+  .driver-row {
+    flex-wrap: wrap;
+  }
+
+  .driver-breakdown {
+    width: 100%;
+    padding-left: 2.25rem;
+  }
+}
