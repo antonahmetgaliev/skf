@@ -1,0 +1,12 @@
+# Raw race-result exports from the game server.
+#
+# These are dropped here to be uploaded through the admin Giveaway tab; they
+# must never be committed. Alongside the results they carry a full <Stream>
+# block of in-race chat between real drivers, which is private conversation we
+# have no reason to publish. The parser discards it, and the test fixtures in
+# skf-site/backend/tests/fixtures/ are stripped copies kept deliberately small.
+#
+# Pattern matches the game's own naming: 2026_09_05_21_29_13-02R1.xml
+[0-9][0-9][0-9][0-9]_[0-9][0-9]_[0-9][0-9]_*.xml
+
+.DS_Store
