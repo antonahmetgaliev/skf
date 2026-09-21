@@ -8,6 +8,7 @@ API, including overall standings (per-race breakdown is not exposed).
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import timedelta
 from typing import Any
@@ -37,6 +38,16 @@ _TTL_LIVE = timedelta(minutes=10)    # participants
 _TTL_STANDINGS = timedelta(hours=1)  # standings
 _MAX_STANDINGS_PAGES = 50            # safety cap for paged standings fetches
 _MAX_CHAMPIONSHIPS = 2000            # safety cap for the championships list
+
+# SimGrid enforces a per-minute rate limit and answers
+# `429 {"error":"Minute rate limit exceeded"}` once it is crossed - measured at
+# roughly twenty requests a minute. Nothing here used to bound concurrency, and
+# the calendar fans out over every active championship at once, so a busy
+# calendar could trip the limit and fall back to stale data for everyone.
+_MAX_CONCURRENT_REQUESTS = 4
+_RATE_LIMIT_RETRY_SECONDS = 5.0
+_client_semaphore = asyncio.Semaphore(_MAX_CONCURRENT_REQUESTS)
+
 logger = logging.getLogger(__name__)
 
 
@@ -67,7 +78,7 @@ class SimgridService:
             items: list[dict] = []
             offset = 0
             while True:
-                resp = await self._client.get(
+                resp = await self._get(
                     "/api/v1/championships",
                     params={"limit": limit, "offset": offset},
                 )
@@ -172,7 +183,7 @@ class SimgridService:
                 page_params = dict(params)
                 if page > 1:
                     page_params["page"] = page
-                resp = await self._client.get(base, params=page_params)
+                resp = await self._get(base, params=page_params)
                 resp.raise_for_status()
                 raw = resp.json()
                 parsed = self._parse_standings(raw)
@@ -228,7 +239,7 @@ class SimgridService:
     ) -> list[int]:
         """Return the championship's car-class ids (empty on failure)."""
         try:
-            resp = await self._client.get(
+            resp = await self._get(
                 f"/api/v1/championships/{championship_id}"
                 "/championship_car_classes"
             )
@@ -334,7 +345,7 @@ class SimgridService:
                 user_id = cached.get("user_id") if isinstance(cached, dict) else None
                 return user_id if isinstance(user_id, int) else None
 
-            resp = await self._client.get(
+            resp = await self._get(
                 f"/api/v1/users/{discord_uid}", params={"attribute": "discord"}
             )
             resp.raise_for_status()
@@ -351,7 +362,7 @@ class SimgridService:
     async def get_race_name(self, race_id: int) -> str:
         """Fetch a single race's display name from SimGrid."""
         try:
-            resp = await self._client.get(f"/api/v1/races/{race_id}")
+            resp = await self._get(f"/api/v1/races/{race_id}")
             resp.raise_for_status()
             data = resp.json()
             return data.get("display_name") or data.get("race_name") or f"Race {race_id}"
@@ -386,8 +397,32 @@ class SimgridService:
         return data if isinstance(data, list) else []
 
     # ------------------------------------------------------------------
-    # HTTP helper with stale-cache fallback
+    # HTTP helpers
     # ------------------------------------------------------------------
+
+    async def _get(
+        self, url: str, params: dict[str, Any] | None = None
+    ) -> httpx.Response:
+        """Every SimGrid GET goes through here, throttled and 429-aware.
+
+        One retry only: the limit is per minute, so a request that is still
+        refused after honouring `Retry-After` is better served by the stale
+        cache than by queueing behind a longer wait.
+        """
+        async with _client_semaphore:
+            resp = await self._client.get(url, params=params)
+            if resp.status_code != 429:
+                return resp
+            delay = _RATE_LIMIT_RETRY_SECONDS
+            header = resp.headers.get("Retry-After")
+            if header:
+                try:
+                    delay = min(float(header), 30.0)
+                except ValueError:
+                    pass
+            logger.warning("SimGrid rate limit hit for %s, retrying in %ss", url, delay)
+            await asyncio.sleep(delay)
+            return await self._client.get(url, params=params)
 
     async def _request(
         self,
@@ -398,7 +433,7 @@ class SimgridService:
     ) -> Any:
         """GET from SimGrid API with stale-cache fallback on upstream errors."""
         try:
-            resp = await self._client.get(url, params=params)
+            resp = await self._get(url, params=params)
             resp.raise_for_status()
             data = resp.json()
             await write_cache(cache_key, data)
