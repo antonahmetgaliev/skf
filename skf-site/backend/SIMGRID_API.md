@@ -1,106 +1,87 @@
 # SimGrid API v1 Reference
 
 **Base URL:** `https://www.thesimgrid.com/api/v1`
-**Alt hosts (from community code):** `api.thesimgrid.com`, `gridos-api.thesimgrid.com`
-**Auth:** Bearer token via `Authorization: Bearer {token}`
+**Auth:** `Authorization: Bearer {token}` (`SIMGRID_API_KEY`)
+**Official docs:** <https://gridos.thesimgrid.com> (Postman). The raw collection —
+44 endpoints — is at
+`https://documenter.gw.postman.com/api/collections/view/TzK2bZpj`.
 
-> Community sources: JanuarySnow/RRR-Bot (Python), geofffranks/rookies-bot (Go), oNiD-Community-Racing/onid-assistant (Kotlin), arelstone/simgrid-utils (TS)
-
----
-
-## Brands
-
-### List all brands
-`GET /brands`
-
-### Retrieve a brand
-`GET /brands/:id`
+Everything below was re-verified against the live API and the official
+collection on **2026-09-21**. Where our behaviour differs from the official
+docs, the verified behaviour wins and the difference is called out.
 
 ---
 
-## Car Classes
+## Read this first
 
-### List all car classes
-`GET /car_classes`
+### There is no results endpoint. Anywhere.
 
-### Retrieve a car class
-`GET /car_classes/:id`
+The API cannot tell you how a race finished. Not positions, not laps, not
+classification:
 
----
+| Attempt | Result |
+|---|---|
+| `championships/:id/standings` → `partial_standings` | `[]` for every entry, every championship |
+| `races/:id/session_results` | `200`, body is literally `[null, null]` |
+| `races/:id` | metadata only |
+| `championships/:id/results`, `races/:id/results`, `.../race_results`, `.../classification` | `404` |
+| The official 44-endpoint collection | contains no results endpoint at all |
 
-## Cars
+The web pages that do show results (`/championships/:id/standings`,
+`/championships/:id/results`) sit behind a Cloudflare challenge and answer
+`403 "Just a moment…"` to any plain HTTP client, browser headers included. A
+scraper used to parse them (`app/services/simgrid_scraper.py`, removed in
+`6079edc`); it cannot be revived this way, and it only ever produced positions
+— never laps.
 
-A Car object represents a formal, specific car (make, model, variation), tied to a specific Game.
+**Consequence:** laps completed is sourced from the game server's own result
+XML instead. See `app/services/race_results_xml.py`.
 
-### List all cars
-`GET /cars?game_id=&car_class_id=`
+### Rate limiting is real and low
 
-Params:
-- `game_id` (optional)
-- `car_class_id` (optional)
+SimGrid answers `429 {"error":"Minute rate limit exceeded"}`, measured at
+roughly **20 requests per minute**. There is no documented quota header.
 
-Response: grouped by car class ID
-```json
-[
-  {
-    "21": [
-      {"id": 25, "name": "Alpine GT4", "in_game_id": 50, "in_game_name": "alpine_a110_gt4"}
-    ]
-  }
-]
-```
+All outbound calls go through `SimgridService._get`, which bounds concurrency
+with a semaphore and retries a 429 once after honouring `Retry-After`. Any
+per-driver fan-out will trip the limit — design around the cache instead.
 
-### Retrieve a car
-`GET /cars/:id`
+### Alternate hosts do not exist
 
----
-
-## Championship Car Classes
-
-A ChampionshipCarClass represents a registerable car class for a given Championship.
-
-### List all championship car classes
-`GET /championships/:id/championship_car_classes`
-
-Response:
-```json
-[{"id": 1308, "display_name": "GT3", "championship_id": 710, "capacity": 48}]
-```
+`api.thesimgrid.com` and `gridos-api.thesimgrid.com` appear in some community
+code. Neither resolves in DNS. Use `www.thesimgrid.com`.
 
 ---
 
 ## Championships
 
-The Championship object represents any events on the platform, both single events and full championships.
-
-### List all championships
+### List championships
 `GET /championships?limit=200&offset=0`
 
-Response (verified 2026-08): the list endpoint returns **only** `id` and `name` —
-no dates or status. Use the detail endpoint below for anything richer.
+Returns **only** `id` and `name` — no dates, no status. Scoped to the token's
+host (ours sees ~10 SKF championships, not the whole platform). Use the detail
+endpoint for anything richer.
+
 ```json
-[
-  {"id": 21946, "name": "SKF: LMP2 Sprint"},
-  {"id": 21950, "name": "SKF LMU Euro Clash"}
-]
+[{"id": 26927, "name": "SKF LMU Hyper 70"}]
 ```
+
+Official docs list further params (`status`, `driver`, `grid`, `order_by`,
+`seasons`, `include_total_count`, `priority_sort`); we use none of them.
 
 ### Retrieve a championship
 `GET /championships/:id`
 
-Response (verified 2026-08): full detail object. Note `start_date`/`end_date`
-(not `starts_at`/`ends_at`), and there is no `description`/`event_completed`.
-`round_number`/`all_rounds_number` give progress; `results_url` and `discord_url`
-are useful outbound links. `races[]` is embedded (each race carries a full
-`track` object).
+Note `start_date`/`end_date` (not `starts_at`/`ends_at`). There is no
+`description` and no `event_completed`. `races[]` is embedded, each race
+carrying a full `track` object.
+
 ```json
 {
   "id": 21950,
   "name": "SKF LMU Euro Clash",
   "url": "https://www.thesimgrid.com/championships/21950",
   "results_url": "https://www.thesimgrid.com/championships/21950/results",
-  "discord_url": "https://discord.gg/XhNsUerTFp",
-  "image": "https://cdn.thesimgrid.com/...",
   "start_date": "2026-02-28T17:00:00.000Z",
   "end_date": null,
   "capacity": 38,
@@ -109,81 +90,25 @@ are useful outbound links. `races[]` is embedded (each race carries a full
   "game_name": "Le Mans Ultimate",
   "round_number": null,
   "all_rounds_number": 0,
-  "upcoming_race": null,
-  "in_progress_race": null,
   "accepting_registrations": true,
-  "teams_enabled": false,
-  "entry_fee_required": false,
-  "entry_fee_cents": null,
-  "co_hosted": false,
-  "scheduled_at": false,
-  "races": [{ "id": 165901, "race_name": "Euro Clash - Round 1", "track": { "name": "Silverstone (ELMS)" }, "...": "..." }]
+  "races": [{ "id": 165901, "race_name": "Euro Clash - Round 1", "track": {"name": "Silverstone (ELMS)"} }]
 }
 ```
-
-### List all participating users
-`GET /championships/:id/participating_users`
-
-Response:
-```json
-[{
-  "user_id": 117,
-  "username": "killianrm",
-  "first_name": "John",
-  "last_name": "Doe",
-  "steam64_id": "12341",
-  "discord_uid": "12341",
-  "psn_id": "12341",
-  "xbox_id": "12341",
-  "epic_id": "12341",
-  "epic_username": "12341",
-  "car_number": 42
-}]
-```
-
-### Retrieve an entrylist
-`GET /championships/:id/entrylist?format=json&championship_car_class_ids[]=`
-
-Params:
-- `format` (required): "json", "ini", or "csv"
-- `championship_car_class_ids[]` (optional): filter by car class
-
-Response (json format) — ACC-style entry data:
-```json
-{
-  "entries": [
-    {
-      "drivers": [{"playerID": "S76561198172339129", "firstName": "John", "lastName": "Doe"}],
-      "raceNumber": 42,
-      "isServerAdmin": 1
-    }
-  ],
-  "forceEntryList": 1
-}
-```
-
-Note: `playerID` is Steam ID prefixed with "S". Response may be `{"entries": [...]}` or bare array.
-
-### List all championship_car_classes
-`GET /championships/:id/championship_car_classes`
-
-(Same as Championship Car Classes section above)
 
 ### Standings
-`GET /championships/:id/standings`
+`GET /championships/:id/standings` (+ `?filter_class={ccid}`, `&page=N`)
 
-Response (verified 2026-08): a heterogeneous **5-element** array, not 2:
-- `[0]` **entries** — standings rows.
-- `[1]` **races** — race metadata (`id`, `display_name`/`race_name`, `starts_at`, `results_available`, `ended`).
-- `[2]` `null`.
-- `[3]` an object keyed by `user_id`.
-- `[4]` `{ "pagination": {...} }`.
+**Undocumented** — absent from the official collection, but working and relied
+on by `SimgridService.get_standings`.
 
-Each entry (`[0][i]`):
+A heterogeneous **4-element** array: `[0]` entries, `[1]` race metadata,
+`[2]` `null`, `[3]` `{"pagination": {"page": 1, "per_page": 40, "total": 26}}`.
+Verified on two championships; our parser still indexes defensively.
+
 ```json
 {
-  "id": 999087,               // registration id (NOT the driver)
-  "user_id": 75640,           // the driver/user id — use this to link drivers
+  "id": 999087,               // registration id — NOT the driver
+  "user_id": 75640,           // the driver; use this to link
   "position_cache": 1,
   "display_name": "Anatolii Maksimyuk",
   "championship_points": 50.0,
@@ -191,324 +116,171 @@ Each entry (`[0][i]`):
   "championship_score": 50.0,
   "car": "Aston Martin Valkyrie LMH",
   "class": "Hypercar",
-  "championship_car_class": { "display_name": "Hypercar", "...": "..." },
-  "participant": { "country_code": "UA", "avatar": "..." },
-  "partial_standings": []     // ALWAYS EMPTY — per-race breakdown is not exposed
+  "championship_car_class": { "display_name": "Hypercar" },
+  "participant": { "country_code": "UA", "grid_rating": {"score": 2257} },
+  "partial_standings": []     // ALWAYS EMPTY
 }
 ```
 
-**Important:** `partial_standings` is empty, so per-race results are not
-available via the API. We source only *overall* standings (position, points,
-score, driver, car class) from this endpoint — see
-`app/services/simgrid.py::_parse_standings`. There is no DSQ flag in the payload.
+There is no DSQ flag in the payload.
 
----
+### Participating users
+`GET /championships/:id/participating_users`
 
-## Communities
+Everyone **registered** — not everyone who raced. Returns `user_id`,
+`username`, `first_name`, `last_name`, `steam64_id`, `discord_uid`,
+`car_number`.
 
-### List all communities
-`GET /communities`
+### Registrations
+`GET /registrations?registerable_type=Championship&registerable_id=:id`
+`GET /championships/:id/registrations`
 
----
+Both forms work and return the same shape — the first is the documented one,
+the second an undocumented convenience. Returns registration id, `user_id`,
+`registerable_*` and `championship_car_class`. Note `?championship_id=` is
+*not* a valid filter on `/registrations` and answers `404`.
 
-## Event Server Configs
+### Car classes / entrylist
+`GET /championships/:id/championship_car_classes` →
+`[{"id": 1308, "display_name": "GT3", "championship_id": 710, "capacity": 48}]`
 
-### Retrieve an event server config
-`GET /event_server_configs/:id`
-
----
-
-## Games
-
-### List all games
-`GET /games`
-
-### Retrieve a game
-`GET /games/:id`
-
-### List all tracks for a game (deprecated)
-`GET /games/:id/tracks`
-
-### List all cars for a game (deprecated)
-`GET /games/:id/cars`
-
-Response:
-```json
-[{"id": 15, "name": "Jaguar GT3", "in_game_id": 14, "in_game_name": "Assetto Corsa Competizione"}]
-```
-
----
-
-## Graphic Blocks
-
-### List all graphic blocks
-`GET /graphic_blocks`
-
-Does not increment impressions.
-
-Response:
-```json
-[{"id": 2, "title": "Introducing ACC Setup Subscriptions"}]
-```
-
-### Retrieve a graphic block
-`GET /graphic_blocks/:id`
-
-Increments impressions.
-
-Response:
-```json
-{
-  "id": 1,
-  "admin_organization_id": 1,
-  "title": "Coach Dave Academy BMW M4 GT3 Setups Available",
-  "description": "...",
-  "link": "https://...",
-  "image": "https://...",
-  "call_to_action": "buy_now",
-  "brand_id": 1
-}
-```
-
-### Draw a random set of graphic blocks
-`GET /graphic_blocks/draw?count=1&seed=0.123456789`
-
-Increments impressions. Use the `link` value to build a redirect link (POST via `data-method="post"`).
-
-Params:
-- `count` (optional): number of ads, defaults to 1
-- `seed` (optional): 0-1.0, prevents duplicate results across requests in same session
-
----
-
-## Leaderboards
-
-### Fastest lap times
-`GET /leaderboards/lap_times?track_id=128&car_id=215&filter=&user_id=&attribute=`
-
-Params:
-- `track_id` (required)
-- `car_id` (optional)
-- `filter` (optional): "followers"
-- `user_id` (required if filtering by followers)
-- `attribute` (optional): "discord" to find user by Discord ID
-
-Response:
-```json
-[{"user_id": 35636, "track_id": 128, "car_id": 215, "lap_time": 125697}]
-```
-
----
-
-## Liveries
-
-### Update a livery
-`PATCH /liveries/:id`
-
-### Delete a livery
-`DELETE /liveries/:id`
-
----
-
-## Race Server Configs
-
-### Retrieve a race server config
-`GET /race_server_configs/:id`
-
----
-
-## Race Signouts
-
-### List all race signouts
-`GET /race_signouts`
+`GET /championships/:id/entrylist?format=json|ini|csv` → ACC-style entry data.
+`playerID` is a Steam ID prefixed with `S`.
 
 ---
 
 ## Races
 
-### List all races
+### List races
 `GET /races?championship_id=:id`
 
-Response (verified 2026-08): each race also carries `race_name`, `game_name`,
-`platform`, `published_at`, `championship_name`, and a full `track` object.
 ```json
 [{
-  "id": 165892,
-  "display_name": "LMP2 Sprint - Round 5",
-  "race_name": "LMP2 Sprint - Round 5",
-  "starts_at": "2026-01-15T19:00:00.000Z",
-  "track": {"id": 3162, "name": "Circuit de Spa-Francorchamps", "in_game_name": "spa 2024 up", "photo": "https://..."},
+  "id": 165904,
+  "race_name": "Euro Clash - Round 4",
+  "display_name": "Euro Clash - Round 4",
+  "starts_at": "2026-03-21T17:00:00.000Z",
+  "track": {"id": 3290, "name": "Spa-Francorchamps (WEC)", "in_game_name": "SpaWEC"},
   "results_available": true,
   "ended": true,
-  "published_at": "2026-..."
+  "published_at": "2026-03-23T21:06:36.258Z",
+  "championship_id": 21950,
+  "game_name": "Le Mans Ultimate",
+  "provisional_results": false
 }]
 ```
 
-Note: `track` can be a dict (with `name`, and extra fields) or a plain string.
+`track` may be a dict or a plain string.
 
-### Retrieve a race
-`GET /races/:id`
+### List the races one driver actually took part in
+`GET /races?user_id=:id`
 
-### Retrieve an Entrylist
-`GET /races/:id/entrylist`
+**The single most useful undocumented detail on this page.**
 
-### Import results (coming soon)
-`POST /races/:id/import_results`
+- `GET /users/:id/races` — the form our old docs described, and the one in the
+  official collection — returns **404**. Do not use it.
+- `user_id` works on `/races`, but **only without `championship_id`**. Passing
+  both makes `user_id` silently ignored and returns the full round list: a
+  nonexistent `user_id` still came back with every race of the championship.
+  Filter by `championship_id` client-side instead.
 
----
+It reflects **participation, not registration** — verified against championship
+25804: a driver holding 26 championship points appeared with only 1 of the 5
+rounds, while another with 0 points appeared with all 5.
 
-## Registrations
+Fields: `id`, `race_name`, `track`, `starts_at`, `ended`, `results_available`,
+`championship_id`, `championship_name`, `game_name`, `platform`, `car`.
+**No laps and no finishing position.**
 
-### List all registrations
-`GET /registrations`
-
-### Retrieve a registration
-`GET /registrations/:id`
-
----
-
-## Rounds
-
-### List all rounds
-`GET /rounds`
-
-### Retrieve a round
-`GET /rounds/:id`
-
----
-
-## Seasons
-
-A Season object is used solely for daily racing. A Season can contain multiple Championships.
-
-### List all seasons
-`GET /seasons`
-
-### Retrieve a season
-`GET /seasons/:id`
-
----
-
-## Sponsors
-
-### List all sponsors
-`GET /sponsors`
-
----
-
-## Teams
-
-A Team object represents a group of drivers who race together.
-
-### List all teams
-`GET /teams`
-
-Response:
-```json
-[{
-  "team_id": 1,
-  "name": "Super Fast People",
-  "total_races_started": null,
-  "total_wins": null,
-  "total_podiums": null,
-  "total_penalty_rate": null
-}]
-```
-
-### Retrieve a team
-`GET /teams/:id`
-
----
-
-## Tracks
-
-A Track object represents a track for a specific Game.
-
-### List all tracks
-`GET /tracks?game_id=1`
-
-Params:
-- `game_id` (optional)
-
-Response:
-```json
-[{
-  "id": 1,
-  "game_id": 1,
-  "name": "Barcelona",
-  "in_game_name": "barcelona",
-  "photo": "https://...",
-  "parent_track_id": null,
-  "external_data": null
-}]
-```
+### Other race endpoints
+- `GET /races/:id` — metadata only.
+- `GET /races/:id/entrylist` — pre-race entries (`playerID` only; no names).
+- `GET /races/:id/session_results` — returns `[null, null]`; useless.
+- `POST /races/:id/import_results` — in the collection; returns `404` for us.
 
 ---
 
 ## Users
 
-### List all users
-`GET /users`
-
 ### Retrieve a user
-`GET /users/:id`
-`GET /users/:id?attribute=discord` — lookup by Discord ID instead of SimGrid user ID
+`GET /users/:id` — also `?attribute=discord` to look up by Discord ID, which is
+how `app/services/drivers.py` links accounts deterministically.
 
-Response:
 ```json
 {
-  "user_id": 117,
-  "username": "killianrm",
-  "preferred_name": "Killian",
-  "steam64_id": "76561198172339129",
-  "discord_uid": "123456789",
-  "teams": [{"id": 1, "name": "Team Name"}],
-  "total_races_started": 42,
-  "total_wins": 5,
-  "total_podiums": 12,
-  "simgrid_pro_active": true,
-  "boosted_hosts": [],
-  "grid_ratings": [{"game_id": 1, "rating": 1500}]
+  "user_id": 75640,
+  "username": "menly1ss",
+  "preferred_name": "Anatolii Maksimyuk",
+  "steam64_id": "76561199185293124",
+  "discord_uid": "797855508676870165",
+  "teams": [{"team_id": 13424, "name": "Ukraine Esport Team"}],
+  "total_races_started": 19,
+  "total_wins": 2,
+  "total_podiums": 5,
+  "grid_ratings": [{"game_id": 1, "score": 2051, "score_name": "bronze"}]
 }
 ```
 
-### List a user's races
-`GET /users/:user_id/races?filter=&limit=&exclude_dsq=`
+`total_races_started` counts platform-wide and will exceed what
+`races?user_id=` returns, since that is scoped to what the token can see.
 
-Params:
-- `filter` (optional): "upcoming" for upcoming only
-- `limit` (optional): integer
-- `exclude_dsq` (optional): defaults to true
-
-Response:
-```json
-[{
-  "id": 261,
-  "race_name": "",
-  "track": "Nurburgring",
-  "starts_at": "2020-11-12T19:30:00.000Z",
-  "host_name": "SimGrid",
-  "championship_id": 160,
-  "championship_name": "Rain Meister",
-  "game_name": "Assetto Corsa Competizione",
-  "platform": "PC",
-  "car": "Mercedes-AMG GT3"
-}]
-```
-
-### Set user status
-`POST /users/:user_id/set_status?status=in_game&track_id=128&car_id=215`
-
-Params:
-- `status` (required): "inactive" or "in_game"
-- `track_id` (optional): used when setting status as "in_game"
-- `car_id` (optional): used when setting status as "in_game"
+### Set status
+`POST /users/:user_id/set_status?status=in_game&track_id=&car_id=`
 
 ---
 
-## Admin/Web URLs (not REST API)
+## Reference data
 
-These use the web interface, not the `/api/v1` prefix:
+| Endpoint | Notes |
+|---|---|
+| `GET /games`, `GET /games/:id` | |
+| `GET /tracks?game_id=` | |
+| `GET /cars?game_id=&car_class_id=` | response is grouped by car class id |
+| `GET /cars/:id`, `GET /car_classes`, `GET /car_classes/:id` | |
+| `GET /brands`, `GET /brands/:id` | |
+| `GET /communities?limit=&offset=` | |
+| `GET /teams`, `GET /teams/:id` | |
+| `GET /seasons?limit=&user_id=`, `GET /seasons/:id` | daily racing only |
+| `GET /rounds?limit=&championship_id=&user_id=`, `GET /rounds/:id` | a scheduling construct, not a results one |
+| `GET /leaderboards/lap_times?track_id=&car_id=` | fastest laps; `track_id` required |
+| `GET /race_signouts?race_id=` | |
+| `GET /race_server_configs/:id`, `GET /event_server_configs/:race_id` | |
+| `GET /sponsors`, `GET /graphic_blocks`, `GET /graphic_blocks/draw` | advertising |
+| `PATCH`/`DELETE /liveries/:id` | |
 
-- `GET /admin/championships/:id/registrations.{json|csv}` — Export registrations
-- `GET /admin/championships/:id/team_registrations.{json|csv}` — Export team registrations
+`GET /games/:id/tracks` and `GET /games/:id/cars` are deprecated in favour of
+the top-level `tracks`/`cars` endpoints.
+
+---
+
+## What we actually call
+
+All SimGrid traffic is server-side, in `app/services/simgrid.py`. The frontend
+talks only to our own `/api/championships/*`.
+
+| Method | Endpoint | Cache key | TTL |
+|---|---|---|---|
+| `get_championships` | `/championships` (paged) | `championships_list_{limit}` | 1 day |
+| `get_championship` | `/championships/{id}` | `championship_{id}` | 1 day |
+| `get_races` | `/races?championship_id=` | `races_{id}` | 1 day |
+| `get_standings` | `/championships/{id}/standings` (+ per class, paged) | `standings_{id}` | 1 hour |
+| `get_participating_users` | `/championships/{id}/participating_users` | `participants_{id}` | 10 min |
+| `get_user_by_discord_id` | `/users/{uid}?attribute=discord` | `user_by_discord_{uid}` | 10 min |
+| `get_race_name` | `/races/{id}` | — | none |
+| `get_games` / `get_car_classes` | `/games`, `/car_classes` | `games_list`, `car_classes*` | 1 day |
+| `_championship_car_class_ids` | `/championships/{id}/championship_car_classes` | — | none |
+
+Responses are cached in the `simgrid_cache` table. Every failing path falls
+back to `read_stale_cache` and calls `mark_stale()`, which surfaces as an
+`X-Data-Stale: true` header and a staleness banner in the UI. Admins can flush
+with `POST /api/admin/clear-cache?domain=simgrid`.
+
+---
+
+## Admin/web URLs (not REST, Cloudflare-protected)
+
+- `GET /admin/championships/:id/registrations.{json|csv}`
+- `GET /admin/championships/:id/team_registrations.{json|csv}`
+
+Both return `403` to server-side clients. Reachable only from a logged-in
+browser.
