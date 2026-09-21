@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.middleware import StaleHeaderMiddleware
-from app.routers import admin, auth, bwp, calendar, championships, incidents, profile, regulations, translations, users, youtube
+from app.routers import admin, auth, bwp, calendar, championships, giveaway, incidents, profile, regulations, translations, users, youtube
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ app.include_router(calendar.router, prefix="/api")
 app.include_router(youtube.router, prefix="/api")
 app.include_router(translations.router, prefix="/api")
 app.include_router(regulations.router, prefix="/api")
+app.include_router(giveaway.router, prefix="/api")
 
 
 @app.get("/healthz")
@@ -79,27 +80,36 @@ async def on_startup():
         await session.commit()
     logger.info("Languages seeded")
 
-    # Seed translations from JSON files if empty
+    # Backfill any translation key the seed files know but the database does
+    # not. This used to run only when the table was completely empty, which
+    # meant every key added after the first deploy never reached production and
+    # rendered as a raw `some.key` string. `on_conflict_do_nothing` keeps it
+    # safe to repeat: keys an admin has since edited in the UI are left alone,
+    # and only genuinely missing ones are inserted.
     from app.models.translation import Translation
     from sqlalchemy.dialects.postgresql import insert as pg_insert
     import json
     from pathlib import Path
 
     async with async_session() as session:
-        result = await session.execute(select(Translation).limit(1))
-        if result.scalar_one_or_none() is None:
-            seed_dir = Path(__file__).resolve().parent.parent / "seed"
-            for lang_code in ("en", "ua"):
-                seed_file = seed_dir / f"translations_{lang_code}.json"
-                if seed_file.exists():
-                    data = json.loads(seed_file.read_text(encoding="utf-8"))
-                    items = [{"lang": lang_code, "key": k, "value": v} for k, v in data.items()]
-                    if items:
-                        stmt = pg_insert(Translation).values(items)
-                        stmt = stmt.on_conflict_do_nothing()
-                        await session.execute(stmt)
-                    logger.info(f"Seeded {len(items)} translations for '{lang_code}'")
-            await session.commit()
+        seed_dir = Path(__file__).resolve().parent.parent / "seed"
+        for lang_code in ("en", "ua"):
+            seed_file = seed_dir / f"translations_{lang_code}.json"
+            if not seed_file.exists():
+                continue
+            data = json.loads(seed_file.read_text(encoding="utf-8"))
+            existing = await session.execute(
+                select(Translation.key).where(Translation.lang == lang_code)
+            )
+            missing = set(data) - set(existing.scalars().all())
+            if not missing:
+                continue
+            stmt = pg_insert(Translation).values(
+                [{"lang": lang_code, "key": k, "value": data[k]} for k in sorted(missing)]
+            )
+            await session.execute(stmt.on_conflict_do_nothing())
+            logger.info(f"Seeded {len(missing)} new translations for '{lang_code}'")
+        await session.commit()
     logger.info("Translations seeded")
 
     # Seed regulation pages from JSON if empty
