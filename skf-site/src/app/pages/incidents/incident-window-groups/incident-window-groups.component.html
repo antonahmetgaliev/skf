@@ -1,0 +1,37 @@
+<ul class="groups">
+  @for (group of groups(); track group.key) {
+    @let open = expanded().has(group.key);
+    <li class="group" [class.group--open]="open">
+      <button type="button" class="group-header" [attr.aria-expanded]="open" (click)="toggle.emit(group.key)">
+        <span class="group-chevron" aria-hidden="true">{{ open ? '▾' : '▸' }}</span>
+        <span class="group-name">{{ group.name ?? ('incidents.otherWindows' | transloco) }}</span>
+        @if (group.openCount > 0) {
+          <app-badge variant="open">{{ 'incidents.openCount' | transloco: { count: group.openCount } }}</app-badge>
+        } @else {
+          <span class="group-count">{{ group.windows.length }}</span>
+        }
+      </button>
+
+      @if (open) {
+        <ul class="rounds">
+          @for (w of group.windows; track w.id) {
+            <li class="round"
+              [class.round--open]="w.isOpen"
+              [class.round--active]="activeWindowId() === w.id"
+              (click)="select.emit(w.id)">
+              <div class="round-name">{{ w.raceName }}</div>
+              <div class="round-meta">
+                @if (w.date) { <span class="round-date">{{ w.date }}</span> }
+                @if (w.isOpen) {
+                  <app-badge variant="open">{{ 'incidents.open' | transloco }} · {{ closesIn(w.closesAt) }}</app-badge>
+                } @else {
+                  <app-badge variant="closed">{{ 'incidents.closed' | transloco }}</app-badge>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </li>
+  }
+</ul>

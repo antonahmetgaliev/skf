@@ -17,6 +17,8 @@ import { BtnComponent } from '../../components/btn/btn.component';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { TabsComponent } from '../../components/tabs/tabs.component';
 import { IncidentCardComponent } from './incident-card/incident-card.component';
+import { IncidentWindowGroupsComponent } from './incident-window-groups/incident-window-groups.component';
+import { closesIn, groupKeyFor, groupWindows } from './incident-window-groups/window-groups';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { BwpApiService, Driver } from '../../services/bwp-api.service';
@@ -51,7 +53,7 @@ export interface PendingPenalty {
 
 @Component({
   selector: 'app-incidents',
-  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, TextareaDirective, BadgeComponent, CardComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent, TabsComponent, IncidentCardComponent],
+  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, TextareaDirective, BadgeComponent, CardComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent, TabsComponent, IncidentCardComponent, IncidentWindowGroupsComponent],
   templateUrl: './incidents.component.html',
   styleUrl: './incidents.component.scss',
 })
@@ -64,14 +66,6 @@ export class IncidentsComponent implements OnInit {
   private readonly transloco = inject(TranslocoService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-
-  /** `?championship=<SimGrid id>`: only that championship's rounds are listed. */
-  readonly championshipFilter = signal<number | null>(null);
-  readonly championshipFilterLabel = computed(() => {
-    const id = this.championshipFilter();
-    if (id === null) return null;
-    return this.windows().find(w => w.championshipName)?.championshipName ?? `#${id}`;
-  });
 
   readonly verdictRules = signal<VerdictRule[]>([]);
   readonly verdictPresets = computed(() => this.verdictRules().map(r => r.verdict));
@@ -109,19 +103,10 @@ export class IncidentsComponent implements OnInit {
     (this.bwpAuditEntries() ?? []).some(e => e.matchedDriverId !== null)
   );
 
-  // ── Window groups ─────────────────────────────────────────────────
-  private readonly RECENT_DAYS = 7;
-  readonly openWindows = computed(() =>
-    this.windows().filter(w => w.isOpen)
-  );
-  readonly recentClosedWindows = computed(() => {
-    const cutoff = Date.now() - this.RECENT_DAYS * 24 * 60 * 60 * 1000;
-    return this.windows().filter(w => !w.isOpen && new Date(w.closesAt).getTime() >= cutoff);
-  });
-  readonly oldClosedWindows = computed(() => {
-    const cutoff = Date.now() - this.RECENT_DAYS * 24 * 60 * 60 * 1000;
-    return this.windows().filter(w => !w.isOpen && new Date(w.closesAt).getTime() < cutoff);
-  });
+  // ── Window groups (championship → rounds) ─────────────────────────
+  readonly windowGroups = computed(() => groupWindows(this.windows()));
+  /** Expanded championships; `?championship=<id>` opens one from a link. */
+  readonly expandedGroups = signal<ReadonlySet<string>>(new Set());
 
   // ── Grouped incidents (Heat sessions first, then Feature) ──────────────────
   // Within each session: auto incidents sorted by time, then filed sorted by lap → corner.
@@ -237,11 +222,17 @@ export class IncidentsComponent implements OnInit {
   ngOnInit(): void {
     const params = this.route.snapshot.queryParamMap;
     const championship = Number(params.get('championship'));
-    if (Number.isFinite(championship) && championship > 0) {
-      this.championshipFilter.set(championship);
-    }
     const windowId = params.get('window');
     void this.loadWindows().then(() => {
+      const initial = new Set<string>();
+      if (Number.isFinite(championship) && championship > 0) {
+        initial.add(groupKeyFor(championship));
+      }
+      if (!windowId && initial.size === 0) {
+        // Nothing linked: show where protests can be filed right now.
+        this.windowGroups().filter(g => g.openCount > 0).forEach(g => initial.add(g.key));
+      }
+      this.expandedGroups.set(initial);
       if (windowId) void this.selectWindow(windowId);
     });
     // Every viewer needs the default verdict to tell a penalty from "no action"
@@ -254,7 +245,7 @@ export class IncidentsComponent implements OnInit {
   async loadWindows(): Promise<void> {
     this.loadingWindows.set(true);
     try {
-      const ws = await firstValueFrom(this.incidentsApi.getWindows(this.championshipFilter()));
+      const ws = await firstValueFrom(this.incidentsApi.getWindows());
       this.windows.set(ws);
     } finally {
       this.loadingWindows.set(false);
@@ -268,6 +259,7 @@ export class IncidentsComponent implements OnInit {
     try {
       const detail = await firstValueFrom(this.incidentsApi.getWindow(id));
       this.windowDetail.set(detail);
+      this.expandGroup(groupKeyFor(detail.championshipId));
       // Keep the open window in the URL so it can be linked to directly.
       if (this.route.snapshot.queryParamMap.get('window') !== id) {
         void this.router.navigate([], {
@@ -281,23 +273,35 @@ export class IncidentsComponent implements OnInit {
     }
   }
 
-  clearChampionshipFilter(): void {
-    this.championshipFilter.set(null);
-    void this.router.navigate([], {
-      queryParams: { championship: null },
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
-    void this.loadWindows();
+  /** Expanding a championship puts it in the URL, so the view can be linked. */
+  toggleGroup(key: string): void {
+    const next = new Set(this.expandedGroups());
+    const group = this.windowGroups().find(g => g.key === key);
+    const opening = !next.has(key);
+    if (opening) next.add(key);
+    else next.delete(key);
+    this.expandedGroups.set(next);
+
+    const current = this.route.snapshot.queryParamMap.get('championship');
+    const id = group?.championshipId ?? null;
+    let championship: number | null | undefined;
+    if (opening && id !== null) championship = id;
+    else if (!opening && current !== null && Number(current) === id) championship = null;
+    if (championship !== undefined) {
+      void this.router.navigate([], {
+        queryParams: { championship },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
   }
 
-  closesIn(closesAt: string): string {
-    const ms = new Date(closesAt).getTime() - Date.now();
-    if (ms <= 0) return 'Closed';
-    const h = Math.floor(ms / 3_600_000);
-    const m = Math.floor((ms % 3_600_000) / 60_000);
-    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  private expandGroup(key: string): void {
+    if (this.expandedGroups().has(key)) return;
+    this.expandedGroups.set(new Set([...this.expandedGroups(), key]));
   }
+
+  readonly closesIn = closesIn;
 
   // ── New Window ────────────────────────────────────────────────────
 

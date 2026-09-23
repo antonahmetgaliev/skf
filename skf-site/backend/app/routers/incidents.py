@@ -15,7 +15,11 @@ from app.database import get_db
 from app.models.bwp import BwpPoint, Driver
 from app.services.driver_matching import match_driver_id_by_name
 from app.services.incident_bwp import apply_resolution_bwp
-from app.services.race_import import add_ingested_incidents, find_or_create_window
+from app.services.race_import import (
+    add_ingested_incidents,
+    championship_name_for,
+    find_or_create_window,
+)
 from app.models.incidents import (
     Incident, IncidentDriver, IncidentResolution, IncidentWindow, VerdictRule,
     DescriptionPreset,
@@ -352,8 +356,18 @@ async def list_windows(
     query = select(IncidentWindow).order_by(IncidentWindow.opened_at.desc())
     if championship_id is not None:
         query = query.where(IncidentWindow.championship_id == championship_id)
-    result = await db.execute(query)
-    return result.scalars().all()
+    windows = list((await db.execute(query)).scalars().all())
+
+    # Windows sent by the legacy ingest API carry the championship id only;
+    # fill the name in once so the page can group rounds by championship.
+    missing = {w.championship_id for w in windows if w.championship_id and not w.championship_name}
+    if missing:
+        names = {cid: await championship_name_for(cid) for cid in missing}
+        for window in windows:
+            if window.championship_id in missing and names[window.championship_id]:
+                window.championship_name = names[window.championship_id]
+        await db.commit()
+    return windows
 
 
 @router.post(

@@ -174,6 +174,21 @@ LMU_CHAMPIONSHIP_ID = 26927
 IRACING_CHAMPIONSHIP_ID = 27503
 
 
+@pytest.fixture(autouse=True)
+def _offline_simgrid_championships(monkeypatch):
+    """Championship lookups never reach SimGrid from tests.
+
+    Name backfills treat a failure as "no name"; ``simgrid_stub`` overrides
+    this for tests that need real answers.
+    """
+    from app.services import simgrid as sg_mod
+
+    async def unavailable(_championship_id):
+        raise RuntimeError("SimGrid is not reachable from tests")
+
+    monkeypatch.setattr(sg_mod.simgrid_service, "get_championship", unavailable)
+
+
 @pytest.fixture
 def simgrid_stub(monkeypatch):
     """Serve championships and races from memory instead of SimGrid.

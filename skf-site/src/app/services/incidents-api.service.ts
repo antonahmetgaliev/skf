@@ -156,9 +156,8 @@ export class IncidentsApiService {
   private readonly http = inject(HttpClient);
   private readonly base = '/api/incidents';
 
-  getWindows(championshipId?: number | null): Observable<IncidentWindowListItem[]> {
-    const params: Record<string, number> = championshipId ? { championshipId } : {};
-    return this.http.get<IncidentWindowListItem[]>(`${this.base}/windows`, { params });
+  getWindows(): Observable<IncidentWindowListItem[]> {
+    return this.http.get<IncidentWindowListItem[]>(`${this.base}/windows`);
   }
 
   /** A championship's windows, one per round, keyed by SimGrid race id. */

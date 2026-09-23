@@ -30,13 +30,11 @@
     text-align: center;
     margin-bottom: 1.25rem;
   }
-}
 
-.window-list--grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0.75rem;
-  flex-direction: unset;
+  app-incident-window-groups {
+    max-width: 640px;
+    margin: 0 auto;
+  }
 }
 
 .sidebar-heading {
@@ -46,131 +44,6 @@
   letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   color: var(--ink);
-}
-
-// Shown when arriving from a championship page (?championship=<id>).
-.championship-filter {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin: -0.35rem 0 0.85rem;
-  padding: 0.4rem 0.6rem;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.04);
-  font-size: var(--text-sm);
-}
-
-.championship-filter__name {
-  color: var(--gold);
-}
-
-.championship-filter__clear {
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--muted);
-  font: inherit;
-  font-size: var(--text-xs);
-  cursor: pointer;
-
-  &:hover {
-    color: var(--ink);
-  }
-}
-
-.window-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.window-item {
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0.6rem 0.75rem;
-  background: rgba(30, 30, 36, 0.75);
-  cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    border-color: rgba(255, 214, 0, 0.5);
-    background: rgba(255, 214, 0, 0.08);
-  }
-
-  &--active {
-    background: rgba(255, 214, 0, 0.18);
-    border-color: rgba(255, 214, 0, 0.75);
-  }
-
-  &--open {
-    border-left: 3px solid var(--gold);
-  }
-
-  &--old {
-    opacity: 0.45;
-    border-color: rgba(255, 255, 255, 0.07);
-    background: rgba(30, 28, 24, 0.5);
-
-    .window-item-name {
-      font-size: var(--text-base);
-      font-weight: 500;
-    }
-
-    &:hover {
-      opacity: 0.7;
-      border-color: rgba(255, 214, 0, 0.3);
-    }
-
-    &.window-item--active {
-      opacity: 1;
-    }
-  }
-}
-
-.window-group-label {
-  list-style: none;
-  padding: 0;
-  margin: 0.6rem 0 0.2rem;
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
-  color: var(--muted);
-
-  &--old {
-    color: rgba(255, 255, 255, 0.25);
-  }
-
-  &--spaced {
-    margin-top: 1.1rem;
-  }
-}
-
-.window-item-name {
-  font-weight: 600;
-  font-size: var(--text-md);
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.window-item-race {
-  font-size: var(--text-sm);
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.window-item-meta {
-  margin-top: 0.35rem;
 }
 
 // ── Detail panel ─────────────────────────────────────────────────────────

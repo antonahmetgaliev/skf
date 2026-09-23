@@ -1,0 +1,120 @@
+:host {
+  display: block;
+}
+
+.groups,
+.rounds {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.group {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: rgba(30, 30, 36, 0.6);
+  overflow: hidden;
+}
+
+.group--open {
+  border-color: rgba(255, 214, 0, 0.35);
+}
+
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: none;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 214, 0, 0.06);
+  }
+}
+
+.group-chevron {
+  width: 0.8rem;
+  color: var(--muted);
+}
+
+.group-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: var(--text-md);
+  line-height: 1.25;
+  // Championship names are long; two lines beat an ellipsis in the sidebar.
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.group-count {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.rounds {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0 0.5rem 0.5rem;
+}
+
+.round {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid transparent;
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    border-color: rgba(255, 214, 0, 0.4);
+    background: rgba(255, 214, 0, 0.06);
+  }
+}
+
+.round--open {
+  border-left-color: var(--gold);
+}
+
+.round--active {
+  border-color: rgba(255, 214, 0, 0.75);
+  background: rgba(255, 214, 0, 0.16);
+}
+
+.round-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.round-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.round-date {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}

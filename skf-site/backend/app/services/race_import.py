@@ -72,6 +72,15 @@ async def alias_map(db: AsyncSession) -> dict[str, tuple[str, str]]:
     return {row[0]: (row[1], row[2]) for row in result.all()}
 
 
+async def championship_name_for(championship_id: int) -> str | None:
+    """The SimGrid championship's name (day-cached), or None if unavailable."""
+    try:
+        return (await simgrid_service.get_championship(championship_id)).name
+    except Exception:  # noqa: BLE001 - a missing name must not block incidents
+        logger.warning("Could not load championship %s from SimGrid", championship_id)
+        return None
+
+
 async def find_or_create_window(
     db: AsyncSession,
     *,
@@ -89,9 +98,14 @@ async def find_or_create_window(
         # Windows opened by hand may lack the championship; the upload knows it.
         if window.championship_id is None and championship_id is not None:
             window.championship_id = championship_id
-            window.championship_name = window.championship_name or championship_name
+        if window.championship_name is None and window.championship_id is not None:
+            window.championship_name = championship_name or await championship_name_for(
+                window.championship_id
+            )
         return window
 
+    if championship_name is None and championship_id is not None:
+        championship_name = await championship_name_for(championship_id)
     now = datetime.now(timezone.utc)
     window = IncidentWindow(
         championship_id=championship_id,

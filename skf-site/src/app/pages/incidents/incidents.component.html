@@ -12,63 +12,18 @@
     <aside [class.incidents-layout__aside--hidden]="!windowDetail() && !loadingDetail()">
     <app-card>
       <h2 class="sidebar-heading">{{ 'incidents.raceWindows' | transloco }}</h2>
-      @if (championshipFilterLabel(); as label) {
-        <div class="championship-filter">
-          <span class="championship-filter__name">{{ label }}</span>
-          <button type="button" class="championship-filter__clear" (click)="clearChampionshipFilter()"
-            [attr.aria-label]="'incidents.showAllChampionships' | transloco">
-            {{ 'incidents.showAllChampionships' | transloco }} &times;
-          </button>
-        </div>
-      }
 
       @if (loadingWindows()) {
         <app-spinner />
       } @else if (windows().length === 0) {
         <app-empty>{{ 'incidents.noWindows' | transloco }}</app-empty>
       } @else {
-        <ul class="window-list">
-          @for (w of openWindows(); track w.id) {
-            <li class="window-item window-item--open"
-              [class.window-item--active]="windowDetail()?.id === w.id"
-              (click)="selectWindow(w.id)">
-              <div class="window-item-name">{{ w.raceName }}</div>
-              @if (w.championshipName) { <div class="window-item-race">{{ w.championshipName }}</div> }
-              @if (w.date) { <div class="window-item-race">{{ w.date }}</div> }
-              <div class="window-item-meta">
-                <app-badge variant="open">{{ 'incidents.open' | transloco }} · {{ closesIn(w.closesAt) }}</app-badge>
-              </div>
-            </li>
-          }
-          @if (recentClosedWindows().length > 0) {
-            @if (openWindows().length > 0) {
-              <li class="window-group-label">{{ 'incidents.recent' | transloco }}</li>
-            }
-            @for (w of recentClosedWindows(); track w.id) {
-              <li class="window-item"
-                [class.window-item--active]="windowDetail()?.id === w.id"
-                (click)="selectWindow(w.id)">
-                <div class="window-item-name">{{ w.raceName }}</div>
-                @if (w.championshipName) { <div class="window-item-race">{{ w.championshipName }}</div> }
-                @if (w.date) { <div class="window-item-race">{{ w.date }}</div> }
-                <div class="window-item-meta"><app-badge variant="closed">{{ 'incidents.closed' | transloco }}</app-badge></div>
-              </li>
-            }
-          }
-          @if (oldClosedWindows().length > 0) {
-            <li class="window-group-label window-group-label--old">{{ 'incidents.archived' | transloco }}</li>
-            @for (w of oldClosedWindows(); track w.id) {
-              <li class="window-item window-item--old"
-                [class.window-item--active]="windowDetail()?.id === w.id"
-                (click)="selectWindow(w.id)">
-                <div class="window-item-name">{{ w.raceName }}</div>
-                @if (w.championshipName) { <div class="window-item-race">{{ w.championshipName }}</div> }
-                @if (w.date) { <div class="window-item-race">{{ w.date }}</div> }
-                <div class="window-item-meta"><app-badge variant="closed">{{ 'incidents.closed' | transloco }}</app-badge></div>
-              </li>
-            }
-          }
-        </ul>
+        <app-incident-window-groups
+          [groups]="windowGroups()"
+          [expanded]="expandedGroups()"
+          [activeWindowId]="windowDetail()?.id ?? null"
+          (toggle)="toggleGroup($event)"
+          (select)="selectWindow($event)" />
       }
     </app-card>
 
@@ -80,58 +35,16 @@
       @if (!windowDetail() && !loadingDetail()) {
         <div class="window-picker-centered">
           <h2 class="sidebar-heading">{{ 'incidents.raceWindows' | transloco }}</h2>
-          @if (championshipFilterLabel(); as label) {
-            <div class="championship-filter">
-              <span class="championship-filter__name">{{ label }}</span>
-              <button type="button" class="championship-filter__clear" (click)="clearChampionshipFilter()"
-                [attr.aria-label]="'incidents.showAllChampionships' | transloco">
-                {{ 'incidents.showAllChampionships' | transloco }} &times;
-              </button>
-            </div>
-          }
           @if (loadingWindows()) {
             <app-spinner />
           } @else if (windows().length === 0) {
             <app-empty>{{ 'incidents.noWindows' | transloco }}</app-empty>
           } @else {
-            @if (openWindows().length > 0) {
-              <ul class="window-list window-list--grid">
-                @for (w of openWindows(); track w.id) {
-                  <li class="window-item window-item--open" (click)="selectWindow(w.id)">
-                    <div class="window-item-name">{{ w.raceName }}</div>
-                    @if (w.championshipName) { <div class="window-item-race">{{ w.championshipName }}</div> }
-                    @if (w.date) { <div class="window-item-race">{{ w.date }}</div> }
-                    <div class="window-item-meta"><app-badge variant="open">{{ 'incidents.open' | transloco }} · {{ closesIn(w.closesAt) }}</app-badge></div>
-                  </li>
-                }
-              </ul>
-            }
-            @if (recentClosedWindows().length > 0) {
-              <p class="window-group-label" [class.window-group-label--spaced]="openWindows().length > 0">{{ 'incidents.recent' | transloco }}</p>
-              <ul class="window-list window-list--grid">
-                @for (w of recentClosedWindows(); track w.id) {
-                  <li class="window-item" (click)="selectWindow(w.id)">
-                    <div class="window-item-name">{{ w.raceName }}</div>
-                    @if (w.championshipName) { <div class="window-item-race">{{ w.championshipName }}</div> }
-                    @if (w.date) { <div class="window-item-race">{{ w.date }}</div> }
-                    <div class="window-item-meta"><app-badge variant="closed">{{ 'incidents.closed' | transloco }}</app-badge></div>
-                  </li>
-                }
-              </ul>
-            }
-            @if (oldClosedWindows().length > 0) {
-              <p class="window-group-label window-group-label--old window-group-label--spaced">{{ 'incidents.archived' | transloco }}</p>
-              <ul class="window-list window-list--grid">
-                @for (w of oldClosedWindows(); track w.id) {
-                  <li class="window-item window-item--old" (click)="selectWindow(w.id)">
-                    <div class="window-item-name">{{ w.raceName }}</div>
-                    @if (w.championshipName) { <div class="window-item-race">{{ w.championshipName }}</div> }
-                    @if (w.date) { <div class="window-item-race">{{ w.date }}</div> }
-                    <div class="window-item-meta"><app-badge variant="closed">{{ 'incidents.closed' | transloco }}</app-badge></div>
-                  </li>
-                }
-              </ul>
-            }
+            <app-incident-window-groups
+              [groups]="windowGroups()"
+              [expanded]="expandedGroups()"
+              (toggle)="toggleGroup($event)"
+              (select)="selectWindow($event)" />
           }
         </div>
       } @else if (loadingDetail()) {
