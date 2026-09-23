@@ -7,11 +7,11 @@
     }
   </app-page-intro>
 
-  <div class="incidents-layout" [class.incidents-layout--no-selection]="!windowDetail() && !loadingDetail()">
+  <div class="incidents-layout">
     <!-- Windows sidebar -->
-    <aside [class.incidents-layout__aside--hidden]="!windowDetail() && !loadingDetail()">
+    <aside>
     <app-card>
-      <h2 class="sidebar-heading">{{ 'incidents.raceWindows' | transloco }}</h2>
+      <h2 class="sidebar-heading">{{ 'championships.title' | transloco }}</h2>
 
       @if (loadingWindows()) {
         <app-spinner />
@@ -33,20 +33,7 @@
     <section>
     <app-card>
       @if (!windowDetail() && !loadingDetail()) {
-        <div class="window-picker-centered">
-          <h2 class="sidebar-heading">{{ 'incidents.raceWindows' | transloco }}</h2>
-          @if (loadingWindows()) {
-            <app-spinner />
-          } @else if (windows().length === 0) {
-            <app-empty>{{ 'incidents.noWindows' | transloco }}</app-empty>
-          } @else {
-            <app-incident-window-groups
-              [groups]="windowGroups()"
-              [expanded]="expandedGroups()"
-              (toggle)="toggleGroup($event)"
-              (select)="selectWindow($event)" />
-          }
-        </div>
+        <div class="empty-detail">{{ 'incidents.selectWindowHint' | transloco }}</div>
       } @else if (loadingDetail()) {
         <app-spinner />
       } @else if (windowDetail(); as w) {

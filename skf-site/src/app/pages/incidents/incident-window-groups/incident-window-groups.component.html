@@ -6,9 +6,7 @@
         <span class="group-chevron" aria-hidden="true">{{ open ? '▾' : '▸' }}</span>
         <span class="group-name">{{ group.name ?? ('incidents.otherWindows' | transloco) }}</span>
         @if (group.openCount > 0) {
-          <app-badge variant="open">{{ 'incidents.openCount' | transloco: { count: group.openCount } }}</app-badge>
-        } @else {
-          <span class="group-count">{{ group.windows.length }}</span>
+          <app-badge variant="open">{{ 'incidents.open' | transloco }}</app-badge>
         }
       </button>
 
