@@ -33,7 +33,7 @@
     <section>
     <app-card>
       @if (!windowDetail() && !loadingDetail()) {
-        <div class="empty-detail">{{ 'incidents.selectWindowHint' | transloco }}</div>
+        <div class="empty-detail">{{ 'incidents.selectRaceHint' | transloco }}</div>
       } @else if (loadingDetail()) {
         <app-spinner />
       } @else if (windowDetail(); as w) {

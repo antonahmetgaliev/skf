@@ -369,7 +369,7 @@
   "incidents.saving": "Збереження…",
   "incidents.selectChampionship": "— Оберіть чемпіонат —",
   "incidents.selectRace": "— Оберіть гонку —",
-  "incidents.selectWindowHint": "Оберіть гонку зліва, щоб побачити її інциденти.",
+  "incidents.selectRaceHint": "Оберіть гонку, щоб побачити її інциденти.",
   "incidents.sessionOptional": "Сесія (необов'язково)",
   "incidents.setAsDefault": "Зробити дефолтним",
   "incidents.settings": "Налаштування стюардингу",

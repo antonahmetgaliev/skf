@@ -369,7 +369,7 @@
   "incidents.saving": "Saving…",
   "incidents.selectChampionship": "— Select championship —",
   "incidents.selectRace": "— Select race —",
-  "incidents.selectWindowHint": "Pick a race on the left to see its incidents.",
+  "incidents.selectRaceHint": "Pick a race to see its incidents.",
   "incidents.sessionOptional": "Session (optional)",
   "incidents.setAsDefault": "Set as default",
   "incidents.settings": "Stewarding settings",
