@@ -1,6 +1,6 @@
 import os
 
-from pydantic import model_validator
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -40,12 +40,16 @@ class Settings(BaseSettings):
     incident_api_token: str = ""
 
     # S3-compatible bucket for uploaded race-result files (Railway Bucket).
-    # Leave empty to skip keeping the originals.
-    s3_endpoint_url: str = ""
-    s3_bucket: str = ""
-    s3_access_key_id: str = ""
-    s3_secret_access_key: str = ""
-    s3_region: str = ""
+    # Leave empty to skip keeping the originals. The AWS_* names are what
+    # Railway's "Add to Service" provisions by default.
+    s3_endpoint_url: str = Field("", validation_alias=AliasChoices("s3_endpoint_url", "aws_endpoint_url"))
+    s3_bucket: str = Field("", validation_alias=AliasChoices("s3_bucket", "aws_s3_bucket_name"))
+    s3_access_key_id: str = Field("", validation_alias=AliasChoices("s3_access_key_id", "aws_access_key_id"))
+    s3_secret_access_key: str = Field(
+        "", validation_alias=AliasChoices("s3_secret_access_key", "aws_secret_access_key")
+    )
+    s3_region: str = Field("", validation_alias=AliasChoices("s3_region", "aws_default_region"))
+    s3_addressing_style: str = "virtual"
 
     # Session
     session_secret: str = "change-me-in-production"

@@ -28,6 +28,7 @@ def is_enabled() -> bool:
 @lru_cache(maxsize=1)
 def _client():
     import boto3
+    from botocore.config import Config
 
     return boto3.client(
         "s3",
@@ -35,6 +36,8 @@ def _client():
         region_name=settings.s3_region or None,
         aws_access_key_id=settings.s3_access_key_id,
         aws_secret_access_key=settings.s3_secret_access_key,
+        # Railway Buckets need virtual-hosted URLs; a local MinIO needs "path".
+        config=Config(s3={"addressing_style": settings.s3_addressing_style}),
     )
 
 

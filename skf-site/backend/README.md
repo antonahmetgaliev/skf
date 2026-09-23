@@ -32,7 +32,7 @@ uvicorn app.main:app --reload --port 8000
 2. Create a new service from your repo, set **Root Directory** to `skf-site/backend`
 3. Railway auto-injects `DATABASE_URL` from the linked PostgreSQL service
 4. Add `SIMGRID_API_KEY` and `CORS_ORIGINS` as environment variables
-5. Add a **Bucket** to the project and set `S3_ENDPOINT_URL`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` and `S3_REGION` on the backend service from its credentials. Uploaded race-result files are kept there; without these variables imports still work but the originals are not stored
+5. Add a **Bucket** to the project and connect it to the backend service with **Add to Service** (the default `AWS_*` variable names work; `S3_ENDPOINT_URL`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION` are accepted too). Uploaded race-result files are kept there; without these variables imports still work but the originals are not stored
 6. The start command in `railway.toml` runs migrations automatically on deploy
 
 ## API Endpoints
