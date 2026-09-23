@@ -1,6 +1,6 @@
 <app-card [animated]="true">
   <h3 class="section-title">{{ 'giveaway.importTitle' | transloco }}</h3>
-  <p class="section-description">{{ 'giveaway.importDescription' | transloco }}</p>
+  <p class="section-description">{{ 'giveaway.resultsSourceDescription' | transloco }}</p>
 
   <app-form-field [label]="'giveaway.championship' | transloco" fieldId="giveawayChampionship">
     @if (championshipsLoading()) {
@@ -22,8 +22,8 @@
       <app-spinner />
     } @else {
       <div class="round-list">
-        @for (round of rounds(); track round.id) {
-          @let record = importForRound(round.id);
+        @for (round of rounds(); track round.raceId) {
+          @let record = round.raceImport;
           <div class="round-row" [class.round-row--imported]="record">
             <div class="round-main">
               <span class="round-name">{{ round.name }}</span>
@@ -40,20 +40,10 @@
                   </span>
                 }
               </span>
-              <app-btn variant="danger" size="xs" (click)="deleteImport(record)">
-                {{ 'common.confirm.delete' | transloco }}
-              </app-btn>
             } @else {
               <span class="round-status round-status--missing">
                 {{ 'giveaway.noResults' | transloco }}
               </span>
-              <label class="upload-btn">
-                <input type="file" accept=".xml,text/xml,application/xml"
-                  [disabled]="uploading()"
-                  (click)="uploadRoundId.set(round.id)"
-                  (change)="onFileSelected($event)" />
-                <span>{{ 'giveaway.upload' | transloco }}</span>
-              </label>
             }
           </div>
         } @empty {
@@ -61,12 +51,11 @@
         }
       </div>
 
-      @if (uploading()) {
-        <app-spinner />
-      }
-      @if (uploadError()) {
-        <p class="upload-error">{{ uploadError() }}</p>
-      }
+      <div class="uploads-link">
+        <app-btn variant="ghost" size="xs" (click)="openRaceResults.emit()">
+          {{ 'giveaway.manageUploads' | transloco }} &rarr;
+        </app-btn>
+      </div>
     }
   }
 </app-card>

@@ -50,9 +50,14 @@
           <div class="details-info">
             <div class="details-title-row">
               <h2>{{ championship.name }}</h2>
-              @if (auth.isAdmin()) {
+              @if (auth.isAdmin() || incidentWindows().size > 0) {
                 <div class="details-actions">
-                  @if (championship.id; as champId) {
+                  @if (incidentWindows().size > 0) {
+                    <app-btn variant="ghost" size="sm" (click)="openIncidents(championship.id)">
+                      {{ 'championships.incidents' | transloco }}
+                    </app-btn>
+                  }
+                  @if (auth.isAdmin() && championship.id; as champId) {
                     <app-btn
                       [variant]="isChampionshipActive(champId) ? 'danger' : 'accent'"
                       size="sm"
@@ -61,9 +66,11 @@
                       {{ isChampionshipActive(champId) ? ('championships.markFinished' | transloco) : ('championships.markActive' | transloco) }}
                     </app-btn>
                   }
-                  <app-btn variant="ghost" size="sm" [disabled]="refreshingCache()" (click)="refreshChampionshipCache(championship.id)">
-                    {{ refreshingCache() ? ('championships.refreshing' | transloco) : ('championships.refreshData' | transloco) }}
-                  </app-btn>
+                  @if (auth.isAdmin()) {
+                    <app-btn variant="ghost" size="sm" [disabled]="refreshingCache()" (click)="refreshChampionshipCache(championship.id)">
+                      {{ refreshingCache() ? ('championships.refreshing' | transloco) : ('championships.refreshData' | transloco) }}
+                    </app-btn>
+                  }
                 </div>
               }
             </div>
@@ -219,6 +226,11 @@
                       </div>
                     </div>
                     <div class="race-card-status">
+                      @if (incidentWindows().get(race.id); as w) {
+                        <a class="race-incidents-link" routerLink="/incidents" [queryParams]="{ window: w.windowId }">
+                          {{ 'incidents.incidentCount' | transloco: { count: w.incidentsCount } }}
+                        </a>
+                      }
                       @if (getRaceStatus(race) === 'completed') {
                         <app-badge variant="completed">{{ 'championships.completed' | transloco }}</app-badge>
                       } @else {

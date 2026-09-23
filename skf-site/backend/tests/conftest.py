@@ -166,3 +166,45 @@ async def auth_client(engine, test_user):
     app.dependency_overrides.pop(get_current_user, None)
     app.dependency_overrides.pop(get_current_user_optional, None)
     db_module.async_session = original
+
+
+# ── SimGrid stub ------------------------------------------------------------
+
+LMU_CHAMPIONSHIP_ID = 26927
+IRACING_CHAMPIONSHIP_ID = 27503
+
+
+@pytest.fixture
+def simgrid_stub(monkeypatch):
+    """Serve championships and races from memory instead of SimGrid.
+
+    Tests may add rounds to ``stub.races[championship_id]`` or games to
+    ``stub.games``; unknown championships default to Le Mans Ultimate.
+    """
+    from app.schemas.championship import ChampionshipDetails
+    from app.services import simgrid as sg_mod
+
+    class Stub:
+        games = {
+            LMU_CHAMPIONSHIP_ID: "Le Mans Ultimate",
+            IRACING_CHAMPIONSHIP_ID: "iRacing",
+        }
+        races: dict[int, list[dict]] = {}
+
+    async def get_championship(championship_id):
+        return ChampionshipDetails(
+            id=championship_id,
+            name=f"Championship {championship_id}",
+            game_name=Stub.games.get(championship_id, "Le Mans Ultimate"),
+        )
+
+    async def get_races(championship_id):
+        return Stub.races.get(championship_id, [])
+
+    async def get_race_name(race_id):
+        return f"Round {race_id}"
+
+    monkeypatch.setattr(sg_mod.simgrid_service, "get_championship", get_championship)
+    monkeypatch.setattr(sg_mod.simgrid_service, "get_races", get_races)
+    monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", get_race_name)
+    return Stub

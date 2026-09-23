@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { BtnComponent } from '../../../components/btn/btn.component';
 import { CardComponent } from '../../../components/card/card.component';
 import { EmptyComponent } from '../../../components/empty/empty.component';
@@ -9,15 +9,13 @@ import { FormFieldComponent } from '../../../components/form-field/form-field.co
 import { SpinnerComponent } from '../../../components/spinner/spinner.component';
 import { InputDirective } from '../../../directives/input.directive';
 import { SelectDirective } from '../../../directives/select.directive';
-import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 import {
   Eligibility,
   EligibleDriver,
   GiveawayApiService,
-  GiveawayRound,
-  RaceResultImport,
   UnmatchedName,
 } from '../../../services/giveaway-api.service';
+import { RaceResultsApiService, RaceRound } from '../../../services/race-results-api.service';
 import {
   ChampionshipListItem,
   SimgridApiService,
@@ -27,9 +25,10 @@ import { classesOf, driversInClass, hasEnoughRounds, pickWinner } from './giveaw
 /**
  * Admin tab for the championship giveaway.
  *
- * SimGrid exposes no per-race results, so the laps each driver covered are
- * imported from the game server's own result XML. Everything below reads that
- * imported data; no draw costs a SimGrid request.
+ * SimGrid exposes no per-race results, so the laps each driver covered come
+ * from the game server's own result file, uploaded per round in the Race
+ * results tab. Everything below reads that imported data; no draw costs a
+ * SimGrid request.
  */
 @Component({
   selector: 'app-admin-giveaway-tab',
@@ -39,22 +38,19 @@ import { classesOf, driversInClass, hasEnoughRounds, pickWinner } from './giveaw
 })
 export class AdminGiveawayTabComponent implements OnInit {
   private readonly api = inject(GiveawayApiService);
+  private readonly raceResultsApi = inject(RaceResultsApiService);
   private readonly simgridApi = inject(SimgridApiService);
-  private readonly confirmSvc = inject(ConfirmDialogService);
-  private readonly transloco = inject(TranslocoService);
+
+  /** Uploads live in the Race results tab; this asks the admin page to switch. */
+  readonly openRaceResults = output<void>();
 
   readonly championships = signal<ChampionshipListItem[]>([]);
   readonly championshipsLoading = signal(false);
   readonly selectedChampionshipId = signal<number | null>(null);
 
-  readonly rounds = signal<GiveawayRound[]>([]);
-  readonly imports = signal<RaceResultImport[]>([]);
+  readonly rounds = signal<RaceRound[]>([]);
   readonly unmatched = signal<UnmatchedName[]>([]);
   readonly dataLoading = signal(false);
-
-  readonly uploadRoundId = signal<number | null>(null);
-  readonly uploading = signal(false);
-  readonly uploadError = signal('');
 
   // Defaults mirror the regulation: >=50% of the distance in 3 of 5 rounds.
   readonly minDistancePct = signal(50);
@@ -99,19 +95,15 @@ export class AdminGiveawayTabComponent implements OnInit {
     this.resetDraw();
     this.eligibility.set(null);
     this.rounds.set([]);
-    this.imports.set([]);
     this.unmatched.set([]);
     if (id !== null) this.loadChampionshipData(id);
   }
 
   private loadChampionshipData(championshipId: number): void {
     this.dataLoading.set(true);
-    this.api.getRounds(championshipId).subscribe({
-      next: (rounds) => this.rounds.set(rounds),
-    });
-    this.api.getImports(championshipId).subscribe({
-      next: (imports) => {
-        this.imports.set(imports);
+    this.raceResultsApi.getRounds(championshipId).subscribe({
+      next: (data) => {
+        this.rounds.set(data.rounds);
         this.dataLoading.set(false);
         this.loadEligibility();
       },
@@ -119,54 +111,6 @@ export class AdminGiveawayTabComponent implements OnInit {
     });
     this.api.getUnmatched(championshipId).subscribe({
       next: (names) => this.unmatched.set(names),
-    });
-  }
-
-  /** The import covering a round, if one has been uploaded. */
-  importForRound(roundId: number): RaceResultImport | null {
-    return this.imports().find((i) => i.raceSimgridId === roundId) ?? null;
-  }
-
-  onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    const championshipId = this.selectedChampionshipId();
-    if (!file || championshipId === null) return;
-
-    this.uploading.set(true);
-    this.uploadError.set('');
-    this.api.uploadResults(championshipId, this.uploadRoundId(), file).subscribe({
-      next: () => {
-        this.uploading.set(false);
-        // Clear the picker so re-uploading the same filename still fires.
-        input.value = '';
-        this.resetDraw();
-        this.loadChampionshipData(championshipId);
-      },
-      error: (err) => {
-        this.uploading.set(false);
-        input.value = '';
-        this.uploadError.set(err?.error?.detail ?? 'Upload failed');
-      },
-    });
-  }
-
-  async deleteImport(record: RaceResultImport): Promise<void> {
-    const ok = await this.confirmSvc.confirm({
-      title: this.transloco.translate('common.confirm.deleteTitle'),
-      message: this.transloco.translate('giveaway.deleteImportConfirm', {
-        name: record.trackEvent ?? record.sourceFilename ?? '',
-      }),
-      confirmLabel: this.transloco.translate('common.confirm.delete'),
-      danger: true,
-    });
-    if (!ok) return;
-    const championshipId = this.selectedChampionshipId();
-    this.api.deleteImport(record.id).subscribe({
-      next: () => {
-        this.resetDraw();
-        if (championshipId !== null) this.loadChampionshipData(championshipId);
-      },
     });
   }
 

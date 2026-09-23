@@ -5,12 +5,13 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from sqlalchemy import select, delete
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_user_optional, is_admin, require_admin
 from app.database import get_db
 from app.models.active_championship import ActiveChampionship
+from app.models.incidents import Incident, IncidentWindow
 from app.models.user import User
 from app.schemas.championship import (
     ChampionshipDetails,
@@ -18,6 +19,7 @@ from app.schemas.championship import (
     ChampionshipRace,
     ChampionshipStandingsData,
 )
+from app.schemas.race_results import ChampionshipIncidentWindowOut
 from app.services.drivers import sync_drivers_from_standings
 from app.services.simgrid import simgrid_service
 
@@ -105,6 +107,35 @@ async def get_races(championship_id: int):
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Failed to fetch races from SimGrid.",
         )
+
+
+@router.get(
+    "/{championship_id}/incident-windows",
+    response_model=list[ChampionshipIncidentWindowOut],
+)
+async def get_incident_windows(
+    championship_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """The championship's incident windows, one per round, keyed by race."""
+    rows = await db.execute(
+        select(IncidentWindow, func.count(Incident.id))
+        .outerjoin(Incident, Incident.window_id == IncidentWindow.id)
+        .where(
+            IncidentWindow.championship_id == championship_id,
+            IncidentWindow.race_id.is_not(None),
+        )
+        .group_by(IncidentWindow.id)
+    )
+    return [
+        ChampionshipIncidentWindowOut(
+            race_id=window.race_id,
+            window_id=window.id,
+            is_open=window.is_open,
+            incidents_count=count,
+        )
+        for window, count in rows.all()
+    ]
 
 
 @router.get("/{championship_id}", response_model=ChampionshipDetails)

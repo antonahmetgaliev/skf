@@ -2,21 +2,29 @@
 
 The fixtures are two real SKF races with the chat stream and per-lap rows
 removed (the parser ignores both, and the chat is private conversation).
+`laguna_seca_incidents.xml` adds back the race's `<Incident>` contact
+reports, and only those.
 """
 
 from __future__ import annotations
 
 import pathlib
+from xml.etree.ElementTree import fromstring
 
 import pytest
 
-from app.services.race_results_xml import RaceResultsXmlError, parse_race_results
+from app.services.race_files import MAX_UPLOAD_BYTES, RaceFileError, parse_race_file
+from app.services.race_files.lmu import parse_contacts
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 
 
 def _load(name: str) -> bytes:
     return (FIXTURES / name).read_bytes()
+
+
+def parse_race_results(payload: bytes):
+    return parse_race_file(payload, "lmu")
 
 
 def test_parses_portimao_grid():
@@ -97,6 +105,8 @@ def test_chat_and_lap_rows_are_ignored():
     assert entry.laps == 10
     # The dataclass has no field that could carry chat or lap times at all.
     assert not any("private" in str(v) for v in vars(entry).values())
+    # A report without a vehicle-contact shape is not a contact.
+    assert race.contacts == []
 
 
 def test_unscored_entries_are_skipped():
@@ -131,15 +141,13 @@ def test_driver_without_laps_element_scores_zero():
     ],
 )
 def test_rejects_unusable_files(payload, message):
-    with pytest.raises(RaceResultsXmlError) as exc:
+    with pytest.raises(RaceFileError) as exc:
         parse_race_results(payload)
     assert message in str(exc.value)
 
 
 def test_rejects_oversized_file():
-    from app.services.race_results_xml import MAX_UPLOAD_BYTES
-
-    with pytest.raises(RaceResultsXmlError) as exc:
+    with pytest.raises(RaceFileError) as exc:
         parse_race_results(b"x" * (MAX_UPLOAD_BYTES + 1))
     assert "too large" in str(exc.value)
 
@@ -151,5 +159,76 @@ def test_external_entities_are_not_resolved():
         b"<rFactorXML><RaceResults><Race><Driver><Name>&xxe;</Name>"
         b"<ServerScored>1</ServerScored><Laps>1</Laps></Driver></Race></RaceResults></rFactorXML>"
     )
-    with pytest.raises(RaceResultsXmlError):
+    with pytest.raises(RaceFileError):
         parse_race_results(payload)
+
+
+def _stream(*incidents: str) -> bytes:
+    body = "\n".join(incidents)
+    return f"""<rFactorXML><RaceResults><Race><Stream>
+{body}
+</Stream>
+<Driver><Name>A</Name><CarClass>GT3</CarClass><ServerScored>1</ServerScored><Laps>1</Laps></Driver>
+</Race></RaceResults></rFactorXML>""".encode()
+
+
+def _contact(et: float, a: str, a_id: int, b: str, b_id: int) -> str:
+    return (
+        f'<Incident et="{et}">{a}({a_id}) reported contact (12.34) '
+        f"with another vehicle {b}({b_id})</Incident>"
+    )
+
+
+def test_both_sides_of_a_contact_are_one_incident():
+    race = parse_race_results(
+        _stream(
+            _contact(162.0, "Bohdan Tseliuk", 7, "Artem Reshodko", 13),
+            _contact(162.0, "Artem Reshodko", 13, "Bohdan Tseliuk", 7),
+        )
+    )
+    assert len(race.contacts) == 1
+    contact = race.contacts[0]
+    assert contact.drivers == ["Bohdan Tseliuk", "Artem Reshodko"]
+    assert contact.time == "00:02:42"
+    assert contact.session_name == "Race"
+
+
+def test_a_chain_of_reports_within_three_seconds_merges():
+    race = parse_race_results(
+        _stream(
+            _contact(168.4, "C", 12, "A", 7),
+            _contact(168.7, "C", 12, "D", 10),
+            # Shares a car, but more than 3 s after the first report.
+            _contact(171.5, "D", 10, "C", 12),
+        )
+    )
+    assert [c.drivers for c in race.contacts] == [["C", "A", "D"], ["D", "C"]]
+
+
+def test_single_car_contacts_are_skipped():
+    race = parse_race_results(
+        _stream(
+            '<Incident et="187.3">Solo Driver(16) reported contact (3056.03) with Immovable</Incident>',
+            '<Incident et="190.0">Solo Driver(16) reported contact (44.29) with Sign</Incident>',
+        )
+    )
+    assert race.contacts == []
+
+
+def test_contacts_from_a_real_race():
+    race = parse_race_results(_load("laguna_seca_incidents.xml"))
+
+    assert len(race.contacts) == 55
+    first = race.contacts[0]
+    assert first.time == "00:03:05"
+    assert first.drivers == [
+        "Bohdan Tseliuk", "Oleksandr Dovmat", "Andrii Mochulskyi", "Artem Reshodko", "Arsen Budzyk",
+    ]
+    # The giveaway view of the same file is unchanged by the stream.
+    assert len(race.entries) == 17
+
+
+def test_no_stream_means_no_contacts():
+    race = parse_race_results(_load("laguna_seca.xml"))
+    assert race.contacts == []
+    assert parse_contacts(fromstring("<Race/>")) == []

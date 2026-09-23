@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -15,7 +15,7 @@ from app.database import get_db
 from app.models.bwp import BwpPoint, Driver
 from app.services.driver_matching import match_driver_id_by_name
 from app.services.incident_bwp import apply_resolution_bwp
-from app.services.simgrid import simgrid_service
+from app.services.race_import import add_ingested_incidents, find_or_create_window
 from app.models.incidents import (
     Incident, IncidentDriver, IncidentResolution, IncidentWindow, VerdictRule,
     DescriptionPreset,
@@ -326,48 +326,15 @@ async def ingest_incidents(
     payload: IncidentBatchCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    # Find or create window by race_id
-    q = select(IncidentWindow).where(IncidentWindow.race_id == payload.race_id)
-    result = await db.execute(q)
-    window = result.scalar_one_or_none()
+    """Deprecated: kept while the desktop parsers are phased out.
 
-    if window is None:
-        race_name = await simgrid_service.get_race_name(payload.race_id)
-        today = date.today().isoformat()
-        now = datetime.now(timezone.utc)
-        window = IncidentWindow(
-            championship_id=payload.championship_id,
-            race_id=payload.race_id,
-            race_name=race_name,
-            date=today,
-            interval_hours=24,
-            opened_at=now,
-            closes_at=now + timedelta(hours=24),
-        )
-        db.add(window)
-        await db.flush()
-
-    # Create incidents + drivers
-    for inc_data in payload.incidents:
-        incident = Incident(
-            window_id=window.id,
-            session_name=inc_data.session_name,
-            time=inc_data.time,
-            source="ingested",
-            is_published=False,
-        )
-        db.add(incident)
-        await db.flush()
-
-        for idx, driver_name in enumerate(inc_data.drivers):
-            driver_id = await _match_driver(driver_name, db)
-            db.add(IncidentDriver(
-                incident_id=incident.id,
-                driver_name=driver_name.strip(),
-                driver_id=driver_id,
-                sort_order=idx,
-            ))
-
+    Admins now upload the round's result file in the Race results tab and
+    the backend parses the contacts itself (`services/race_import.py`).
+    """
+    window = await find_or_create_window(
+        db, race_id=payload.race_id, championship_id=payload.championship_id
+    )
+    await add_ingested_incidents(db, window, payload.incidents)
     await db.commit()
 
     # Expire cached window so selectinload re-fetches all incidents
@@ -379,11 +346,13 @@ async def ingest_incidents(
 
 @router.get("/windows", response_model=list[IncidentWindowListItem])
 async def list_windows(
+    championship_id: int | None = Query(None, alias="championshipId"),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(IncidentWindow).order_by(IncidentWindow.opened_at.desc())
-    )
+    query = select(IncidentWindow).order_by(IncidentWindow.opened_at.desc())
+    if championship_id is not None:
+        query = query.where(IncidentWindow.championship_id == championship_id)
+    result = await db.execute(query)
     return result.scalars().all()
 
 
@@ -397,6 +366,15 @@ async def create_window(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_admin),
 ):
+    if payload.race_id is not None:
+        existing = await db.execute(
+            select(IncidentWindow.id).where(IncidentWindow.race_id == payload.race_id)
+        )
+        if existing.scalar_one_or_none() is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This race already has an incident window.",
+            )
     now = datetime.now(timezone.utc)
     window = IncidentWindow(
         championship_id=payload.championship_id,

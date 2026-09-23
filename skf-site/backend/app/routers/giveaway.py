@@ -1,10 +1,10 @@
-"""Giveaway router - admin-only race-result import and eligibility.
+"""Giveaway router - admin-only eligibility over imported race results.
 
-Every figure the giveaway needs is read from imported game-server XML, so no
-endpoint here calls SimGrid. That is deliberate: eligibility would otherwise
-need one request per driver and SimGrid enforces a per-minute rate limit that
-such a fan-out trips immediately. The round list comes from the existing
-day-cached `simgrid_service.get_races`, which costs no extra request.
+Every figure the giveaway needs is read from the round result files uploaded
+in the Race results tab (`routers/race_results.py`), so no endpoint here
+calls SimGrid. That is deliberate: eligibility would otherwise need one
+request per driver and SimGrid enforces a per-minute rate limit that such a
+fan-out trips immediately.
 """
 
 from __future__ import annotations
@@ -13,8 +13,8 @@ import difflib
 import logging
 import uuid
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
-from sqlalchemy import delete, func, select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_admin
@@ -32,36 +32,17 @@ from app.schemas.giveaway import (
     AliasOut,
     EligibilityOut,
     EligibleDriverOut,
-    ImportDetailOut,
-    ImportEntryOut,
     ImportOut,
     RoundBreakdownOut,
     UnmatchedNameOut,
 )
 from app.services.driver_matching import match_driver_id_by_name
 from app.services.giveaway import RoundEntry, compute_eligibility
-from app.services.race_results_xml import (
-    MAX_UPLOAD_BYTES,
-    RaceResultsXmlError,
-    parse_race_results,
-)
-from app.services.simgrid import simgrid_service
+from app.services.race_import import alias_map
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/giveaway", tags=["Giveaway"])
-
-
-async def _alias_map(db: AsyncSession) -> dict[str, tuple[str, str]]:
-    """normalized alias -> (canonical normalized name, canonical display name)."""
-    result = await db.execute(
-        select(
-            GiveawayNameAlias.normalized_alias,
-            GiveawayNameAlias.canonical_normalized_name,
-            GiveawayNameAlias.canonical_display_name,
-        )
-    )
-    return {row[0]: (row[1], row[2]) for row in result.all()}
 
 
 async def _load_imports(
@@ -97,121 +78,13 @@ async def list_imports(
             track_event=record.track_event,
             session_started_at=record.session_started_at,
             source_filename=record.source_filename,
+            sim=record.sim,
             created_at=record.created_at,
             entry_count=len(record.entries),
             unmatched_count=sum(1 for e in record.entries if e.driver_id is None),
         )
         for record in records
     ]
-
-
-@router.post(
-    "/imports", response_model=ImportDetailOut, status_code=status.HTTP_201_CREATED
-)
-async def create_import(
-    file: UploadFile = File(...),
-    championship_simgrid_id: int = Form(..., alias="championshipSimgridId"),
-    race_simgrid_id: int | None = Form(None, alias="raceSimgridId"),
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(require_admin),
-):
-    """Import one round's results from a game-server XML file."""
-    payload = await file.read()
-    if len(payload) > MAX_UPLOAD_BYTES:
-        raise HTTPException(
-            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "File is too large"
-        )
-    try:
-        parsed = parse_race_results(payload)
-    except RaceResultsXmlError as exc:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
-
-    # Re-importing a round replaces it, so a corrected file cannot leave the
-    # championship counting the same round twice.
-    if race_simgrid_id is not None:
-        existing = await db.execute(
-            select(RaceResultImport.id).where(
-                RaceResultImport.championship_simgrid_id == championship_simgrid_id,
-                RaceResultImport.race_simgrid_id == race_simgrid_id,
-            )
-        )
-        for old_id in existing.scalars().all():
-            await db.execute(
-                delete(RaceResultImport).where(RaceResultImport.id == old_id)
-            )
-
-    record = RaceResultImport(
-        championship_simgrid_id=championship_simgrid_id,
-        race_simgrid_id=race_simgrid_id,
-        track_event=parsed.track_event,
-        session_started_at=parsed.session_started_at,
-        source_filename=file.filename,
-        uploaded_by_user_id=user.id,
-    )
-    db.add(record)
-    await db.flush()
-
-    aliases = await _alias_map(db)
-    entries: list[RaceResultEntry] = []
-    for parsed_entry in parsed.entries:
-        normalized = normalize_driver_name(parsed_entry.raw_name)
-        canonical = aliases.get(normalized, (normalized, parsed_entry.raw_name))[0]
-        # Match on the canonical spelling so a previously merged name links to
-        # the same driver record as the spelling it was merged into.
-        driver_id = await match_driver_id_by_name(db, canonical)
-        if driver_id is None and canonical != normalized:
-            driver_id = await match_driver_id_by_name(db, parsed_entry.raw_name)
-        entries.append(
-            RaceResultEntry(
-                import_id=record.id,
-                raw_name=parsed_entry.raw_name,
-                normalized_name=normalized,
-                car_class=parsed_entry.car_class,
-                laps=parsed_entry.laps,
-                position=parsed_entry.position,
-                class_position=parsed_entry.class_position,
-                finish_status=parsed_entry.finish_status,
-                driver_id=driver_id,
-            )
-        )
-    db.add_all(entries)
-    await db.commit()
-
-    return ImportDetailOut(
-        id=record.id,
-        championship_simgrid_id=record.championship_simgrid_id,
-        race_simgrid_id=record.race_simgrid_id,
-        track_event=record.track_event,
-        session_started_at=record.session_started_at,
-        source_filename=record.source_filename,
-        created_at=record.created_at,
-        entry_count=len(entries),
-        unmatched_count=sum(1 for e in entries if e.driver_id is None),
-        entries=[
-            ImportEntryOut(
-                raw_name=e.raw_name,
-                car_class=e.car_class,
-                laps=e.laps,
-                position=e.position,
-                finish_status=e.finish_status,
-                matched=e.driver_id is not None,
-            )
-            for e in entries
-        ],
-    )
-
-
-@router.delete("/imports/{import_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_import(
-    import_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_admin),
-):
-    record = await db.get(RaceResultImport, import_id)
-    if record is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Import not found")
-    await db.delete(record)
-    await db.commit()
 
 
 @router.get("/eligibility", response_model=EligibilityOut)
@@ -224,7 +97,7 @@ async def get_eligibility(
 ):
     """Drivers who cleared the distance bar in enough rounds, grouped by class."""
     records = await _load_imports(db, championship_simgrid_id)
-    aliases = await _alias_map(db)
+    aliases = await alias_map(db)
     labels = {_round_key(r): (r.track_event or r.source_filename or "") for r in records}
 
     rows: list[RoundEntry] = []
@@ -288,7 +161,7 @@ async def list_unmatched(
     person.
     """
     records = await _load_imports(db, championship_simgrid_id)
-    aliases = await _alias_map(db)
+    aliases = await alias_map(db)
 
     counts: dict[str, dict] = {}
     for record in records:
@@ -382,29 +255,3 @@ async def delete_alias(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Alias not found")
     await db.delete(record)
     await db.commit()
-
-
-@router.get("/rounds", response_model=list[dict])
-async def list_rounds(
-    championship_simgrid_id: int = Query(..., alias="championshipSimgridId"),
-    _: User = Depends(require_admin),
-):
-    """Championship rounds, so an admin can pin an upload to the right one.
-
-    Served from the day-long SimGrid cache; no live request is made here.
-    """
-    try:
-        races = await simgrid_service.get_races(championship_simgrid_id)
-    except Exception:  # noqa: BLE001 - a missing round list must not block imports
-        logger.exception("Failed to load rounds for championship %s", championship_simgrid_id)
-        return []
-    return [
-        {
-            "id": race.get("id"),
-            "name": race.get("display_name") or race.get("race_name") or "",
-            "startsAt": race.get("starts_at"),
-            "ended": race.get("ended", False),
-        }
-        for race in races
-        if isinstance(race, dict)
-    ]

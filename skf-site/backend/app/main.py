@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.middleware import StaleHeaderMiddleware
-from app.routers import admin, auth, bwp, calendar, championships, giveaway, incidents, profile, regulations, translations, users, youtube
+from app.routers import admin, auth, bwp, calendar, championships, giveaway, incidents, profile, race_results, regulations, translations, users, youtube
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,6 +34,7 @@ app.include_router(youtube.router, prefix="/api")
 app.include_router(translations.router, prefix="/api")
 app.include_router(regulations.router, prefix="/api")
 app.include_router(giveaway.router, prefix="/api")
+app.include_router(race_results.router, prefix="/api")
 
 
 @app.get("/healthz")

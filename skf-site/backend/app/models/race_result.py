@@ -1,8 +1,10 @@
-"""Race results imported from game-server XML, used only by the giveaway.
+"""Race results imported from each round's game-server result file.
 
 SimGrid exposes no per-race results, so laps completed can only come from the
-game server's own result file. These rows exist purely to decide giveaway
-eligibility — they are not a results archive and are never shown publicly.
+game server's own result file (LMU XML or an iRaceControl .bin for iRacing).
+The entries exist purely to decide giveaway eligibility — they are not a
+results archive and are never shown publicly. The same upload also seeds the
+round's "Auto" incidents, which point back here through `Incident.import_id`.
 """
 
 from __future__ import annotations
@@ -11,6 +13,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     ForeignKey,
     Index,
@@ -54,6 +57,23 @@ class RaceResultImport(Base):
         DateTime(timezone=True), nullable=True
     )
     source_filename: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    # "lmu" or "iracing", from the championship's SimGrid game.
+    sim: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="lmu", server_default="lmu"
+    )
+    # Object key of the original file in the bucket; None when storage was
+    # not configured at upload time.
+    storage_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    file_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    contacts_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    # iRacing subsession id, for reference; LMU files carry none.
+    external_session_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # iRaceControl recorded without grouping, so contacts were regrouped here.
+    auto_grouped: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
     uploaded_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )

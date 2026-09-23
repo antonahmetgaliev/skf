@@ -1,0 +1,138 @@
+<app-card [animated]="true">
+  <h3 class="section-title">{{ 'raceImports.title' | transloco }}</h3>
+  <p class="section-description">{{ 'raceImports.description' | transloco }}</p>
+
+  <app-form-field [label]="'giveaway.championship' | transloco" fieldId="raceResultsChampionship">
+    @if (championshipsLoading()) {
+      <app-spinner />
+    } @else {
+      <select appSelect id="raceResultsChampionship"
+        [ngModel]="selectedChampionshipId()"
+        (ngModelChange)="selectChampionship($event)">
+        <option [ngValue]="null">{{ 'giveaway.choosePlaceholder' | transloco }}</option>
+        @for (champ of championships(); track champ.id) {
+          <option [ngValue]="champ.id">{{ champ.name }}</option>
+        }
+      </select>
+    }
+  </app-form-field>
+
+  @if (selectedChampionshipId() !== null) {
+    @if (loading()) {
+      <app-spinner />
+    } @else if (loadError()) {
+      <p class="rr-error">{{ loadError() }}</p>
+    } @else if (data(); as d) {
+      <div class="rr-toolbar">
+        <span class="sim-chip">{{ d.gameName || '—' }}</span>
+        @if (d.sim) {
+          <span class="rr-hint">
+            {{ 'raceImports.expects' | transloco }} <code>{{ fileExtension() }}</code>
+          </span>
+          <label class="rr-check">
+            <input type="checkbox" [ngModel]="createIncidents()" (ngModelChange)="createIncidents.set($event)" />
+            {{ 'raceImports.createIncidents' | transloco }}
+          </label>
+        }
+        <a class="rr-link" routerLink="/incidents" [queryParams]="{ championship: d.championshipId }">
+          {{ 'raceImports.championshipIncidents' | transloco }} &rarr;
+        </a>
+      </div>
+
+      @if (!d.sim) {
+        <p class="rr-warning">{{ 'raceImports.unsupportedGame' | transloco: { game: d.gameName } }}</p>
+      }
+      @if (!d.storageEnabled) {
+        <p class="rr-warning">{{ 'raceImports.storageDisabled' | transloco }}</p>
+      }
+
+      <div class="round-list">
+        @for (round of d.rounds; track round.raceId) {
+          @let record = round.raceImport;
+          <div class="round-row" [class.round-row--imported]="record">
+            <div class="round-main">
+              <span class="round-name">{{ round.name }}</span>
+              @if (round.startsAt) {
+                <span class="round-meta">{{ round.startsAt | date: 'dd.MM.yyyy' }}</span>
+              }
+              @if (record) {
+                <span class="round-meta">
+                  <span class="sim-chip sim-chip--sm">{{ simLabels[record.sim] }}</span>
+                  {{ record.entryCount }} {{ 'giveaway.driversImported' | transloco }}
+                  @if (record.unmatchedCount > 0) {
+                    <span class="round-warn">· {{ record.unmatchedCount }} {{ 'giveaway.unlinked' | transloco }}</span>
+                  }
+                  · {{ record.contactsCount }} {{ 'raceImports.contacts' | transloco }}
+                  @if (record.autoGrouped) {
+                    · {{ 'raceImports.autoGrouped' | transloco }}
+                  }
+                </span>
+                <span class="round-meta round-file">
+                  {{ record.sourceFilename }}
+                  @if (record.fileSize) { · {{ formatSize(record.fileSize) }} }
+                  · {{ record.createdAt | date: 'dd.MM.yyyy HH:mm' }}
+                </span>
+              } @else {
+                <span class="round-meta round-meta--missing">{{ 'giveaway.noResults' | transloco }}</span>
+              }
+            </div>
+
+            <div class="round-window">
+              @if (round.window; as w) {
+                <a class="rr-link" routerLink="/incidents" [queryParams]="{ window: w.id }">
+                  {{ 'incidents.incidentCount' | transloco: { count: w.incidentsCount } }}
+                </a>
+                <app-badge [variant]="w.isOpen ? 'open' : 'closed'">
+                  {{ (w.isOpen ? 'incidents.open' : 'incidents.closed') | transloco }}
+                </app-badge>
+              }
+            </div>
+
+            <div class="round-actions">
+              @if (busyRoundId() === round.raceId) {
+                <app-spinner />
+              } @else {
+                @if (d.sim) {
+                  <label class="upload-btn">
+                    <input type="file" [accept]="accept()"
+                      [disabled]="busyRoundId() !== null"
+                      (change)="onFileSelected(round, $event)" />
+                    <span>{{ (record ? 'raceImports.replace' : 'raceImports.upload') | transloco }}</span>
+                  </label>
+                }
+                @if (record?.hasFile) {
+                  <app-btn variant="ghost" size="xs" (click)="download(record!)">
+                    {{ 'raceImports.download' | transloco }}
+                  </app-btn>
+                  <app-btn variant="ghost" size="xs" [disabled]="busyRoundId() !== null" (click)="reparse(round, record!)">
+                    {{ 'raceImports.reparse' | transloco }}
+                  </app-btn>
+                }
+                @if (record) {
+                  <app-btn variant="danger" size="xs" [disabled]="busyRoundId() !== null" (click)="deleteImport(round, record)">
+                    {{ 'common.confirm.delete' | transloco }}
+                  </app-btn>
+                }
+              }
+            </div>
+          </div>
+        } @empty {
+          <app-empty>{{ 'giveaway.noRounds' | transloco }}</app-empty>
+        }
+      </div>
+
+      @if (lastResult(); as r) {
+        <p class="rr-success">
+          {{ 'raceImports.imported' | transloco: {
+            drivers: r.raceImport.entryCount,
+            created: r.incidentsCreated,
+            kept: r.incidentsKept
+          } }}
+        </p>
+      }
+      @if (error()) {
+        <p class="rr-error">{{ error() }}</p>
+      }
+    }
+  }
+</app-card>

@@ -12,7 +12,7 @@ import pathlib
 import pytest
 
 from app.services.giveaway import RoundEntry, class_leader_laps, compute_eligibility
-from app.services.race_results_xml import parse_race_results
+from app.services.race_files import parse_race_file
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 
@@ -20,7 +20,7 @@ FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 def _rows(*fixtures: str) -> list[RoundEntry]:
     rows: list[RoundEntry] = []
     for name in fixtures:
-        race = parse_race_results((FIXTURES / name).read_bytes())
+        race = parse_race_file((FIXTURES / name).read_bytes(), "lmu")
         for entry in race.entries:
             rows.append(
                 RoundEntry(

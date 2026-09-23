@@ -398,6 +398,17 @@ tbody tr:hover {
   gap: 0.4rem;
 }
 
+.race-incidents-link {
+  color: var(--gold);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 // ------------------------------------------------------------------
 // Multiclass: filter tabs
 // ------------------------------------------------------------------

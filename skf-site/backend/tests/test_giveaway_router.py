@@ -1,7 +1,8 @@
 """End-to-end tests for the giveaway admin API.
 
-Covers the path an admin actually walks: upload a round's results, review the
-names that matched nothing, merge one, and draw from the eligible pool.
+Covers the path an admin actually walks: upload a round's results (in the
+Race results tab), review the names that matched nothing, merge one, and
+draw from the eligible pool.
 """
 
 from __future__ import annotations
@@ -46,7 +47,7 @@ async def admin_user(db: AsyncSession, seed_roles):
 
 
 @pytest_asyncio.fixture
-async def admin_client(engine, admin_user):
+async def admin_client(engine, admin_user, simgrid_stub):
     import app.database as db_module
     from app.auth import get_current_user, get_current_user_optional
     from app.database import get_db
@@ -73,7 +74,7 @@ async def admin_client(engine, admin_user):
 
 async def _upload(client: AsyncClient, fixture: str, race_id: int):
     return await client.post(
-        "/api/giveaway/imports",
+        "/api/race-results/imports",
         files={"file": (fixture, (FIXTURES / fixture).read_bytes(), "text/xml")},
         data={"championshipSimgridId": str(CHAMPIONSHIP_ID), "raceSimgridId": str(race_id)},
     )
@@ -84,10 +85,11 @@ async def test_upload_parses_and_reports_the_grid(admin_client):
 
     assert resp.status_code == 201
     body = resp.json()
-    assert body["entryCount"] == 26
-    assert body["trackEvent"] == "6 Hours of Portimao"
+    assert body["raceImport"]["entryCount"] == 26
+    assert body["raceImport"]["trackEvent"] == "6 Hours of Portimao"
+    assert body["raceImport"]["sim"] == "lmu"
     # Nothing in the drivers table yet, so every name is unlinked.
-    assert body["unmatchedCount"] == 26
+    assert body["raceImport"]["unmatchedCount"] == 26
     assert len(body["entries"]) == 26
 
 
@@ -104,7 +106,7 @@ async def test_reuploading_a_round_replaces_it(admin_client):
 
 async def test_rejects_a_file_that_is_not_a_race_result(admin_client):
     resp = await admin_client.post(
-        "/api/giveaway/imports",
+        "/api/race-results/imports",
         files={"file": ("notes.xml", b"<hello/>", "text/xml")},
         data={"championshipSimgridId": str(CHAMPIONSHIP_ID), "raceSimgridId": "1"},
     )
@@ -231,9 +233,9 @@ async def test_alias_refuses_to_merge_a_name_into_itself(admin_client):
 
 async def test_deleting_an_import_removes_its_rounds(admin_client):
     created = await _upload(admin_client, "portimao.xml", 1)
-    import_id = created.json()["id"]
+    import_id = created.json()["raceImport"]["id"]
 
-    resp = await admin_client.delete(f"/api/giveaway/imports/{import_id}")
+    resp = await admin_client.delete(f"/api/race-results/imports/{import_id}")
     assert resp.status_code == 204
 
     listed = await admin_client.get(

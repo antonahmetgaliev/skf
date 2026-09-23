@@ -2,25 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-export interface GiveawayRound {
-  id: number;
-  name: string;
-  startsAt: string | null;
-  ended: boolean;
-}
-
-export interface RaceResultImport {
-  id: string;
-  championshipSimgridId: number;
-  raceSimgridId: number | null;
-  trackEvent: string | null;
-  sessionStartedAt: string | null;
-  sourceFilename: string | null;
-  createdAt: string;
-  entryCount: number;
-  unmatchedCount: number;
-}
-
 export interface RoundBreakdown {
   roundKey: string;
   roundLabel: string;
@@ -59,34 +40,6 @@ export interface UnmatchedName {
 @Injectable({ providedIn: 'root' })
 export class GiveawayApiService {
   private readonly http = inject(HttpClient);
-
-  getRounds(championshipSimgridId: number): Observable<GiveawayRound[]> {
-    return this.http.get<GiveawayRound[]>('/api/giveaway/rounds', {
-      params: { championshipSimgridId },
-    });
-  }
-
-  getImports(championshipSimgridId: number): Observable<RaceResultImport[]> {
-    return this.http.get<RaceResultImport[]>('/api/giveaway/imports', {
-      params: { championshipSimgridId },
-    });
-  }
-
-  uploadResults(
-    championshipSimgridId: number,
-    raceSimgridId: number | null,
-    file: File,
-  ): Observable<RaceResultImport> {
-    const body = new FormData();
-    body.append('file', file);
-    body.append('championshipSimgridId', String(championshipSimgridId));
-    if (raceSimgridId !== null) body.append('raceSimgridId', String(raceSimgridId));
-    return this.http.post<RaceResultImport>('/api/giveaway/imports', body);
-  }
-
-  deleteImport(importId: string): Observable<void> {
-    return this.http.delete<void>(`/api/giveaway/imports/${importId}`);
-  }
 
   getEligibility(
     championshipSimgridId: number,

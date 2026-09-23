@@ -18,9 +18,11 @@ class IncidentWindow(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    championship_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # SimGrid ids. A round has at most one window, so its result upload and
+    # its incidents always meet in the same place.
+    championship_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     championship_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    race_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    race_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True, unique=True)
     race_name: Mapped[str] = mapped_column(String(200), nullable=False)
     date: Mapped[str | None] = mapped_column(String(20), nullable=True)
     interval_hours: Mapped[int] = mapped_column(Integer, nullable=False, default=24)
@@ -75,6 +77,14 @@ class Incident(Base):
     corner: Mapped[str | None] = mapped_column(String(50), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     source: Mapped[str] = mapped_column(String(20), nullable=False, default="filed")
+    # The result upload an "ingested" incident came from, so re-uploading a
+    # corrected file can replace exactly its own untouched incidents.
+    import_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("race_result_imports.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
     # Everything starts hidden; publishing a window is the only way verdicts
     # go public, so hidden-ness is a property of the round, not of a card.

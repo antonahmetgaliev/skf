@@ -12,6 +12,7 @@ import {
   StandingRace,
 } from '../../services/simgrid-api.service';
 import { AuthService } from '../../services/auth.service';
+import { ChampionshipIncidentWindow, IncidentsApiService } from '../../services/incidents-api.service';
 import { ChampionshipEntry, ChampionshipService } from '../../services/championship.service';
 import { DataFreshnessService } from '../../services/data-freshness.service';
 import { formatDate, formatNumber } from '../../utils/format';
@@ -49,6 +50,7 @@ export class ChampionshipsComponent {
   readonly cs = inject(ChampionshipService);
   readonly freshness = inject(DataFreshnessService);
   private readonly api = inject(SimgridApiService);
+  private readonly incidentsApi = inject(IncidentsApiService);
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -67,6 +69,8 @@ export class ChampionshipsComponent {
   readonly allRaces = signal<ChampionshipRace[]>([]);
   readonly loadingRaces = signal(false);
   readonly activeChampionshipIds = signal<Set<number>>(new Set());
+  /** The selected championship's incident windows by SimGrid race id. */
+  readonly incidentWindows = signal<Map<number, ChampionshipIncidentWindow>>(new Map());
 
 
   readonly isStaleData = computed(() => {
@@ -239,6 +243,7 @@ export class ChampionshipsComponent {
         queryParamsHandling: 'merge',
         replaceUrl,
       });
+      void this.loadIncidentWindows(simgridId);
       await this.loadStandings(simgridId);
     }
   }
@@ -277,6 +282,10 @@ export class ChampionshipsComponent {
     } catch {
       this.errorMessage.set('Failed to update active status.');
     }
+  }
+
+  openIncidents(simgridId: number): void {
+    void this.router.navigate(['/incidents'], { queryParams: { championship: simgridId } });
   }
 
   isChampionshipActive(simgridId: number): boolean {
@@ -342,6 +351,18 @@ export class ChampionshipsComponent {
       if (token === this.standingsLoadToken) {
         this.loadingStandings.set(false);
       }
+    }
+  }
+
+  private async loadIncidentWindows(championshipId: number): Promise<void> {
+    this.incidentWindows.set(new Map());
+    try {
+      const windows = await firstValueFrom(this.incidentsApi.getChampionshipWindows(championshipId));
+      if (this.getSelectedSimgridId() === championshipId) {
+        this.incidentWindows.set(new Map(windows.map((w) => [w.raceId, w])));
+      }
+    } catch {
+      // Links to incidents are a convenience; the page works without them.
     }
   }
 

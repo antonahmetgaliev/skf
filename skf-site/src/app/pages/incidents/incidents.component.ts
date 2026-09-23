@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { InputDirective } from '../../directives/input.directive';
 import { SelectDirective } from '../../directives/select.directive';
@@ -61,6 +62,16 @@ export class IncidentsComponent implements OnInit {
   private readonly bwpApi = inject(BwpApiService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly transloco = inject(TranslocoService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  /** `?championship=<SimGrid id>`: only that championship's rounds are listed. */
+  readonly championshipFilter = signal<number | null>(null);
+  readonly championshipFilterLabel = computed(() => {
+    const id = this.championshipFilter();
+    if (id === null) return null;
+    return this.windows().find(w => w.championshipName)?.championshipName ?? `#${id}`;
+  });
 
   readonly verdictRules = signal<VerdictRule[]>([]);
   readonly verdictPresets = computed(() => this.verdictRules().map(r => r.verdict));
@@ -224,7 +235,15 @@ export class IncidentsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadWindows();
+    const params = this.route.snapshot.queryParamMap;
+    const championship = Number(params.get('championship'));
+    if (Number.isFinite(championship) && championship > 0) {
+      this.championshipFilter.set(championship);
+    }
+    const windowId = params.get('window');
+    void this.loadWindows().then(() => {
+      if (windowId) void this.selectWindow(windowId);
+    });
     // Every viewer needs the default verdict to tell a penalty from "no action"
     // on an incident tile, so the rules are not judge-only data.
     void this.loadVerdictRules();
@@ -235,7 +254,7 @@ export class IncidentsComponent implements OnInit {
   async loadWindows(): Promise<void> {
     this.loadingWindows.set(true);
     try {
-      const ws = await firstValueFrom(this.incidentsApi.getWindows());
+      const ws = await firstValueFrom(this.incidentsApi.getWindows(this.championshipFilter()));
       this.windows.set(ws);
     } finally {
       this.loadingWindows.set(false);
@@ -249,9 +268,27 @@ export class IncidentsComponent implements OnInit {
     try {
       const detail = await firstValueFrom(this.incidentsApi.getWindow(id));
       this.windowDetail.set(detail);
+      // Keep the open window in the URL so it can be linked to directly.
+      if (this.route.snapshot.queryParamMap.get('window') !== id) {
+        void this.router.navigate([], {
+          queryParams: { window: id },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+      }
     } finally {
       this.loadingDetail.set(false);
     }
+  }
+
+  clearChampionshipFilter(): void {
+    this.championshipFilter.set(null);
+    void this.router.navigate([], {
+      queryParams: { championship: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    void this.loadWindows();
   }
 
   closesIn(closesAt: string): string {

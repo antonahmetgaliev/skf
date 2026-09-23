@@ -12,6 +12,15 @@
     <aside [class.incidents-layout__aside--hidden]="!windowDetail() && !loadingDetail()">
     <app-card>
       <h2 class="sidebar-heading">{{ 'incidents.raceWindows' | transloco }}</h2>
+      @if (championshipFilterLabel(); as label) {
+        <div class="championship-filter">
+          <span class="championship-filter__name">{{ label }}</span>
+          <button type="button" class="championship-filter__clear" (click)="clearChampionshipFilter()"
+            [attr.aria-label]="'incidents.showAllChampionships' | transloco">
+            {{ 'incidents.showAllChampionships' | transloco }} &times;
+          </button>
+        </div>
+      }
 
       @if (loadingWindows()) {
         <app-spinner />
@@ -71,6 +80,15 @@
       @if (!windowDetail() && !loadingDetail()) {
         <div class="window-picker-centered">
           <h2 class="sidebar-heading">{{ 'incidents.raceWindows' | transloco }}</h2>
+          @if (championshipFilterLabel(); as label) {
+            <div class="championship-filter">
+              <span class="championship-filter__name">{{ label }}</span>
+              <button type="button" class="championship-filter__clear" (click)="clearChampionshipFilter()"
+                [attr.aria-label]="'incidents.showAllChampionships' | transloco">
+                {{ 'incidents.showAllChampionships' | transloco }} &times;
+              </button>
+            </div>
+          }
           @if (loadingWindows()) {
             <app-spinner />
           } @else if (windows().length === 0) {

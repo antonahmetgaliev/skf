@@ -68,37 +68,8 @@
   color: var(--gold);
 }
 
-.upload-btn {
-  cursor: pointer;
-
-  input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  span {
-    display: inline-block;
-    padding: 0.3rem 0.7rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--radius-xs);
-    font-size: var(--text-xs);
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-wide);
-  }
-
-  &:hover span {
-    border-color: var(--gold);
-    color: var(--gold);
-  }
-}
-
-.upload-error {
-  margin: 0.75rem 0 0;
-  color: var(--danger, #ff6b6b);
-  font-size: var(--text-sm);
+.uploads-link {
+  margin-top: 0.75rem;
 }
 
 // ── Unmatched names ───────────────────────────────────────────────────────

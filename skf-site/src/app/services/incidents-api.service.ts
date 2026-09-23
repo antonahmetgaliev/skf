@@ -54,6 +54,13 @@ export interface IncidentWindowListItem {
   isOpen: boolean;
 }
 
+export interface ChampionshipIncidentWindow {
+  raceId: number;
+  windowId: string;
+  isOpen: boolean;
+  incidentsCount: number;
+}
+
 export interface IncidentWindowOut extends IncidentWindowListItem {
   incidents: Incident[];
 }
@@ -149,8 +156,16 @@ export class IncidentsApiService {
   private readonly http = inject(HttpClient);
   private readonly base = '/api/incidents';
 
-  getWindows(): Observable<IncidentWindowListItem[]> {
-    return this.http.get<IncidentWindowListItem[]>(`${this.base}/windows`);
+  getWindows(championshipId?: number | null): Observable<IncidentWindowListItem[]> {
+    const params: Record<string, number> = championshipId ? { championshipId } : {};
+    return this.http.get<IncidentWindowListItem[]>(`${this.base}/windows`, { params });
+  }
+
+  /** A championship's windows, one per round, keyed by SimGrid race id. */
+  getChampionshipWindows(championshipId: number): Observable<ChampionshipIncidentWindow[]> {
+    return this.http.get<ChampionshipIncidentWindow[]>(
+      `/api/championships/${championshipId}/incident-windows`
+    );
   }
 
   createWindow(payload: IncidentWindowCreate): Observable<IncidentWindowOut> {

@@ -39,6 +39,14 @@ class Settings(BaseSettings):
     # Incident ingestion API token (shared with external tool)
     incident_api_token: str = ""
 
+    # S3-compatible bucket for uploaded race-result files (Railway Bucket).
+    # Leave empty to skip keeping the originals.
+    s3_endpoint_url: str = ""
+    s3_bucket: str = ""
+    s3_access_key_id: str = ""
+    s3_secret_access_key: str = ""
+    s3_region: str = ""
+
     # Session
     session_secret: str = "change-me-in-production"
     session_max_age_hours: int = 24 * 7  # 1 week

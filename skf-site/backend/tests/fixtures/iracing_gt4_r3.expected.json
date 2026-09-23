@@ -1,0 +1,344 @@
+{
+ "autoGrouped": false,
+ "event": {
+  "trackName": "Interlagos",
+  "configName": "Grand Prix",
+  "subsessionId": 86669928,
+  "sessionId": 313252641,
+  "startTime": "2026-06-23T18:09:52.804Z"
+ },
+ "incidents": [
+  {
+   "id": 18,
+   "sessionNum": 2,
+   "sessionName": "RACE",
+   "time": "00:00:19",
+   "drivers": [
+    "Serhii Kachan",
+    "Vitaliy Chizhuk",
+    "Andrii Rublov",
+    "Artem Entel"
+   ]
+  },
+  {
+   "id": 35,
+   "sessionNum": 2,
+   "sessionName": "RACE",
+   "time": "00:01:59",
+   "drivers": [
+    "Arsen Petrosian",
+    "Nikita Zakharov"
+   ]
+  },
+  {
+   "id": 150,
+   "sessionNum": 2,
+   "sessionName": "RACE",
+   "time": "00:26:18",
+   "drivers": [
+    "Alex Alyokhin",
+    "Oleksii Lissov"
+   ]
+  },
+  {
+   "id": 161,
+   "sessionNum": 2,
+   "sessionName": "RACE",
+   "time": "00:31:02",
+   "drivers": [
+    "Maksym Tarasenko",
+    "Vincenzo Stagnitto"
+   ]
+  }
+ ],
+ "sessions": [
+  {
+   "num": 0,
+   "name": "PRACTICE",
+   "type": "Practice",
+   "standingsSource": "iracing",
+   "standings": [
+    {
+     "pos": 1,
+     "classPos": 1,
+     "name": "Maksym Tarasenko",
+     "className": "GT4 Class",
+     "laps": 26,
+     "status": "Running"
+    },
+    {
+     "pos": 2,
+     "classPos": 2,
+     "name": "Vincenzo Stagnitto",
+     "className": "GT4 Class",
+     "laps": 21,
+     "status": "Running"
+    },
+    {
+     "pos": 3,
+     "classPos": 3,
+     "name": "Arsen Petrosian",
+     "className": "GT4 Class",
+     "laps": 3,
+     "status": "Running"
+    },
+    {
+     "pos": 4,
+     "classPos": 4,
+     "name": "Oleksii Lissov",
+     "className": "GT4 Class",
+     "laps": 18,
+     "status": "Running"
+    },
+    {
+     "pos": 5,
+     "classPos": 5,
+     "name": "Artem Entel",
+     "className": "GT4 Class",
+     "laps": 33,
+     "status": "Running"
+    },
+    {
+     "pos": 6,
+     "classPos": 6,
+     "name": "Yevhen Petrenko",
+     "className": "GT4 Class",
+     "laps": 8,
+     "status": "Running"
+    },
+    {
+     "pos": 7,
+     "classPos": 7,
+     "name": "Serhii Kachan",
+     "className": "GT4 Class",
+     "laps": 22,
+     "status": "Running"
+    },
+    {
+     "pos": 8,
+     "classPos": 8,
+     "name": "Alex Alyokhin",
+     "className": "GT4 Class",
+     "laps": 14,
+     "status": "Running"
+    },
+    {
+     "pos": 9,
+     "classPos": 9,
+     "name": "Andrii Rublov",
+     "className": "GT4 Class",
+     "laps": 18,
+     "status": "Running"
+    },
+    {
+     "pos": 10,
+     "classPos": 10,
+     "name": "Vitaliy Chizhuk",
+     "className": "GT4 Class",
+     "laps": 26,
+     "status": "Running"
+    },
+    {
+     "pos": 11,
+     "classPos": 11,
+     "name": "Nikita Zakharov",
+     "className": "GT4 Class",
+     "laps": 13,
+     "status": "Running"
+    }
+   ]
+  },
+  {
+   "num": 1,
+   "name": "QUALIFY",
+   "type": "Lone Qualify",
+   "standingsSource": "iracing",
+   "standings": [
+    {
+     "pos": 1,
+     "classPos": 1,
+     "name": "Maksym Tarasenko",
+     "className": "GT4 Class",
+     "laps": 2,
+     "status": "Running"
+    },
+    {
+     "pos": 2,
+     "classPos": 2,
+     "name": "Vincenzo Stagnitto",
+     "className": "GT4 Class",
+     "laps": 2,
+     "status": "Running"
+    },
+    {
+     "pos": 3,
+     "classPos": 3,
+     "name": "Alex Alyokhin",
+     "className": "GT4 Class",
+     "laps": 2,
+     "status": "Running"
+    },
+    {
+     "pos": 4,
+     "classPos": 4,
+     "name": "Yevhen Petrenko",
+     "className": "GT4 Class",
+     "laps": 2,
+     "status": "Running"
+    },
+    {
+     "pos": 5,
+     "classPos": 5,
+     "name": "Oleksii Lissov",
+     "className": "GT4 Class",
+     "laps": 2,
+     "status": "Running"
+    },
+    {
+     "pos": 6,
+     "classPos": 6,
+     "name": "Serhii Kachan",
+     "className": "GT4 Class",
+     "laps": 2,
+     "status": "Running"
+    },
+    {
+     "pos": 7,
+     "classPos": 7,
+     "name": "Artem Entel",
+     "className": "GT4 Class",
+     "laps": 2,
+     "status": "Running"
+    },
+    {
+     "pos": 8,
+     "classPos": 8,
+     "name": "Andrii Rublov",
+     "className": "GT4 Class",
+     "laps": 2,
+     "status": "Running"
+    },
+    {
+     "pos": 9,
+     "classPos": 9,
+     "name": "Nikita Zakharov",
+     "className": "GT4 Class",
+     "laps": 2,
+     "status": "Running"
+    },
+    {
+     "pos": 10,
+     "classPos": 10,
+     "name": "Arsen Petrosian",
+     "className": "GT4 Class",
+     "laps": 0,
+     "status": "Running"
+    },
+    {
+     "pos": 11,
+     "classPos": 11,
+     "name": "Vitaliy Chizhuk",
+     "className": "GT4 Class",
+     "laps": 0,
+     "status": "Running"
+    }
+   ]
+  },
+  {
+   "num": 2,
+   "name": "RACE",
+   "type": "Race",
+   "standingsSource": "iracing",
+   "standings": [
+    {
+     "pos": 1,
+     "classPos": 1,
+     "name": "Maksym Tarasenko",
+     "className": "GT4 Class",
+     "laps": 27,
+     "status": "Running"
+    },
+    {
+     "pos": 2,
+     "classPos": 2,
+     "name": "Arsen Petrosian",
+     "className": "GT4 Class",
+     "laps": 27,
+     "status": "Running"
+    },
+    {
+     "pos": 3,
+     "classPos": 3,
+     "name": "Vincenzo Stagnitto",
+     "className": "GT4 Class",
+     "laps": 27,
+     "status": "Running"
+    },
+    {
+     "pos": 4,
+     "classPos": 4,
+     "name": "Yevhen Petrenko",
+     "className": "GT4 Class",
+     "laps": 27,
+     "status": "Running"
+    },
+    {
+     "pos": 5,
+     "classPos": 5,
+     "name": "Oleksii Lissov",
+     "className": "GT4 Class",
+     "laps": 27,
+     "status": "Running"
+    },
+    {
+     "pos": 6,
+     "classPos": 6,
+     "name": "Alex Alyokhin",
+     "className": "GT4 Class",
+     "laps": 27,
+     "status": "Running"
+    },
+    {
+     "pos": 7,
+     "classPos": 7,
+     "name": "Artem Entel",
+     "className": "GT4 Class",
+     "laps": 27,
+     "status": "Running"
+    },
+    {
+     "pos": 8,
+     "classPos": 8,
+     "name": "Andrii Rublov",
+     "className": "GT4 Class",
+     "laps": 27,
+     "status": "Running"
+    },
+    {
+     "pos": 9,
+     "classPos": 9,
+     "name": "Serhii Kachan",
+     "className": "GT4 Class",
+     "laps": 27,
+     "status": "Running"
+    },
+    {
+     "pos": 10,
+     "classPos": 10,
+     "name": "Vitaliy Chizhuk",
+     "className": "GT4 Class",
+     "laps": 27,
+     "status": "Running"
+    },
+    {
+     "pos": 11,
+     "classPos": 11,
+     "name": "Nikita Zakharov",
+     "className": "GT4 Class",
+     "laps": 26,
+     "status": "Running"
+    }
+   ]
+  }
+ ]
+}

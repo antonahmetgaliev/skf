@@ -14,15 +14,16 @@ import { AuthService, AuthUser, ROLES, Role } from '../../services/auth.service'
 import { CalendarApiService, Community } from '../../services/calendar-api.service';
 import { AdminCalendarTabComponent } from './admin-calendar-tab/admin-calendar-tab.component';
 import { AdminGiveawayTabComponent } from './admin-giveaway-tab/admin-giveaway-tab.component';
+import { AdminRaceResultsTabComponent } from './admin-race-results-tab/admin-race-results-tab.component';
 import { AdminRegulationsTabComponent } from './admin-regulations-tab/admin-regulations-tab.component';
 import { AdminTranslationsTabComponent } from './admin-translations-tab/admin-translations-tab.component';
 import { UserItemComponent } from './user-item/user-item.component';
 
-type AdminTab = 'users' | 'site' | 'calendar' | 'translations' | 'regulations' | 'giveaway';
+type AdminTab = 'users' | 'site' | 'calendar' | 'translations' | 'regulations' | 'raceResults' | 'giveaway';
 
 @Component({
   selector: 'app-admin',
-  imports: [FormsModule, TranslocoPipe, InputDirective, AdminCalendarTabComponent, AdminGiveawayTabComponent, AdminRegulationsTabComponent, AdminTranslationsTabComponent, BtnComponent, CardComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent, UserItemComponent],
+  imports: [FormsModule, TranslocoPipe, InputDirective, AdminCalendarTabComponent, AdminGiveawayTabComponent, AdminRaceResultsTabComponent, AdminRegulationsTabComponent, AdminTranslationsTabComponent, BtnComponent, CardComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent, UserItemComponent],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',
 })

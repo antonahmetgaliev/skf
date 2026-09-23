@@ -51,13 +51,10 @@ class ImportOut(CamelModel):
     track_event: str | None = None
     session_started_at: datetime | None = None
     source_filename: str | None = None
+    sim: str = "lmu"
     created_at: datetime
     entry_count: int
     unmatched_count: int
-
-
-class ImportDetailOut(ImportOut):
-    entries: list[ImportEntryOut]
 
 
 class UnmatchedNameOut(CamelModel):
