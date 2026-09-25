@@ -1,11 +1,12 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import {
   CalendarApiService,
   CalendarEvent,
 } from '../../services/calendar-api.service';
+import { AuthService } from '../../services/auth.service';
 import { LocaleService } from '../../services/locale.service';
 import { MediaApiService, YouTubeVideo } from '../../services/media-api.service';
 import { toLocalDateStr, toLocalTime } from '../../utils/date';
@@ -67,6 +68,8 @@ export class WeekCalendarComponent {
   private readonly calendarApi = inject(CalendarApiService);
   private readonly mediaApi = inject(MediaApiService);
   private readonly locale = inject(LocaleService);
+  private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
 
   readonly loading = signal(true);
   readonly todayRaces = signal<WeekRace[]>([]);
@@ -74,6 +77,8 @@ export class WeekCalendarComponent {
   readonly championships = signal<ChampionshipSummary[]>([]);
   readonly todayBroadcasts = signal<YouTubeVideo[]>([]);
   readonly nextRace = signal<NextRaceInfo | null>(null);
+  readonly activeChampionshipCount = signal(0);
+  readonly communityCount = signal(0);
 
   readonly hasTodayContent = computed(() =>
     this.todayRaces().length > 0 || this.todayBroadcasts().length > 0,
@@ -128,6 +133,8 @@ export class WeekCalendarComponent {
       // Build championship summaries
       const champs = this.buildChampionshipSummaries(events, todayStr);
       this.championships.set(champs);
+
+      this.buildCalendarOverview(events);
 
       // Find the next upcoming race across all championships (for empty-week state)
       if (restOfWeek.length === 0 && today.length === 0) {
@@ -250,6 +257,22 @@ export class WeekCalendarComponent {
     });
 
     return summaries;
+  }
+
+  /** How many championships are still to run, and how many communities run them. */
+  private buildCalendarOverview(events: CalendarEvent[]): void {
+    const active = events.filter((ev) => ev.eventType !== 'past');
+    this.activeChampionshipCount.set(active.length);
+    this.communityCount.set(new Set(active.map((ev) => ev.communityName).filter(Boolean)).size);
+  }
+
+  /** Community requests need a Discord login, same as the button on /calendar. */
+  requestCommunity(): void {
+    if (!this.auth.user()) {
+      this.auth.login();
+      return;
+    }
+    this.router.navigate(['/calendar'], { queryParams: { request: 'community' } });
   }
 
   formatChampDate(iso: string): string {

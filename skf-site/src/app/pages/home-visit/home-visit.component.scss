@@ -35,14 +35,6 @@
   margin-inline: auto;
 }
 
-.hero-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-top: 2rem;
-}
-
 .cta-actions {
   display: flex;
   gap: 0.75rem;
@@ -125,7 +117,6 @@
    ═══════════════════════════════════════════ */
 .open-reg {
   padding: 1rem 0 3rem;
-  scroll-margin-top: 7rem;
 }
 
 .open-reg-grid {

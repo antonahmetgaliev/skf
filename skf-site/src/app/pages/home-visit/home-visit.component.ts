@@ -57,10 +57,6 @@ export class HomeVisitComponent {
 
   readonly hasOpenChampionships = computed(() => this.openChampionships().length > 0);
 
-  scrollToOpenRegistration(): void {
-    document.getElementById('open-registration')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
   formatDate(iso: string): string {
     return new Date(iso).toLocaleDateString(this.locale.locale, { day: 'numeric', month: 'long' });
   }

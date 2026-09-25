@@ -5,20 +5,6 @@
     <p class="eyebrow">{{ 'home.eyebrow' | transloco }}</p>
     <h1>SKF <span class="accent">Racing Hub</span></h1>
     <p class="subtitle">{{ 'home.subtitle' | transloco }}</p>
-    <div class="hero-actions">
-      <a appBtn variant="accent" [href]="discordUrl()" target="_blank" rel="noopener noreferrer">
-        {{ 'home.heroJoinDiscord' | transloco }}
-      </a>
-      @if (hasOpenChampionships()) {
-        <app-btn variant="outline" (click)="scrollToOpenRegistration()">
-          {{ 'home.heroFindChampionship' | transloco }}
-        </app-btn>
-      } @else {
-        <app-btn variant="outline" routerLink="/championships">
-          {{ 'home.heroFindChampionship' | transloco }}
-        </app-btn>
-      }
-    </div>
   </div>
 
   <!-- ───── HOW TO ENTER ───── -->
@@ -33,7 +19,7 @@
           <p>{{ 'home.steps.discordDesc' | transloco }}</p>
           <div class="step-actions">
             <a class="step-link" [href]="discordUrl()" target="_blank" rel="noopener noreferrer">
-              {{ 'home.steps.discordAction' | transloco }} ↗
+              {{ 'home.steps.discordLink' | transloco }} ↗
             </a>
           </div>
         </app-card>
@@ -66,7 +52,7 @@
 
   <!-- ───── OPEN REGISTRATION ───── -->
   @if (hasOpenChampionships()) {
-    <section class="open-reg" id="open-registration">
+    <section class="open-reg">
       <p class="eyebrow center">{{ 'home.openRegistration.eyebrow' | transloco }}</p>
       <h2 class="section-title">{{ 'home.openRegistration.title' | transloco }}</h2>
       <div class="open-reg-grid">
@@ -135,12 +121,12 @@
           <span class="pro-link">{{ 'home.browseChampionships' | transloco }}</span>
         </app-card>
       </a>
-      <a class="pro-card" routerLink="/calendar">
+      <a class="pro-card" [href]="discordUrl()" target="_blank" rel="noopener noreferrer">
         <app-card [animated]="true">
-          <div class="pro-icon">📅</div>
-          <h3>{{ 'home.fullSeasonCommitment' | transloco }}</h3>
-          <p>{{ 'home.fullSeasonCommitmentDesc' | transloco }}</p>
-          <span class="pro-link">{{ 'home.viewCalendar' | transloco }}</span>
+          <div class="pro-icon">🤝</div>
+          <h3>{{ 'home.moreThanOrganizer' | transloco }}</h3>
+          <p>{{ 'home.moreThanOrganizerDesc' | transloco }}</p>
+          <span class="pro-link">{{ 'home.joinCommunity' | transloco }} ↗</span>
         </app-card>
       </a>
       <a class="pro-card" routerLink="/bwp-license">

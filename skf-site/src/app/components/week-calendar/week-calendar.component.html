@@ -255,8 +255,20 @@
 
     </div>
 
-    <div class="calendar-link">
-      <app-btn variant="outline" routerLink="/calendar">{{ 'calendar.viewFullCalendar' | transloco }}</app-btn>
-    </div>
+    <app-card class="calendar-promo">
+      <div class="calendar-promo-text">
+        <h3>{{ 'calendar.promo.title' | transloco }}</h3>
+        <p>{{ 'calendar.promo.desc' | transloco }}</p>
+        @if (activeChampionshipCount() > 0 && communityCount() > 0) {
+          <p class="calendar-promo-stats">
+            {{ 'calendar.promo.stats' | transloco: { championships: activeChampionshipCount(), communities: communityCount() } }}
+          </p>
+        }
+      </div>
+      <div class="calendar-promo-actions">
+        <app-btn variant="accent" routerLink="/calendar">{{ 'calendar.promo.open' | transloco }}</app-btn>
+        <button class="calendar-promo-add" type="button" (click)="requestCommunity()">{{ 'calendar.promo.addCommunity' | transloco }}</button>
+      </div>
+    </app-card>
   }
 </section>

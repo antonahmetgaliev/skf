@@ -24,7 +24,7 @@ import { ToggleComponent } from '../../components/toggle/toggle.component';
 import { InputDirective } from '../../directives/input.directive';
 import { TextareaDirective } from '../../directives/textarea.directive';
 import { TooltipDirective } from '../../directives/tooltip.directive';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
   CalendarApiService,
@@ -82,6 +82,7 @@ const VIEW_TABS: { key: string; label: string }[] = [
 export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly calendarApi = inject(CalendarApiService);
+  private readonly route = inject(ActivatedRoute);
   private readonly locale = inject(LocaleService);
   private readonly confirmSvc = inject(ConfirmDialogService);
   private readonly transloco = inject(TranslocoService);
@@ -258,6 +259,10 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.loadCommunities();
     this.loadYearEvents();
+    // Deep link from the home page "add your community" prompt
+    if (this.route.snapshot.queryParamMap.get('request') === 'community' && this.auth.user()) {
+      this.openRequestModal();
+    }
   }
 
   ngAfterViewInit(): void {
