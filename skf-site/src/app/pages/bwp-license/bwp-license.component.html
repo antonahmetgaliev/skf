@@ -1,6 +1,61 @@
 <app-page class="bwp-page">
   <app-page-intro [title]="'bwp.title' | transloco" [subtitle]="'bwp.subtitle' | transloco" />
 
+  <app-card class="guide" [animated]="true">
+    <button class="guide-toggle" type="button" (click)="toggleGuide()" [attr.aria-expanded]="!guideCollapsed()">
+      <h2>{{ 'bwp.guide.title' | transloco }}</h2>
+      <span class="guide-toggle-label">
+        {{ (guideCollapsed() ? 'bwp.expand' : 'bwp.collapse') | transloco }}
+      </span>
+    </button>
+
+    @if (!guideCollapsed()) {
+      <div class="guide-body">
+        <ol class="guide-steps">
+          <li>
+            <h3>{{ 'bwp.guide.whatTitle' | transloco }}</h3>
+            <p>{{ 'bwp.guide.whatDesc' | transloco }}</p>
+          </li>
+          <li>
+            <h3>{{ 'bwp.guide.howTitle' | transloco }}</h3>
+            <p>{{ 'bwp.guide.howDesc' | transloco }}</p>
+          </li>
+          <li>
+            <h3>{{ 'bwp.guide.expiryTitle' | transloco }}</h3>
+            <p>{{ 'bwp.guide.expiryDesc' | transloco }}</p>
+          </li>
+          <li>
+            <h3>{{ 'bwp.guide.protestTitle' | transloco }}</h3>
+            <p>{{ 'bwp.guide.protestDesc' | transloco }}</p>
+            <div class="guide-links">
+              <a routerLink="/incidents">{{ 'bwp.guide.incidentsLink' | transloco }} →</a>
+              <a routerLink="/regulations">{{ 'bwp.guide.regulationsLink' | transloco }} →</a>
+            </div>
+          </li>
+        </ol>
+
+        @if (sortedPenaltyRules().length > 0) {
+          <div class="guide-thresholds">
+            <h3>{{ 'bwp.guide.thresholdsTitle' | transloco }}</h3>
+            <div class="rules-summary">
+              <div class="rules-summary-header" aria-hidden="true">
+                <span>{{ 'bwp.threshold' | transloco }}</span>
+                <span>{{ 'bwp.penalty' | transloco }}</span>
+              </div>
+              @for (rule of sortedPenaltyRules(); track rule.id) {
+                <div class="rules-summary-row">
+                  <span class="rule-threshold">{{ rule.threshold }} BWP</span>
+                  <span class="rule-label">{{ rule.label }}</span>
+                </div>
+              }
+            </div>
+            <p class="hint">{{ 'bwp.guide.checkYourself' | transloco }}</p>
+          </div>
+        }
+      </div>
+    }
+  </app-card>
+
   <section class="content-grid">
     @if (auth.isAdmin()) {
     <div class="stack">

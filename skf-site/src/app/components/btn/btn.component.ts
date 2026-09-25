@@ -2,7 +2,7 @@ import { Component, ElementRef, HostBinding, HostListener, inject, input } from 
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'app-btn',
+  selector: 'app-btn, a[appBtn]',
   standalone: true,
   template: '<ng-content />',
   styleUrl: './btn.component.scss',
@@ -10,6 +10,8 @@ import { Router } from '@angular/router';
 export class BtnComponent {
   private readonly router = inject(Router);
   private readonly el = inject(ElementRef);
+  // Anchors (a[appBtn]) keep their native link semantics and tab order
+  private readonly isAnchor = (this.el.nativeElement as HTMLElement).tagName === 'A';
 
   readonly variant = input<'accent' | 'primary' | 'danger' | 'ghost' | 'outline'>('accent');
   readonly size = input<'xs' | 'sm' | 'md'>('md');
@@ -29,16 +31,20 @@ export class BtnComponent {
   }
 
   @HostBinding('attr.tabindex')
-  get tabIndex(): number {
-    return this.isDisabled ? -1 : 0;
+  get tabIndex(): number | null {
+    if (this.isDisabled) return -1;
+    return this.isAnchor ? null : 0;
   }
 
   @HostBinding('attr.role')
-  readonly role = 'button';
+  get role(): string | null {
+    return this.isAnchor ? null : 'button';
+  }
 
   @HostListener('click')
   handleClick(): void {
-    if (this.isDisabled) return;
+    // Anchors navigate natively (href or the RouterLink directive)
+    if (this.isDisabled || this.isAnchor) return;
     const link = this.routerLink();
     if (link) {
       this.router.navigateByUrl(link);
@@ -56,6 +62,7 @@ export class BtnComponent {
   @HostListener('keydown.enter')
   @HostListener('keydown.space')
   handleKey(): void {
+    if (this.isAnchor) return;
     this.handleClick();
   }
 }

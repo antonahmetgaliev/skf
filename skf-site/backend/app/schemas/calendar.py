@@ -177,4 +177,8 @@ class CalendarEvent(CamelModel):
     community_color: str | None = None
     community_discord_url: str | None = None
     community_is_skf: bool = False
+    accepting_registrations: bool = False
+    capacity: int | None = None
+    spots_taken: int | None = None
+    registration_url: str | None = None
     races: list[CalendarRace] = []

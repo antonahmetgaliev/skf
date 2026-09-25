@@ -35,7 +35,7 @@
                         @if (isExternalLink(race)) {
                           <a class="race-community-link" [href]="link" target="_blank" rel="noopener">Discord ↗</a>
                         } @else {
-                          <a class="race-community-link" [routerLink]="link" [queryParams]="raceQueryParams(race)!">Championship →</a>
+                          <a class="race-community-link" [routerLink]="link" [queryParams]="raceQueryParams(race)!">{{ 'calendar.openChampionship' | transloco }}</a>
                         }
                       }
                     </div>
@@ -153,48 +153,66 @@
 
             <div class="champs-list">
               @for (champ of championships(); track champ.id) {
-                <a
-                  class="champ-row"
-                  routerLink="/championships"
-                  [queryParams]="champQueryParams(champ)"
-                >
-                  @if (champ.image) {
-                    <img
-                      class="champ-image"
-                      [src]="champ.image"
-                      [alt]="champ.name"
-                      loading="lazy"
-                    />
-                  }
-                  <div class="champ-info">
-                    <span class="champ-name">{{ champ.name }}</span>
-                    <span class="champ-meta">
-                      {{ champ.game }}
-                      @if (champ.carClass) {
-                        · {{ champ.carClass }}
-                      }
-                    </span>
-                    @if (champ.eventType === 'ongoing' && champ.totalRaces > 0) {
-                      <div class="champ-progress">
-                        <div class="progress-bar">
-                          <div
-                            class="progress-fill"
-                            [style.width.%]="(champ.completedRaces / champ.totalRaces) * 100"
-                          ></div>
-                        </div>
-                        <span class="progress-label">Round {{ champ.completedRaces + 1 }}/{{ champ.totalRaces }}</span>
-                      </div>
+                <div class="champ-item" [class.champ-item--open]="champ.acceptingRegistrations">
+                  <a
+                    class="champ-row"
+                    routerLink="/championships"
+                    [queryParams]="champQueryParams(champ)"
+                  >
+                    @if (champ.image) {
+                      <img
+                        class="champ-image"
+                        [src]="champ.image"
+                        [alt]="champ.name"
+                        loading="lazy"
+                      />
                     }
-                  </div>
-                  <div class="champ-status">
-                    <app-badge [variant]="champ.eventType">{{ champ.eventType }}</app-badge>
-                    @if (champ.nextRaceDate) {
-                      <span class="champ-next">
-                        {{ champ.eventType === 'ongoing' ? 'Next' : 'Start' }}: {{ formatChampDate(champ.nextRaceDate) }}
+                    <div class="champ-info">
+                      <span class="champ-name">{{ champ.name }}</span>
+                      <span class="champ-meta">
+                        {{ champ.game }}
+                        @if (champ.carClass) {
+                          · {{ champ.carClass }}
+                        }
                       </span>
-                    }
-                  </div>
-                </a>
+                      @if (champ.eventType === 'ongoing' && champ.totalRaces > 0) {
+                        <div class="champ-progress">
+                          <div class="progress-bar">
+                            <div
+                              class="progress-fill"
+                              [style.width.%]="(champ.completedRaces / champ.totalRaces) * 100"
+                            ></div>
+                          </div>
+                          <span class="progress-label">{{ 'calendar.round' | transloco: { current: champ.completedRaces + 1, total: champ.totalRaces } }}</span>
+                        </div>
+                      }
+                    </div>
+                    <div class="champ-status">
+                      <app-badge [variant]="champ.eventType">{{ 'calendar.eventType.' + champ.eventType | transloco }}</app-badge>
+                      @if (champ.nextRaceDate) {
+                        <span class="champ-next">
+                          {{ (champ.eventType === 'ongoing' ? 'calendar.nextRace' : 'calendar.startsOn') | transloco }}: {{ formatChampDate(champ.nextRaceDate) }}
+                        </span>
+                      }
+                    </div>
+                  </a>
+                  @if (champ.acceptingRegistrations) {
+                    <div class="champ-register">
+                      <span class="champ-register-status">
+                        <span class="champ-register-dot"></span>
+                        {{ 'calendar.registrationOpen' | transloco }}
+                        @if (champ.capacity) {
+                          · {{ champ.spotsTaken ?? 0 }}/{{ champ.capacity }}
+                        }
+                      </span>
+                      @if (champ.registrationUrl) {
+                        <a class="champ-register-link" [href]="champ.registrationUrl" target="_blank" rel="noopener noreferrer">
+                          {{ 'calendar.register' | transloco }}
+                        </a>
+                      }
+                    </div>
+                  }
+                </div>
               }
             </div>
           </div>

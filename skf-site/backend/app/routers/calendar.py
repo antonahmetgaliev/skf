@@ -461,6 +461,13 @@ async def get_calendar_events(
             community_color=skf_color,
             community_discord_url=skf_discord_url,
             community_is_skf=True,
+            accepting_registrations=(
+                champ.accepting_registrations
+                or bool(detail.get("accepting_registrations"))
+            ),
+            capacity=detail.get("capacity"),
+            spots_taken=detail.get("spots_taken"),
+            registration_url=detail.get("url") or None,
             races=races,
         ))
 

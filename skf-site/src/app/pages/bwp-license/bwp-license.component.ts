@@ -22,6 +22,8 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 
 type SortMode = 'bwp-desc' | 'bwp-asc' | 'name-asc' | 'name-desc';
 
+const GUIDE_COLLAPSED_KEY = 'bwp.guideCollapsed';
+
 @Component({
   selector: 'app-bwp-license',
   imports: [FormsModule, RouterLink, TranslocoPipe, InputDirective, SelectDirective, CardComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, BtnComponent, ModalComponent],
@@ -98,6 +100,7 @@ export class BwpLicenseComponent {
   hiddenExpiredDrivers = signal<Set<string>>(new Set());
   rulesModalOpen = signal(false);
   loading = signal(true);
+  guideCollapsed = signal(this.readGuideCollapsed());
 
   constructor() {
     this.loadData();
@@ -109,6 +112,24 @@ export class BwpLicenseComponent {
         document.body.style.overflow = '';
       });
     });
+  }
+
+  toggleGuide(): void {
+    const collapsed = !this.guideCollapsed();
+    this.guideCollapsed.set(collapsed);
+    try {
+      localStorage.setItem(GUIDE_COLLAPSED_KEY, collapsed ? '1' : '0');
+    } catch {
+      // Storage unavailable — keep the in-memory state only
+    }
+  }
+
+  private readGuideCollapsed(): boolean {
+    try {
+      return localStorage.getItem(GUIDE_COLLAPSED_KEY) === '1';
+    } catch {
+      return false;
+    }
   }
 
   // ── Data loading ─────────────────────────────────────────────────

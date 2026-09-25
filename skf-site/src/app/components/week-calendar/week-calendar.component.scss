@@ -350,6 +350,57 @@
   color: var(--muted);
 }
 
+/* ── Open registration strip ── */
+.champ-item--open {
+  .champ-row {
+    border-color: rgba(255, 214, 0, 0.35);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}
+
+.champ-register {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid rgba(255, 214, 0, 0.35);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: rgba(255, 214, 0, 0.06);
+  font-size: var(--text-xs);
+}
+
+.champ-register-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.champ-register-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 3px rgba(255, 214, 0, 0.2);
+}
+
+.champ-register-link {
+  font-weight: 700;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--gold-deep);
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--gold);
+  }
+}
+
 /* ── Progress bar ── */
 .champ-progress {
   display: flex;

@@ -7,7 +7,7 @@
    ═══════════════════════════════════════════ */
 .hero {
   text-align: center;
-  padding: 3rem 1rem 4rem;
+  padding: 3rem 1rem 3rem;
   max-width: 700px;
   margin: 0 auto;
 }
@@ -35,11 +35,181 @@
   margin-inline: auto;
 }
 
+.hero-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
 .cta-actions {
   display: flex;
   gap: 0.75rem;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+/* ═══════════════════════════════════════════
+   HOW TO ENTER
+   ═══════════════════════════════════════════ */
+.steps {
+  padding: 1rem 0 3rem;
+}
+
+.steps-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+  max-width: 1000px;
+}
+
+.step {
+  display: flex;
+}
+
+.step-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 1.5rem 1.25rem;
+
+  h3 {
+    font-size: var(--text-lg);
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 0.5rem;
+  }
+
+  p {
+    font-size: var(--text-base);
+    line-height: 1.6;
+    color: var(--muted);
+    margin: 0 0 1rem;
+    flex: 1;
+  }
+}
+
+.step-num {
+  font-family: var(--font-display);
+  font-size: var(--heading-xl);
+  line-height: 1;
+  color: var(--gold-deep);
+  margin-bottom: 0.75rem;
+}
+
+.step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.step-link {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--gold-deep);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--gold);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   OPEN REGISTRATION
+   ═══════════════════════════════════════════ */
+.open-reg {
+  padding: 1rem 0 3rem;
+  scroll-margin-top: 7rem;
+}
+
+.open-reg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
+  justify-content: center;
+  gap: 0.85rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.reg-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.reg-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+}
+
+.reg-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  flex: 1;
+}
+
+.reg-name {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0.25rem 0 0;
+}
+
+.reg-meta,
+.reg-facts {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--muted);
+}
+
+.reg-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+
+.reg-spots {
+  width: 100%;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.reg-spots-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--separator);
+  overflow: hidden;
+}
+
+.reg-spots-fill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 2px;
+}
+
+.reg-spots-label {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.reg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
 }
 
 /* ═══════════════════════════════════════════
@@ -141,30 +311,6 @@
   }
 }
 
-.btn-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  padding: 0.65rem 1.4rem;
-  font-weight: 700;
-  font-size: var(--text-base);
-  letter-spacing: var(--tracking-normal);
-  text-transform: uppercase;
-  text-decoration: none;
-  cursor: pointer;
-  font-family: inherit;
-  background: linear-gradient(135deg, var(--bg-dark), #1e1e26);
-  color: #fff;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 22px rgba(0, 0, 0, 0.4);
-  }
-}
-
 /* ═══════════════════════════════════════════
    FOOTER
    ═══════════════════════════════════════════ */
@@ -183,6 +329,12 @@
 /* ═══════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════ */
+@media (max-width: 860px) {
+  .steps-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 640px) {
   .pros-grid {
     grid-template-columns: 1fr;

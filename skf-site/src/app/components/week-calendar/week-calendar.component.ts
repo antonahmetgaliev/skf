@@ -42,6 +42,10 @@ interface ChampionshipSummary {
   completedRaces: number;
   simgridChampionshipId: number | null;
   customChampionshipId: string | null;
+  acceptingRegistrations: boolean;
+  capacity: number | null;
+  spotsTaken: number | null;
+  registrationUrl: string | null;
 }
 
 interface NextRaceInfo {
@@ -98,7 +102,7 @@ export class WeekCalendarComponent {
       const { monday, sunday } = this.getCurrentWeekBounds(now);
 
       const [events, broadcasts] = await Promise.all([
-        this.fetchEventsForYear(now, sunday),
+        firstValueFrom(this.calendarApi.getCurrentEvents()),
         firstValueFrom(this.mediaApi.getTodayBroadcasts()).catch(() => [] as YouTubeVideo[]),
       ]);
 
@@ -146,26 +150,6 @@ export class WeekCalendarComponent {
     sunday.setHours(23, 59, 59, 999);
 
     return { monday, sunday };
-  }
-
-  private async fetchEventsForYear(now: Date, sunday: Date): Promise<CalendarEvent[]> {
-    const years = new Set<number>([now.getFullYear()]);
-    if (sunday.getFullYear() !== now.getFullYear()) years.add(sunday.getFullYear());
-    if (now.getMonth() >= 9) years.add(now.getFullYear() + 1);
-
-    const fetches = [...years].map((y) => firstValueFrom(this.calendarApi.getYearEvents(y)));
-    const results = await Promise.all(fetches);
-    const seen = new Set<string>();
-    const merged: CalendarEvent[] = [];
-    for (const list of results) {
-      for (const ev of list) {
-        if (!seen.has(ev.id)) {
-          seen.add(ev.id);
-          merged.push(ev);
-        }
-      }
-    }
-    return merged;
   }
 
   private extractWeekRaces(events: CalendarEvent[], monday: Date, sunday: Date): WeekRace[] {
@@ -247,6 +231,10 @@ export class WeekCalendarComponent {
         completedRaces,
         simgridChampionshipId: ev.simgridChampionshipId,
         customChampionshipId: ev.customChampionshipId,
+        acceptingRegistrations: ev.acceptingRegistrations,
+        capacity: ev.capacity,
+        spotsTaken: ev.spotsTaken,
+        registrationUrl: ev.registrationUrl,
       });
     }
 

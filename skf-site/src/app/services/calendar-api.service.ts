@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { forkJoin, map, Observable, shareReplay } from 'rxjs';
 
 export type CalendarEventType = 'past' | 'ongoing' | 'upcoming' | 'future';
 
@@ -29,6 +29,10 @@ export interface CalendarEvent {
   communityColor: string | null;
   communityDiscordUrl: string | null;
   communityIsSkf: boolean;
+  acceptingRegistrations: boolean;
+  capacity: number | null;
+  spotsTaken: number | null;
+  registrationUrl: string | null;
   races: CalendarRace[];
 }
 
@@ -125,6 +129,7 @@ export interface CommunityRequest {
 export class CalendarApiService {
   private readonly http = inject(HttpClient);
   private readonly base = '/api/calendar';
+  private currentEvents$?: Observable<CalendarEvent[]>;
 
   // ── Events ──
 
@@ -138,6 +143,30 @@ export class CalendarApiService {
     return this.http.get<CalendarEvent[]>(`${this.base}/events`, {
       params: { year: String(year) },
     });
+  }
+
+  /**
+   * Events relevant "around now": this year, plus next year once the season
+   * rolls over (from October or when the current week crosses New Year).
+   * Shared between home page widgets so the request runs once.
+   */
+  getCurrentEvents(): Observable<CalendarEvent[]> {
+    if (!this.currentEvents$) {
+      const now = new Date();
+      const weekAhead = new Date(now);
+      weekAhead.setDate(now.getDate() + 7);
+      const years = new Set<number>([now.getFullYear(), weekAhead.getFullYear()]);
+      if (now.getMonth() >= 9) years.add(now.getFullYear() + 1);
+
+      this.currentEvents$ = forkJoin([...years].map((y) => this.getYearEvents(y))).pipe(
+        map((lists) => {
+          const seen = new Set<string>();
+          return lists.flat().filter((ev) => !seen.has(ev.id) && !!seen.add(ev.id));
+        }),
+        shareReplay({ bufferSize: 1, refCount: false }),
+      );
+    }
+    return this.currentEvents$;
   }
 
   // ── Communities ──

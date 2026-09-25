@@ -5,7 +5,119 @@
     <p class="eyebrow">{{ 'home.eyebrow' | transloco }}</p>
     <h1>SKF <span class="accent">Racing Hub</span></h1>
     <p class="subtitle">{{ 'home.subtitle' | transloco }}</p>
+    <div class="hero-actions">
+      <a appBtn variant="accent" [href]="discordUrl()" target="_blank" rel="noopener noreferrer">
+        {{ 'home.heroJoinDiscord' | transloco }}
+      </a>
+      @if (hasOpenChampionships()) {
+        <app-btn variant="outline" (click)="scrollToOpenRegistration()">
+          {{ 'home.heroFindChampionship' | transloco }}
+        </app-btn>
+      } @else {
+        <app-btn variant="outline" routerLink="/championships">
+          {{ 'home.heroFindChampionship' | transloco }}
+        </app-btn>
+      }
+    </div>
   </div>
+
+  <!-- ───── HOW TO ENTER ───── -->
+  <section class="steps">
+    <p class="eyebrow center">{{ 'home.steps.eyebrow' | transloco }}</p>
+    <h2 class="section-title">{{ 'home.steps.title' | transloco }}</h2>
+    <ol class="steps-grid">
+      <li class="step">
+        <app-card class="step-card">
+          <span class="step-num">01</span>
+          <h3>{{ 'home.steps.discordTitle' | transloco }}</h3>
+          <p>{{ 'home.steps.discordDesc' | transloco }}</p>
+          <div class="step-actions">
+            <a class="step-link" [href]="discordUrl()" target="_blank" rel="noopener noreferrer">
+              {{ 'home.steps.discordAction' | transloco }} ↗
+            </a>
+          </div>
+        </app-card>
+      </li>
+      <li class="step">
+        <app-card class="step-card">
+          <span class="step-num">02</span>
+          <h3>{{ 'home.steps.simgridTitle' | transloco }}</h3>
+          <p>{{ 'home.steps.simgridDesc' | transloco }}</p>
+          <div class="step-actions">
+            <a class="step-link" [href]="simgridUrl" target="_blank" rel="noopener noreferrer">
+              {{ 'home.steps.simgridAction' | transloco }} ↗
+            </a>
+          </div>
+        </app-card>
+      </li>
+      <li class="step">
+        <app-card class="step-card">
+          <span class="step-num">03</span>
+          <h3>{{ 'home.steps.rulesTitle' | transloco }}</h3>
+          <p>{{ 'home.steps.rulesDesc' | transloco }}</p>
+          <div class="step-actions">
+            <a class="step-link" routerLink="/regulations">{{ 'home.steps.rulesAction' | transloco }} →</a>
+            <a class="step-link" routerLink="/bwp-license">{{ 'home.steps.bwpAction' | transloco }} →</a>
+          </div>
+        </app-card>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ───── OPEN REGISTRATION ───── -->
+  @if (hasOpenChampionships()) {
+    <section class="open-reg" id="open-registration">
+      <p class="eyebrow center">{{ 'home.openRegistration.eyebrow' | transloco }}</p>
+      <h2 class="section-title">{{ 'home.openRegistration.title' | transloco }}</h2>
+      <div class="open-reg-grid">
+        @for (champ of openChampionships(); track champ.id) {
+          <app-card class="reg-card">
+            @if (champ.image) {
+              <img class="reg-image" [src]="champ.image" [alt]="champ.name" loading="lazy" />
+            }
+            <div class="reg-body">
+              <app-badge variant="open">{{ 'calendar.registrationOpen' | transloco }}</app-badge>
+              <h3 class="reg-name">{{ champ.name }}</h3>
+              <p class="reg-meta">
+                {{ champ.game }}
+                @if (champ.carClass) {
+                  · {{ champ.carClass }}
+                }
+              </p>
+              <p class="reg-facts">
+                @if (champ.startDate) {
+                  <span>{{ 'home.openRegistration.starts' | transloco: { date: formatDate(champ.startDate) } }}</span>
+                }
+                @if (champ.races.length > 0) {
+                  <span>{{ 'home.openRegistration.rounds' | transloco: { count: champ.races.length } }}</span>
+                }
+              </p>
+              @if (champ.capacity) {
+                <div class="reg-spots">
+                  <div class="reg-spots-bar">
+                    <div class="reg-spots-fill" [style.width.%]="spotsPercent(champ)"></div>
+                  </div>
+                  <span class="reg-spots-label">
+                    {{ 'home.openRegistration.spots' | transloco: { taken: champ.spotsTaken ?? 0, capacity: champ.capacity } }}
+                  </span>
+                </div>
+              }
+              <div class="reg-actions">
+                @if (champ.registrationUrl) {
+                  <a appBtn variant="accent" size="sm" [href]="champ.registrationUrl" target="_blank" rel="noopener noreferrer">
+                    {{ 'home.openRegistration.register' | transloco }}
+                  </a>
+                }
+                <a appBtn variant="ghost" size="sm" routerLink="/championships" [queryParams]="{ id: champ.simgridChampionshipId }">
+                  {{ 'home.openRegistration.details' | transloco }}
+                </a>
+              </div>
+            </div>
+          </app-card>
+        }
+      </div>
+    </section>
+  }
 
   <!-- ───── WEEK CALENDAR ───── -->
   <app-week-calendar />
@@ -57,14 +169,12 @@
   <div class="cta">
     <app-card class="cta-card">
       <h2>{{ 'home.joinTheGrid' | transloco }}</h2>
-      <p>{{ 'home.joinTheGridDesc' | transloco }}</p>
+      <p>{{ 'home.joinCtaDesc' | transloco }}</p>
       <div class="cta-actions">
-        <a
-          class="btn-link"
-          href="https://www.thesimgrid.com/communities/skf-racing-hub"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a appBtn variant="accent" [href]="discordUrl()" target="_blank" rel="noopener noreferrer">
+          {{ 'home.joinDiscord' | transloco }}
+        </a>
+        <a appBtn variant="primary" [href]="simgridUrl" target="_blank" rel="noopener noreferrer">
           {{ 'home.joinOnSimgrid' | transloco }}
         </a>
       </div>
