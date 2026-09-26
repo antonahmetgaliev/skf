@@ -32,7 +32,7 @@ export class App implements OnInit {
   readonly mobileMenuOpen = signal(false);
 
   ngOnInit(): void {
-    this.auth.loadUser();
+    this.auth.whenLoaded(); // a route guard may already have started it
     this.loadViewAsCommunities();
     this.loadRegulationPages(this.transloco.getActiveLang());
     this.transloco.langChanges$.subscribe((lang) => this.loadRegulationPages(lang));

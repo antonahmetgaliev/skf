@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { Observable } from 'rxjs';
+import { catchError, firstValueFrom, Observable, of } from 'rxjs';
 import { API } from '../api';
 
 /** Canonical role names. Mirrors backend `ROLE_*` constants in `models/user.py`. */
@@ -50,6 +50,9 @@ export class AuthService {
   private readonly http = inject(HttpClient);
 
   readonly user = signal<AuthUser | null>(null);
+  /** True once the initial `/me` request has resolved (with a user or as anonymous). */
+  readonly loaded = signal(false);
+  private loadPromise: Promise<void> | null = null;
   readonly isLoggedIn = computed(() => this.user() !== null);
 
   /**
@@ -117,11 +120,19 @@ export class AuthService {
    * Fetch the current session user. Call once at app startup.
    * `/me` answers 401 for anonymous visitors — that simply means "not logged in".
    */
-  loadUser(): void {
-    this.http.get<AuthUser>(`${API}/me`).subscribe({
-      next: (user) => this.user.set(user),
-      error: () => this.user.set(null),
+  loadUser(): Promise<void> {
+    this.loadPromise = firstValueFrom(
+      this.http.get<AuthUser>(`${API}/me`).pipe(catchError(() => of(null))),
+    ).then((user) => {
+      this.user.set(user);
+      this.loaded.set(true);
     });
+    return this.loadPromise;
+  }
+
+  /** Resolves once the session user is known; starts loading it if nobody has yet. */
+  whenLoaded(): Promise<void> {
+    return this.loadPromise ?? this.loadUser();
   }
 
   /** Redirect the browser to the Discord OAuth flow. */
