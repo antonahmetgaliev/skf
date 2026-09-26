@@ -9,7 +9,8 @@ from app import seed
 from app.config import settings
 from app.core.errors import register_error_handlers
 from app.middleware import StaleHeaderMiddleware
-from app.routers import admin, auth, bwp, calendar, championships, giveaway, incidents, profile, race_results, regulations, translations, users, youtube
+from app.api import v1
+from app.routers import ROUTERS as PRE_V1_ROUTERS
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -41,19 +42,10 @@ app.add_middleware(
 app.add_middleware(StaleHeaderMiddleware)
 register_error_handlers(app)
 
-app.include_router(admin.router, prefix="/api")
-app.include_router(auth.router, prefix="/api")
-app.include_router(bwp.router, prefix="/api")
-app.include_router(championships.router, prefix="/api")
-app.include_router(profile.router, prefix="/api")
-app.include_router(users.router, prefix="/api")
-app.include_router(incidents.router, prefix="/api")
-app.include_router(calendar.router, prefix="/api")
-app.include_router(youtube.router, prefix="/api")
-app.include_router(translations.router, prefix="/api")
-app.include_router(regulations.router, prefix="/api")
-app.include_router(giveaway.router, prefix="/api")
-app.include_router(race_results.router, prefix="/api")
+app.include_router(v1.router)
+app.include_router(v1.legacy_router)
+for _router in PRE_V1_ROUTERS:
+    app.include_router(_router, prefix="/api")
 
 
 @app.get("/healthz")
