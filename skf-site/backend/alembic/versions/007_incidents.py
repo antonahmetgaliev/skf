@@ -1,7 +1,7 @@
 """Add incident management tables and racing_judge role.
 
 Revision ID: 007
-Revises: 006
+Revises: 006a
 Create Date: 2026-03-19
 """
 from typing import Sequence, Union
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
 
 revision: str = "007"
-down_revision: Union[str, None] = "006"
+down_revision: Union[str, None] = "006a"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

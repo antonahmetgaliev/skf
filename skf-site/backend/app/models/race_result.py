@@ -139,6 +139,7 @@ class GiveawayNameAlias(Base):
     """
 
     __tablename__ = "giveaway_name_aliases"
+    __table_args__ = (Index("ix_giveaway_name_aliases_canonical", "canonical_normalized_name"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -146,9 +147,7 @@ class GiveawayNameAlias(Base):
     normalized_alias: Mapped[str] = mapped_column(
         String(200), nullable=False, unique=True
     )
-    canonical_normalized_name: Mapped[str] = mapped_column(
-        String(200), nullable=False, index=True
-    )
+    canonical_normalized_name: Mapped[str] = mapped_column(String(200), nullable=False)
     canonical_display_name: Mapped[str] = mapped_column(String(200), nullable=False)
     driver_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("drivers.id", ondelete="SET NULL"), nullable=True

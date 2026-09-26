@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime, timezone
 
-from sqlalchemy import Date, DateTime, ForeignKey, Index, Integer, String, Text, func
+from sqlalchemy import Date, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -17,6 +17,7 @@ def utc_today() -> date:
 
 class Driver(Base):
     __tablename__ = "drivers"
+    __table_args__ = (UniqueConstraint("user_id", name="uq_drivers_user_id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -34,11 +35,9 @@ class Driver(Base):
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
-        unique=True,
-        index=True,
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        DateTime(timezone=True), server_default=func.now(), nullable=True
     )
 
     points: Mapped[list["BwpPoint"]] = relationship(
@@ -69,7 +68,7 @@ class BwpPoint(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     driver_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("drivers.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("drivers.id", ondelete="CASCADE"), nullable=False, index=True
     )
     points: Mapped[int] = mapped_column(Integer, nullable=False)
     issued_on: Mapped[date] = mapped_column(Date, nullable=False)

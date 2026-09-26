@@ -24,7 +24,7 @@ class Community(Base):
     is_visible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_skf: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        DateTime(timezone=True), server_default=func.now(), nullable=True
     )
 
     championships: Mapped[list["CustomChampionship"]] = relationship(
@@ -41,5 +41,5 @@ class Game(Base):
     )
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        DateTime(timezone=True), server_default=func.now(), nullable=True
     )

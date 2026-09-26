@@ -41,7 +41,7 @@ class CustomChampionship(Base):
         index=True,
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        DateTime(timezone=True), server_default=func.now(), nullable=True
     )
 
     races: Mapped[list["CustomRace"]] = relationship(
@@ -78,7 +78,7 @@ class CustomRace(Base):
     track: Mapped[str | None] = mapped_column(String(200), nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        DateTime(timezone=True), server_default=func.now(), nullable=True
     )
 
     championship: Mapped["CustomChampionship"] = relationship(

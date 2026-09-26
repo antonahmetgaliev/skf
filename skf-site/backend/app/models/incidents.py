@@ -27,7 +27,7 @@ class IncidentWindow(Base):
     date: Mapped[str | None] = mapped_column(String(20), nullable=True)
     interval_hours: Mapped[int] = mapped_column(Integer, nullable=False, default=24)
     opened_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        DateTime(timezone=True), server_default=func.now(), nullable=True
     )
     closes_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     opened_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -91,7 +91,7 @@ class Incident(Base):
     # go public, so hidden-ness is a property of the round, not of a card.
     is_published: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        DateTime(timezone=True), server_default=func.now(), nullable=True
     )
 
     window: Mapped["IncidentWindow"] = relationship(back_populates="incidents")
@@ -161,7 +161,7 @@ class IncidentResolution(Base):
         nullable=True,
     )
     resolved_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        DateTime(timezone=True), server_default=func.now(), nullable=True
     )
 
     incident_driver: Mapped["IncidentDriver"] = relationship(back_populates="resolution")

@@ -1,4 +1,4 @@
-"""Schema bootstrap and reference-data seeding run at application startup."""
+"""Reference-data seeding run at application startup (schema comes from Alembic)."""
 
 from __future__ import annotations
 
@@ -11,8 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 import app.models  # noqa: F401 – ensure all models are registered
-from app.database import async_session, engine
-from app.models.bwp import Base
+from app.database import async_session
 from app.models.regulation import RegulationContent, RegulationPage
 from app.models.translation import Language, Translation
 from app.models.user import (
@@ -30,15 +29,6 @@ logger = logging.getLogger(__name__)
 SEED_DIR = Path(__file__).resolve().parent.parent / "seed"
 DEFAULT_LANGUAGES = [("en", "English"), ("ua", "Українська")]
 ALL_ROLES = (ROLE_DRIVER, ROLE_MODERATOR, ROLE_ADMIN, ROLE_SUPER_ADMIN, ROLE_JUDGE, ROLE_COMMUNITY_MANAGER)
-
-
-async def ensure_tables() -> None:
-    # Some tables (roles, languages, translations, penalty_clearances) exist
-    # only through this call, not through Alembic. Keep it until the
-    # migration chain can build the schema on its own.
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("Database tables ensured")
 
 
 async def seed_roles() -> None:
@@ -122,7 +112,6 @@ async def backfill_window_names() -> None:
 
 
 async def run() -> None:
-    await ensure_tables()
     await seed_roles()
     await seed_languages()
     await seed_translations()
