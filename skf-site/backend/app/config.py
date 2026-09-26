@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     simgrid_api_key: str = ""
     simgrid_base_url: str = "https://www.thesimgrid.com"
     cors_origins: str = "http://localhost:4200"
+    # Public origin of the Angular app: where the OAuth callback sends the
+    # browser after login. Its scheme also decides the session cookie's
+    # ``Secure`` flag.
+    frontend_url: str = "http://localhost:4200"
     port: int = 8000
 
     # YouTube Data API

@@ -1,7 +1,9 @@
 import uuid
 from datetime import date, datetime
 
-from pydantic import ConfigDict, Field
+from typing import Literal
+
+from pydantic import ConfigDict, Field, field_validator
 
 from app.schemas.base import CamelModel
 
@@ -24,6 +26,23 @@ class BwpPointOut(CamelModel):
     expires_on: date
     note: str | None = None
     expired: bool = False
+
+
+class BwpPointUpdate(CamelModel):
+    """``PATCH /bwp-points/{id}``: expire a point today (history is kept).
+
+    Only ``expired: true`` is accepted — un-expiring would need the original
+    expiry date, which is overwritten.
+    """
+
+    expired: Literal[True]
+    note: str = ""
+
+
+class BwpResetCreate(CamelModel):
+    """``POST /drivers/{id}/bwp-resets``: expire every active point."""
+
+    note: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -50,37 +69,11 @@ class DriverUpdate(CamelModel):
     simgrid_driver_id: int | None = None
 
 
-class DriverOut(CamelModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    name: str
-    simgrid_driver_id: int | None = None
-    simgrid_display_name: str | None = None
-    country_code: str | None = None
-    photo_url: str | None = None
-    user_id: uuid.UUID | None = None
-    created_at: datetime
-    active_bwp: int = 0
-    points: list[BwpPointOut] = []
-    clearances: list[PenaltyClearanceOut] = []
-
-
 class DriverBrief(CamelModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
     name: str
-
-
-class DriverIndexEntry(CamelModel):
-    """Slim public entry for building the SimGrid-id → UUID link map."""
-
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    name: str
-    simgrid_driver_id: int | None = None
 
 
 class DriverPublicOut(CamelModel):
@@ -96,6 +89,34 @@ class DriverPublicOut(CamelModel):
     active_bwp: int = 0
     points: list[BwpPointOut] = []
     clearances: list[PenaltyClearanceOut] = []
+
+
+class DriverOut(DriverPublicOut):
+    """Judge view: the public projection plus the linked site account.
+
+    ``user_id`` has no default on purpose: it keeps the public and judge
+    projections distinguishable when ``GET /drivers`` answers with either.
+    """
+
+    user_id: uuid.UUID | None
+
+
+class MyDriverPhotoUpdate(CamelModel):
+    """``PATCH /me/driver``: set (https only) or clear the profile photo."""
+
+    photo_url: str | None = Field(default=None, max_length=500)
+
+    @field_validator("photo_url")
+    @classmethod
+    def _https_only(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        v = v.strip()
+        if not v:
+            return None
+        if not v.lower().startswith("https://") or len(v) <= len("https://"):
+            raise ValueError("Photo URL must start with https://")
+        return v
 
 
 # ---------------------------------------------------------------------------

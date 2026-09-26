@@ -18,7 +18,7 @@ PAYLOAD = {
 @pytest.fixture(autouse=True)
 def clear_rate_limit():
     """The cooldown store is a module-level global shared across tests."""
-    from app.routers.calendar import _last_request_at
+    from app.services.communities import _last_request_at
 
     _last_request_at.clear()
     yield
@@ -28,11 +28,11 @@ def clear_rate_limit():
 # ── Router ───────────────────────────────────────────────────────────────────
 
 async def test_requires_login(client):
-    resp = await client.post("/api/calendar/community-requests", json=PAYLOAD)
+    resp = await client.post("/api/v1/community-requests", json=PAYLOAD)
     assert resp.status_code == 401
 
 
-async def test_sends_request_and_returns_202(auth_client, monkeypatch, test_user):
+async def test_sends_request_and_returns_204(auth_client, monkeypatch, test_user):
     sent = {}
 
     async def _fake_send(*, name, description, discord_url, user):
@@ -40,11 +40,11 @@ async def test_sends_request_and_returns_202(auth_client, monkeypatch, test_user
             name=name, description=description, discord_url=discord_url, user=user
         )
 
-    monkeypatch.setattr("app.routers.calendar.send_community_request", _fake_send)
+    monkeypatch.setattr("app.services.communities.send_community_request", _fake_send)
 
-    resp = await auth_client.post("/api/calendar/community-requests", json=PAYLOAD)
+    resp = await auth_client.post("/api/v1/community-requests", json=PAYLOAD)
 
-    assert resp.status_code == 202
+    assert resp.status_code == 204
     assert sent["name"] == "Night Racers"
     assert sent["discord_url"] == "https://discord.gg/abc123"
     # The requester is taken from the session, never from the payload.
@@ -57,14 +57,14 @@ async def test_strips_whitespace_and_blanks_empty_discord_url(auth_client, monke
     async def _fake_send(*, name, description, discord_url, user):
         sent.update(name=name, description=description, discord_url=discord_url)
 
-    monkeypatch.setattr("app.routers.calendar.send_community_request", _fake_send)
+    monkeypatch.setattr("app.services.communities.send_community_request", _fake_send)
 
     resp = await auth_client.post(
-        "/api/calendar/community-requests",
+        "/api/v1/community-requests",
         json={**PAYLOAD, "name": "  Night Racers  ", "discordUrl": "   "},
     )
 
-    assert resp.status_code == 202
+    assert resp.status_code == 204
     assert sent["name"] == "Night Racers"
     assert sent["discord_url"] is None
 
@@ -73,21 +73,23 @@ async def test_second_request_is_rate_limited(auth_client, monkeypatch):
     async def _fake_send(**_kwargs):
         return None
 
-    monkeypatch.setattr("app.routers.calendar.send_community_request", _fake_send)
+    monkeypatch.setattr("app.services.communities.send_community_request", _fake_send)
 
-    first = await auth_client.post("/api/calendar/community-requests", json=PAYLOAD)
-    second = await auth_client.post("/api/calendar/community-requests", json=PAYLOAD)
+    first = await auth_client.post("/api/v1/community-requests", json=PAYLOAD)
+    second = await auth_client.post("/api/v1/community-requests", json=PAYLOAD)
 
-    assert first.status_code == 202
+    assert first.status_code == 204
     assert second.status_code == 429
 
 
 async def test_503_when_webhook_not_configured(auth_client, monkeypatch):
     monkeypatch.setattr(settings, "discord_community_request_webhook_url", "")
 
-    resp = await auth_client.post("/api/calendar/community-requests", json=PAYLOAD)
+    resp = await auth_client.post("/api/v1/community-requests", json=PAYLOAD)
 
     assert resp.status_code == 503
+    # The problem detail must not reveal server configuration.
+    assert "WEBHOOK" not in resp.json()["detail"]
 
 
 async def test_502_when_discord_rejects(auth_client, monkeypatch):
@@ -96,9 +98,9 @@ async def test_502_when_discord_rejects(auth_client, monkeypatch):
     async def _fake_send(**_kwargs):
         raise DiscordSendFailed
 
-    monkeypatch.setattr("app.routers.calendar.send_community_request", _fake_send)
+    monkeypatch.setattr("app.services.communities.send_community_request", _fake_send)
 
-    resp = await auth_client.post("/api/calendar/community-requests", json=PAYLOAD)
+    resp = await auth_client.post("/api/v1/community-requests", json=PAYLOAD)
 
     assert resp.status_code == 502
 
@@ -110,18 +112,18 @@ async def test_a_failed_send_does_not_consume_the_cooldown(auth_client, monkeypa
     async def _failing(**_kwargs):
         raise DiscordSendFailed
 
-    monkeypatch.setattr("app.routers.calendar.send_community_request", _failing)
+    monkeypatch.setattr("app.services.communities.send_community_request", _failing)
     assert (
-        await auth_client.post("/api/calendar/community-requests", json=PAYLOAD)
+        await auth_client.post("/api/v1/community-requests", json=PAYLOAD)
     ).status_code == 502
 
     async def _ok(**_kwargs):
         return None
 
-    monkeypatch.setattr("app.routers.calendar.send_community_request", _ok)
+    monkeypatch.setattr("app.services.communities.send_community_request", _ok)
     assert (
-        await auth_client.post("/api/calendar/community-requests", json=PAYLOAD)
-    ).status_code == 202
+        await auth_client.post("/api/v1/community-requests", json=PAYLOAD)
+    ).status_code == 204
 
 
 @pytest.mark.parametrize(
@@ -136,10 +138,10 @@ async def test_validation_rejects_bad_input(auth_client, monkeypatch, bad):
     async def _fake_send(**_kwargs):
         raise AssertionError("should not be called")
 
-    monkeypatch.setattr("app.routers.calendar.send_community_request", _fake_send)
+    monkeypatch.setattr("app.services.communities.send_community_request", _fake_send)
 
     resp = await auth_client.post(
-        "/api/calendar/community-requests", json={**PAYLOAD, **bad}
+        "/api/v1/community-requests", json={**PAYLOAD, **bad}
     )
 
     assert resp.status_code == 422

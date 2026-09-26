@@ -1,53 +1,54 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { concat, last, Observable, of } from 'rxjs';
+import { API } from '../api';
 
 export interface Language {
   code: string;
   name: string;
-  is_active: boolean;
+  isActive: boolean;
 }
 
-export interface TranslationItem {
-  key: string;
-  value: string;
-}
+/** A flat translation bundle: `{ "some.key": "value" }`. */
+export type TranslationMap = Record<string, string>;
+
+/** Largest map the backend accepts in one PATCH. */
+const MAX_KEYS_PER_PATCH = 5000;
 
 @Injectable({ providedIn: 'root' })
 export class TranslationApiService {
   private readonly http = inject(HttpClient);
+  private readonly base = `${API}/languages`;
 
   getLanguages(): Observable<Language[]> {
-    return this.http.get<Language[]>('/api/admin/languages');
+    return this.http.get<Language[]>(this.base);
   }
 
   addLanguage(code: string, name: string): Observable<Language> {
-    return this.http.post<Language>('/api/admin/languages', { code, name });
+    return this.http.post<Language>(this.base, { code, name });
   }
 
   deleteLanguage(code: string): Observable<void> {
-    return this.http.delete<void>(`/api/admin/languages/${code}`);
+    return this.http.delete<void>(`${this.base}/${code}`);
   }
 
-  getTranslations(lang: string): Observable<TranslationItem[]> {
-    return this.http.get<TranslationItem[]>('/api/admin/translations', { params: { lang } });
+  getTranslations(lang: string): Observable<TranslationMap> {
+    return this.http.get<TranslationMap>(`${this.base}/${lang}/translations`);
   }
 
-  saveTranslations(lang: string, items: TranslationItem[]): Observable<void> {
-    return this.http.put<void>(`/api/admin/translations/${lang}`, { items });
+  /** Merge *entries* into the language: new keys are added, existing ones overwritten. */
+  saveTranslations(lang: string, entries: TranslationMap): Observable<void> {
+    const pairs = Object.entries(entries);
+    if (pairs.length === 0) return of(undefined);
+    const requests: Observable<void>[] = [];
+    for (let i = 0; i < pairs.length; i += MAX_KEYS_PER_PATCH) {
+      const chunk = Object.fromEntries(pairs.slice(i, i + MAX_KEYS_PER_PATCH));
+      requests.push(this.http.patch<void>(`${this.base}/${lang}/translations`, chunk));
+    }
+    return concat(...requests).pipe(last());
   }
 
   deleteKey(lang: string, key: string): Observable<void> {
-    return this.http.delete<void>(`/api/admin/translations/${lang}/${key}`);
-  }
-
-  exportTranslations(lang: string): Observable<Record<string, string>> {
-    return this.http.get<Record<string, string>>(`/api/admin/translations/export/${lang}`);
-  }
-
-  importTranslations(lang: string, file: File): Observable<void> {
-    const formData = new FormData();
-    formData.append('file', file);
-    return this.http.post<void>(`/api/admin/translations/import/${lang}`, formData);
+    return this.http.delete<void>(`${this.base}/${lang}/translations/${encodeURIComponent(key)}`);
   }
 }

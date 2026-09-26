@@ -106,18 +106,18 @@ async def _upload(
     **extra,
 ):
     return await client.post(
-        "/api/race-results/imports",
+        "/api/v1/race-result-imports",
         files={"file": (fixture, (FIXTURES / fixture).read_bytes(), "application/octet-stream")},
         data={
-            "championshipSimgridId": str(championship_id),
-            "raceSimgridId": str(race_id),
+            "championshipId": str(championship_id),
+            "raceId": str(race_id),
             **{k: str(v) for k, v in extra.items()},
         },
     )
 
 
 async def _window(client: AsyncClient, window_id: str) -> dict:
-    resp = await client.get(f"/api/incidents/windows/{window_id}")
+    resp = await client.get(f"/api/v1/incident-windows/{window_id}")
     assert resp.status_code == 200
     return resp.json()
 
@@ -207,7 +207,7 @@ async def test_incidents_from_the_legacy_ingest_are_not_duplicated(admin_client,
     monkeypatch.setattr(settings, "incident_api_token", "legacy-token")
     ir = (await _upload(admin_client, IR_FILE, 201, IRACING_CHAMPIONSHIP_ID)).json()
     window = await _window(admin_client, ir["windowId"])
-    await admin_client.delete(f"/api/race-results/imports/{ir['raceImport']['id']}")
+    await admin_client.delete(f"/api/v1/race-result-imports/{ir['raceImport']['id']}")
 
     # Same round sent by the desktop tool into a fresh race id.
     legacy = await admin_client.post(
@@ -233,7 +233,7 @@ async def test_upload_can_skip_incidents(admin_client):
     resp = await _upload(admin_client, LMU_FILE, 101, createIncidents="false")
     assert resp.status_code == 201
     assert resp.json()["windowId"] is None
-    assert (await admin_client.get("/api/incidents/windows")).json() == []
+    assert (await admin_client.get("/api/v1/incident-windows")).json() == []
 
 
 async def test_rounds_show_upload_and_window(admin_client, simgrid_stub):
@@ -244,7 +244,7 @@ async def test_rounds_show_upload_and_window(admin_client, simgrid_stub):
     await _upload(admin_client, LMU_FILE, 101)
 
     resp = await admin_client.get(
-        "/api/race-results/rounds", params={"championshipSimgridId": LMU_CHAMPIONSHIP_ID}
+        f"/api/v1/championships/{LMU_CHAMPIONSHIP_ID}/rounds"
     )
     body = resp.json()
     assert body["sim"] == "lmu"
@@ -263,30 +263,31 @@ async def test_original_file_is_kept_downloadable_and_reparsable(admin_client, b
     assert created["raceImport"]["hasFile"] is True
     assert list(bucket) == [f"race-results/{IRACING_CHAMPIONSHIP_ID}/201/{import_id}.bin"]
 
-    download = await admin_client.get(f"/api/race-results/imports/{import_id}/file")
+    download = await admin_client.get(f"/api/v1/race-result-imports/{import_id}/file")
     assert download.status_code == 200
     assert download.content == (FIXTURES / IR_FILE).read_bytes()
     assert IR_FILE in download.headers["content-disposition"]
 
-    reparsed = await admin_client.post(f"/api/race-results/imports/{import_id}/reparse")
-    assert reparsed.status_code == 200
+    reparsed = await admin_client.post(f"/api/v1/race-result-imports/{import_id}/parse-runs")
+    assert reparsed.status_code == 201
     new_id = reparsed.json()["raceImport"]["id"]
+    assert reparsed.headers["location"] == f"/api/v1/race-result-imports/{new_id}"
     # The replaced upload's object goes, the new one stays.
     assert list(bucket) == [f"race-results/{IRACING_CHAMPIONSHIP_ID}/201/{new_id}.bin"]
 
-    await admin_client.delete(f"/api/race-results/imports/{new_id}")
+    await admin_client.delete(f"/api/v1/race-result-imports/{new_id}")
     assert bucket == {}
 
 
 async def test_without_storage_there_is_nothing_to_download(admin_client):
     import_id = (await _upload(admin_client, LMU_FILE, 101)).json()["raceImport"]["id"]
-    assert (await admin_client.get(f"/api/race-results/imports/{import_id}/file")).status_code == 404
-    assert (await admin_client.post(f"/api/race-results/imports/{import_id}/reparse")).status_code == 409
+    assert (await admin_client.get(f"/api/v1/race-result-imports/{import_id}/file")).status_code == 404
+    assert (await admin_client.post(f"/api/v1/race-result-imports/{import_id}/parse-runs")).status_code == 409
 
 
 async def test_deleting_an_import_keeps_its_incidents(admin_client):
     created = (await _upload(admin_client, LMU_FILE, 101)).json()
-    resp = await admin_client.delete(f"/api/race-results/imports/{created['raceImport']['id']}")
+    resp = await admin_client.delete(f"/api/v1/race-result-imports/{created['raceImport']['id']}")
     assert resp.status_code == 204
     assert len((await _window(admin_client, created["windowId"]))["incidents"]) == 55
 
@@ -295,13 +296,13 @@ async def test_championship_links_to_its_incident_windows(admin_client):
     lmu = (await _upload(admin_client, LMU_FILE, 101)).json()
     await _upload(admin_client, IR_FILE, 201, IRACING_CHAMPIONSHIP_ID)
 
-    resp = await admin_client.get(f"/api/championships/{LMU_CHAMPIONSHIP_ID}/incident-windows")
+    resp = await admin_client.get(f"/api/v1/championships/{LMU_CHAMPIONSHIP_ID}/incident-windows")
     assert resp.json() == [
         {"raceId": 101, "windowId": lmu["windowId"], "isOpen": True, "incidentsCount": 55}
     ]
 
     windows = await admin_client.get(
-        "/api/incidents/windows", params={"championshipId": LMU_CHAMPIONSHIP_ID}
+        "/api/v1/incident-windows", params={"championshipId": LMU_CHAMPIONSHIP_ID}
     )
     assert [w["id"] for w in windows.json()] == [lmu["windowId"]]
 
@@ -309,7 +310,7 @@ async def test_championship_links_to_its_incident_windows(admin_client):
 async def test_a_round_gets_only_one_window(admin_client):
     await _upload(admin_client, LMU_FILE, 101)
     resp = await admin_client.post(
-        "/api/incidents/windows",
+        "/api/v1/incident-windows",
         json={"raceId": 101, "raceName": "Duplicate", "intervalHours": 24},
     )
     assert resp.status_code == 409
@@ -317,10 +318,10 @@ async def test_a_round_gets_only_one_window(admin_client):
 
 async def test_endpoints_are_closed_to_non_admins(client):
     resp = await client.get(
-        "/api/race-results/rounds", params={"championshipSimgridId": LMU_CHAMPIONSHIP_ID}
+        f"/api/v1/championships/{LMU_CHAMPIONSHIP_ID}/rounds"
     )
     assert resp.status_code in (401, 403)
-    resp = await client.post("/api/race-results/imports")
+    resp = await client.post("/api/v1/race-result-imports")
     assert resp.status_code in (401, 403, 422)
 
 
@@ -344,8 +345,46 @@ async def test_missing_championship_names_are_backfilled(admin_client, db):
     await db.commit()
 
     assert await backfill_window_championship_names(db) == 1
-    windows = (await admin_client.get("/api/incidents/windows")).json()
+    windows = (await admin_client.get("/api/v1/incident-windows")).json()
     assert [w["championshipName"] for w in windows] == [f"Championship {LMU_CHAMPIONSHIP_ID}"]
 
     stored = await db.execute(select(IncidentWindow.championship_name))
     assert stored.scalars().all() == [f"Championship {LMU_CHAMPIONSHIP_ID}"]
+
+
+async def test_upload_answers_with_the_new_imports_location(admin_client):
+    resp = await _upload(admin_client, LMU_FILE, 101)
+    import_id = resp.json()["raceImport"]["id"]
+    assert resp.headers["location"] == f"/api/v1/race-result-imports/{import_id}"
+
+    fetched = await admin_client.get(resp.headers["location"])
+    assert fetched.status_code == 200
+    assert fetched.json()["entryCount"] == 17
+
+
+async def test_oversized_upload_is_refused_with_413(admin_client, monkeypatch):
+    from app.services import race_import
+
+    monkeypatch.setattr(race_import, "MAX_UPLOAD_BYTES", 1024)
+    resp = await _upload(admin_client, LMU_FILE, 101)
+    assert resp.status_code == 413
+    assert resp.headers["content-type"].startswith("application/problem+json")
+    assert resp.json()["detail"] == "File is too large"
+
+
+async def test_imports_are_listed_per_championship_with_paging(admin_client):
+    await _upload(admin_client, LMU_FILE, 101)
+    await _upload(admin_client, LMU_FILE, 102)
+    await _upload(admin_client, IR_FILE, 201, IRACING_CHAMPIONSHIP_ID)
+
+    resp = await admin_client.get(
+        "/api/v1/race-result-imports", params={"championshipId": LMU_CHAMPIONSHIP_ID, "limit": 1}
+    )
+    assert resp.status_code == 200
+    assert resp.headers["x-total-count"] == "2"
+    assert [i["raceSimgridId"] for i in resp.json()] in ([101], [102])
+
+
+async def test_parse_run_of_an_unknown_import_is_404(admin_client):
+    resp = await admin_client.post(f"/api/v1/race-result-imports/{uuid.uuid4()}/parse-runs")
+    assert resp.status_code == 404

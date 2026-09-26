@@ -163,6 +163,24 @@ def test_external_entities_are_not_resolved():
         parse_race_results(payload)
 
 
+def test_accepts_the_rfactor_doctype():
+    """Real server files open with rFactor's one internal entity declaration."""
+    payload = _load("portimao.xml").replace(
+        b"?>", b'?>\n<!DOCTYPE rF [<!ENTITY rFEnt "rFactor Entity">]>', 1
+    )
+    assert len(parse_race_results(payload).entries) == 26
+
+
+def test_entity_expansion_bombs_are_refused():
+    payload = (
+        b'<!DOCTYPE r [<!ENTITY a "aaaaaaaaaa"><!ENTITY b "&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;">]>'
+        b"<rFactorXML><RaceResults><Race><Driver><Name>&b;</Name>"
+        b"<ServerScored>1</ServerScored><Laps>1</Laps></Driver></Race></RaceResults></rFactorXML>"
+    )
+    with pytest.raises(RaceFileError):
+        parse_race_results(payload)
+
+
 def _stream(*incidents: str) -> bytes:
     body = "\n".join(incidents)
     return f"""<rFactorXML><RaceResults><Race><Stream>

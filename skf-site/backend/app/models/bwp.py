@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from sqlalchemy import Date, DateTime, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -8,6 +8,11 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 class Base(DeclarativeBase):
     pass
+
+
+def utc_today() -> date:
+    """Today's date in UTC — the reference day for BWP point expiry."""
+    return datetime.now(timezone.utc).date()
 
 
 class Driver(Base):
@@ -46,8 +51,8 @@ class Driver(Base):
     @property
     def active_bwp(self) -> int:
         """Sum of not-yet-expired BWP points (expired = expires_on <= today,
-        matching the immediate-expire semantics in the BWP router)."""
-        today = date.today()
+        matching the immediate-expire semantics of ``PATCH /bwp-points``)."""
+        today = utc_today()
         return sum(p.points for p in self.points if p.expires_on > today)
 
 
@@ -75,7 +80,7 @@ class BwpPoint(Base):
 
     @property
     def expired(self) -> bool:
-        return self.expires_on <= date.today()
+        return self.expires_on <= utc_today()
 
 
 class PenaltyRule(Base):

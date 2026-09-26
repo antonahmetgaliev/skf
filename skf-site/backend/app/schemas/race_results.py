@@ -6,7 +6,30 @@ import uuid
 from datetime import datetime
 
 from app.schemas.base import CamelModel
-from app.schemas.giveaway import ImportEntryOut
+
+
+class ImportEntryOut(CamelModel):
+    raw_name: str
+    car_class: str
+    laps: int
+    position: int | None = None
+    finish_status: str | None = None
+    matched: bool
+
+
+class ImportOut(CamelModel):
+    """One uploaded round file, as listed per championship."""
+
+    id: uuid.UUID
+    championship_simgrid_id: int
+    race_simgrid_id: int | None = None
+    track_event: str | None = None
+    session_started_at: datetime | None = None
+    source_filename: str | None = None
+    sim: str = "lmu"
+    created_at: datetime
+    entry_count: int
+    unmatched_count: int
 
 
 class RaceImportOut(CamelModel):
@@ -40,7 +63,6 @@ class RoundOut(CamelModel):
     window: RoundWindowOut | None = None
 
 
-
 class RoundsOut(CamelModel):
     championship_id: int
     championship_name: str
@@ -58,9 +80,3 @@ class ImportResultOut(CamelModel):
     incidents_kept: int
     entries: list[ImportEntryOut]
 
-
-class ChampionshipIncidentWindowOut(CamelModel):
-    race_id: int
-    window_id: uuid.UUID
-    is_open: bool
-    incidents_count: int

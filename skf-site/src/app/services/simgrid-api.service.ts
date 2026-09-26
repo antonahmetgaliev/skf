@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import { API } from '../api';
+
 export interface ChampionshipListItem {
   id: number;
   name: string;
@@ -77,12 +79,11 @@ export interface ChampionshipRace {
 @Injectable({ providedIn: 'root' })
 export class SimgridApiService {
   private readonly http = inject(HttpClient);
-  private readonly base = '/api/championships';
+  private readonly base = `${API}/championships`;
+  private readonly activeBase = `${API}/active-championships`;
 
-  getChampionships(limit = 200): Observable<ChampionshipListItem[]> {
-    return this.http.get<ChampionshipListItem[]>(this.base, {
-      params: { limit: String(limit) }
-    });
+  getChampionships(): Observable<ChampionshipListItem[]> {
+    return this.http.get<ChampionshipListItem[]>(this.base);
   }
 
   getChampionshipById(championshipId: number): Observable<ChampionshipDetails> {
@@ -102,17 +103,14 @@ export class SimgridApiService {
   }
 
   getActiveChampionships(): Observable<number[]> {
-    return this.http.get<number[]>(`${this.base}/active`);
+    return this.http.get<number[]>(this.activeBase);
   }
 
-  addActiveChampionship(simgridId: number): Observable<void> {
-    return this.http.put<void>(`${this.base}/active/${simgridId}`, null);
+  addActiveChampionship(simgridId: number): Observable<unknown> {
+    return this.http.put(`${this.activeBase}/${simgridId}`, null);
   }
 
   removeActiveChampionship(simgridId: number): Observable<void> {
-    return this.http.delete<void>(`${this.base}/active/${simgridId}`);
+    return this.http.delete<void>(`${this.activeBase}/${simgridId}`);
   }
-
 }
-
-

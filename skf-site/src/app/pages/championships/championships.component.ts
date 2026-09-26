@@ -11,6 +11,7 @@ import {
   StandingEntry,
   StandingRace,
 } from '../../services/simgrid-api.service';
+import { API } from '../../api';
 import { AuthService } from '../../services/auth.service';
 import { ChampionshipIncidentWindow, IncidentsApiService } from '../../services/incidents-api.service';
 import { ChampionshipEntry, ChampionshipService } from '../../services/championship.service';
@@ -76,7 +77,7 @@ export class ChampionshipsComponent {
   readonly isStaleData = computed(() => {
     const key = this.selectedChampionshipKey();
     if (!key) return false;
-    return this.freshness.hasStaleData('/api/championships');
+    return this.freshness.hasStaleData(`${API}/championships`);
   });
 
   readonly refreshingCache = signal(false);
@@ -297,7 +298,7 @@ export class ChampionshipsComponent {
     this.refreshingCache.set(true);
     try {
       await firstValueFrom(
-        this.http.post('/api/admin/clear-cache', {}, { params: { domain: 'simgrid' } }),
+        this.http.delete(`${API}/caches/simgrid`),
       );
       await this.loadStandings(championshipId);
     } catch {

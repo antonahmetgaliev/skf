@@ -367,6 +367,7 @@ class SimgridService:
             data = resp.json()
             return data.get("display_name") or data.get("race_name") or f"Race {race_id}"
         except Exception:
+            logger.warning("Failed to fetch race %s name from SimGrid", race_id, exc_info=True)
             return f"Race {race_id}"
 
     async def get_games(self) -> list[dict]:

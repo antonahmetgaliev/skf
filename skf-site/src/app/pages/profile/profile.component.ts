@@ -33,7 +33,7 @@ export class ProfileComponent {
   private initializedForUserId: string | null = null;
 
   constructor() {
-    // /auth/me may still be in flight on a direct page load — react to the
+    // /me may still be in flight on a direct page load — react to the
     // user signal instead of reading it once in ngOnInit.
     effect(() => {
       const user = this.auth.user();

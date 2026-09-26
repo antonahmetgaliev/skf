@@ -20,6 +20,8 @@ from sqlalchemy.orm import joinedload
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 CHAMPIONSHIP_ID = 26927
+ELIGIBILITY = f"/api/v1/championships/{CHAMPIONSHIP_ID}/giveaway-eligibility"
+UNMATCHED = f"/api/v1/championships/{CHAMPIONSHIP_ID}/unmatched-driver-names"
 
 
 def _factory(engine):
@@ -74,9 +76,9 @@ async def admin_client(engine, admin_user, simgrid_stub):
 
 async def _upload(client: AsyncClient, fixture: str, race_id: int):
     return await client.post(
-        "/api/race-results/imports",
+        "/api/v1/race-result-imports",
         files={"file": (fixture, (FIXTURES / fixture).read_bytes(), "text/xml")},
-        data={"championshipSimgridId": str(CHAMPIONSHIP_ID), "raceSimgridId": str(race_id)},
+        data={"championshipId": str(CHAMPIONSHIP_ID), "raceId": str(race_id)},
     )
 
 
@@ -98,7 +100,7 @@ async def test_reuploading_a_round_replaces_it(admin_client):
     await _upload(admin_client, "portimao.xml", 1)
 
     listed = await admin_client.get(
-        "/api/giveaway/imports", params={"championshipSimgridId": CHAMPIONSHIP_ID}
+        "/api/v1/race-result-imports", params={"championshipId": CHAMPIONSHIP_ID}
     )
     # One round, counted once — not two copies inflating the round tally.
     assert len(listed.json()) == 1
@@ -106,9 +108,9 @@ async def test_reuploading_a_round_replaces_it(admin_client):
 
 async def test_rejects_a_file_that_is_not_a_race_result(admin_client):
     resp = await admin_client.post(
-        "/api/race-results/imports",
+        "/api/v1/race-result-imports",
         files={"file": ("notes.xml", b"<hello/>", "text/xml")},
-        data={"championshipSimgridId": str(CHAMPIONSHIP_ID), "raceSimgridId": "1"},
+        data={"championshipId": str(CHAMPIONSHIP_ID), "raceId": "1"},
     )
     assert resp.status_code == 400
     assert "rFactor2/LMU" in resp.json()["detail"]
@@ -119,12 +121,7 @@ async def test_eligibility_splits_the_classes(admin_client):
     await _upload(admin_client, "laguna_seca.xml", 2)
 
     resp = await admin_client.get(
-        "/api/giveaway/eligibility",
-        params={
-            "championshipSimgridId": CHAMPIONSHIP_ID,
-            "minDistancePct": 50,
-            "minRounds": 2,
-        },
+        ELIGIBILITY, params={"minDistancePct": 50, "minRounds": 2}
     )
     body = resp.json()
 
@@ -145,10 +142,7 @@ async def test_eligibility_exposes_the_per_round_arithmetic(admin_client):
     """Every qualifying round must be auditable, not just counted."""
     await _upload(admin_client, "portimao.xml", 1)
 
-    resp = await admin_client.get(
-        "/api/giveaway/eligibility",
-        params={"championshipSimgridId": CHAMPIONSHIP_ID, "minDistancePct": 50, "minRounds": 1},
-    )
+    resp = await admin_client.get(ELIGIBILITY, params={"minDistancePct": 50, "minRounds": 1})
     driver = next(
         d for d in resp.json()["drivers"] if d["displayName"] == "Dmitriy Bondariev"
     )
@@ -168,9 +162,7 @@ async def test_unmatched_names_are_listed_with_suggestions_only(admin_client, db
     await db.commit()
 
     await _upload(admin_client, "laguna_seca.xml", 2)
-    resp = await admin_client.get(
-        "/api/giveaway/unmatched", params={"championshipSimgridId": CHAMPIONSHIP_ID}
-    )
+    resp = await admin_client.get(UNMATCHED)
     names = {n["rawName"]: n for n in resp.json()}
 
     # "Max Tarasenko" did not auto-link to "Maksym Tarasenko" — it is only
@@ -196,24 +188,20 @@ async def test_merging_a_name_joins_the_rounds(admin_client):
     await _upload(admin_client, "portimao.xml", 1)
     await _upload(admin_client, "laguna_seca.xml", 2)
 
-    params = {
-        "championshipSimgridId": CHAMPIONSHIP_ID,
-        "minDistancePct": 50,
-        "minRounds": 2,
-    }
-    before = await admin_client.get("/api/giveaway/eligibility", params=params)
+    params = {"minDistancePct": 50, "minRounds": 2}
+    before = await admin_client.get(ELIGIBILITY, params=params)
     hyper_before = [d for d in before.json()["drivers"] if d["carClass"] == "Hyper"]
     assert not any(d["displayName"] == "Jaz Whitfield" for d in hyper_before)
 
     # Whitfield raced only Portimao; Kenneth only shows there too. Merge a name
     # that appears in exactly one round into one that appears in the other.
     merged = await admin_client.post(
-        "/api/giveaway/aliases",
+        "/api/v1/driver-aliases",
         json={"normalizedAlias": "jaz whitfield", "canonicalDisplayName": "Max Tarasenko"},
     )
     assert merged.status_code == 201
 
-    after = await admin_client.get("/api/giveaway/eligibility", params=params)
+    after = await admin_client.get(ELIGIBILITY, params=params)
     tarasenko = next(
         d for d in after.json()["drivers"]
         if d["displayName"] == "Max Tarasenko" and d["carClass"] == "Hyper"
@@ -225,7 +213,7 @@ async def test_merging_a_name_joins_the_rounds(admin_client):
 
 async def test_alias_refuses_to_merge_a_name_into_itself(admin_client):
     resp = await admin_client.post(
-        "/api/giveaway/aliases",
+        "/api/v1/driver-aliases",
         json={"normalizedAlias": "Max Tarasenko", "canonicalDisplayName": "max tarasenko"},
     )
     assert resp.status_code == 400
@@ -235,18 +223,23 @@ async def test_deleting_an_import_removes_its_rounds(admin_client):
     created = await _upload(admin_client, "portimao.xml", 1)
     import_id = created.json()["raceImport"]["id"]
 
-    resp = await admin_client.delete(f"/api/race-results/imports/{import_id}")
+    resp = await admin_client.delete(f"/api/v1/race-result-imports/{import_id}")
     assert resp.status_code == 204
 
     listed = await admin_client.get(
-        "/api/giveaway/imports", params={"championshipSimgridId": CHAMPIONSHIP_ID}
+        "/api/v1/race-result-imports", params={"championshipId": CHAMPIONSHIP_ID}
     )
     assert listed.json() == []
 
 
 async def test_endpoints_are_closed_to_non_admins(client):
-    for path in ("/api/giveaway/imports", "/api/giveaway/eligibility", "/api/giveaway/unmatched"):
-        resp = await client.get(path, params={"championshipSimgridId": CHAMPIONSHIP_ID})
+    for path in (
+        f"/api/v1/race-result-imports?championshipId={CHAMPIONSHIP_ID}",
+        ELIGIBILITY,
+        UNMATCHED,
+        "/api/v1/driver-aliases",
+    ):
+        resp = await client.get(path)
         assert resp.status_code in (401, 403), path
 
 
@@ -268,7 +261,7 @@ async def test_merging_backfills_the_driver_link_on_existing_rows(admin_client, 
     assert before.scalars().all() == [None]
 
     resp = await admin_client.post(
-        "/api/giveaway/aliases",
+        "/api/v1/driver-aliases",
         json={"normalizedAlias": "max tarasenko", "canonicalDisplayName": "Maksym Tarasenko"},
     )
     assert resp.status_code == 201
@@ -282,7 +275,29 @@ async def test_merging_backfills_the_driver_link_on_existing_rows(admin_client, 
     assert all(v is not None for v in after.scalars().all())
 
     # And it drops off the review list.
-    unmatched = await admin_client.get(
-        "/api/giveaway/unmatched", params={"championshipSimgridId": CHAMPIONSHIP_ID}
-    )
+    unmatched = await admin_client.get(UNMATCHED)
     assert "Max Tarasenko" not in {n["rawName"] for n in unmatched.json()}
+
+
+async def test_alias_post_is_an_upsert_201_then_200(admin_client):
+    body = {"normalizedAlias": "Jaz Whitfield", "canonicalDisplayName": "Max Tarasenko"}
+    created = await admin_client.post("/api/v1/driver-aliases", json=body)
+    assert created.status_code == 201
+    alias_id = created.json()["id"]
+    assert created.headers["location"] == f"/api/v1/driver-aliases/{alias_id}"
+
+    # Same alias (different case/spacing) updates the existing row.
+    updated = await admin_client.post(
+        "/api/v1/driver-aliases",
+        json={"normalizedAlias": "  jaz  WHITFIELD ", "canonicalDisplayName": "Arsen Petrosian"},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["id"] == alias_id
+    assert updated.json()["canonicalDisplayName"] == "Arsen Petrosian"
+
+    listed = await admin_client.get("/api/v1/driver-aliases")
+    assert listed.headers["x-total-count"] == "1"
+    assert [a["id"] for a in listed.json()] == [alias_id]
+
+    assert (await admin_client.delete(f"/api/v1/driver-aliases/{alias_id}")).status_code == 204
+    assert (await admin_client.delete(f"/api/v1/driver-aliases/{alias_id}")).status_code == 404

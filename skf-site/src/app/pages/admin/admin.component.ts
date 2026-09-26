@@ -10,6 +10,7 @@ import { TabsComponent } from '../../components/tabs/tabs.component';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InputDirective } from '../../directives/input.directive';
+import { API } from '../../api';
 import { AuthService, AuthUser, ROLES, Role } from '../../services/auth.service';
 import { CalendarApiService, Community } from '../../services/calendar-api.service';
 import { AdminCalendarTabComponent } from './admin-calendar-tab/admin-calendar-tab.component';
@@ -61,7 +62,7 @@ export class AdminComponent implements OnInit {
 
   loadUsers(): void {
     this.loading.set(true);
-    this.http.get<AuthUser[]>('/api/users').subscribe({
+    this.http.get<AuthUser[]>(`${API}/users`, { params: { limit: 1000 } }).subscribe({
       next: (users) => {
         this.users.set(users);
         this.loading.set(false);
@@ -83,7 +84,7 @@ export class AdminComponent implements OnInit {
 
   changeRole(user: AuthUser, newRole: Role): void {
     this.http
-      .patch<AuthUser>(`/api/users/${user.id}`, { role: newRole })
+      .patch<AuthUser>(`${API}/users/${user.id}`, { role: newRole })
       .subscribe({
         next: (updated) => {
           this.users.update((list) =>
@@ -118,7 +119,7 @@ export class AdminComponent implements OnInit {
 
   toggleBlock(user: AuthUser): void {
     this.http
-      .patch<AuthUser>(`/api/users/${user.id}`, { blocked: !user.blocked })
+      .patch<AuthUser>(`${API}/users/${user.id}`, { blocked: !user.blocked })
       .subscribe({
         next: (updated) => {
           this.users.update((list) =>
@@ -129,7 +130,7 @@ export class AdminComponent implements OnInit {
   }
 
   forceLogout(user: AuthUser): void {
-    this.http.delete(`/api/users/${user.id}/sessions`).subscribe({
+    this.http.delete(`${API}/users/${user.id}/sessions`).subscribe({
       next: () => {},
     });
   }
@@ -152,7 +153,7 @@ export class AdminComponent implements OnInit {
   assignCommunity(user: AuthUser, communityId: string): void {
     const ids = communityId ? [communityId] : [];
     this.http
-      .put<string[]>(`/api/users/${user.id}/managed-communities`, { communityIds: ids })
+      .put<string[]>(`${API}/users/${user.id}/managed-communities`, { communityIds: ids })
       .subscribe({
         next: (result) => {
           this.users.update((list) =>
@@ -169,8 +170,7 @@ export class AdminComponent implements OnInit {
     if (this.clearingCache()) return;
     this.clearingCache.set(true);
     this.cacheMessage.set('');
-    const params = domain ? { params: { domain } } : {};
-    this.http.post('/api/admin/clear-cache', {}, params).subscribe({
+    this.http.delete(domain ? `${API}/caches/${domain}` : `${API}/caches`).subscribe({
       next: () => {
         const label = domain ?? 'All';
         this.cacheMessage.set(`${label} cache cleared.`);

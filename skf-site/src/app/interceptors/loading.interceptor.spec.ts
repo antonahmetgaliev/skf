@@ -4,11 +4,12 @@ import { throwError, of, EMPTY } from 'rxjs';
 import { loadingInterceptor } from './loading.interceptor';
 import { LoadingService } from '../services/loading.service';
 
-function run(url: string, handler: () => any, loading: LoadingService) {
+function run(url: string, handler: () => any, loading: LoadingService, method = 'GET') {
   const injector = Injector.create({
     providers: [{ provide: LoadingService, useValue: loading }],
   });
-  const req = new HttpRequest('GET', url);
+  const req =
+    method === 'GET' ? new HttpRequest('GET', url) : new HttpRequest(method as 'PATCH', url, {});
   return runInInjectionContext(injector, () =>
     loadingInterceptor(req, handler as any),
   );
@@ -23,7 +24,7 @@ describe('loadingInterceptor', () => {
 
   it('is loading while the request is in flight', () => {
     let wasLoading = false;
-    const result = run('/api/incidents/windows', () => {
+    const result = run('/api/v1/incident-windows', () => {
       wasLoading = loading.loading();
       return of({} as any);
     }, loading);
@@ -33,25 +34,25 @@ describe('loadingInterceptor', () => {
   });
 
   it('clears loading once the request completes', () => {
-    run('/api/incidents/windows', () => of({} as any), loading).subscribe();
+    run('/api/v1/incident-windows', () => of({} as any), loading).subscribe();
     expect(loading.loading()).toBe(false);
   });
 
   it('clears loading when the request errors', () => {
-    run('/api/incidents/windows', () => throwError(() => new Error('boom')), loading)
+    run('/api/v1/incident-windows', () => throwError(() => new Error('boom')), loading)
       .subscribe({ error: () => {} });
     expect(loading.loading()).toBe(false);
   });
 
   it('clears loading when the request is cancelled', () => {
-    const sub = run('/api/incidents/windows', () => EMPTY, loading).subscribe();
+    const sub = run('/api/v1/incident-windows', () => EMPTY, loading).subscribe();
     sub.unsubscribe();
     expect(loading.loading()).toBe(false);
   });
 
   it('ignores translation bundle loads', () => {
     let wasLoading = true;
-    run('/api/translations/ua', () => {
+    run('/api/v1/languages/ua/translations', () => {
       wasLoading = loading.loading();
       return of({} as any);
     }, loading).subscribe();
@@ -60,10 +61,10 @@ describe('loadingInterceptor', () => {
 
   it('still tracks admin translation edits', () => {
     let wasLoading = false;
-    run('/api/admin/translations/ua', () => {
+    run('/api/v1/languages/ua/translations', () => {
       wasLoading = loading.loading();
       return of({} as any);
-    }, loading).subscribe();
+    }, loading, 'PATCH').subscribe();
     expect(wasLoading).toBe(true);
   });
 });

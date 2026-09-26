@@ -57,24 +57,6 @@ class CommunityRequestCreate(CamelModel):
     description: str = Field(min_length=10, max_length=2000)
 
 
-# ── Game CRUD schemas ────────────────────────────────────────────────────────
-
-class GameCreate(CamelModel):
-    name: str = Field(min_length=1, max_length=100)
-
-
-class GameUpdate(CamelModel):
-    name: str | None = Field(default=None, min_length=1, max_length=100)
-
-
-class GameOut(CamelModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    name: str
-    created_at: datetime
-
-
 # ── Custom race CRUD schemas ────────────────────────────────────────────────
 
 class CustomRaceCreate(CamelModel):
@@ -171,8 +153,8 @@ class CalendarEvent(CamelModel):
     source: str  # "simgrid" or "custom"
     image: str | None = None
     simgrid_championship_id: int | None = None
-    custom_championship_id: str | None = None
-    community_id: str | None = None
+    custom_championship_id: uuid.UUID | None = None
+    community_id: uuid.UUID | None = None
     community_name: str | None = None
     community_color: str | None = None
     community_discord_url: str | None = None

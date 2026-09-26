@@ -2,6 +2,7 @@
 
 Shared by the admin upload, the re-parse of a stored file, and the legacy
 `/incidents/ingest` endpoint (window lookup and incident creation only).
+Also assembles the per-championship round overview the admin uploads from.
 """
 
 from __future__ import annotations
@@ -12,8 +13,19 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 
-from sqlalchemy import case, delete, func, select
+from fastapi import UploadFile
+from sqlalchemy import case, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.errors import (
+    BadGateway,
+    BadRequest,
+    Conflict,
+    NotFound,
+    PayloadTooLarge,
+    ServiceUnavailable,
+    Unprocessable,
+)
 
 from app.models.incidents import Incident, IncidentDriver, IncidentWindow
 from app.models.race_result import (
@@ -22,14 +34,26 @@ from app.models.race_result import (
     RaceResultImport,
     normalize_driver_name,
 )
+from app.schemas.race_results import (
+    ImportEntryOut,
+    ImportOut,
+    ImportResultOut,
+    RaceImportOut,
+    RoundOut,
+    RoundsOut,
+    RoundWindowOut,
+)
 from app.services import file_storage
 from app.services.driver_matching import match_driver_id_by_name
 from app.services.race_files import (
     FILE_EXTENSIONS,
+    MAX_UPLOAD_BYTES,
     ParsedContact,
     ParsedRaceFile,
+    RaceFileError,
     Sim,
     parse_race_file,
+    sim_for_game,
 )
 from app.services.simgrid import simgrid_service
 
@@ -96,7 +120,9 @@ async def championship_name_for(championship_id: int) -> str | None:
     try:
         return (await simgrid_service.get_championship(championship_id)).name
     except Exception:  # noqa: BLE001 - a missing name must not block incidents
-        logger.warning("Could not load championship %s from SimGrid", championship_id)
+        logger.warning(
+            "Could not load championship %s from SimGrid", championship_id, exc_info=True
+        )
         return None
 
 
@@ -160,7 +186,7 @@ async def find_or_create_window(
         championship_name=championship_name,
         race_id=race_id,
         race_name=race_name or await simgrid_service.get_race_name(race_id),
-        date=(race_date or date.today()).isoformat(),
+        date=(race_date or now.date()).isoformat(),
         interval_hours=interval_hours,
         opened_at=now,
         closes_at=now + timedelta(hours=interval_hours),
@@ -361,4 +387,272 @@ async def import_race_file(
         window=window,
         incidents_created=created,
         incidents_kept=len(kept),
+    )
+
+
+# ── Admin upload API ────────────────────────────────────────────────────────
+
+_READ_CHUNK = 1024 * 1024
+
+
+async def read_upload(file: UploadFile, limit: int | None = None) -> bytes:
+    """The upload's bytes, refusing anything over *limit* without reading it all.
+
+    The declared size is checked first; the body is then read in chunks so a
+    file whose size was not declared still stops at the cap.
+    """
+    limit = MAX_UPLOAD_BYTES if limit is None else limit
+    if file.size is not None and file.size > limit:
+        raise PayloadTooLarge("File is too large")
+    chunks: list[bytes] = []
+    total = 0
+    while chunk := await file.read(_READ_CHUNK):
+        total += len(chunk)
+        if total > limit:
+            raise PayloadTooLarge("File is too large")
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+async def championship_info(championship_id: int) -> tuple[str, str, Sim | None]:
+    """(name, game name, simulator) of a SimGrid championship."""
+    try:
+        details = await simgrid_service.get_championship(championship_id)
+    except Exception as exc:  # noqa: BLE001 - SimGrid down or unknown id
+        logger.warning("Failed to load championship %s", championship_id, exc_info=True)
+        raise BadGateway("Could not load the championship from SimGrid") from exc
+    return details.name, details.game_name, sim_for_game(details.game_name)
+
+
+def import_out(record: RaceResultImport, entry_count: int, unmatched: int) -> RaceImportOut:
+    return RaceImportOut(
+        id=record.id,
+        sim=record.sim,
+        track_event=record.track_event,
+        session_started_at=record.session_started_at,
+        source_filename=record.source_filename,
+        file_size=record.file_size,
+        has_file=record.storage_key is not None,
+        entry_count=entry_count,
+        unmatched_count=unmatched,
+        contacts_count=record.contacts_count,
+        auto_grouped=record.auto_grouped,
+        created_at=record.created_at,
+    )
+
+
+def result_out(result: ImportResult) -> ImportResultOut:
+    entries = result.entries
+    return ImportResultOut(
+        race_import=import_out(
+            result.record, len(entries), sum(1 for e in entries if e.driver_id is None)
+        ),
+        window_id=result.window.id if result.window else None,
+        incidents_created=result.incidents_created,
+        incidents_kept=result.incidents_kept,
+        entries=[
+            ImportEntryOut(
+                raw_name=e.raw_name,
+                car_class=e.car_class,
+                laps=e.laps,
+                position=e.position,
+                finish_status=e.finish_status,
+                matched=e.driver_id is not None,
+            )
+            for e in entries
+        ],
+    )
+
+
+def imports_query(championship_id: int | None = None):
+    """Uploads in round order, optionally for one championship."""
+    stmt = select(RaceResultImport).order_by(
+        RaceResultImport.session_started_at, RaceResultImport.created_at
+    )
+    if championship_id is not None:
+        stmt = stmt.where(RaceResultImport.championship_simgrid_id == championship_id)
+    return stmt
+
+
+async def list_out(db: AsyncSession, records: list[RaceResultImport]) -> list[ImportOut]:
+    counts = await entry_counts(db, (r.id for r in records))
+    return [
+        ImportOut(
+            id=record.id,
+            championship_simgrid_id=record.championship_simgrid_id,
+            race_simgrid_id=record.race_simgrid_id,
+            track_event=record.track_event,
+            session_started_at=record.session_started_at,
+            source_filename=record.source_filename,
+            sim=record.sim,
+            created_at=record.created_at,
+            entry_count=counts.get(record.id, (0, 0))[0],
+            unmatched_count=counts.get(record.id, (0, 0))[1],
+        )
+        for record in records
+    ]
+
+
+async def upload(
+    db: AsyncSession,
+    *,
+    payload: bytes,
+    filename: str | None,
+    championship_id: int,
+    race_id: int,
+    user_id: uuid.UUID,
+    create_incidents: bool,
+    window_hours: int,
+) -> ImportResult:
+    """Import an uploaded round file for a championship whose game decides the parser."""
+    name, game_name, sim = await championship_info(championship_id)
+    if sim is None:
+        raise Unprocessable(f"Result files are not supported for {game_name or 'this game'}")
+    try:
+        return await import_race_file(
+            db,
+            payload=payload,
+            filename=filename,
+            sim=sim,
+            championship_id=championship_id,
+            championship_name=name,
+            race_id=race_id,
+            user_id=user_id,
+            create_incidents=create_incidents,
+            window_hours=window_hours,
+        )
+    except RaceFileError as exc:
+        raise BadRequest(f"{exc}. {game_name} expects a .{FILE_EXTENSIONS[sim]} file.") from exc
+
+
+async def reparse(db: AsyncSession, record: RaceResultImport, user_id: uuid.UUID) -> ImportResult:
+    """Re-run the parser on the stored original, replacing the import."""
+    if record.storage_key is None:
+        raise Conflict("The original file was not kept")
+    payload = await read_stored(record.storage_key)
+    name, _, _ = await championship_info(record.championship_simgrid_id)
+    try:
+        return await import_race_file(
+            db,
+            payload=payload,
+            filename=record.source_filename,
+            sim=record.sim,
+            championship_id=record.championship_simgrid_id,
+            championship_name=name,
+            race_id=record.race_simgrid_id,
+            user_id=user_id,
+        )
+    except RaceFileError as exc:
+        raise BadRequest(str(exc)) from exc
+
+
+async def stored_file(record: RaceResultImport) -> tuple[bytes, str]:
+    """The kept original and a download-safe filename for it."""
+    if record.storage_key is None:
+        raise NotFound("The original file was not kept")
+    payload = await read_stored(record.storage_key)
+    filename = record.source_filename or f"{record.id}.{FILE_EXTENSIONS.get(record.sim, 'bin')}"
+    safe = "".join(c for c in filename if c.isalnum() or c in "._- ") or "race-results"
+    return payload, safe
+
+
+async def delete_import(db: AsyncSession, record: RaceResultImport) -> None:
+    """Remove the round's results. Its incidents stay with the window."""
+    storage_key = record.storage_key
+    await db.execute(
+        update(Incident).where(Incident.import_id == record.id).values(import_id=None)
+    )
+    await db.delete(record)
+    await db.commit()
+    if storage_key:
+        try:
+            await file_storage.delete(storage_key)
+        except Exception:  # noqa: BLE001 - an orphaned object is harmless
+            logger.exception("Could not delete race file %s", storage_key)
+
+
+async def read_stored(key: str) -> bytes:
+    try:
+        return await file_storage.get(key)
+    except file_storage.StorageUnavailable as exc:
+        raise ServiceUnavailable("File storage is not available") from exc
+    except Exception as exc:  # noqa: BLE001 - bucket errors
+        logger.exception("Could not read race file %s", key)
+        raise BadGateway("Could not read the stored file") from exc
+
+
+async def build_rounds(db: AsyncSession, championship_id: int) -> RoundsOut:
+    """The championship's rounds with their upload and incident window."""
+    name, game_name, sim = await championship_info(championship_id)
+    try:
+        races = await simgrid_service.get_races(championship_id)
+    except Exception:  # noqa: BLE001 - a missing round list must not break the page
+        logger.exception("Failed to load rounds for championship %s", championship_id)
+        races = []
+    races = sorted(
+        (r for r in races if isinstance(r, dict) and r.get("id") is not None),
+        key=lambda r: r.get("starts_at") or "",
+    )
+
+    imports = {
+        r.race_simgrid_id: r
+        for r in (
+            await db.execute(
+                select(RaceResultImport).where(
+                    RaceResultImport.championship_simgrid_id == championship_id
+                )
+            )
+        ).scalars()
+    }
+    entry_totals = await entry_counts(db, (r.id for r in imports.values()))
+    race_ids = [race["id"] for race in races]
+    windows = {
+        w.race_id: w
+        for w in (
+            await db.execute(select(IncidentWindow).where(IncidentWindow.race_id.in_(race_ids)))
+        ).scalars()
+    } if race_ids else {}
+    counts = dict(
+        (
+            await db.execute(
+                select(Incident.window_id, func.count(Incident.id))
+                .where(Incident.window_id.in_([w.id for w in windows.values()]))
+                .group_by(Incident.window_id)
+            )
+        ).all()
+    ) if windows else {}
+
+    rounds: list[RoundOut] = []
+    for race in races:
+        record = imports.get(race["id"])
+        window = windows.get(race["id"])
+        rounds.append(
+            RoundOut(
+                race_id=race["id"],
+                name=race.get("display_name") or race.get("race_name") or "",
+                starts_at=race.get("starts_at"),
+                ended=race.get("ended", False),
+                race_import=(
+                    import_out(record, *entry_totals.get(record.id, (0, 0))) if record else None
+                ),
+                window=(
+                    RoundWindowOut(
+                        id=window.id,
+                        is_open=window.is_open,
+                        closes_at=window.closes_at,
+                        incidents_count=counts.get(window.id, 0),
+                    )
+                    if window
+                    else None
+                ),
+            )
+        )
+
+    return RoundsOut(
+        championship_id=championship_id,
+        championship_name=name,
+        game_name=game_name,
+        sim=sim,
+        storage_enabled=file_storage.is_enabled(),
+        rounds=rounds,
     )

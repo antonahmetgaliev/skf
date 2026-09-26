@@ -1,4 +1,4 @@
-"""Schemas for the giveaway admin API."""
+"""Schemas for giveaway eligibility and driver-name aliases."""
 
 from __future__ import annotations
 
@@ -33,28 +33,6 @@ class EligibilityOut(CamelModel):
     imported_rounds: int
     car_classes: list[str]
     drivers: list[EligibleDriverOut]
-
-
-class ImportEntryOut(CamelModel):
-    raw_name: str
-    car_class: str
-    laps: int
-    position: int | None = None
-    finish_status: str | None = None
-    matched: bool
-
-
-class ImportOut(CamelModel):
-    id: uuid.UUID
-    championship_simgrid_id: int
-    race_simgrid_id: int | None = None
-    track_event: str | None = None
-    session_started_at: datetime | None = None
-    source_filename: str | None = None
-    sim: str = "lmu"
-    created_at: datetime
-    entry_count: int
-    unmatched_count: int
 
 
 class UnmatchedNameOut(CamelModel):

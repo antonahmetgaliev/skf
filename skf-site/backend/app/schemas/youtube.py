@@ -1,4 +1,11 @@
+from enum import Enum
+
 from app.schemas.base import CamelModel
+
+
+class StreamStatus(str, Enum):
+    PAST = "past"
+    UPCOMING = "upcoming"
 
 
 class YouTubeVideo(CamelModel):

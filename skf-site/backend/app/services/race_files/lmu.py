@@ -19,7 +19,9 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
-from xml.etree.ElementTree import fromstring
+
+from defusedxml import DefusedXmlException
+from defusedxml.ElementTree import ParseError, fromstring
 
 from app.services.race_files.types import (
     ParsedContact,
@@ -31,6 +33,11 @@ from app.services.race_files.types import (
 
 # Two reports within this many seconds that share a car are one incident.
 CONTACT_MERGE_WINDOW_S = 3.0
+
+# The fixed doctype every rFactor2/LMU result file starts with.
+_RFACTOR_DOCTYPE = re.compile(
+    r'<!DOCTYPE\s+rF\s*\[\s*<!ENTITY\s+rFEnt\s+"(?P<value>[^"<>&%]*)"\s*>\s*\]\s*>'
+)
 
 # "Driver A(7) reported contact (63.41) with another vehicle Driver B(13)".
 # Contacts with "Immovable", "Sign" etc. are single-car and never match.
@@ -72,14 +79,20 @@ def parse(payload: bytes) -> ParsedRaceFile:
     Raises `RaceFileError` for anything that is not a race result — a
     qualifying-only export, a different game's format, or plain garbage.
     """
-    # These files open with `<!DOCTYPE rF [<!ENTITY rFEnt "rFactor Entity">]>`,
-    # so the parser has to tolerate a doctype on untrusted input. ElementTree
-    # is safe here without extra work: it refuses external entities outright
-    # (no XXE — verified against expat 2.7.4), and expat's input-amplification
-    # limit stops entity-expansion bombs. The caller's size cap covers the rest.
+    # These files open with `<!DOCTYPE rF [<!ENTITY rFEnt "rFactor Entity">]>`.
+    # That one harmless declaration is expanded by hand and the doctype
+    # dropped, so the XML itself is parsed by defusedxml with every DTD,
+    # entity declaration and external reference forbidden (no XXE, no entity
+    # expansion bombs). Any other doctype is refused. The caller's size cap
+    # covers the rest.
+    text = payload.decode("utf-8", errors="replace")
+    match = _RFACTOR_DOCTYPE.search(text, 0, 512)
+    if match:
+        text = text[: match.start()] + text[match.end() :]
+        text = text.replace("&rFEnt;", match.group("value"))
     try:
-        root = fromstring(payload.decode("utf-8", errors="replace"))
-    except Exception as exc:  # noqa: BLE001 - any malformed XML lands here
+        root = fromstring(text, forbid_dtd=True)
+    except (ParseError, DefusedXmlException) as exc:
         raise RaceFileError("File is not valid XML (Le Mans Ultimate expects .xml)") from exc
 
     results = root.find("RaceResults") if root.tag != "RaceResults" else root

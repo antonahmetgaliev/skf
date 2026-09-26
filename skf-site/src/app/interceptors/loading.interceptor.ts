@@ -13,12 +13,13 @@ import { LoadingService } from '../services/loading.service';
  * Translation bundles are skipped: they load on boot and on every language
  * switch, and flashing the bar for them says nothing about the user's action.
  */
-/** The Transloco bundle loader only — not the admin translation editor, whose
- *  saves are user actions and should report themselves like any other. */
-const TRANSLATION_BUNDLE = /\/api\/translations\//;
+/** Reads of a translation bundle (what the Transloco loader fetches) — not the
+ *  admin translation editor's saves, which are user actions and should report
+ *  themselves like any other. */
+const TRANSLATION_BUNDLE = /\/api\/v1\/languages\/[^/]+\/translations$/;
 
 export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
-  if (TRANSLATION_BUNDLE.test(req.url)) {
+  if (req.method === 'GET' && TRANSLATION_BUNDLE.test(req.url)) {
     return next(req);
   }
 

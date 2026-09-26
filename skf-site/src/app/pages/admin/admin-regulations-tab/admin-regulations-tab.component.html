@@ -29,12 +29,12 @@
         <app-empty>No regulation pages yet.</app-empty>
       } @else {
         <ul class="page-list">
-          @for (page of pages(); track page.slug) {
+          @for (page of pages(); track page.id) {
             <li
               class="page-item"
-              [class.page-item--active]="selectedSlug() === page.slug"
-              [class.page-item--hidden]="!page.is_visible"
-              (click)="selectPage(page.slug)"
+              [class.page-item--active]="selectedId() === page.id"
+              [class.page-item--hidden]="!page.isVisible"
+              (click)="selectPage(page.id)"
             >
               <div class="page-item-info">
                 <span class="page-item-slug">{{ page.slug }}</span>
@@ -44,12 +44,12 @@
                 <button
                   class="btn-link btn-link--toggle"
                   type="button"
-                  [title]="page.is_visible ? 'Hide from public' : 'Show on public site'"
+                  [title]="page.isVisible ? 'Hide from public' : 'Show on public site'"
                   (click)="toggleVisibility(page); $event.stopPropagation()"
                 >
-                  {{ page.is_visible ? 'Hide' : 'Show' }}
+                  {{ page.isVisible ? 'Hide' : 'Show' }}
                 </button>
-                <button class="btn-link btn-link--danger" type="button" (click)="deletePage(page.slug); $event.stopPropagation()">×</button>
+                <button class="btn-link btn-link--danger" type="button" (click)="deletePage(page); $event.stopPropagation()">×</button>
               </div>
             </li>
           }

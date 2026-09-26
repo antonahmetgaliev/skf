@@ -1,21 +1,14 @@
-from pydantic import BaseModel
+from pydantic import Field
+
+from app.schemas.base import CamelModel, OrmCamelModel
 
 
-class LanguageCreate(BaseModel):
-    code: str
-    name: str
+class LanguageCreate(CamelModel):
+    code: str = Field(min_length=1, max_length=10, pattern=r"^[A-Za-z0-9_-]+$")
+    name: str = Field(min_length=1, max_length=100)
 
 
-class LanguageOut(BaseModel):
+class LanguageOut(OrmCamelModel):
     code: str
     name: str
     is_active: bool
-
-
-class TranslationItem(BaseModel):
-    key: str
-    value: str
-
-
-class TranslationBulkUpdate(BaseModel):
-    items: list[TranslationItem]

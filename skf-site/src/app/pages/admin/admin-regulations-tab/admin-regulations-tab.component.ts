@@ -31,7 +31,7 @@ export class AdminRegulationsTabComponent implements OnInit {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly message = signal('');
-  readonly selectedSlug = signal<string | null>(null);
+  readonly selectedId = signal<string | null>(null);
   readonly activeLang = signal('en');
   readonly showPreview = signal(false);
 
@@ -41,8 +41,8 @@ export class AdminRegulationsTabComponent implements OnInit {
   newSortOrder = 0;
 
   readonly selectedPage = computed(() => {
-    const slug = this.selectedSlug();
-    return this.pages().find((p) => p.slug === slug) ?? null;
+    const id = this.selectedId();
+    return this.pages().find((p) => p.id === id) ?? null;
   });
 
   // Edit buffer: Record<lang, { title, subtitle, content }>
@@ -73,14 +73,14 @@ export class AdminRegulationsTabComponent implements OnInit {
     });
   }
 
-  selectPage(slug: string): void {
-    this.selectedSlug.set(slug);
-    const page = this.pages().find((p) => p.slug === slug);
+  selectPage(id: string): void {
+    this.selectedId.set(id);
+    const page = this.pages().find((p) => p.id === id);
     if (!page) return;
 
     this.editSlug = page.slug;
     this.editSortOrder = page.sortOrder;
-    this.editIsVisible = page.is_visible;
+    this.editIsVisible = page.isVisible;
     this.editContents = {};
     for (const lang of this.availableLangs) {
       const c = page.contents[lang];
@@ -100,24 +100,21 @@ export class AdminRegulationsTabComponent implements OnInit {
   }
 
   savePage(): void {
-    const slug = this.selectedSlug();
-    if (!slug) return;
+    const page = this.selectedPage();
+    if (!page) return;
 
     this.saving.set(true);
     this.message.set('');
 
-    this.api.updatePage(slug, {
-      slug: this.editSlug !== slug ? this.editSlug : undefined,
-      sort_order: this.editSortOrder,
-      is_visible: this.editIsVisible,
+    this.api.updatePage(page.id, {
+      slug: this.editSlug !== page.slug ? this.editSlug : undefined,
+      sortOrder: this.editSortOrder,
+      isVisible: this.editIsVisible,
       contents: this.editContents,
     }).subscribe({
       next: () => {
         this.saving.set(false);
         this.message.set('Saved');
-        if (this.editSlug !== slug) {
-          this.selectedSlug.set(this.editSlug);
-        }
         this.loadPages();
         setTimeout(() => this.message.set(''), 2000);
       },
@@ -134,7 +131,7 @@ export class AdminRegulationsTabComponent implements OnInit {
     this.saving.set(true);
     this.api.createPage({
       slug: this.newSlug.trim(),
-      sort_order: this.newSortOrder,
+      sortOrder: this.newSortOrder,
       contents: {},
     }).subscribe({
       next: (page) => {
@@ -142,8 +139,9 @@ export class AdminRegulationsTabComponent implements OnInit {
         this.showNewForm.set(false);
         this.newSlug = '';
         this.newSortOrder = 0;
+        this.pages.update((list) => [...list, page]);
+        this.selectPage(page.id);
         this.loadPages();
-        this.selectPage(page.slug);
       },
       error: (err) => {
         this.saving.set(false);
@@ -153,20 +151,21 @@ export class AdminRegulationsTabComponent implements OnInit {
   }
 
   toggleVisibility(page: RegulationPageOut): void {
-    const next = !page.is_visible;
-    this.api.updatePage(page.slug, { is_visible: next }).subscribe({
+    const next = !page.isVisible;
+    this.api.updatePage(page.id, { isVisible: next }).subscribe({
       next: () => {
         this.pages.update((list) =>
-          list.map((p) => (p.slug === page.slug ? { ...p, is_visible: next } : p)),
+          list.map((p) => (p.id === page.id ? { ...p, isVisible: next } : p)),
         );
-        if (this.selectedSlug() === page.slug) {
+        if (this.selectedId() === page.id) {
           this.editIsVisible = next;
         }
       },
     });
   }
 
-  async deletePage(slug: string): Promise<void> {
+  async deletePage(page: RegulationPageOut): Promise<void> {
+    const slug = page.slug;
     const ok = await this.confirmSvc.confirm({
       title: this.transloco.translate('common.confirm.deleteTitle'),
       message: this.transloco.translate('admin.deleteRegulationConfirm', { slug }),
@@ -175,10 +174,10 @@ export class AdminRegulationsTabComponent implements OnInit {
     });
     if (!ok) return;
 
-    this.api.deletePage(slug).subscribe({
+    this.api.deletePage(page.id).subscribe({
       next: () => {
-        if (this.selectedSlug() === slug) {
-          this.selectedSlug.set(null);
+        if (this.selectedId() === page.id) {
+          this.selectedId.set(null);
         }
         this.loadPages();
       },

@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { API } from '../api';
 
 export interface BwpPoint {
   id: string;
@@ -44,24 +45,26 @@ export interface PenaltyRule {
 @Injectable({ providedIn: 'root' })
 export class BwpApiService {
   private readonly http = inject(HttpClient);
-  private readonly base = '/api/bwp';
 
   // ── Drivers ──────────────────────────────────────────────────────
 
+  /** Judge view of every driver, including the linked account (`userId`). */
   getDrivers(): Observable<Driver[]> {
-    return this.http.get<Driver[]>(`${this.base}/drivers`);
+    return this.http.get<Driver[]>(`${API}/drivers`, {
+      params: { include: 'account', limit: 1000 },
+    });
   }
 
   createDriver(name: string): Observable<Driver> {
-    return this.http.post<Driver>(`${this.base}/drivers`, { name });
+    return this.http.post<Driver>(`${API}/drivers`, { name });
   }
 
   updateDriver(driverId: string, patch: { name: string; simgridDriverId?: number | null }): Observable<Driver> {
-    return this.http.patch<Driver>(`${this.base}/drivers/${driverId}`, patch);
+    return this.http.patch<Driver>(`${API}/drivers/${driverId}`, patch);
   }
 
   deleteDriver(driverId: string): Observable<void> {
-    return this.http.delete<void>(`${this.base}/drivers/${driverId}`);
+    return this.http.delete<void>(`${API}/drivers/${driverId}`);
   }
 
   // ── Points ───────────────────────────────────────────────────────
@@ -71,30 +74,30 @@ export class BwpApiService {
     payload: { points: number; issuedOn: string; expiresOn: string }
   ): Observable<BwpPoint> {
     return this.http.post<BwpPoint>(
-      `${this.base}/drivers/${driverId}/points`,
+      `${API}/drivers/${driverId}/bwp-points`,
       payload
     );
   }
 
   deletePoint(pointId: string): Observable<void> {
-    return this.http.delete<void>(`${this.base}/points/${pointId}`);
+    return this.http.delete<void>(`${API}/bwp-points/${pointId}`);
   }
 
   expirePoint(pointId: string, note: string): Observable<BwpPoint> {
-    return this.http.patch<BwpPoint>(`${this.base}/points/${pointId}/expire`, { note });
+    return this.http.patch<BwpPoint>(`${API}/bwp-points/${pointId}`, { expired: true, note });
   }
 
   // ── Penalty Rules ────────────────────────────────────────────────
 
   getPenaltyRules(): Observable<PenaltyRule[]> {
-    return this.http.get<PenaltyRule[]>(`${this.base}/penalty-rules`);
+    return this.http.get<PenaltyRule[]>(`${API}/penalty-rules`);
   }
 
   createPenaltyRule(payload: {
     threshold: number;
     label: string;
   }): Observable<PenaltyRule> {
-    return this.http.post<PenaltyRule>(`${this.base}/penalty-rules`, payload);
+    return this.http.post<PenaltyRule>(`${API}/penalty-rules`, payload);
   }
 
   updatePenaltyRule(
@@ -102,13 +105,13 @@ export class BwpApiService {
     patch: { threshold?: number; label?: string }
   ): Observable<PenaltyRule> {
     return this.http.patch<PenaltyRule>(
-      `${this.base}/penalty-rules/${ruleId}`,
+      `${API}/penalty-rules/${ruleId}`,
       patch
     );
   }
 
   deletePenaltyRule(ruleId: string): Observable<void> {
-    return this.http.delete<void>(`${this.base}/penalty-rules/${ruleId}`);
+    return this.http.delete<void>(`${API}/penalty-rules/${ruleId}`);
   }
 
   // ── Penalty Clearances ───────────────────────────────────────────
@@ -117,19 +120,19 @@ export class BwpApiService {
     driverId: string,
     ruleId: string
   ): Observable<PenaltyClearance> {
-    return this.http.post<PenaltyClearance>(
-      `${this.base}/drivers/${driverId}/clearances/${ruleId}`,
+    return this.http.put<PenaltyClearance>(
+      `${API}/drivers/${driverId}/clearances/${ruleId}`,
       null
     );
   }
 
   removeClearance(driverId: string, ruleId: string): Observable<void> {
     return this.http.delete<void>(
-      `${this.base}/drivers/${driverId}/clearances/${ruleId}`
+      `${API}/drivers/${driverId}/clearances/${ruleId}`
     );
   }
 
   expireAllPoints(driverId: string, note: string): Observable<Driver> {
-    return this.http.post<Driver>(`${this.base}/drivers/${driverId}/expire-all`, { note });
+    return this.http.post<Driver>(`${API}/drivers/${driverId}/bwp-resets`, { note });
   }
 }

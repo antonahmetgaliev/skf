@@ -30,14 +30,8 @@ export class ChampionshipService {
   refreshDriverMap(): void {
     if (this.driverMapLoading) return;
     this.driverMapLoading = true;
-    this.profileApi.getDriversIndex().subscribe({
-      next: (drivers) => {
-        const map = new Map<number, string>();
-        for (const d of drivers) {
-          if (d.simgridDriverId) {
-            map.set(d.simgridDriverId, d.id);
-          }
-        }
+    this.profileApi.getDriverUuidsBySimgridId().subscribe({
+      next: (map) => {
         this.driverUuidBySimgridId.set(map);
         this.driverMapLoading = false;
       },

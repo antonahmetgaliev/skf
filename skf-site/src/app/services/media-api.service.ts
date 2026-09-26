@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable, shareReplay } from 'rxjs';
+import { API } from '../api';
 import { toLocalDateStr } from '../utils/date';
 
 export interface YouTubeVideo {
@@ -14,7 +15,7 @@ export interface YouTubeVideo {
 @Injectable({ providedIn: 'root' })
 export class MediaApiService {
   private readonly http = inject(HttpClient);
-  private readonly base = '/api/youtube';
+  private readonly base = `${API}/youtube-streams`;
 
   private pastCache$: Observable<YouTubeVideo[]> | null = null;
   private pastCacheLimit = 0;
@@ -26,8 +27,8 @@ export class MediaApiService {
     if (!this.pastCache$ || limit > this.pastCacheLimit) {
       this.pastCacheLimit = limit;
       this.pastCache$ = this.http
-        .get<YouTubeVideo[]>(`${this.base}/past-streams`, {
-          params: { limit: String(limit) },
+        .get<YouTubeVideo[]>(this.base, {
+          params: { status: 'past', limit: String(limit) },
         })
         .pipe(shareReplay(1));
     }
@@ -38,8 +39,8 @@ export class MediaApiService {
     if (!this.upcomingCache$ || limit > this.upcomingCacheLimit) {
       this.upcomingCacheLimit = limit;
       this.upcomingCache$ = this.http
-        .get<YouTubeVideo[]>(`${this.base}/upcoming-streams`, {
-          params: { limit: String(limit) },
+        .get<YouTubeVideo[]>(this.base, {
+          params: { status: 'upcoming', limit: String(limit) },
         })
         .pipe(shareReplay(1));
     }

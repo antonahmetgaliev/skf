@@ -10,7 +10,6 @@ from app.config import settings
 from app.core.errors import register_error_handlers
 from app.middleware import StaleHeaderMiddleware
 from app.api import v1
-from app.routers import ROUTERS as PRE_V1_ROUTERS
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -44,8 +43,6 @@ register_error_handlers(app)
 
 app.include_router(v1.router)
 app.include_router(v1.legacy_router)
-for _router in PRE_V1_ROUTERS:
-    app.include_router(_router, prefix="/api")
 
 
 @app.get("/healthz")

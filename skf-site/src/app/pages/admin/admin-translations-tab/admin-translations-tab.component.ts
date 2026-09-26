@@ -8,7 +8,11 @@ import { FormFieldComponent } from '../../../components/form-field/form-field.co
 import { SpinnerComponent } from '../../../components/spinner/spinner.component';
 import { InputDirective } from '../../../directives/input.directive';
 import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
-import { Language, TranslationApiService, TranslationItem } from '../../../services/translation-api.service';
+import {
+  Language,
+  TranslationApiService,
+  TranslationMap,
+} from '../../../services/translation-api.service';
 
 interface TranslationRow {
   key: string;
@@ -94,9 +98,9 @@ export class AdminTranslationsTabComponent implements OnInit {
       next: (results) => {
         // Collect all unique keys
         const keySet = new Set<string>();
-        for (const items of Object.values(results)) {
-          for (const item of items) {
-            keySet.add(item.key);
+        for (const map of Object.values(results)) {
+          for (const key of Object.keys(map)) {
+            keySet.add(key);
           }
         }
 
@@ -104,8 +108,7 @@ export class AdminTranslationsTabComponent implements OnInit {
         const rows: TranslationRow[] = [...keySet].sort().map((key) => {
           const values: Record<string, string> = {};
           for (const lang of langs) {
-            const item = results[lang.code]?.find((i: TranslationItem) => i.key === key);
-            values[lang.code] = item?.value ?? '';
+            values[lang.code] = results[lang.code]?.[key] ?? '';
           }
           return { key, values };
         });
@@ -131,14 +134,13 @@ export class AdminTranslationsTabComponent implements OnInit {
     if (modifiedCells.size === 0) return;
 
     // Group modified items by language
-    const byLang: Record<string, TranslationItem[]> = {};
+    const byLang: Record<string, TranslationMap> = {};
     for (const cell of modifiedCells) {
       const [lang, ...keyParts] = cell.split(':');
       const key = keyParts.join(':');
       const row = this.rows().find((r) => r.key === key);
       if (!row) continue;
-      if (!byLang[lang]) byLang[lang] = [];
-      byLang[lang].push({ key, value: row.values[lang] ?? '' });
+      (byLang[lang] ??= {})[key] = row.values[lang] ?? '';
     }
 
     this.saving.set(true);
@@ -191,13 +193,8 @@ export class AdminTranslationsTabComponent implements OnInit {
 
     const vals = this.newValues();
     const langs = this.languages();
-    const items: Record<string, TranslationItem[]> = {};
-    for (const lang of langs) {
-      items[lang.code] = [{ key, value: vals[lang.code] ?? '' }];
-    }
-
-    const saves = Object.entries(items).map(([lang, itms]) =>
-      this.api.saveTranslations(lang, itms)
+    const saves = langs.map((lang) =>
+      this.api.saveTranslations(lang.code, { [key]: vals[lang.code] ?? '' })
     );
 
     forkJoin(saves).subscribe({
@@ -254,7 +251,7 @@ export class AdminTranslationsTabComponent implements OnInit {
   }
 
   exportJson(lang: string): void {
-    this.api.exportTranslations(lang).subscribe({
+    this.api.getTranslations(lang).subscribe({
       next: (data) => {
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -267,21 +264,55 @@ export class AdminTranslationsTabComponent implements OnInit {
     });
   }
 
-  importJson(event: Event, lang: string): void {
+  async importJson(event: Event, lang: string): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
 
-    this.api.importTranslations(lang, file).subscribe({
+    let entries: TranslationMap;
+    try {
+      entries = parseTranslationFile(await file.text());
+    } catch (err) {
+      this.message.set(err instanceof Error ? err.message : 'Import failed.');
+      input.value = '';
+      return;
+    }
+
+    this.api.saveTranslations(lang, entries).subscribe({
       next: () => {
         this.message.set(`Import to "${lang}" successful.`);
         this.loadAllTranslations();
         input.value = '';
       },
-      error: () => {
-        this.message.set('Import failed.');
+      error: (err) => {
+        this.message.set(err?.error?.detail ?? 'Import failed.');
         input.value = '';
       },
     });
   }
+}
+
+/** Parse an imported bundle: a flat JSON object whose values are strings
+ *  (numbers and booleans are accepted and stringified). */
+function parseTranslationFile(text: string): TranslationMap {
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error('Invalid JSON file.');
+  }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error('JSON must be a flat object {key: value}.');
+  }
+  const entries: TranslationMap = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (typeof value === 'string') {
+      entries[key] = value;
+    } else if (typeof value === 'number' || typeof value === 'boolean') {
+      entries[key] = String(value);
+    } else {
+      throw new Error(`JSON must be a flat object {key: value}; "${key}" is not a string.`);
+    }
+  }
+  return entries;
 }

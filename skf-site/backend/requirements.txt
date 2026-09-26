@@ -11,3 +11,4 @@ python-multipart==0.0.20
 msgpack==1.1.1
 PyYAML==6.0.2
 boto3==1.40.30
+defusedxml==0.7.1

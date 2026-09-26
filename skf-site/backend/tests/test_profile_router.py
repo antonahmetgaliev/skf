@@ -1,19 +1,19 @@
-"""Tests for /api/profile/* endpoints.
+"""Tests for the signed-in user's own driver.
 
 Covers:
-  GET  /api/profile/me/driver
-  GET  /api/profile/drivers          (public directory)
-  GET  /api/profile/drivers-index    (SimGrid-id → UUID map)
-  GET  /api/profile/drivers/{driver_id}
+  GET   /api/v1/me/driver
+  PATCH /api/v1/me/driver   {photoUrl}
 
-Account↔driver linking is fully automatic (discord_uid) and covered in
-test_drivers_service.py — there are no manual link endpoints anymore.
+The public driver directory lives in test_bwp_router.py. Account↔driver
+linking is fully automatic (discord_uid) and covered in
+test_drivers_service.py — there are no manual link endpoints.
 """
 from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
 
+import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,136 +22,94 @@ def _now():
     return datetime.now(timezone.utc)
 
 
+async def _link_driver(db: AsyncSession, user_id, name="My Driver"):
+    from app.models.bwp import Driver
+
+    driver = Driver(name=name, user_id=user_id, created_at=_now())
+    db.add(driver)
+    await db.commit()
+    return driver
+
+
 # ---------------------------------------------------------------------------
-# GET /api/profile/me/driver
+# GET /api/v1/me/driver
 # ---------------------------------------------------------------------------
 
 async def test_get_my_driver_returns_linked_driver(
     auth_client: AsyncClient, db: AsyncSession, test_user
 ):
-    from app.models.bwp import Driver
+    await _link_driver(db, test_user.id)
 
-    driver = Driver(name="My Driver", user_id=test_user.id, created_at=_now())
-    db.add(driver)
-    await db.commit()
-
-    resp = await auth_client.get("/api/profile/me/driver")
+    resp = await auth_client.get("/api/v1/me/driver")
     assert resp.status_code == 200
     assert resp.json()["name"] == "My Driver"
+    assert resp.json()["userId"] == str(test_user.id)
 
 
 async def test_get_my_driver_404_when_not_linked(auth_client: AsyncClient):
-    resp = await auth_client.get("/api/profile/me/driver")
+    resp = await auth_client.get("/api/v1/me/driver")
     assert resp.status_code == 404
+    assert resp.json()["detail"] == "No linked driver."
 
 
 async def test_get_my_driver_requires_auth(client: AsyncClient):
-    resp = await client.get("/api/profile/me/driver")
+    resp = await client.get("/api/v1/me/driver")
     assert resp.status_code == 401
 
 
 # ---------------------------------------------------------------------------
-# Removed manual link endpoints stay removed
+# PATCH /api/v1/me/driver
 # ---------------------------------------------------------------------------
 
-async def test_manual_link_endpoints_are_gone(auth_client: AsyncClient):
+async def test_set_and_clear_photo(auth_client: AsyncClient, db: AsyncSession, test_user):
+    await _link_driver(db, test_user.id)
+
+    resp = await auth_client.patch(
+        "/api/v1/me/driver", json={"photoUrl": "  https://example.com/me.png "}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["photoUrl"] == "https://example.com/me.png"
+
+    resp = await auth_client.patch("/api/v1/me/driver", json={"photoUrl": None})
+    assert resp.status_code == 200
+    assert resp.json()["photoUrl"] is None
+
+
+@pytest.mark.parametrize(
+    "url",
+    ["http://example.com/me.png", "javascript:alert(1)", "https://", "ftp://x/y.png"],
+)
+async def test_photo_must_be_https(
+    auth_client: AsyncClient, db: AsyncSession, test_user, url
+):
+    await _link_driver(db, test_user.id)
+    resp = await auth_client.patch("/api/v1/me/driver", json={"photoUrl": url})
+    assert resp.status_code == 422
+
+
+async def test_photo_url_length_limit(auth_client: AsyncClient, db: AsyncSession, test_user):
+    await _link_driver(db, test_user.id)
+    url = "https://example.com/" + "a" * 500
+    resp = await auth_client.patch("/api/v1/me/driver", json={"photoUrl": url})
+    assert resp.status_code == 422
+
+
+async def test_photo_404_when_not_linked(auth_client: AsyncClient):
+    resp = await auth_client.patch(
+        "/api/v1/me/driver", json={"photoUrl": "https://example.com/me.png"}
+    )
+    assert resp.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Removed endpoints stay removed
+# ---------------------------------------------------------------------------
+
+async def test_old_profile_endpoints_are_gone(auth_client: AsyncClient):
+    assert (await auth_client.get("/api/profile/me/driver")).status_code == 404
     assert (await auth_client.get("/api/profile/link-candidates")).status_code == 404
     assert (
         await auth_client.post(
             "/api/profile/link-driver", json={"driverId": str(uuid.uuid4())}
         )
     ).status_code == 404
-    assert (await auth_client.delete("/api/profile/unlink-driver")).status_code == 404
-
-
-# ---------------------------------------------------------------------------
-# GET /api/profile/drivers/{driver_id}  — public endpoint
-# ---------------------------------------------------------------------------
-
-async def test_get_public_driver_returns_data(client: AsyncClient, db: AsyncSession):
-    from app.models.bwp import Driver
-
-    driver = Driver(
-        name="Public Star",
-        simgrid_driver_id=777,
-        country_code="ES",
-        created_at=_now(),
-    )
-    db.add(driver)
-    await db.commit()
-
-    resp = await client.get(f"/api/profile/drivers/{driver.id}")
-    assert resp.status_code == 200
-    body = resp.json()
-    assert body["name"] == "Public Star"
-    assert body["simgridDriverId"] == 777
-    assert body["countryCode"] == "ES"
-
-
-async def test_get_public_driver_by_simgrid_id(client: AsyncClient, db: AsyncSession):
-    from app.models.bwp import Driver
-
-    driver = Driver(name="By Numeric Id", simgrid_driver_id=555, created_at=_now())
-    db.add(driver)
-    await db.commit()
-
-    resp = await client.get("/api/profile/drivers/555")
-    assert resp.status_code == 200
-    assert resp.json()["name"] == "By Numeric Id"
-
-
-async def test_get_public_driver_404_unknown(client: AsyncClient):
-    resp = await client.get(f"/api/profile/drivers/{uuid.uuid4()}")
-    assert resp.status_code == 404
-
-
-async def test_get_public_driver_no_auth_required(client: AsyncClient, db: AsyncSession):
-    """Public driver endpoint is accessible without authentication."""
-    from app.models.bwp import Driver
-
-    driver = Driver(name="Open Profile", created_at=_now())
-    db.add(driver)
-    await db.commit()
-
-    resp = await client.get(f"/api/profile/drivers/{driver.id}")
-    assert resp.status_code == 200
-
-
-# ---------------------------------------------------------------------------
-# GET /api/profile/drivers + /drivers-index  — public lists
-# ---------------------------------------------------------------------------
-
-async def test_public_driver_list_hides_user_link(client: AsyncClient, db: AsyncSession):
-    """The public directory never exposes which user claimed a driver."""
-    from app.models.bwp import Driver
-
-    db.add(Driver(name="Linked Racer", user_id=uuid.uuid4(), created_at=_now()))
-    await db.commit()
-
-    resp = await client.get("/api/profile/drivers")
-    assert resp.status_code == 200
-    body = resp.json()
-    assert len(body) == 1
-    assert "userId" not in body[0]
-
-
-async def test_drivers_index_only_simgrid_linked(client: AsyncClient, db: AsyncSession):
-    from app.models.bwp import Driver
-
-    db.add_all([
-        Driver(name="With SimGrid", simgrid_driver_id=42, created_at=_now()),
-        Driver(name="Without SimGrid", created_at=_now()),
-    ])
-    await db.commit()
-
-    resp = await client.get("/api/profile/drivers-index")
-    assert resp.status_code == 200
-    body = resp.json()
-    assert [d["name"] for d in body] == ["With SimGrid"]
-    assert body[0]["simgridDriverId"] == 42
-
-
-async def test_bwp_driver_list_requires_auth(client: AsyncClient):
-    """The full BWP driver list (with user linkage) is not public."""
-    resp = await client.get("/api/bwp/drivers")
-    assert resp.status_code == 401

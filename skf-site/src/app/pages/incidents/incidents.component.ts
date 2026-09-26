@@ -587,9 +587,18 @@ export class IncidentsComponent implements OnInit {
 
   async addIncidentDriver(incidentId: string, name: string): Promise<void> {
     if (!name.trim()) return;
-    await firstValueFrom(this.incidentsApi.addDriverToIncident(incidentId, name.trim()));
-    const windowId = this.windowDetail()?.id;
-    if (windowId) await this.selectWindow(windowId, true);
+    const driver = await firstValueFrom(this.incidentsApi.addDriverToIncident(incidentId, name.trim()));
+    // Merge the new driver in place; it has no verdict yet, so the incident is open again.
+    this.windowDetail.update(w =>
+      w && {
+        ...w,
+        incidents: w.incidents.map(inc =>
+          inc.id === incidentId
+            ? { ...inc, status: 'open', drivers: [...inc.drivers, driver] }
+            : inc
+        ),
+      }
+    );
   }
 
 

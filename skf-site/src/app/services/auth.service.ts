@@ -1,6 +1,7 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Observable } from 'rxjs';
+import { API } from '../api';
 
 /** Canonical role names. Mirrors backend `ROLE_*` constants in `models/user.py`. */
 export const ROLES = {
@@ -112,31 +113,32 @@ export class AuthService {
     return r === role || ROLE_RANK[r] >= ROLE_RANK[ROLES.ADMIN];
   }
 
-  /** Fetch the current session user. Call once at app startup. */
+  /**
+   * Fetch the current session user. Call once at app startup.
+   * `/me` answers 401 for anonymous visitors — that simply means "not logged in".
+   */
   loadUser(): void {
-    this.http.get<AuthUser>('/api/auth/me', { observe: 'response' }).subscribe({
-      next: (res: HttpResponse<AuthUser>) => {
-        this.user.set(res.status === 204 ? null : res.body);
-      },
+    this.http.get<AuthUser>(`${API}/me`).subscribe({
+      next: (user) => this.user.set(user),
       error: () => this.user.set(null),
     });
   }
 
   /** Redirect the browser to the Discord OAuth flow. */
   login(): void {
-    this.http.get<{ url: string }>('/api/auth/discord').subscribe({
+    this.http.get<{ url: string }>(`${API}/auth/discord/authorization-url`).subscribe({
       next: (res) => (window.location.href = res.url),
     });
   }
 
   /** Re-fetch and store the user's Discord server nickname. */
   refreshDiscordNickname(): Observable<AuthUser> {
-    return this.http.post<AuthUser>('/api/auth/refresh-discord-nickname', null);
+    return this.http.post<AuthUser>(`${API}/me/discord-syncs`, null);
   }
 
   /** End the current session. */
   logout(): void {
-    this.http.post('/api/auth/logout', null).subscribe({
+    this.http.delete(`${API}/auth/session`).subscribe({
       next: () => this.user.set(null),
       error: () => this.user.set(null),
     });

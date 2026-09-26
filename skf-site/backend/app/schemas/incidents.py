@@ -2,8 +2,9 @@
 
 import uuid
 from datetime import datetime
+from typing import Annotated, Literal
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field, StringConstraints
 
 from app.schemas.base import CamelModel
 
@@ -40,20 +41,31 @@ class IncidentBatchCreate(CamelModel):
 
 # ── Manual file incident ────────────────────────────────────────────────────
 
+# Anyone may file an incident without logging in, so every free-text field is
+# bounded: the endpoint must not be a way to store arbitrary amounts of data.
+MAX_FILED_DRIVERS = 20
+DriverName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+
+
 class IncidentFileCreate(CamelModel):
     session_name: str | None = Field(default=None, max_length=100)
     lap: str | None = Field(default=None, max_length=20)
     corner: str | None = Field(default=None, max_length=50)
-    description: str | None = None
-    drivers: list[str] = Field(min_length=1)
+    description: str | None = Field(default=None, max_length=2000)
+    drivers: list[DriverName] = Field(min_length=1, max_length=MAX_FILED_DRIVERS)
 
 
 class IncidentDriverAdd(CamelModel):
     driver_name: str = Field(min_length=1, max_length=200)
 
 
-class IncidentDriverLink(CamelModel):
+class IncidentDriverUpdate(CamelModel):
     driver_id: uuid.UUID
+
+
+class WindowIncidentsUpdate(CamelModel):
+    # Publishing is one-way: verdicts that went public cannot be hidden again.
+    is_published: Literal[True]
 
 
 # ── Per-driver resolve ──────────────────────────────────────────────────────
@@ -195,6 +207,13 @@ class PublishWindowOut(IncidentWindowOut):
     # Penalties that could not reach a licence because the driver name never
     # matched a record. Reported out loud rather than lost in silence.
     unlinked_count: int = 0
+
+
+class BwpBackfillOut(CamelModel):
+    # Penalties that now have a licence point.
+    fixed: int
+    # Names that still match no driver record.
+    unmatched: list[str]
 
 
 class BwpAuditEntry(CamelModel):

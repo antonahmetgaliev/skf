@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { forkJoin, map, Observable, shareReplay } from 'rxjs';
+import { API } from '../api';
 
 export type CalendarEventType = 'past' | 'ongoing' | 'upcoming' | 'future';
 
@@ -128,19 +129,19 @@ export interface CommunityRequest {
 @Injectable({ providedIn: 'root' })
 export class CalendarApiService {
   private readonly http = inject(HttpClient);
-  private readonly base = '/api/calendar';
+  private readonly base = API;
   private currentEvents$?: Observable<CalendarEvent[]>;
 
   // ── Events ──
 
   getEvents(year: number, month: number): Observable<CalendarEvent[]> {
-    return this.http.get<CalendarEvent[]>(`${this.base}/events`, {
+    return this.http.get<CalendarEvent[]>(`${this.base}/calendar-events`, {
       params: { year: String(year), month: String(month) },
     });
   }
 
   getYearEvents(year: number): Observable<CalendarEvent[]> {
-    return this.http.get<CalendarEvent[]>(`${this.base}/events`, {
+    return this.http.get<CalendarEvent[]>(`${this.base}/calendar-events`, {
       params: { year: String(year) },
     });
   }
@@ -175,8 +176,11 @@ export class CalendarApiService {
     return this.http.get<Community[]>(`${this.base}/communities`);
   }
 
+  /** Communities the caller manages, hidden ones included (all of them for admins). */
   getCommunitiesAdmin(): Observable<Community[]> {
-    return this.http.get<Community[]>(`${this.base}/communities/admin`);
+    return this.http.get<Community[]>(`${this.base}/communities`, {
+      params: { scope: 'managed' },
+    });
   }
 
   createCommunity(payload: CommunityCreate): Observable<Community> {
@@ -213,7 +217,8 @@ export class CalendarApiService {
   }
 
   getCustomChampionships(communityId?: string): Observable<CustomChampionshipOut[]> {
-    const params: Record<string, string> = {};
+    // The collection is paginated; the admin tab shows everything at once.
+    const params: Record<string, string> = { limit: '1000' };
     if (communityId) {
       params['communityId'] = communityId;
     }

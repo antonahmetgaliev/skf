@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import uuid
+from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import model_validator
 
 from app.schemas.base import CamelModel
 
@@ -132,3 +134,15 @@ class ParticipatingUser(CamelModel):
     username: str
     steam64_id: str | None = None
     discord_uid: str | None = None
+
+
+class ChampionshipIncidentWindowOut(CamelModel):
+    race_id: int
+    window_id: uuid.UUID
+    is_open: bool
+    incidents_count: int
+
+
+class ActiveChampionshipOut(CamelModel):
+    simgrid_id: int
+    created_at: datetime | None = None

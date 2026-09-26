@@ -1,0 +1,74 @@
+"""Regulations: localized public views and the admin ``regulation-pages`` resource."""
+
+from __future__ import annotations
+
+import uuid
+
+from fastapi import APIRouter, Depends, Query, Response, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.auth import require_admin
+from app.database import get_db
+from app.schemas.regulations import (
+    RegulationContentOut,
+    RegulationPageCreate,
+    RegulationPageListItem,
+    RegulationPageOut,
+    RegulationPageUpdate,
+)
+from app.services import regulations as service
+
+router = APIRouter(tags=["Regulations"])
+
+
+# ── Public ───────────────────────────────────────────────────────────────────
+
+
+@router.get("/regulations", response_model=list[RegulationPageListItem])
+async def list_regulations(lang: str = Query("en"), db: AsyncSession = Depends(get_db)):
+    """Visible pages with their title in *lang* (falling back to any language)."""
+    return await service.list_public(db, lang)
+
+
+@router.get("/regulations/{slug}", response_model=RegulationContentOut)
+async def get_regulation(slug: str, lang: str = Query("en"), db: AsyncSession = Depends(get_db)):
+    return await service.get_public(db, slug, lang)
+
+
+# ── Admin ────────────────────────────────────────────────────────────────────
+
+admin = APIRouter(prefix="/regulation-pages", dependencies=[Depends(require_admin)])
+
+
+@admin.get("", response_model=list[RegulationPageOut])
+async def list_regulation_pages(db: AsyncSession = Depends(get_db)):
+    return await service.list_all(db)
+
+
+@admin.post("", response_model=RegulationPageOut, status_code=status.HTTP_201_CREATED)
+async def create_regulation_page(
+    body: RegulationPageCreate, response: Response, db: AsyncSession = Depends(get_db)
+):
+    page = await service.create(db, body)
+    response.headers["Location"] = f"/api/v1/regulation-pages/{page.id}"
+    return page
+
+
+@admin.get("/{page_id}", response_model=RegulationPageOut)
+async def get_regulation_page(page_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return await service.get(db, page_id)
+
+
+@admin.patch("/{page_id}", response_model=RegulationPageOut)
+async def update_regulation_page(
+    page_id: uuid.UUID, body: RegulationPageUpdate, db: AsyncSession = Depends(get_db)
+):
+    return await service.update(db, page_id, body)
+
+
+@admin.delete("/{page_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_regulation_page(page_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    await service.delete(db, page_id)
+
+
+router.include_router(admin)

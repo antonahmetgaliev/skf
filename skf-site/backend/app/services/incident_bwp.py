@@ -6,7 +6,7 @@ cannot drift apart — and so the idempotency guard is impossible to forget.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +16,11 @@ from app.services.driver_matching import match_driver_id_by_name
 
 # The regulations' "points remain active for 3 months".
 BWP_ACTIVE_DAYS = 90
+
+
+def utc_today() -> date:
+    """Today's date in UTC, independent of the server's local timezone."""
+    return datetime.now(timezone.utc).date()
 
 
 async def apply_resolution_bwp(entry: IncidentDriver, db: AsyncSession) -> bool:
@@ -43,7 +48,7 @@ async def apply_resolution_bwp(entry: IncidentDriver, db: AsyncSession) -> bool:
         # marking it applied against nobody.
         return False
 
-    today = date.today()
+    today = utc_today()
     point = BwpPoint(
         driver_id=entry.driver_id,
         points=resolution.bwp_points,

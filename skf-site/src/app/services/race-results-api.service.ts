@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import { API } from '../api';
+
 /** Simulators whose result file the backend can parse. */
 export type RaceSim = 'lmu' | 'iracing';
 
@@ -68,37 +70,36 @@ export interface ImportResult {
 @Injectable({ providedIn: 'root' })
 export class RaceResultsApiService {
   private readonly http = inject(HttpClient);
-  private readonly base = '/api/race-results';
+  private readonly base = `${API}/race-result-imports`;
 
-  getRounds(championshipSimgridId: number): Observable<RaceRounds> {
-    return this.http.get<RaceRounds>(`${this.base}/rounds`, {
-      params: { championshipSimgridId },
-    });
+  getRounds(championshipId: number): Observable<RaceRounds> {
+    return this.http.get<RaceRounds>(`${API}/championships/${championshipId}/rounds`);
   }
 
   upload(
-    championshipSimgridId: number,
-    raceSimgridId: number,
+    championshipId: number,
+    raceId: number,
     file: File,
     createIncidents: boolean,
   ): Observable<ImportResult> {
     const body = new FormData();
     body.append('file', file);
-    body.append('championshipSimgridId', String(championshipSimgridId));
-    body.append('raceSimgridId', String(raceSimgridId));
+    body.append('championshipId', String(championshipId));
+    body.append('raceId', String(raceId));
     body.append('createIncidents', String(createIncidents));
-    return this.http.post<ImportResult>(`${this.base}/imports`, body);
+    return this.http.post<ImportResult>(this.base, body);
   }
 
+  /** Re-run the parser on the stored original; the import gets a new id. */
   reparse(importId: string): Observable<ImportResult> {
-    return this.http.post<ImportResult>(`${this.base}/imports/${importId}/reparse`, null);
+    return this.http.post<ImportResult>(`${this.base}/${importId}/parse-runs`, null);
   }
 
   download(importId: string): Observable<Blob> {
-    return this.http.get(`${this.base}/imports/${importId}/file`, { responseType: 'blob' });
+    return this.http.get(`${this.base}/${importId}/file`, { responseType: 'blob' });
   }
 
   deleteImport(importId: string): Observable<void> {
-    return this.http.delete<void>(`${this.base}/imports/${importId}`);
+    return this.http.delete<void>(`${this.base}/${importId}`);
   }
 }

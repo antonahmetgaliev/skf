@@ -7,12 +7,13 @@ import uuid
 from datetime import datetime, timezone
 from typing import Callable
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.config import settings
+from app.core.errors import Forbidden, ServiceUnavailable, Unauthorized
 from app.database import get_db
 from app.models.user import Session, User, ROLE_ADMIN, ROLE_SUPER_ADMIN, ROLE_COMMUNITY_MANAGER
 
@@ -58,10 +59,7 @@ async def get_current_user(
 ) -> User:
     """Return the authenticated user or raise 401."""
     if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated.",
-        )
+        raise Unauthorized("Not authenticated.")
     return user
 
 
@@ -77,10 +75,7 @@ def require_role(*roles: str) -> Callable:
 
     async def _check(user: User = Depends(get_current_user)) -> User:
         if user.role.name not in roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient permissions.",
-            )
+            raise Forbidden("Insufficient permissions.")
         return user
 
     return _check
@@ -109,10 +104,7 @@ async def check_community_access(
         )
         if result.scalar_one_or_none() is not None:
             return
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="No access to this community.",
-    )
+    raise Forbidden("No access to this community.")
 
 
 async def get_managed_community_ids(
@@ -133,18 +125,9 @@ async def require_api_token(request: Request) -> None:
     """Validate ``Authorization: Bearer <token>`` against the configured incident API token."""
     token = settings.incident_api_token
     if not token:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Incident API token not configured.",
-        )
+        raise ServiceUnavailable("Incident API token not configured.")
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing bearer token.",
-        )
+        raise Unauthorized("Missing bearer token.")
     if not secrets.compare_digest(auth_header[7:].encode(), token.encode()):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid API token.",
-        )
+        raise Forbidden("Invalid API token.")

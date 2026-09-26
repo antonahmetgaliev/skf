@@ -1,46 +1,50 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+import uuid
+
+from pydantic import Field
+
+from app.schemas.base import CamelModel
 
 
-class RegulationContentOut(BaseModel):
+class RegulationContentOut(CamelModel):
     lang: str
     title: str
     subtitle: str
     content: str
 
 
-class RegulationPageListItem(BaseModel):
-    id: str
+class RegulationPageListItem(CamelModel):
+    id: uuid.UUID
     slug: str
     sort_order: int
     is_visible: bool
     title: str
 
 
-class RegulationPageOut(BaseModel):
-    id: str
+class RegulationPageOut(CamelModel):
+    id: uuid.UUID
     slug: str
     sort_order: int
     is_visible: bool
     contents: dict[str, RegulationContentOut]
 
 
-class RegulationContentUpdate(BaseModel):
-    title: str
-    subtitle: str = ""
+class RegulationContentUpdate(CamelModel):
+    title: str = Field(max_length=300)
+    subtitle: str = Field(default="", max_length=500)
     content: str = ""
 
 
-class RegulationPageCreate(BaseModel):
-    slug: str
+class RegulationPageCreate(CamelModel):
+    slug: str = Field(min_length=1, max_length=100)
     sort_order: int = 0
     is_visible: bool = True
     contents: dict[str, RegulationContentUpdate] = {}
 
 
-class RegulationPageUpdate(BaseModel):
-    slug: str | None = None
+class RegulationPageUpdate(CamelModel):
+    slug: str | None = Field(default=None, min_length=1, max_length=100)
     sort_order: int | None = None
     is_visible: bool | None = None
     contents: dict[str, RegulationContentUpdate] | None = None
