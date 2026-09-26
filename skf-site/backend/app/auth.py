@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import secrets
 import uuid
 from datetime import datetime, timezone
 from typing import Callable
@@ -11,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.config import Settings
+from app.config import settings
 from app.database import get_db
 from app.models.user import Session, User, ROLE_ADMIN, ROLE_SUPER_ADMIN, ROLE_COMMUNITY_MANAGER
 
@@ -130,7 +131,6 @@ async def get_managed_community_ids(
 
 async def require_api_token(request: Request) -> None:
     """Validate ``Authorization: Bearer <token>`` against the configured incident API token."""
-    settings = Settings()  # type: ignore[call-arg]
     token = settings.incident_api_token
     if not token:
         raise HTTPException(
@@ -143,7 +143,7 @@ async def require_api_token(request: Request) -> None:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing bearer token.",
         )
-    if auth_header[7:] != token:
+    if not secrets.compare_digest(auth_header[7:].encode(), token.encode()):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid API token.",

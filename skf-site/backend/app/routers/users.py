@@ -143,7 +143,7 @@ async def force_logout(
 # ── Community manager assignments ──────────────────────────────────────────
 
 
-from app.schemas.championship import CamelModel
+from app.schemas.base import CamelModel
 
 
 class ManagedCommunitiesUpdate(CamelModel):

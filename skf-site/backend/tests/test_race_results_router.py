@@ -202,7 +202,9 @@ async def test_reupload_keeps_resolved_incidents_and_adds_no_duplicates(admin_cl
 
 
 async def test_incidents_from_the_legacy_ingest_are_not_duplicated(admin_client, monkeypatch):
-    monkeypatch.setenv("INCIDENT_API_TOKEN", "legacy-token")
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "incident_api_token", "legacy-token")
     ir = (await _upload(admin_client, IR_FILE, 201, IRACING_CHAMPIONSHIP_ID)).json()
     window = await _window(admin_client, ir["windowId"])
     await admin_client.delete(f"/api/race-results/imports/{ir['raceImport']['id']}")

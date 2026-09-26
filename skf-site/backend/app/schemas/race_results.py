@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from app.schemas.championship import CamelModel
+from app.schemas.base import CamelModel
 from app.schemas.giveaway import ImportEntryOut
 
 

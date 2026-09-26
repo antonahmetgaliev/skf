@@ -8,7 +8,7 @@ from enum import Enum
 
 from pydantic import ConfigDict, Field
 
-from app.schemas.championship import CamelModel
+from app.schemas.base import CamelModel
 
 
 # ── Enums ────────────────────────────────────────────────────────────────────

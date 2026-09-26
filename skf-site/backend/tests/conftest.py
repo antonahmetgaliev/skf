@@ -168,6 +168,14 @@ async def auth_client(engine, test_user):
     db_module.async_session = original
 
 
+@pytest.fixture(autouse=True)
+def _incident_api_token(monkeypatch):
+    """The legacy ingest token tests authenticate with."""
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "incident_api_token", "test-token-secret")
+
+
 # ── SimGrid stub ------------------------------------------------------------
 
 LMU_CHAMPIONSHIP_ID = 26927

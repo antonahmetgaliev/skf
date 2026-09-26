@@ -7,7 +7,7 @@ from datetime import datetime
 
 from pydantic import ConfigDict
 
-from app.schemas.championship import CamelModel
+from app.schemas.base import CamelModel
 
 
 class UserOut(CamelModel):

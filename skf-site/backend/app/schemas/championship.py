@@ -3,20 +3,8 @@ from __future__ import annotations
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, model_validator
-from pydantic.alias_generators import to_camel
 
-
-class CamelModel(BaseModel):
-    """Base model that serialises field names as camelCase."""
-
-    model_config = ConfigDict(
-        alias_generator=to_camel,
-        populate_by_name=True,
-    )
-
-    def model_dump(self, **kwargs):  # type: ignore[override]
-        kwargs.setdefault("by_alias", True)
-        return super().model_dump(**kwargs)
+from app.schemas.base import CamelModel
 
 
 class ChampionshipListItem(CamelModel):

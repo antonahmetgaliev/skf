@@ -17,7 +17,7 @@ from app.database import get_db
 from app.models.bwp import Driver
 from app.models.user import User
 from app.schemas.bwp import DriverIndexEntry, DriverOut, DriverPublicOut
-from app.schemas.championship import CamelModel
+from app.schemas.base import CamelModel
 
 router = APIRouter(prefix="/profile", tags=["Profile"])
 

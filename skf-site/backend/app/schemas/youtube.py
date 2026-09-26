@@ -1,4 +1,4 @@
-from app.schemas.championship import CamelModel
+from app.schemas.base import CamelModel
 
 
 class YouTubeVideo(CamelModel):
