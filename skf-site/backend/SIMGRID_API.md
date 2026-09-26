@@ -256,7 +256,7 @@ the top-level `tracks`/`cars` endpoints.
 ## What we actually call
 
 All SimGrid traffic is server-side, in `app/services/simgrid.py`. The frontend
-talks only to our own `/api/championships/*`.
+talks only to our own `/api/v1/championships/*`.
 
 | Method | Endpoint | Cache key | TTL |
 |---|---|---|---|
@@ -273,7 +273,7 @@ talks only to our own `/api/championships/*`.
 Responses are cached in the `simgrid_cache` table. Every failing path falls
 back to `read_stale_cache` and calls `mark_stale()`, which surfaces as an
 `X-Data-Stale: true` header and a staleness banner in the UI. Admins can flush
-with `POST /api/admin/clear-cache?domain=simgrid`.
+with `DELETE /api/v1/caches/simgrid`.
 
 ---
 
