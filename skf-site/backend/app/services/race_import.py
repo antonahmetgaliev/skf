@@ -12,7 +12,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 
-from sqlalchemy import delete, select
+from sqlalchemy import case, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.incidents import Incident, IncidentDriver, IncidentWindow
@@ -60,6 +60,25 @@ class ImportResult:
     incidents_kept: int
 
 
+async def entry_counts(
+    db: AsyncSession, import_ids: Iterable[uuid.UUID]
+) -> dict[uuid.UUID, tuple[int, int]]:
+    """``{import_id: (entries, unmatched entries)}`` counted in SQL."""
+    ids = list(import_ids)
+    if not ids:
+        return {}
+    rows = await db.execute(
+        select(
+            RaceResultEntry.import_id,
+            func.count(RaceResultEntry.id),
+            func.sum(case((RaceResultEntry.driver_id.is_(None), 1), else_=0)),
+        )
+        .where(RaceResultEntry.import_id.in_(ids))
+        .group_by(RaceResultEntry.import_id)
+    )
+    return {import_id: (total, unmatched or 0) for import_id, total, unmatched in rows.all()}
+
+
 async def alias_map(db: AsyncSession) -> dict[str, tuple[str, str]]:
     """normalized alias -> (canonical normalized name, canonical display name)."""
     result = await db.execute(
@@ -79,6 +98,35 @@ async def championship_name_for(championship_id: int) -> str | None:
     except Exception:  # noqa: BLE001 - a missing name must not block incidents
         logger.warning("Could not load championship %s from SimGrid", championship_id)
         return None
+
+
+async def backfill_window_championship_names(db: AsyncSession) -> int:
+    """Fill in championship names on windows that only have the id.
+
+    Windows sent by the legacy ingest API before the name was stored carry the
+    championship id only; the incidents page groups rounds by name. Returns the
+    number of windows updated.
+    """
+    windows = (
+        await db.execute(
+            select(IncidentWindow).where(
+                IncidentWindow.championship_id.is_not(None),
+                IncidentWindow.championship_name.is_(None),
+            )
+        )
+    ).scalars().all()
+    names: dict[int, str | None] = {}
+    updated = 0
+    for window in windows:
+        cid = window.championship_id
+        if cid not in names:
+            names[cid] = await championship_name_for(cid)
+        if names[cid]:
+            window.championship_name = names[cid]
+            updated += 1
+    if updated:
+        await db.commit()
+    return updated
 
 
 async def find_or_create_window(

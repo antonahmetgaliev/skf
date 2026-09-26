@@ -42,7 +42,8 @@ class IncidentWindow(Base):
     incidents: Mapped[list["Incident"]] = relationship(
         back_populates="window",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        passive_deletes=True,
+        lazy="raise",
         order_by="Incident.created_at",
     )
 

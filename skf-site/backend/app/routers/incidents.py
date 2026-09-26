@@ -6,7 +6,7 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select, update
+from sqlalchemy import case, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -17,7 +17,6 @@ from app.services.driver_matching import match_driver_id_by_name
 from app.services.incident_bwp import apply_resolution_bwp
 from app.services.race_import import (
     add_ingested_incidents,
-    championship_name_for,
     find_or_create_window,
 )
 from app.models.incidents import (
@@ -98,19 +97,15 @@ async def _match_driver(name: str, db: AsyncSession) -> uuid.UUID | None:
 
 async def _update_incident_status(incident_id: uuid.UUID, db: AsyncSession) -> None:
     """Set incident status to 'resolved' when all its drivers have resolutions."""
-    # Expire any cached Incident so we get fresh relationship data
-    result = await db.execute(
-        select(Incident).where(Incident.id == incident_id)
-    )
-    incident = result.scalar_one_or_none()
+    incident = await db.get(Incident, incident_id)
     if incident is None:
         return
-    # Refresh drivers + their resolutions
-    await db.refresh(incident, attribute_names=["drivers"])
-    for d in incident.drivers:
-        await db.refresh(d, attribute_names=["resolution"])
-    all_resolved = all(d.resolution is not None for d in incident.drivers)
-    incident.status = "resolved" if all_resolved else "open"
+    unresolved = await db.scalar(
+        select(func.count(IncidentDriver.id))
+        .outerjoin(IncidentResolution, IncidentResolution.incident_driver_id == IncidentDriver.id)
+        .where(IncidentDriver.incident_id == incident_id, IncidentResolution.id.is_(None))
+    )
+    incident.status = "open" if unresolved else "resolved"
 
 
 async def _promote_default_rule(rule_id: uuid.UUID, db: AsyncSession) -> None:
@@ -191,9 +186,17 @@ async def reorder_verdict_rules(
     sort_order has always existed and has always been the ORDER BY, but until
     now the only way to change it was to delete a rule and recreate it.
     """
-    for index, rule_id in enumerate(payload.ids):
+    existing = set((await db.execute(select(VerdictRule.id))).scalars().all())
+    if len(payload.ids) != len(set(payload.ids)) or set(payload.ids) != existing:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="The order must list every verdict rule exactly once.",
+        )
+    if payload.ids:
         await db.execute(
-            update(VerdictRule).where(VerdictRule.id == rule_id).values(sort_order=index)
+            update(VerdictRule).values(
+                sort_order=case({rule_id: i for i, rule_id in enumerate(payload.ids)}, value=VerdictRule.id)
+            )
         )
     await db.commit()
     result = await db.execute(select(VerdictRule).order_by(VerdictRule.sort_order))
@@ -356,18 +359,7 @@ async def list_windows(
     query = select(IncidentWindow).order_by(IncidentWindow.opened_at.desc())
     if championship_id is not None:
         query = query.where(IncidentWindow.championship_id == championship_id)
-    windows = list((await db.execute(query)).scalars().all())
-
-    # Windows sent by the legacy ingest API carry the championship id only;
-    # fill the name in once so the page can group rounds by championship.
-    missing = {w.championship_id for w in windows if w.championship_id and not w.championship_name}
-    if missing:
-        names = {cid: await championship_name_for(cid) for cid in missing}
-        for window in windows:
-            if window.championship_id in missing and names[window.championship_id]:
-                window.championship_name = names[window.championship_id]
-        await db.commit()
-    return windows
+    return (await db.execute(query)).scalars().all()
 
 
 @router.post(
@@ -500,6 +492,7 @@ async def file_incident(
     result = await db.execute(
         select(Incident)
         .options(selectinload(Incident.drivers).selectinload(IncidentDriver.resolution))
+        .execution_options(populate_existing=True)
         .where(Incident.id == incident.id)
     )
     return result.scalar_one()
@@ -553,6 +546,7 @@ async def duplicate_incident(
     result = await db.execute(
         select(Incident)
         .options(selectinload(Incident.drivers).selectinload(IncidentDriver.resolution))
+        .execution_options(populate_existing=True)
         .where(Incident.id == new_inc.id)
     )
     return result.scalar_one()
@@ -574,6 +568,7 @@ async def add_driver_to_incident(
     result = await db.execute(
         select(Incident)
         .options(selectinload(Incident.drivers).selectinload(IncidentDriver.resolution))
+        .execution_options(populate_existing=True)
         .where(Incident.id == incident_id)
     )
     incident = result.scalar_one_or_none()
@@ -594,6 +589,7 @@ async def add_driver_to_incident(
     result = await db.execute(
         select(Incident)
         .options(selectinload(Incident.drivers).selectinload(IncidentDriver.resolution))
+        .execution_options(populate_existing=True)
         .where(Incident.id == incident_id)
     )
     return result.scalar_one()
@@ -664,6 +660,7 @@ async def bulk_resolve_incident(
     result = await db.execute(
         select(Incident)
         .options(selectinload(Incident.drivers).selectinload(IncidentDriver.resolution))
+        .execution_options(populate_existing=True)
         .where(Incident.id == incident_id)
     )
     incident = result.scalar_one_or_none()
@@ -727,6 +724,7 @@ async def bulk_resolve_incident(
     result = await db.execute(
         select(Incident)
         .options(selectinload(Incident.drivers).selectinload(IncidentDriver.resolution))
+        .execution_options(populate_existing=True)
         .where(Incident.id == incident_id)
     )
     return result.scalar_one()

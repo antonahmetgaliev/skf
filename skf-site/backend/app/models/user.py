@@ -19,7 +19,7 @@ class Role(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
 
-    users: Mapped[list["User"]] = relationship(back_populates="role", lazy="selectin")
+    users: Mapped[list["User"]] = relationship(back_populates="role", lazy="raise")
 
     def __repr__(self) -> str:
         return f"Role(id={self.id}, name={self.name!r})"
@@ -61,7 +61,7 @@ class User(Base):
     role: Mapped["Role"] = relationship(back_populates="users", lazy="joined")
 
     sessions: Mapped[list["Session"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="raise"
     )
 
     @property

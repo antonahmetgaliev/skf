@@ -36,7 +36,7 @@ from app.services.race_files import (
     Sim,
     sim_for_game,
 )
-from app.services.race_import import ImportResult, import_race_file
+from app.services.race_import import ImportResult, entry_counts, import_race_file
 from app.services.simgrid import simgrid_service
 
 logger = logging.getLogger(__name__)
@@ -131,6 +131,7 @@ async def list_rounds(
             )
         ).scalars()
     }
+    entry_totals = await entry_counts(db, (r.id for r in imports.values()))
     race_ids = [race["id"] for race in races]
     windows = {
         w.race_id: w
@@ -159,11 +160,7 @@ async def list_rounds(
                 starts_at=race.get("starts_at"),
                 ended=race.get("ended", False),
                 race_import=(
-                    _import_out(
-                        record,
-                        len(record.entries),
-                        sum(1 for e in record.entries if e.driver_id is None),
-                    )
+                    _import_out(record, *entry_totals.get(record.id, (0, 0)))
                     if record
                     else None
                 ),

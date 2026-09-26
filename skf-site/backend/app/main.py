@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -19,10 +20,12 @@ origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await seed.run()
+    backfill = asyncio.create_task(seed.backfill_window_names())
     logger.info("DATABASE_URL scheme: %s", settings.database_url.split("@")[0].split("://")[0])
     logger.info("CORS origins: %s", origins)
     logger.info("SKF Racing Hub API started")
     yield
+    backfill.cancel()
 
 
 app = FastAPI(title="SKF Racing Hub API", version="1.0.0", lifespan=lifespan)

@@ -82,7 +82,7 @@ class RaceResultImport(Base):
     )
 
     entries: Mapped[list["RaceResultEntry"]] = relationship(
-        back_populates="race_import", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="race_import", cascade="all, delete-orphan", passive_deletes=True, lazy="raise"
     )
 
     __table_args__ = (

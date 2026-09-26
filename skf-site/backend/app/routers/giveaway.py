@@ -16,6 +16,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.auth import require_admin
 from app.database import get_db
@@ -38,7 +39,7 @@ from app.schemas.giveaway import (
 )
 from app.services.driver_matching import match_driver_id_by_name
 from app.services.giveaway import RoundEntry, compute_eligibility
-from app.services.race_import import alias_map
+from app.services.race_import import alias_map, entry_counts
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +47,13 @@ router = APIRouter(prefix="/giveaway", tags=["Giveaway"])
 
 
 async def _load_imports(
-    db: AsyncSession, championship_simgrid_id: int
+    db: AsyncSession, championship_simgrid_id: int, *, with_entries: bool = False
 ) -> list[RaceResultImport]:
+    stmt = select(RaceResultImport)
+    if with_entries:
+        stmt = stmt.options(selectinload(RaceResultImport.entries))
     result = await db.execute(
-        select(RaceResultImport)
+        stmt
         .where(RaceResultImport.championship_simgrid_id == championship_simgrid_id)
         .order_by(RaceResultImport.session_started_at, RaceResultImport.created_at)
     )
@@ -70,6 +74,7 @@ async def list_imports(
     _: User = Depends(require_admin),
 ):
     records = await _load_imports(db, championship_simgrid_id)
+    counts = await entry_counts(db, (r.id for r in records))
     return [
         ImportOut(
             id=record.id,
@@ -80,8 +85,8 @@ async def list_imports(
             source_filename=record.source_filename,
             sim=record.sim,
             created_at=record.created_at,
-            entry_count=len(record.entries),
-            unmatched_count=sum(1 for e in record.entries if e.driver_id is None),
+            entry_count=counts.get(record.id, (0, 0))[0],
+            unmatched_count=counts.get(record.id, (0, 0))[1],
         )
         for record in records
     ]
@@ -96,7 +101,7 @@ async def get_eligibility(
     _: User = Depends(require_admin),
 ):
     """Drivers who cleared the distance bar in enough rounds, grouped by class."""
-    records = await _load_imports(db, championship_simgrid_id)
+    records = await _load_imports(db, championship_simgrid_id, with_entries=True)
     aliases = await alias_map(db)
     labels = {_round_key(r): (r.track_event or r.source_filename or "") for r in records}
 
@@ -160,7 +165,7 @@ async def list_unmatched(
     applied on their own, because the closest string is not reliably the same
     person.
     """
-    records = await _load_imports(db, championship_simgrid_id)
+    records = await _load_imports(db, championship_simgrid_id, with_entries=True)
     aliases = await alias_map(db)
 
     counts: dict[str, dict] = {}

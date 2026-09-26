@@ -108,6 +108,19 @@ async def seed_regulations() -> None:
         logger.info("Seeded %d regulation pages", len(data))
 
 
+async def backfill_window_names() -> None:
+    """Runs in the background: it calls SimGrid and must not delay startup."""
+    from app.services.race_import import backfill_window_championship_names
+
+    try:
+        async with async_session() as session:
+            updated = await backfill_window_championship_names(session)
+        if updated:
+            logger.info("Backfilled championship names on %d incident windows", updated)
+    except Exception:  # noqa: BLE001 - best effort
+        logger.exception("Championship name backfill failed")
+
+
 async def run() -> None:
     await ensure_tables()
     await seed_roles()

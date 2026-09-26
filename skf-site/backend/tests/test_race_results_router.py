@@ -324,11 +324,12 @@ async def test_endpoints_are_closed_to_non_admins(client):
     assert resp.status_code in (401, 403, 422)
 
 
-async def test_window_list_fills_in_missing_championship_names(admin_client, db):
+async def test_missing_championship_names_are_backfilled(admin_client, db):
     """Windows from the legacy ingest API had only the championship id."""
     from datetime import timedelta
 
     from app.models.incidents import IncidentWindow
+    from app.services.race_import import backfill_window_championship_names
 
     now = datetime.now(timezone.utc)
     db.add(
@@ -342,6 +343,7 @@ async def test_window_list_fills_in_missing_championship_names(admin_client, db)
     )
     await db.commit()
 
+    assert await backfill_window_championship_names(db) == 1
     windows = (await admin_client.get("/api/incidents/windows")).json()
     assert [w["championshipName"] for w in windows] == [f"Championship {LMU_CHAMPIONSHIP_ID}"]
 

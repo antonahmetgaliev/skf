@@ -89,7 +89,7 @@ class PenaltyRule(Base):
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     clearances: Mapped[list["PenaltyClearance"]] = relationship(
-        back_populates="penalty_rule", cascade="all, delete-orphan", lazy="selectin"
+        back_populates="penalty_rule", cascade="all, delete-orphan", passive_deletes=True, lazy="raise"
     )
 
 
