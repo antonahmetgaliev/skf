@@ -2,12 +2,11 @@
 
 **Base URL:** `https://www.thesimgrid.com/api/v1`
 **Auth:** `Authorization: Bearer {token}` (`SIMGRID_API_KEY`)
-**Official docs:** <https://gridos.thesimgrid.com> (Postman). The raw collection —
-44 endpoints — is at
-`https://documenter.gw.postman.com/api/collections/view/TzK2bZpj`.
+**Official docs:** <https://gridos.thesimgrid.com/docs/> (Scalar); the raw spec
+is <https://gridos.thesimgrid.com/openapi.yml>.
 
 Everything below was re-verified against the live API and the official
-collection on **2026-09-21**. Where our behaviour differs from the official
+OpenAPI spec on **2026-09-29**. Where our behaviour differs from the official
 docs, the verified behaviour wins and the difference is called out.
 
 ---
@@ -25,7 +24,7 @@ classification:
 | `races/:id/session_results` | `200`, body is literally `[null, null]` |
 | `races/:id` | metadata only |
 | `championships/:id/results`, `races/:id/results`, `.../race_results`, `.../classification` | `404` |
-| The official 44-endpoint collection | contains no results endpoint at all |
+| The old official Postman collection (44 endpoints) | contains no results endpoint at all |
 
 The web pages that do show results (`/championships/:id/standings`,
 `/championships/:id/results`) sit behind a Cloudflare challenge and answer
@@ -46,6 +45,17 @@ All outbound calls go through `SimgridService._get`, which bounds concurrency
 with a semaphore and retries a 429 once after honouring `Retry-After`. Any
 per-driver fan-out will trip the limit — design around the cache instead.
 
+### Collections are wrapped (since 2026-09-28)
+
+Every endpoint returning a collection answers
+`{"data": [...], "pagination": {"limit", "offset", "total_count"} | null}`;
+single resources are returned bare. Before this change collections were bare
+arrays, and the switch silently emptied our championships list.
+`SimgridService` unwraps via `_unwrap`, also on cached payloads.
+
+Paginated collections default to `limit=10` (cap 500). `/races` accepts
+`limit` but **ignores `offset`**, so we request `limit=100`.
+
 ### Alternate hosts do not exist
 
 `api.thesimgrid.com` and `gridos-api.thesimgrid.com` appear in some community
@@ -59,15 +69,17 @@ code. Neither resolves in DNS. Use `www.thesimgrid.com`.
 `GET /championships?limit=200&offset=0`
 
 Returns **only** `id` and `name` — no dates, no status. Scoped to the token's
-host (ours sees ~10 SKF championships, not the whole platform). Use the detail
-endpoint for anything richer.
+host (ours sees ~10 SKF championships, not the whole platform). Dates and
+registration state come from the detail endpoint
+(`SimgridService.with_details`, applied to active championships only).
 
 ```json
-[{"id": 26927, "name": "SKF LMU Hyper 70"}]
+{"data": [{"id": 26927, "name": "SKF LMU Hyper 70"}],
+ "pagination": {"limit": 200, "offset": 0, "total_count": 9}}
 ```
 
 Official docs list further params (`status`, `driver`, `grid`, `order_by`,
-`seasons`, `include_total_count`, `priority_sort`); we use none of them.
+`seasons`, `priority_sort`, `races_count`); we use none of them.
 
 ### Retrieve a championship
 `GET /championships/:id`
@@ -98,12 +110,14 @@ carrying a full `track` object.
 ### Standings
 `GET /championships/:id/standings` (+ `?filter_class={ccid}`, `&page=N`)
 
-**Undocumented** — absent from the official collection, but working and relied
-on by `SimgridService.get_standings`.
+Relied on by `SimgridService.get_standings`.
 
-A heterogeneous **4-element** array: `[0]` entries, `[1]` race metadata,
-`[2]` `null`, `[3]` `{"pagination": {"page": 1, "per_page": 40, "total": 26}}`.
-Verified on two championships; our parser still indexes defensively.
+`{"data": entries, "pagination": {...}, "completed_races": races,
+"standings": ..., "is_series": bool}`. Pages via `page` (40 per page by
+default, `per_page` up to 500); `offset` is ignored. Without `filter_class`
+only the first car class is returned. (Until 2026-09-28 this was a
+heterogeneous array `[entries, races, null, {pagination}]`; the parser still
+accepts both.)
 
 ```json
 {
@@ -152,7 +166,9 @@ the second an undocumented convenience. Returns registration id, `user_id`,
 ## Races
 
 ### List races
-`GET /races?championship_id=:id`
+`GET /races?championship_id=:id&limit=100`
+
+`data` items:
 
 ```json
 [{
@@ -262,7 +278,7 @@ talks only to our own `/api/v1/championships/*`.
 |---|---|---|---|
 | `get_championships` | `/championships` (paged) | `championships_list_{limit}` | 1 day |
 | `get_championship` | `/championships/{id}` | `championship_{id}` | 1 day |
-| `get_races` | `/races?championship_id=` | `races_{id}` | 1 day |
+| `get_races` | `/races?championship_id=&limit=100` | `races_{id}` | 1 day |
 | `get_standings` | `/championships/{id}/standings` (+ per class, paged) | `standings_{id}` | 1 hour |
 | `get_participating_users` | `/championships/{id}/participating_users` | `participants_{id}` | 10 min |
 | `get_user_by_discord_id` | `/users/{uid}?attribute=discord` | `user_by_discord_{uid}` | 10 min |

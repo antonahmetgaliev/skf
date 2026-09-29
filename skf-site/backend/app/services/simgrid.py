@@ -38,6 +38,7 @@ _TTL_LIVE = timedelta(minutes=10)    # participants
 _TTL_STANDINGS = timedelta(hours=1)  # standings
 _MAX_STANDINGS_PAGES = 50            # safety cap for paged standings fetches
 _MAX_CHAMPIONSHIPS = 2000            # safety cap for the championships list
+_RACES_LIMIT = 100                   # races endpoint defaults to 10 and ignores offset
 
 # SimGrid enforces a per-minute rate limit and answers
 # `429 {"error":"Minute rate limit exceeded"}` once it is crossed - measured at
@@ -49,6 +50,16 @@ _RATE_LIMIT_RETRY_SECONDS = 5.0
 _client_semaphore = asyncio.Semaphore(_MAX_CONCURRENT_REQUESTS)
 
 logger = logging.getLogger(__name__)
+
+
+def _unwrap(payload: Any) -> Any:
+    """SimGrid wraps list responses as ``{"data": [...], "pagination": ...}``.
+
+    Also applied to cached payloads, which may predate the unwrapping.
+    """
+    if isinstance(payload, dict) and "data" in payload:
+        return payload["data"]
+    return payload
 
 
 class SimgridService:
@@ -71,7 +82,9 @@ class SimgridService:
     ) -> list[ChampionshipListItem]:
         key = f"championships_list_{limit}"
         cached = await read_cache(key, _TTL_STATIC)
-        if cached is not None:
+        # An empty list is never a real answer for SKF; refetch instead of
+        # serving it for a whole day.
+        if cached:
             return [ChampionshipListItem(**item) for item in cached]
 
         try:
@@ -83,14 +96,21 @@ class SimgridService:
                     params={"limit": limit, "offset": offset},
                 )
                 resp.raise_for_status()
-                page = resp.json()
-                if not isinstance(page, list) or not page:
+                raw = resp.json()
+                page = _unwrap(raw)
+                if not isinstance(page, list):
+                    raise ValueError(f"Unexpected championships payload: {type(raw).__name__}")
+                if not page:
                     break
                 items.extend(page)
+                total = (raw.get("pagination") or {}).get("total_count") if isinstance(raw, dict) else None
+                if isinstance(total, int) and len(items) >= total:
+                    break
                 if len(page) < limit or len(items) >= _MAX_CHAMPIONSHIPS:
                     break
                 offset += limit
-            await write_cache(key, items)
+            if items:
+                await write_cache(key, items)
             return [ChampionshipListItem(**item) for item in items]
         except Exception:
             logger.warning(
@@ -102,6 +122,28 @@ class SimgridService:
                 mark_stale()
                 return [ChampionshipListItem(**item) for item in stale]
             raise
+
+    async def with_details(
+        self, items: list[ChampionshipListItem],
+    ) -> list[ChampionshipListItem]:
+        """Fill dates and registration state from each championship's details.
+
+        The list endpoint only returns ``id`` and ``name``, so call this on
+        the (few) items actually shown rather than on the whole list.
+        """
+        async def enrich(item: ChampionshipListItem) -> ChampionshipListItem:
+            try:
+                details = await self.get_championship(item.id)
+            except Exception:
+                logger.warning("Failed to fetch details for championship %s", item.id, exc_info=True)
+                return item
+            return item.model_copy(update={
+                "start_date": item.start_date or details.start_date,
+                "end_date": item.end_date or details.end_date,
+                "accepting_registrations": item.accepting_registrations or details.accepting_registrations,
+            })
+
+        return list(await asyncio.gather(*(enrich(item) for item in items)))
 
     async def get_championship(
         self, championship_id: int,
@@ -120,12 +162,13 @@ class SimgridService:
         self, championship_id: int,
     ) -> list[dict]:
         key = f"races_{championship_id}"
-        cached = await read_cache(key, _TTL_STATIC)
+        cached = _unwrap(await read_cache(key, _TTL_STATIC))
         if cached is not None:
             return cached if isinstance(cached, list) else []
 
         data = await self._request(
-            "/api/v1/races", key, params={"championship_id": championship_id}
+            "/api/v1/races", key,
+            params={"championship_id": championship_id, "limit": _RACES_LIMIT},
         )
         return data if isinstance(data, list) else []
 
@@ -222,12 +265,19 @@ class SimgridService:
     @staticmethod
     def _standings_total_pages(raw: Any) -> int | None:
         """Extract the page count from the standings payload's pagination
-        element (``raw[4]``); 1 when absent, None when unrecognisable."""
-        if not (isinstance(raw, list) and len(raw) > 4 and isinstance(raw[4], dict)):
+        (``raw["pagination"]``, or ``raw[4]`` in the legacy array shape);
+        1 when absent, None when unrecognisable."""
+        if isinstance(raw, dict):
+            pagination = raw.get("pagination")
+        elif isinstance(raw, list) and len(raw) > 4 and isinstance(raw[4], dict):
+            pagination = raw[4].get("pagination")
+        else:
             return 1
-        pagination = raw[4].get("pagination")
         if not isinstance(pagination, dict):
             return 1
+        total, limit = pagination.get("total_count"), pagination.get("limit")
+        if isinstance(total, int) and isinstance(limit, int) and limit > 0:
+            return max(1, -(-total // limit))
         for key in ("total_pages", "pages", "last", "last_page", "page_count"):
             value = pagination.get(key)
             if isinstance(value, int) and value > 0:
@@ -244,7 +294,7 @@ class SimgridService:
                 "/championship_car_classes"
             )
             resp.raise_for_status()
-            data = resp.json()
+            data = _unwrap(resp.json())
             return [
                 c["id"] for c in data
                 if isinstance(c, dict) and c.get("id") is not None
@@ -260,13 +310,17 @@ class SimgridService:
     def _parse_standings(raw: Any) -> ChampionshipStandingsData:
         """Map the REST standings payload into ``ChampionshipStandingsData``.
 
-        The endpoint returns a heterogeneous array whose first element is the
-        list of standings entries and second element is the race metadata.
+        The endpoint returns ``{"data": entries, "completed_races": races, ...}``
+        (formerly a heterogeneous array ``[entries, races, ...]``).
         Per-race results (``partial_standings``) are not populated by the API,
         so ``StandingEntry.race_results`` is always empty.
         """
-        entries_raw = raw[0] if isinstance(raw, list) and raw else []
-        races_raw = raw[1] if isinstance(raw, list) and len(raw) > 1 else []
+        if isinstance(raw, dict):
+            entries_raw = raw.get("data") or []
+            races_raw = raw.get("completed_races") or []
+        else:
+            entries_raw = raw[0] if isinstance(raw, list) and raw else []
+            races_raw = raw[1] if isinstance(raw, list) and len(raw) > 1 else []
 
         entries: list[StandingEntry] = []
         for e in entries_raw if isinstance(entries_raw, list) else []:
@@ -322,7 +376,7 @@ class SimgridService:
         self, championship_id: int,
     ) -> list[ParticipatingUser]:
         key = f"participants_{championship_id}"
-        cached = await read_cache(key, _TTL_LIVE)
+        cached = _unwrap(await read_cache(key, _TTL_LIVE))
         if cached is not None:
             return [ParticipatingUser(**u) for u in cached]
 
@@ -373,7 +427,7 @@ class SimgridService:
     async def get_games(self) -> list[dict]:
         """Fetch all games from SimGrid."""
         key = "games_list"
-        cached = await read_cache(key, _TTL_STATIC)
+        cached = _unwrap(await read_cache(key, _TTL_STATIC))
         if cached is not None:
             return cached if isinstance(cached, list) else []
 
@@ -386,7 +440,7 @@ class SimgridService:
         """Fetch car classes from SimGrid, optionally filtered by game."""
         suffix = f"_{game_id}" if game_id else ""
         key = f"car_classes{suffix}"
-        cached = await read_cache(key, _TTL_STATIC)
+        cached = _unwrap(await read_cache(key, _TTL_STATIC))
         if cached is not None:
             return cached if isinstance(cached, list) else []
 
@@ -436,7 +490,7 @@ class SimgridService:
         try:
             resp = await self._get(url, params=params)
             resp.raise_for_status()
-            data = resp.json()
+            data = _unwrap(resp.json())
             await write_cache(cache_key, data)
             return data
         except httpx.HTTPStatusError:
@@ -447,7 +501,7 @@ class SimgridService:
             stale = await read_stale_cache(cache_key)
             if stale is not None:
                 mark_stale()
-                return stale
+                return _unwrap(stale)
             raise
 
     # ------------------------------------------------------------------

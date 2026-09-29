@@ -182,9 +182,9 @@ async def _simgrid_events(
 
     active_ids = set((await db.execute(select(ActiveChampionship.simgrid_id))).scalars().all())
     try:
-        championships = [
+        championships = await simgrid_service.with_details([
             c for c in await simgrid_service.get_championships() if c.id in active_ids
-        ]
+        ])
     except Exception:
         logger.warning("Could not load SimGrid championships for the calendar", exc_info=True)
         championships = []

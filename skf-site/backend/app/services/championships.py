@@ -61,12 +61,16 @@ async def list_championships(db: AsyncSession, *, include_inactive: bool) -> lis
         raise BadGateway("Failed to fetch championships from SimGrid.") from exc
 
     active = set(await active_ids(db))
+    enriched = {
+        item.id: item
+        for item in await simgrid_service.with_details([i for i in items if i.id in active])
+    }
     if include_inactive:
         return [
-            item if item.id in active else item.model_copy(update={"event_completed": True})
+            enriched[item.id] if item.id in active else item.model_copy(update={"event_completed": True})
             for item in items
         ]
-    return [item for item in items if item.id in active]
+    return [enriched[item.id] for item in items if item.id in active]
 
 
 async def get_championship(championship_id: int) -> ChampionshipDetails:
