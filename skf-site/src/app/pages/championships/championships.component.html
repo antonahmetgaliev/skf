@@ -26,7 +26,7 @@
               <span class="championship-footer">
                 <span class="championship-id">#{{ entry.simgridItem.id }}</span>
                 @if (cs.getStatusLabel(entry); as label) {
-                  <span class="championship-status-tag">{{ label }}</span>
+                  <span class="championship-status-tag">{{ label | transloco }}</span>
                 }
               </span>
             </button>

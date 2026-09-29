@@ -60,11 +60,12 @@ export class ChampionshipService {
     return '';
   }
 
+  /** Translation key of the status tag, or null when the status is unknown. */
   getStatusLabel(entry: ChampionshipEntry): string | null {
     const order = this.getStatusOrder(entry);
-    if (order === 0) return 'Active';
-    if (order === 1) return 'Upcoming';
-    if (order === 3) return 'Finished';
+    if (order === 0) return 'calendar.eventType.ongoing';
+    if (order === 1) return 'calendar.eventType.upcoming';
+    if (order === 3) return 'championships.completed';
     return null;
   }
 

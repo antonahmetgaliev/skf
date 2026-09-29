@@ -61,34 +61,18 @@ h2 {
   border-color: rgba(255, 214, 0, 0.5);
 }
 
-.championship-button.active {
-  background: rgba(255, 214, 0, 0.2);
-  border-color: rgba(255, 214, 0, 0.75);
-}
-
-.championship-button.championship--active {
-  border-color: rgba(255, 214, 0, 0.55);
-  background: rgba(255, 214, 0, 0.1);
-
-  .championship-name {
-    color: var(--gold-deep);
-  }
-}
-
-.championship-button.championship--future {
-  border-color: rgba(100, 180, 255, 0.5);
-  background: rgba(100, 180, 255, 0.06);
-
-  .championship-name {
-    color: #4a9fd4;
-  }
-}
-
-.championship-button.championship--finished {
+// Status shows only in the tag; border and background mark the selection.
+.championship-button.championship--finished:not(.active) {
   opacity: 0.45;
+}
+
+.championship-button.active {
+  background: rgba(255, 214, 0, 0.16);
+  border-color: rgba(255, 214, 0, 0.75);
+  box-shadow: inset 3px 0 0 var(--gold);
 
   .championship-name {
-    color: var(--muted);
+    color: var(--gold);
   }
 }
 
