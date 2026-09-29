@@ -103,6 +103,58 @@ class RawStandingsPage(Envelope[RawStandingEntry]):
     completed_races: list[RawRace] = []
 
 
+class RawRfactorResult(RawModel):
+    """LMU (rFactor) extras; iRacing results carry none of this."""
+
+    status: str | None = None     # "Finished Normally", "DNF", "DQ"
+    finished: str | None = None   # overall finishing position
+    starting: str | None = None   # overall grid position
+    class_st: str | None = None   # grid position in class
+    class_fn: str | None = None   # finishing position in class
+
+
+class RawResultExternalData(RawModel):
+    rfactor: RawRfactorResult | None = None
+
+
+class RawSessionEntrant(RawModel):
+    user_id: int | None = None
+    championship_car_class: RawStandingCarClass | None = None
+
+
+class RawSessionResult(RawModel):
+    """An item of ``GET /races/{id}/session_results?result_type=results``.
+
+    Times are milliseconds. ``dnf`` is never set by SimGrid (not even for
+    LMU retirements), so only ``external_data.rfactor.status`` tells DNF/DQ.
+    """
+
+    session_type: str
+    position_cache: int | None = None
+    lap_count: int | None = None
+    best_lap: int | None = None
+    total_time: int | None = None
+    points_total: float | None = None
+    dns: bool = False
+    dnf: bool = False
+    total_time_penalty: float | None = None
+    championship_car_class_id: int | None = None
+    sessionable_name: str | None = None
+    imported_name: str | None = None
+    sessionable: RawSessionEntrant | None = None
+    car_name: str | None = None
+    car_number: int | None = None
+    grid_rating_change: int | None = None
+    external_data: RawResultExternalData | None = None
+
+
+class RawSessionResultsPage(RawModel):
+    """``data`` is ``null`` until results are published (or without ``result_type``)."""
+
+    data: list[RawSessionResult] | None
+    pagination: Pagination | None = None
+
+
 def collection(model: type[T], payload: Any) -> Envelope[T]:
     """Validate a collection payload, raising on any other shape."""
     return Envelope[model].model_validate(payload)  # type: ignore[valid-type]

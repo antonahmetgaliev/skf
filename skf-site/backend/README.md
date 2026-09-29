@@ -67,6 +67,7 @@ Everything lives under **`/api/v1`**; the interactive reference is at `/docs`.
 
 ### Championships (SimGrid proxy)
 - `GET /championships`, `/championships/{id}`, `/{id}/standings`, `/{id}/races`, `/{id}/incident-windows`
+- `GET /championships/{id}/races/{raceId}/results?session=race|qualifying` – one race's classification; `/{id}/standings` entries carry per-round `raceResults`
 - `GET /active-championships`, `PUT|DELETE /active-championships/{simgridId}` (admin)
 - `GET /championships/{id}/rounds` – rounds with their upload and incident window (admin)
 - `GET /championships/{id}/giveaway-eligibility?minDistancePct=&minRounds=` and `/{id}/unmatched-driver-names` (admin)

@@ -23,3 +23,24 @@ export function toSlug(value: string): string {
     .replace(/^-+|-+$/g, '')
     .slice(0, 80);
 }
+
+/** Lap or race time from milliseconds: `1:33.485`, `1:10:38.798`. */
+export function formatLapTime(ms: number | null, fallback = '-'): string {
+  if (ms === null || ms <= 0) return fallback;
+  const totalSeconds = Math.floor(ms / 1000);
+  const millis = String(ms % 1000).padStart(3, '0');
+  const seconds = totalSeconds % 60;
+  const minutes = Math.floor(totalSeconds / 60) % 60;
+  const hours = Math.floor(totalSeconds / 3600);
+  const ss = String(seconds).padStart(2, '0');
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, '0')}:${ss}.${millis}`
+    : `${minutes}:${ss}.${millis}`;
+}
+
+/** Gap to the leader from milliseconds: `+0.220`, `+1:05.310`. */
+export function formatGap(ms: number | null, fallback = '-'): string {
+  if (ms === null || ms < 0) return fallback;
+  if (ms < 60_000) return `+${(ms / 1000).toFixed(3)}`;
+  return `+${formatLapTime(ms)}`;
+}

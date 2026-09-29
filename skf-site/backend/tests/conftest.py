@@ -191,20 +191,23 @@ def _offline_simgrid_championships(monkeypatch):
     """
     from app.services import simgrid as sg_mod
 
-    async def unavailable(_championship_id):
+    async def unavailable(*_args):
         raise RuntimeError("SimGrid is not reachable from tests")
 
     monkeypatch.setattr(sg_mod.simgrid_service, "get_championship", unavailable)
+    monkeypatch.setattr(sg_mod.simgrid_service, "get_session_results", unavailable)
 
 
 @pytest.fixture
 def simgrid_stub(monkeypatch):
     """Serve championships and races from memory instead of SimGrid.
 
-    Tests may add rounds to ``stub.races[championship_id]`` or games to
+    Tests may add rounds to ``stub.races[championship_id]``, raw session
+    results to ``stub.results[(race_id, session)]`` or games to
     ``stub.games``; unknown championships default to Le Mans Ultimate.
     """
     from app.schemas.championship import ChampionshipDetails
+    from app.schemas.simgrid_raw import RawSessionResult
     from app.services import simgrid as sg_mod
 
     class Stub:
@@ -213,6 +216,7 @@ def simgrid_stub(monkeypatch):
             IRACING_CHAMPIONSHIP_ID: "iRacing",
         }
         races: dict[int, list[dict]] = {}
+        results: dict[tuple[int, str], list[dict]] = {}
 
     async def get_championship(championship_id):
         return ChampionshipDetails(
@@ -227,7 +231,11 @@ def simgrid_stub(monkeypatch):
     async def get_race_name(race_id):
         return f"Round {race_id}"
 
+    async def get_session_results(championship_id, race_id, session):
+        return [RawSessionResult.model_validate(r) for r in Stub.results.get((race_id, session), [])]
+
     monkeypatch.setattr(sg_mod.simgrid_service, "get_championship", get_championship)
     monkeypatch.setattr(sg_mod.simgrid_service, "get_races", get_races)
     monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", get_race_name)
+    monkeypatch.setattr(sg_mod.simgrid_service, "get_session_results", get_session_results)
     return Stub

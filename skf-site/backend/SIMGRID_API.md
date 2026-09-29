@@ -13,28 +13,34 @@ docs, the verified behaviour wins and the difference is called out.
 
 ## Read this first
 
-### There is no results endpoint. Anywhere.
+### Race results: `session_results` (since 2026-09-28)
 
-The API cannot tell you how a race finished. Not positions, not laps, not
-classification:
+`GET /races/:id/session_results?session_type=race_1|qualifying&result_type=results`
+returns the full classification per session; used by
+`app/services/championship_results.py`. **`result_type` is required** — without
+it `data` is `null`. `result_type=laps` returns per-lap data in `session_laps`
+(time, sectors, position, tyres, fuel, `valid`); `result_type=incidents` is
+empty for our races. `data` stays `null` until SimGrid publishes the results.
 
-| Attempt | Result |
-|---|---|
-| `championships/:id/standings` → `partial_standings` | `[]` for every entry, every championship |
-| `races/:id/session_results` | `200`, body is literally `[null, null]` |
-| `races/:id` | metadata only |
-| `championships/:id/results`, `races/:id/results`, `.../race_results`, `.../classification` | `404` |
-| The old official Postman collection (44 endpoints) | contains no results endpoint at all |
+Each result carries `position_cache` (**position within the car class**),
+`lap_count`, `best_lap` / `total_time` (ms), `points_total`,
+`total_time_penalty` (s), `fastest_lap`, `dns`, `grid_rating_change`,
+`sessionable.user_id` and `championship_car_class_id`. Pitfalls:
 
-The web pages that do show results (`/championships/:id/standings`,
-`/championships/:id/results`) sit behind a Cloudflare challenge and answer
-`403 "Just a moment…"` to any plain HTTP client, browser headers included. A
-scraper used to parse them (`app/services/simgrid_scraper.py`, removed in
-`6079edc`); it cannot be revived this way, and it only ever produced positions
-— never laps.
+- `dnf` is never set, not even for retirements. LMU results have
+  `external_data.rfactor.status` (`Finished Normally` / `DNF` / `DQ`) plus
+  `finished` (overall), `class_fn`, `starting`, `class_st`; iRacing results
+  have none of it, so a retirement there is indistinguishable from a car
+  several laps down.
+- In qualifying `position_cache` can be wrong (a driver without a timed lap
+  on pole), so we rank qualifying by best lap.
+- Standings' `partial_standings` are still `[]`: per-round columns in our
+  standings are built from `session_results` instead.
 
-**Consequence:** laps completed is sourced from the game server's own result
-XML instead. See `app/services/race_results_xml.py`.
+The old scraper (`simgrid_scraper.py`, removed in `6079edc`) is not needed any
+more; the SimGrid results pages are still Cloudflare-protected. The giveaway
+still sources laps from the game server's result files
+(`app/services/race_results_xml.py`).
 
 ### Rate limiting is real and low
 
@@ -229,7 +235,7 @@ Fields: `id`, `race_name`, `track`, `starts_at`, `ended`, `results_available`,
 ### Other race endpoints
 - `GET /races/:id` — metadata only.
 - `GET /races/:id/entrylist` — pre-race entries (`playerID` only; no names).
-- `GET /races/:id/session_results` — returns `[null, null]`; useless.
+- `GET /races/:id/session_results` — see *Race results* above.
 - `POST /races/:id/import_results` — in the collection; returns `404` for us.
 
 ---
@@ -303,6 +309,7 @@ talks only to our own `/api/v1/championships/*`.
 | `get_race_name` | `/races/{id}` | — | none |
 | `get_games` / `get_car_classes` | `/games`, `/car_classes` | `games_list`, `car_classes*` | 1 day |
 | `_championship_car_class_ids` | `/championships/{id}/championship_car_classes` | — | none |
+| `get_session_results` | `/races/{id}/session_results?session_type=&result_type=results` | `session_results_{cid}_{rid}_{session}` | 1 day |
 
 Responses are cached in the `simgrid_cache` table. Every failing path falls
 back to `read_stale_cache` and calls `mark_stale()`, which surfaces as an

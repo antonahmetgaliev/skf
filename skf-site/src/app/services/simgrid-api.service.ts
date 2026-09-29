@@ -31,12 +31,50 @@ export interface ChampionshipDetails {
   allRoundsNumber: number | null;
 }
 
+/** `classified` also covers iRacing retirements: SimGrid gives no status there. */
+export type RaceStatus = 'classified' | 'dnf' | 'dq' | 'dns';
+
 export interface DriverRaceResult {
-  raceId: number | null;
+  raceId: number;
+  /** Index into the standings' `races`. */
   raceIndex: number;
   points: number | null;
+  /** Position within the car class. */
   position: number | null;
-  dns: boolean;
+  status: RaceStatus;
+}
+
+export type RaceSessionKind = 'race' | 'qualifying';
+
+export interface RaceResultEntry {
+  userId: number | null;
+  displayName: string;
+  car: string;
+  carNumber: number | null;
+  carClass: string;
+  /** Overall position; LMU only. */
+  position: number | null;
+  classPosition: number | null;
+  /** Grid slot within the class; LMU only. */
+  startPosition: number | null;
+  laps: number | null;
+  bestLapMs: number | null;
+  isClassBestLap: boolean;
+  totalTimeMs: number | null;
+  /** Gap to the class leader on the same lap. */
+  gapMs: number | null;
+  lapsDown: number;
+  penaltyS: number;
+  points: number | null;
+  status: RaceStatus;
+  ratingChange: number | null;
+}
+
+export interface RaceSession {
+  raceId: number;
+  session: RaceSessionKind;
+  /** Ordered by class, then class position. */
+  entries: RaceResultEntry[];
 }
 
 export interface StandingEntry {
@@ -100,6 +138,12 @@ export class SimgridApiService {
     return this.http.get<ChampionshipRace[]>(
       `${this.base}/${championshipId}/races`
     );
+  }
+
+  getRaceResults(championshipId: number, raceId: number, session: RaceSessionKind): Observable<RaceSession> {
+    return this.http.get<RaceSession>(`${this.base}/${championshipId}/races/${raceId}/results`, {
+      params: { session },
+    });
   }
 
   getActiveChampionships(): Observable<number[]> {

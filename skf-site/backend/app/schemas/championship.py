@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import model_validator
 
@@ -60,12 +60,46 @@ class ChampionshipDetails(CamelModel):
     all_rounds_number: int | None = None
 
 
+# "classified" covers every non-DNS finisher when SimGrid gives no status
+# (iRacing): it cannot tell a retirement from a car several laps down.
+RaceStatus = Literal["classified", "dnf", "dq", "dns"]
+
+
 class DriverRaceResult(CamelModel):
-    race_id: int | None = None
+    """One round of a driver's standings row (class position)."""
+
+    race_id: int
     race_index: int
     points: float | None = None
     position: int | None = None
-    dns: bool = False
+    status: RaceStatus = "classified"
+
+
+class RaceResultEntry(CamelModel):
+    user_id: int | None = None
+    display_name: str
+    car: str = ""
+    car_number: int | None = None
+    car_class: str = ""
+    position: int | None = None
+    class_position: int | None = None
+    start_position: int | None = None
+    laps: int | None = None
+    best_lap_ms: int | None = None
+    is_class_best_lap: bool = False
+    total_time_ms: int | None = None
+    gap_ms: int | None = None
+    laps_down: int = 0
+    penalty_s: float = 0
+    points: float | None = None
+    status: RaceStatus = "classified"
+    rating_change: int | None = None
+
+
+class RaceSessionOut(CamelModel):
+    race_id: int
+    session: Literal["race", "qualifying"]
+    entries: list[RaceResultEntry] = []
 
 
 class StandingEntry(CamelModel):

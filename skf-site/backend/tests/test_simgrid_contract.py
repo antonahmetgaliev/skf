@@ -23,6 +23,7 @@ from app.schemas.simgrid_raw import (
     RawNamed,
     RawParticipant,
     RawRace,
+    RawSessionResultsPage,
     RawStandingsPage,
     collection,
 )
@@ -31,6 +32,7 @@ from app.services.simgrid import SimgridService
 
 FIXTURES = Path(__file__).parent / "fixtures" / "simgrid"
 LIVE_CHAMPIONSHIP_ID = 26927
+LIVE_RACE_ID = 256741
 
 COLLECTIONS = {
     "championships": RawChampionshipRef,
@@ -188,3 +190,9 @@ def test_live_api_matches_models():
         RawStandingsPage.model_validate(
             client.get(f"/championships/{cid}/standings").raise_for_status().json()
         )
+        for session in ("race_1", "qualifying"):
+            page = RawSessionResultsPage.model_validate(client.get(
+                f"/races/{LIVE_RACE_ID}/session_results",
+                params={"session_type": session, "result_type": "results"},
+            ).raise_for_status().json())
+            assert page.data

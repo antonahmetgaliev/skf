@@ -166,6 +166,11 @@
                   @if (isMulticlass()) {
                     <th>{{ 'championships.class' | transloco }}</th>
                   }
+                  @if (hasRaceBreakdown()) {
+                    @for (race of races(); track race.id; let raceIndex = $index) {
+                      <th class="race-position" [attr.title]="race.displayName">R{{ raceIndex + 1 }}</th>
+                    }
+                  }
                   <th>{{ 'championships.score' | transloco }}</th>
                 </tr>
               </thead>
@@ -193,6 +198,11 @@
                       @if (isMulticlass()) {
                         <td><span class="class-badge" [ngClass]="'class-color-' + getClassIndex(entry.carClass)">{{ entry.carClass || '-' }}</span></td>
                       }
+                      @if (hasRaceBreakdown()) {
+                        @for (race of races(); track race.id; let raceIndex = $index) {
+                          <td class="race-position" [ngClass]="roundResultClass(entry, raceIndex)">{{ formatRoundResult(entry, raceIndex) }}</td>
+                        }
+                      }
                       <td>{{ formatNumber(entry.score) }}</td>
                     </tr>
                   }
@@ -211,8 +221,17 @@
           } @else {
             <div class="races-list">
               @for (race of allRaces(); track race.id; let raceIndex = $index) {
-                <div class="race-card" [class.race-completed]="getRaceStatus(race) === 'completed'">
-                  <div class="race-card-header">
+                <div class="race-card" [id]="'race-' + race.id" [class.race-completed]="getRaceStatus(race) === 'completed'">
+                  <div
+                    class="race-card-header"
+                    [class.clickable]="canExpandRace(race)"
+                    [attr.role]="canExpandRace(race) ? 'button' : null"
+                    [attr.tabindex]="canExpandRace(race) ? 0 : null"
+                    [attr.aria-expanded]="canExpandRace(race) ? expandedRaceId() === race.id : null"
+                    (click)="toggleRace(race)"
+                    (keydown.enter)="toggleRace(race)"
+                    (keydown.space)="$event.preventDefault(); toggleRace(race)"
+                  >
                     <div class="race-card-info">
                       <span class="race-round">R{{ raceIndex + 1 }}</span>
                       <div class="race-card-details">
@@ -227,7 +246,7 @@
                     </div>
                     <div class="race-card-status">
                       @if (incidentWindows().get(race.id); as w) {
-                        <a class="race-incidents-link" routerLink="/incidents" [queryParams]="{ window: w.windowId }">
+                        <a class="race-incidents-link" routerLink="/incidents" [queryParams]="{ window: w.windowId }" (click)="$event.stopPropagation()">
                           {{ 'incidents.incidentCount' | transloco: { count: w.incidentsCount } }}
                         </a>
                       }
@@ -236,8 +255,111 @@
                       } @else {
                         <app-badge variant="upcoming">{{ 'championships.upcoming' | transloco }}</app-badge>
                       }
+                      @if (canExpandRace(race)) {
+                        <span class="race-expand-icon" [class.expanded]="expandedRaceId() === race.id" aria-hidden="true">&#9662;</span>
+                      }
                     </div>
                   </div>
+
+                  @if (expandedRaceId() === race.id) {
+                    <div class="race-results-panel">
+                      <div class="race-results-toolbar">
+                        <div class="session-toggle" role="group">
+                          <button type="button" [class.active]="raceSession() === 'race'" (click)="setRaceSession('race')">
+                            {{ 'championships.sessionRace' | transloco }}
+                          </button>
+                          <button type="button" [class.active]="raceSession() === 'qualifying'" (click)="setRaceSession('qualifying')">
+                            {{ 'championships.sessionQualifying' | transloco }}
+                          </button>
+                        </div>
+                        @if (raceClasses().length > 1) {
+                          <div class="class-tabs class-tabs-sm">
+                            @for (cls of raceClasses(); track cls) {
+                              <button type="button" [ngClass]="getRaceClassTabClasses(cls)" (click)="selectedRaceClass.set(cls)">{{ cls }}</button>
+                            }
+                          </div>
+                        }
+                      </div>
+
+                      @if (loadingRaceResults() && expandedResults() === null) {
+                        <app-spinner />
+                      } @else if (raceResultsError()) {
+                        <app-alert variant="error">{{ 'championships.raceResultsError' | transloco }}</app-alert>
+                      } @else if (visibleRaceResults().length === 0) {
+                        <app-empty>{{ 'championships.noRaceResults' | transloco }}</app-empty>
+                      } @else {
+                        <div class="table-wrap">
+                          <table class="standings-table race-results-table">
+                            <thead>
+                              <tr>
+                                <th>{{ 'championships.pos' | transloco }}</th>
+                                <th>{{ 'championships.driver' | transloco }}</th>
+                                <th class="col-optional">{{ 'championships.car' | transloco }}</th>
+                                @if (raceSession() === 'race') {
+                                  <th class="num col-optional">{{ 'championships.laps' | transloco }}</th>
+                                  <th class="num col-optional">{{ 'championships.bestLap' | transloco }}</th>
+                                  <th class="num">{{ 'championships.timeGap' | transloco }}</th>
+                                  <th class="num col-optional">{{ 'championships.penalty' | transloco }}</th>
+                                  <th class="num">{{ 'championships.points' | transloco }}</th>
+                                } @else {
+                                  <th class="num">{{ 'championships.bestLap' | transloco }}</th>
+                                  <th class="num">{{ 'championships.gap' | transloco }}</th>
+                                }
+                              </tr>
+                            </thead>
+                            <tbody>
+                              @for (result of visibleRaceResults(); track $index) {
+                                <tr [class.result-out]="result.status === 'dns'">
+                                  <td>
+                                    {{ result.classPosition ?? '-' }}
+                                    @if (result.startPosition !== null && raceSession() === 'race') {
+                                      <span class="grid-delta" [attr.title]="'championships.startPos' | transloco: { pos: result.startPosition }">
+                                        @if (result.classPosition !== null && result.startPosition > result.classPosition) {
+                                          <span class="up">▲{{ result.startPosition - result.classPosition }}</span>
+                                        } @else if (result.classPosition !== null && result.startPosition < result.classPosition) {
+                                          <span class="down">▼{{ result.classPosition - result.startPosition }}</span>
+                                        }
+                                      </span>
+                                    }
+                                  </td>
+                                  <td class="driver-cell">
+                                    @if (result.userId !== null && cs.driverUuidBySimgridId().get(result.userId); as uuid) {
+                                      <a [routerLink]="['/drivers', uuid]" class="driver-link">{{ result.displayName }}</a>
+                                    } @else {
+                                      {{ result.displayName }}
+                                    }
+                                    @if (result.status !== 'classified') {
+                                      <span class="status-badge" [ngClass]="'status-' + result.status">{{ result.status.toUpperCase() }}</span>
+                                    }
+                                    @if (result.carNumber !== null) {
+                                      <span class="car-number">#{{ result.carNumber }}</span>
+                                    }
+                                  </td>
+                                  <td class="col-optional">{{ result.car || '-' }}</td>
+                                  @if (raceSession() === 'race') {
+                                    <td class="num col-optional">{{ result.laps ?? '-' }}</td>
+                                    <td class="num col-optional" [class.best-lap]="result.isClassBestLap">{{ formatLapTime(result.bestLapMs) }}</td>
+                                    <td class="num">
+                                      @if (result.lapsDown > 0 && result.status === 'classified') {
+                                        {{ 'championships.lapsDown' | transloco: { count: result.lapsDown } }}
+                                      } @else {
+                                        {{ formatResultTime(result, result.classPosition === 1) }}
+                                      }
+                                    </td>
+                                    <td class="num col-optional">{{ result.penaltyS > 0 ? '+' + result.penaltyS + 's' : '-' }}</td>
+                                    <td class="num">{{ result.points !== null ? formatNumber(result.points) : '-' }}</td>
+                                  } @else {
+                                    <td class="num" [class.best-lap]="result.isClassBestLap">{{ formatLapTime(result.bestLapMs) }}</td>
+                                    <td class="num">{{ formatQualifyingGap(result) }}</td>
+                                  }
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                      }
+                    </div>
+                  }
                 </div>
               }
             </div>

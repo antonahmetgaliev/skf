@@ -333,6 +333,7 @@ tbody tr:hover {
 }
 
 .race-card {
+  scroll-margin-top: 6rem;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-md);
   background: rgba(30, 30, 36, 0.7);
@@ -407,6 +408,140 @@ tbody tr:hover {
   &:hover {
     text-decoration: underline;
   }
+}
+
+.race-expand-icon {
+  color: var(--ink-soft);
+  font-size: var(--text-md);
+  transition: transform 0.15s ease;
+
+  &.expanded {
+    transform: rotate(180deg);
+  }
+}
+
+.race-card-header.clickable:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
+// ------------------------------------------------------------------
+// Races tab: results panel
+// ------------------------------------------------------------------
+
+.race-results-panel {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.2rem 0.8rem 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.race-results-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.6rem;
+
+  .class-tabs {
+    margin-bottom: 0;
+  }
+}
+
+.session-toggle {
+  display: inline-flex;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  overflow: hidden;
+
+  button {
+    padding: 0.3rem 0.8rem;
+    border: 0;
+    background: transparent;
+    color: var(--ink-soft);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: var(--tracking-normal);
+    text-transform: uppercase;
+    cursor: pointer;
+
+    &.active {
+      background: rgba(255, 214, 0, 0.16);
+      color: var(--gold);
+    }
+  }
+}
+
+.race-results-table {
+  min-width: 640px;
+
+  .num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.best-lap {
+  color: #b47fd4;
+  font-weight: 700;
+}
+
+.result-out td {
+  color: var(--muted);
+}
+
+.car-number {
+  margin-left: 0.4em;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.grid-delta {
+  margin-left: 0.3em;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+
+  .up {
+    color: #5ab95a;
+  }
+
+  .down {
+    color: #e07b54;
+  }
+}
+
+.status-badge {
+  display: inline-block;
+  margin-left: 0.4em;
+  padding: 0.1em 0.45em;
+  font-size: 0.65em;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  border-radius: var(--radius-xs);
+  vertical-align: middle;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+
+  &.status-dq {
+    color: #fff;
+    background: #c0392b;
+    border-color: #c0392b;
+  }
+}
+
+// Standings: per-round columns
+.round-podium {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.round-out {
+  color: var(--muted);
+  font-size: var(--text-xs);
 }
 
 // ------------------------------------------------------------------
@@ -533,6 +668,23 @@ $class-palette: #ffd600, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
 
   .class-tab {
     flex-shrink: 0;
+  }
+
+  .race-results-panel {
+    padding: 0.2rem 0.5rem 0.6rem;
+  }
+
+  .race-results-table {
+    min-width: 0;
+
+    th,
+    td {
+      padding: 0.45rem 0.4rem;
+    }
+
+    .col-optional {
+      display: none;
+    }
   }
 
   .details-actions {

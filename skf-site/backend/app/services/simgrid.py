@@ -27,11 +27,15 @@ from app.schemas.championship import (
     StandingRace,
 )
 from app.schemas.simgrid_raw import (
+    Envelope,
     RawChampionshipCarClass,
     RawChampionshipRef,
+    RawModel,
     RawNamed,
     RawParticipant,
     RawRace,
+    RawSessionResult,
+    RawSessionResultsPage,
     RawStandingsPage,
     collection,
 )
@@ -46,6 +50,7 @@ from app.services.cache import (
 _TTL_STATIC = timedelta(days=1)      # championships list, details, races
 _TTL_LIVE = timedelta(minutes=10)    # participants
 _TTL_STANDINGS = timedelta(hours=1)  # standings
+_TTL_RESULTS = timedelta(days=1)     # session results (stewards may amend them)
 _MAX_STANDINGS_PAGES = 50            # safety cap for paged standings fetches
 _MAX_CHAMPIONSHIPS = 2000            # safety cap for the championships list
 _RACES_LIMIT = 100                   # races endpoint defaults to 10 and ignores offset
@@ -175,10 +180,24 @@ class SimgridService:
             return cached if isinstance(cached, list) else []
 
         data = await self._request(
-            "/api/v1/races", key, item=RawRace,
+            "/api/v1/races", key, page=Envelope[RawRace],
             params={"championship_id": championship_id, "limit": _RACES_LIMIT},
         )
         return data if isinstance(data, list) else []
+
+    async def get_session_results(
+        self, championship_id: int, race_id: int, session: str,
+    ) -> list[RawSessionResult]:
+        """One session's results (``race_1`` or ``qualifying``); ``[]`` until published."""
+        key = f"session_results_{championship_id}_{race_id}_{session}"
+        data = _unwrap(await read_cache(key, _TTL_RESULTS))
+        if data is None:
+            data = await self._request(
+                f"/api/v1/races/{race_id}/session_results", key,
+                page=RawSessionResultsPage,
+                params={"session_type": session, "result_type": "results", "per_page": 500},
+            )
+        return [RawSessionResult.model_validate(r) for r in data or []]
 
     async def get_standings(
         self, championship_id: int,
@@ -346,7 +365,7 @@ class SimgridService:
 
         data = await self._request(
             f"/api/v1/championships/{championship_id}/participating_users", key,
-            item=RawParticipant,
+            page=Envelope[RawParticipant],
         )
         items = data if isinstance(data, list) else []
         return [ParticipatingUser(**u) for u in items]
@@ -396,7 +415,7 @@ class SimgridService:
         if cached is not None:
             return cached if isinstance(cached, list) else []
 
-        data = await self._request("/api/v1/games", key, item=RawNamed)
+        data = await self._request("/api/v1/games", key, page=Envelope[RawNamed])
         return data if isinstance(data, list) else []
 
     async def get_car_classes(
@@ -413,7 +432,7 @@ class SimgridService:
         if game_id is not None:
             params["game_id"] = game_id
 
-        data = await self._request("/api/v1/car_classes", key, item=RawNamed, params=params)
+        data = await self._request("/api/v1/car_classes", key, page=Envelope[RawNamed], params=params)
         return data if isinstance(data, list) else []
 
     # ------------------------------------------------------------------
@@ -449,22 +468,23 @@ class SimgridService:
         url: str,
         cache_key: str,
         *,
-        item: type | None = None,
+        page: type[RawModel] | None = None,
         params: dict[str, Any] | None = None,
     ) -> Any:
         """GET from SimGrid API with stale-cache fallback on upstream errors.
 
-        With *item*, the response must be a collection of that raw model; its
-        ``data`` (the raw dicts) is cached and returned. A shape mismatch is
-        treated like an upstream error, never as an empty collection.
+        With *page* (an envelope model), the response must validate against
+        it; its ``data`` (the raw dicts, ``[]`` for a null ``data``) is cached
+        and returned. A shape mismatch is treated like an upstream error,
+        never as an empty collection.
         """
         try:
             resp = await self._get(url, params=params)
             resp.raise_for_status()
             data = resp.json()
-            if item is not None:
-                collection(item, data)
-                data = data["data"]
+            if page is not None:
+                page.model_validate(data)
+                data = data["data"] or []
             await write_cache(cache_key, data)
             return data
         except (httpx.HTTPStatusError, ValidationError):
@@ -492,6 +512,7 @@ class SimgridService:
                 f"races_{championship_id}",
                 f"participants_{championship_id}",
             )
+            await invalidate_cache_by_prefix(f"session_results_{championship_id}_")
         else:
             await invalidate_cache_by_prefix()
 

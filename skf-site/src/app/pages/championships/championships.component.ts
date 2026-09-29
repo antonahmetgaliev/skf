@@ -7,6 +7,8 @@ import { firstValueFrom } from 'rxjs';
 import {
   ChampionshipDetails,
   ChampionshipRace,
+  RaceResultEntry,
+  RaceSessionKind,
   SimgridApiService,
   StandingEntry,
   StandingRace,
@@ -16,7 +18,7 @@ import { AuthService } from '../../services/auth.service';
 import { ChampionshipIncidentWindow, IncidentsApiService } from '../../services/incidents-api.service';
 import { ChampionshipEntry, ChampionshipService } from '../../services/championship.service';
 import { DataFreshnessService } from '../../services/data-freshness.service';
-import { formatDate, formatNumber } from '../../utils/format';
+import { formatDate, formatGap, formatLapTime, formatNumber } from '../../utils/format';
 import { AlertComponent } from '../../components/alert/alert.component';
 import { BadgeComponent } from '../../components/badge/badge.component';
 import { BtnComponent } from '../../components/btn/btn.component';
@@ -57,6 +59,8 @@ export class ChampionshipsComponent {
   private readonly router = inject(Router);
   private standingsLoadToken = 0;
   private championshipsLoadToken = 0;
+  /** Race to expand once the races load (from the `race` query param). */
+  private pendingRaceId: number | null = null;
 
   readonly championships = signal<ChampionshipEntry[]>([]);
   readonly selectedChampionshipKey = signal<string | null>(null);
@@ -114,9 +118,39 @@ export class ChampionshipsComponent {
     if (cls === null) return this.standings();
     return this.standings().filter((e) => e.carClass === cls);
   });
+  readonly hasRaceBreakdown = computed(() => this.standings().some((e) => e.raceResults.length > 0));
+
+  // Races tab: one expanded race at a time, results cached per race and session.
+  readonly expandedRaceId = signal<number | null>(null);
+  readonly raceSession = signal<RaceSessionKind>('race');
+  readonly selectedRaceClass = signal<string | null>(null);
+  readonly loadingRaceResults = signal(false);
+  readonly raceResultsError = signal(false);
+  private readonly raceResults = signal<Map<string, RaceResultEntry[]>>(new Map());
+
+  readonly expandedResults = computed(() => {
+    const raceId = this.expandedRaceId();
+    return raceId === null ? null : (this.raceResults().get(`${raceId}:${this.raceSession()}`) ?? null);
+  });
+  readonly raceClasses = computed(() => [...new Set((this.expandedResults() ?? []).map((e) => e.carClass))].sort());
+  readonly activeRaceClass = computed(() => {
+    const classes = this.raceClasses();
+    if (classes.length < 2) return null;
+    const selected = this.selectedRaceClass();
+    return selected !== null && classes.includes(selected) ? selected : classes[0];
+  });
+  readonly visibleRaceResults = computed(() => {
+    const cls = this.activeRaceClass();
+    const results = this.expandedResults() ?? [];
+    return cls === null ? results : results.filter((e) => e.carClass === cls);
+  });
 
   constructor() {
     this.route.queryParams.subscribe((params) => {
+      const race = Number(params['race']) || null;
+      if (race !== this.expandedRaceId()) {
+        this.pendingRaceId = race;
+      }
       const id = params['id'];
       if (id) {
         const num = Number(id);
@@ -166,7 +200,84 @@ export class ChampionshipsComponent {
   }
 
   getOverallColspan(): number {
-    return 3 + (this.isMulticlass() ? 1 : 0);
+    return 3 + (this.isMulticlass() ? 1 : 0) + (this.hasRaceBreakdown() ? this.races().length : 0);
+  }
+
+  // ------------------------------------------------------------------
+  // Per-race results
+  // ------------------------------------------------------------------
+
+  /** Standings cell for one round: class position, or DNS/DNF/DQ. */
+  formatRoundResult(entry: StandingEntry, raceIndex: number): string {
+    const result = entry.raceResults.find((r) => r.raceIndex === raceIndex);
+    if (!result) return '–';
+    if (result.status !== 'classified') return result.status.toUpperCase();
+    return result.position === null ? '–' : String(result.position);
+  }
+
+  roundResultClass(entry: StandingEntry, raceIndex: number): string {
+    const result = entry.raceResults.find((r) => r.raceIndex === raceIndex);
+    if (!result) return '';
+    if (result.status !== 'classified') return 'round-out';
+    return result.position !== null && result.position <= 3 ? 'round-podium' : '';
+  }
+
+  canExpandRace(race: ChampionshipRace): boolean {
+    return this.getRaceStatus(race) === 'completed' && race.resultsAvailable;
+  }
+
+  toggleRace(race: ChampionshipRace): void {
+    if (!this.canExpandRace(race)) return;
+    const expanded = this.expandedRaceId() === race.id ? null : race.id;
+    this.expandedRaceId.set(expanded);
+    this.raceSession.set('race');
+    this.selectedRaceClass.set(null);
+    void this.router.navigate([], {
+      queryParams: { race: expanded },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    if (expanded !== null) void this.loadRaceResults();
+  }
+
+  setRaceSession(session: RaceSessionKind): void {
+    this.raceSession.set(session);
+    void this.loadRaceResults();
+  }
+
+  getRaceClassTabClasses(cls: string): Record<string, boolean> {
+    return {
+      'class-tab': true,
+      active: this.activeRaceClass() === cls,
+      [`class-color-${this.raceClassColor(cls)}`]: true,
+    };
+  }
+
+  /** Colour of a class as in the standings, so both tabs agree. */
+  raceClassColor(cls: string): number {
+    const idx = this.getClassIndex(cls);
+    return idx >= 0 ? idx : this.raceClasses().indexOf(cls);
+  }
+
+  formatLapTime(ms: number | null): string {
+    return formatLapTime(ms);
+  }
+
+  /** Race time for the class leader, the gap for everyone on the lead lap. */
+  formatResultTime(entry: RaceResultEntry, isClassLeader: boolean): string {
+    if (entry.status !== 'classified') return '-';
+    return isClassLeader ? formatLapTime(entry.totalTimeMs) : formatGap(entry.gapMs);
+  }
+
+  /** Qualifying gap: best lap versus the class's fastest. */
+  formatQualifyingGap(entry: RaceResultEntry): string {
+    const best = Math.min(
+      ...this.visibleRaceResults()
+        .filter((e) => e.carClass === entry.carClass && e.bestLapMs)
+        .map((e) => e.bestLapMs as number),
+    );
+    if (!entry.bestLapMs || !Number.isFinite(best) || entry.bestLapMs === best) return '-';
+    return formatGap(entry.bestLapMs - best);
   }
 
   // ------------------------------------------------------------------
@@ -229,6 +340,12 @@ export class ChampionshipsComponent {
     void this.selectAndLoad(key, false);
   }
 
+  private resetRaceResults(): void {
+    this.expandedRaceId.set(null);
+    this.raceResults.set(new Map());
+    this.raceResultsError.set(false);
+  }
+
   private async selectAndLoad(key: string, replaceUrl: boolean): Promise<void> {
     this.selectedChampionshipKey.set(key);
     this.selectedClass.set(null);
@@ -238,9 +355,10 @@ export class ChampionshipsComponent {
 
     if (entry) {
       this.allRaces.set([]);
+      this.resetRaceResults();
       const simgridId = entry.simgridItem.id;
       void this.router.navigate([], {
-        queryParams: { id: simgridId },
+        queryParams: { id: simgridId, race: this.pendingRaceId },
         queryParamsHandling: 'merge',
         replaceUrl,
       });
@@ -339,7 +457,9 @@ export class ChampionshipsComponent {
       if (!isUpcoming) {
         this.cs.refreshDriverMap();
       }
-      if (isUpcoming && this.allRaces().length === 0) {
+      if (this.pendingRaceId !== null) {
+        this.setActiveTab('races');
+      } else if (isUpcoming && this.allRaces().length === 0) {
         void this.loadAllRaces(championshipId);
       }
     } catch (error) {
@@ -373,6 +493,7 @@ export class ChampionshipsComponent {
       const races = await firstValueFrom(this.api.getChampionshipRaces(championshipId));
       if (this.getSelectedSimgridId() === championshipId) {
         this.allRaces.set(races);
+        this.expandPendingRace(races);
       }
     } catch {
       if (this.getSelectedSimgridId() === championshipId) {
@@ -380,6 +501,35 @@ export class ChampionshipsComponent {
       }
     } finally {
       this.loadingRaces.set(false);
+    }
+  }
+
+  private expandPendingRace(races: ChampionshipRace[]): void {
+    const race = races.find((r) => r.id === this.pendingRaceId);
+    this.pendingRaceId = null;
+    if (!race || !this.canExpandRace(race)) return;
+    this.toggleRace(race);
+    setTimeout(() => document.getElementById(`race-${race.id}`)?.scrollIntoView({ block: 'start' }));
+  }
+
+  private async loadRaceResults(): Promise<void> {
+    const championshipId = this.getSelectedSimgridId();
+    const raceId = this.expandedRaceId();
+    const session = this.raceSession();
+    const key = `${raceId}:${session}`;
+    if (championshipId === null || raceId === null || this.raceResults().has(key)) return;
+
+    this.loadingRaceResults.set(true);
+    this.raceResultsError.set(false);
+    try {
+      const data = await firstValueFrom(this.api.getRaceResults(championshipId, raceId, session));
+      if (this.getSelectedSimgridId() === championshipId) {
+        this.raceResults.update((m) => new Map(m).set(key, data.entries));
+      }
+    } catch {
+      if (this.expandedRaceId() === raceId) this.raceResultsError.set(true);
+    } finally {
+      this.loadingRaceResults.set(false);
     }
   }
 }

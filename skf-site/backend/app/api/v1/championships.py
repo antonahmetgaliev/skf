@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,11 +16,12 @@ from app.schemas.championship import (
     ChampionshipListItem,
     ChampionshipRace,
     ChampionshipStandingsData,
+    RaceSessionOut,
 )
 from app.schemas.giveaway import EligibilityOut, UnmatchedNameOut
 from app.schemas.race_results import RoundsOut
 from app.services import championships as service
-from app.services import giveaway, race_import
+from app.services import championship_results, giveaway, race_import
 from app.services.drivers import sync_drivers_from_standings
 
 router = APIRouter(prefix="/championships", tags=["Championships"])
@@ -45,13 +48,23 @@ async def get_standings(championship_id: int, background_tasks: BackgroundTasks)
     # fallbacks cannot contain anything new.
     if fetched_live:
         background_tasks.add_task(sync_drivers_from_standings, data.entries, championship_id)
-    return data
+    return await championship_results.with_round_results(championship_id, data)
 
 
 @router.get("/{championship_id}/races", response_model=list[ChampionshipRace])
 async def get_races(championship_id: int):
     """All races of the championship, including future ones."""
     return await service.get_races(championship_id)
+
+
+@router.get("/{championship_id}/races/{race_id}/results", response_model=RaceSessionOut)
+async def get_race_results(
+    championship_id: int,
+    race_id: int,
+    session: Literal["race", "qualifying"] = "race",
+):
+    """One race's classification (race or qualifying), ordered by class."""
+    return await championship_results.race_session(championship_id, race_id, session)
 
 
 @router.get(
