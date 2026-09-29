@@ -1,5 +1,4 @@
 import { NgClass } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -14,7 +13,6 @@ import {
   StandingRace,
 } from '../../services/simgrid-api.service';
 import { API } from '../../api';
-import { AuthService } from '../../services/auth.service';
 import { ChampionshipIncidentWindow, IncidentsApiService } from '../../services/incidents-api.service';
 import { ChampionshipEntry, ChampionshipService } from '../../services/championship.service';
 import { DataFreshnessService } from '../../services/data-freshness.service';
@@ -49,12 +47,10 @@ import { TabsComponent } from '../../components/tabs/tabs.component';
   styleUrl: './championships.component.scss',
 })
 export class ChampionshipsComponent {
-  readonly auth = inject(AuthService);
   readonly cs = inject(ChampionshipService);
   readonly freshness = inject(DataFreshnessService);
   private readonly api = inject(SimgridApiService);
   private readonly incidentsApi = inject(IncidentsApiService);
-  private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private standingsLoadToken = 0;
@@ -73,7 +69,6 @@ export class ChampionshipsComponent {
   readonly activeTab = signal<'standings' | 'races' | 'participants'>('standings');
   readonly allRaces = signal<ChampionshipRace[]>([]);
   readonly loadingRaces = signal(false);
-  readonly activeChampionshipIds = signal<Set<number>>(new Set());
   /** The selected championship's incident windows by SimGrid race id. */
   readonly incidentWindows = signal<Map<number, ChampionshipIncidentWindow>>(new Map());
 
@@ -83,8 +78,6 @@ export class ChampionshipsComponent {
     if (!key) return false;
     return this.freshness.hasStaleData(`${API}/championships`);
   });
-
-  readonly refreshingCache = signal(false);
 
   readonly isUpcomingChampionship = computed(() => {
     return this.cs.isChampionshipNotStarted(this.selectedChampionship());
@@ -290,12 +283,8 @@ export class ChampionshipsComponent {
     this.errorMessage.set('');
 
     try {
-      const [simgridList, activeIds] = await Promise.all([
-        firstValueFrom(this.api.getChampionships()),
-        firstValueFrom(this.api.getActiveChampionships()),
-      ]);
+      const simgridList = await firstValueFrom(this.api.getChampionships());
       if (token !== this.championshipsLoadToken) return;
-      this.activeChampionshipIds.set(new Set(activeIds));
 
       const entries: ChampionshipEntry[] = simgridList.map((s) => ({
         key: `sg-${s.id}`,
@@ -381,49 +370,8 @@ export class ChampionshipsComponent {
     }
   }
 
-  // ------------------------------------------------------------------
-  // Admin actions
-  // ------------------------------------------------------------------
-
-  async toggleActive(simgridId: number): Promise<void> {
-    const ids = this.activeChampionshipIds();
-    try {
-      if (ids.has(simgridId)) {
-        await firstValueFrom(this.api.removeActiveChampionship(simgridId));
-        const next = new Set(ids);
-        next.delete(simgridId);
-        this.activeChampionshipIds.set(next);
-      } else {
-        await firstValueFrom(this.api.addActiveChampionship(simgridId));
-        this.activeChampionshipIds.set(new Set([...ids, simgridId]));
-      }
-      void this.loadChampionships();
-    } catch {
-      this.errorMessage.set('Failed to update active status.');
-    }
-  }
-
   openIncidents(simgridId: number): void {
     void this.router.navigate(['/incidents'], { queryParams: { championship: simgridId } });
-  }
-
-  isChampionshipActive(simgridId: number): boolean {
-    return this.activeChampionshipIds().has(simgridId);
-  }
-
-  async refreshChampionshipCache(championshipId: number): Promise<void> {
-    if (this.refreshingCache()) return;
-    this.refreshingCache.set(true);
-    try {
-      await firstValueFrom(
-        this.http.delete(`${API}/caches/simgrid`),
-      );
-      await this.loadStandings(championshipId);
-    } catch {
-      this.errorMessage.set('Failed to refresh championship data.');
-    } finally {
-      this.refreshingCache.set(false);
-    }
   }
 
   // ------------------------------------------------------------------

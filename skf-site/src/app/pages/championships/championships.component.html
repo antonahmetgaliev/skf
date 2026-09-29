@@ -50,27 +50,11 @@
           <div class="details-info">
             <div class="details-title-row">
               <h2>{{ championship.name }}</h2>
-              @if (auth.isAdmin() || incidentWindows().size > 0) {
+              @if (incidentWindows().size > 0) {
                 <div class="details-actions">
-                  @if (incidentWindows().size > 0) {
-                    <app-btn variant="ghost" size="sm" (click)="openIncidents(championship.id)">
-                      {{ 'championships.incidents' | transloco }}
-                    </app-btn>
-                  }
-                  @if (auth.isAdmin() && championship.id; as champId) {
-                    <app-btn
-                      [variant]="isChampionshipActive(champId) ? 'danger' : 'accent'"
-                      size="sm"
-                      (click)="toggleActive(champId)"
-                    >
-                      {{ isChampionshipActive(champId) ? ('championships.markFinished' | transloco) : ('championships.markActive' | transloco) }}
-                    </app-btn>
-                  }
-                  @if (auth.isAdmin()) {
-                    <app-btn variant="ghost" size="sm" [disabled]="refreshingCache()" (click)="refreshChampionshipCache(championship.id)">
-                      {{ refreshingCache() ? ('championships.refreshing' | transloco) : ('championships.refreshData' | transloco) }}
-                    </app-btn>
-                  }
+                  <app-btn variant="ghost" size="sm" (click)="openIncidents(championship.id)">
+                    {{ 'championships.incidents' | transloco }}
+                  </app-btn>
                 </div>
               }
             </div>
