@@ -62,7 +62,7 @@ export class HomeVisitComponent {
   readonly hasChampionships = computed(() => this.championships().length > 0);
 
   formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString(this.locale.locale, { day: 'numeric', month: 'long' });
+    return new Date(iso).toLocaleDateString(this.locale.locale, { day: 'numeric', month: 'short' });
   }
 
   isOngoing(ev: CalendarEvent): boolean {

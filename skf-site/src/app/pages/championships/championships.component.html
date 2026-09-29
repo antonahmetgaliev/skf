@@ -66,7 +66,7 @@
               </span>
               <span class="info-chip">
                 <span class="info-chip-label">{{ 'championships.entries' | transloco }}</span>
-                <span class="info-chip-value">{{ standings().length }}/{{ championship.capacity ?? '∞' }}</span>
+                <span class="info-chip-value">{{ championship.spotsTaken ?? standings().length }}/{{ championship.capacity ?? '∞' }}</span>
               </span>
               <span class="info-chip">
                 <span class="info-chip-label">{{ 'championships.start' | transloco }}</span>
@@ -174,9 +174,6 @@
                           <a [routerLink]="['/drivers', uuid]" class="driver-link">{{ entry.displayName }}</a>
                         } @else {
                           {{ entry.displayName }}
-                        }
-                        @if (entry.dsq) {
-                          <span class="dsq-badge">DSQ</span>
                         }
                       </td>
                       @if (isMulticlass()) {

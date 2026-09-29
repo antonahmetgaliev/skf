@@ -8,7 +8,6 @@ import { HomeVisitComponent } from './pages/home-visit/home-visit.component';
 import { ChampionshipsComponent } from './pages/championships/championships.component';
 import { IncidentsComponent } from './pages/incidents/incidents.component';
 import { ProfileComponent } from './pages/profile/profile.component';
-import { RaceResultsComponent } from './pages/race-results/race-results.component';
 import { SkfHistoryComponent } from './pages/skf-history/skf-history.component';
 import { CalendarComponent } from './pages/calendar/calendar.component';
 import { MediaComponent } from './pages/media/media.component';
@@ -22,7 +21,7 @@ export const appRoutes: Routes = [
   { path: 'championship-standings', pathMatch: 'full', redirectTo: 'championships' },
   { path: 'championships', component: ChampionshipsComponent, title: 'Championships | SKF Racing Hub' },
   { path: 'skf-history', component: SkfHistoryComponent, title: 'SKF History | SKF Racing Hub' },
-  { path: 'race-results', component: RaceResultsComponent, title: 'Race Results | SKF Racing Hub' },
+  { path: 'race-results', pathMatch: 'full', redirectTo: 'championships' },
   { path: 'calendar', component: CalendarComponent, title: 'Calendar | SKF Racing Hub' },
   { path: 'regulations', component: RegulationPageComponent, data: { slug: 'general' }, title: 'Regulations | SKF Racing Hub' },
   { path: 'regulations/:slug', component: RegulationPageComponent, title: 'Regulations | SKF Racing Hub' },

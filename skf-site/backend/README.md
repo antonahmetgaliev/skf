@@ -33,7 +33,7 @@ uvicorn app.main:app --reload --port 8000
 3. Railway auto-injects `DATABASE_URL` from the linked PostgreSQL service
 4. Add `SIMGRID_API_KEY`, `CORS_ORIGINS` and `FRONTEND_URL` (the public origin of the site; Discord login redirects there and an `https` URL makes the session cookie `Secure`) as environment variables
 5. Add a **Bucket** to the project and connect it to the backend service with **Add to Service** (the default `AWS_*` variable names work; `S3_ENDPOINT_URL`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION` are accepted too). Uploaded race-result files are kept there; without these variables imports still work but the originals are not stored
-6. The start command in `railway.toml` runs migrations automatically on deploy. The app still runs `create_all` on startup, because a few tables (`roles`, `languages`, `translations`, `penalty_clearances`) are not created by any migration yet
+6. The start command in `railway.toml` runs migrations automatically on deploy; the migrations create the whole schema. On startup the app syncs translations with `seed/translations_*.json`: missing keys are added, keys no longer in the files are removed, and values edited in the admin UI are kept
 
 ## API
 

@@ -52,17 +52,17 @@
 
   <!-- ───── CHAMPIONSHIPS ───── -->
   @if (hasChampionships()) {
-    <section class="open-reg">
+    <section class="champs">
       <p class="eyebrow center">{{ 'home.championships.eyebrow' | transloco }}</p>
       <h2 class="section-title">{{ 'home.championships.title' | transloco }}</h2>
-      <div class="open-reg-grid">
+      <div class="champs-grid">
         @for (champ of championships(); track champ.id) {
-          <app-card class="reg-card">
+          <app-card class="champ-card">
             @if (champ.image) {
-              <img class="reg-image" [src]="champ.image" [alt]="champ.name" loading="lazy" />
+              <img class="champ-image" [src]="champ.image" [alt]="champ.name" loading="lazy" />
             }
-            <div class="reg-body">
-              <div class="reg-badges">
+            <div class="champ-body">
+              <div class="champ-badges">
                 @if (isOngoing(champ)) {
                   <app-badge variant="ongoing">{{ 'calendar.eventType.ongoing' | transloco }}</app-badge>
                 } @else {
@@ -72,46 +72,59 @@
                   <app-badge variant="open">{{ 'calendar.registrationOpen' | transloco }}</app-badge>
                 }
               </div>
-              <h3 class="reg-name">{{ champ.name }}</h3>
-              <p class="reg-meta">
+              <h3 class="champ-name">{{ champ.name }}</h3>
+              <p class="champ-meta">
                 {{ champ.game }}
                 @if (champ.carClass) {
                   · {{ champ.carClass }}
                 }
               </p>
-              <p class="reg-facts">
+              <dl class="champ-stats">
                 @if (isOngoing(champ) && nextRoundDate(champ); as next) {
-                  <span>{{ 'home.openRegistration.nextRound' | transloco: { date: formatDate(next) } }}</span>
+                  <div class="champ-stat">
+                    <dt>{{ 'home.championships.statNextRound' | transloco }}</dt>
+                    <dd>{{ formatDate(next) }}</dd>
+                  </div>
                 } @else if (champ.startDate) {
-                  <span>{{ 'home.openRegistration.starts' | transloco: { date: formatDate(champ.startDate) } }}</span>
+                  <div class="champ-stat">
+                    <dt>{{ 'home.championships.statStart' | transloco }}</dt>
+                    <dd>{{ formatDate(champ.startDate) }}</dd>
+                  </div>
                 }
                 @if (champ.races.length > 0) {
-                  <span>{{ 'home.openRegistration.rounds' | transloco: { count: champ.races.length } }}</span>
-                }
-              </p>
-              @if (isOngoing(champ) && champ.races.length > 0) {
-                <div class="reg-progress">
-                  <div class="reg-progress-bar">
-                    <div class="reg-progress-fill" [style.width.%]="(roundsDone(champ) / champ.races.length) * 100"></div>
+                  <div class="champ-stat">
+                    <dt>{{ 'home.championships.statRounds' | transloco }}</dt>
+                    <dd>
+                      @if (isOngoing(champ)) {
+                        {{ roundsDone(champ) }}<span class="champ-stat-total">/{{ champ.races.length }}</span>
+                      } @else {
+                        {{ champ.races.length }}
+                      }
+                    </dd>
                   </div>
-                  <span class="reg-progress-label">
-                    {{ 'home.openRegistration.roundsDone' | transloco: { done: roundsDone(champ), total: champ.races.length } }}
-                  </span>
+                }
+                @if (champ.acceptingRegistrations && champ.capacity) {
+                  <div class="champ-stat">
+                    <dt>{{ 'home.championships.statSpots' | transloco }}</dt>
+                    <dd>{{ champ.spotsTaken ?? 0 }}<span class="champ-stat-total">/{{ champ.capacity }}</span></dd>
+                  </div>
+                }
+              </dl>
+              @if (isOngoing(champ) && champ.races.length > 0) {
+                <div class="champ-rounds" [attr.aria-hidden]="true">
+                  @for (race of champ.races; track $index) {
+                    <span class="champ-round" [class.done]="$index < roundsDone(champ)"></span>
+                  }
                 </div>
               }
-              @if (champ.acceptingRegistrations && champ.capacity) {
-                <span class="reg-spots">
-                  {{ 'home.openRegistration.spots' | transloco: { taken: champ.spotsTaken ?? 0, capacity: champ.capacity } }}
-                </span>
-              }
-              <div class="reg-actions">
+              <div class="champ-actions">
                 @if (champ.acceptingRegistrations && champ.registrationUrl) {
                   <a appBtn variant="accent" size="sm" [href]="champ.registrationUrl" target="_blank" rel="noopener noreferrer">
-                    {{ 'home.openRegistration.register' | transloco }}
+                    {{ 'home.championships.register' | transloco }}
                   </a>
                 }
                 <a appBtn variant="ghost" size="sm" routerLink="/championships" [queryParams]="{ id: champ.simgridChampionshipId }">
-                  {{ 'home.openRegistration.details' | transloco }}
+                  {{ 'home.championships.details' | transloco }}
                 </a>
               </div>
             </div>

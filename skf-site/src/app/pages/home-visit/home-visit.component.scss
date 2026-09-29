@@ -115,11 +115,11 @@
 /* ═══════════════════════════════════════════
    OPEN REGISTRATION
    ═══════════════════════════════════════════ */
-.open-reg {
+.champs {
   padding: 1rem 0 3rem;
 }
 
-.open-reg-grid {
+.champs-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
   justify-content: center;
@@ -128,21 +128,21 @@
   margin: 0 auto;
 }
 
-.reg-card {
+.champ-card {
   display: flex;
   flex-direction: column;
   padding: 0;
   overflow: hidden;
 }
 
-.reg-image {
+.champ-image {
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
   display: block;
 }
 
-.reg-body {
+.champ-body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -151,63 +151,84 @@
   flex: 1;
 }
 
-.reg-name {
+.champ-name {
   font-size: var(--text-lg);
   font-weight: 700;
   color: var(--ink);
   margin: 0.25rem 0 0;
 }
 
-.reg-meta,
-.reg-facts {
+.champ-meta {
   margin: 0;
   font-size: var(--text-base);
   color: var(--muted);
 }
 
-.reg-facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1rem;
-}
-
-.reg-badges {
+.champ-badges {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
 }
 
-.reg-progress {
+.champ-stats {
   width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.5rem 0 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--separator);
+}
+
+.champ-stat {
   display: grid;
-  gap: 0.3rem;
+  gap: 0.2rem;
+  min-width: 0;
+
+  dt {
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--text-base);
+    font-weight: 700;
+    color: var(--ink);
+    white-space: nowrap;
+  }
 }
 
-.reg-progress-bar {
-  height: 4px;
-  border-radius: 2px;
-  background: var(--separator);
-  overflow: hidden;
-}
-
-.reg-progress-fill {
-  height: 100%;
-  background: var(--gold);
-  border-radius: 2px;
-}
-
-.reg-progress-label,
-.reg-spots {
-  font-size: var(--text-xs);
+.champ-stat-total {
+  font-weight: 400;
   color: var(--muted);
 }
 
-.reg-actions {
+.champ-rounds {
+  width: 100%;
+  display: flex;
+  gap: 4px;
+}
+
+.champ-round {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--separator);
+
+  &.done {
+    background: var(--gold);
+  }
+}
+
+.champ-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: auto;
-  padding-top: 0.5rem;
+  padding-top: 1rem;
 }
 
 /* ═══════════════════════════════════════════

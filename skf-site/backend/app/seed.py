@@ -7,7 +7,7 @@ import logging
 import uuid
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 import app.models  # noqa: F401 – ensure all models are registered
@@ -51,10 +51,13 @@ async def seed_languages() -> None:
 
 
 async def seed_translations() -> None:
-    """Insert translation keys the seed files know but the database does not.
+    """Sync each seeded language's keys with its seed file.
 
-    Keys an admin has since edited in the UI are left alone; only genuinely
-    missing ones are inserted, so this is safe to run on every start.
+    Missing keys are inserted and keys the file no longer has (removed
+    features) are deleted. Values an admin has edited in the UI are left
+    alone, so this is safe to run on every start. The seed files are the
+    source of truth for which keys exist: the UI only renders keys the code
+    references, and those all live in the files.
     """
     async with async_session() as session:
         for code, _ in DEFAULT_LANGUAGES:
@@ -62,15 +65,22 @@ async def seed_translations() -> None:
             if not seed_file.exists():
                 continue
             data = json.loads(seed_file.read_text(encoding="utf-8"))
-            existing = await session.execute(select(Translation.key).where(Translation.lang == code))
-            missing = set(data) - set(existing.scalars().all())
-            if not missing:
-                continue
-            stmt = pg_insert(Translation).values(
-                [{"lang": code, "key": k, "value": data[k]} for k in sorted(missing)]
+            existing = set(
+                (await session.execute(select(Translation.key).where(Translation.lang == code))).scalars().all()
             )
-            await session.execute(stmt.on_conflict_do_nothing())
-            logger.info("Seeded %d new translations for '%s'", len(missing), code)
+            missing = set(data) - existing
+            if missing:
+                stmt = pg_insert(Translation).values(
+                    [{"lang": code, "key": k, "value": data[k]} for k in sorted(missing)]
+                )
+                await session.execute(stmt.on_conflict_do_nothing())
+                logger.info("Seeded %d new translations for '%s'", len(missing), code)
+            obsolete = existing - set(data)
+            if obsolete:
+                await session.execute(
+                    delete(Translation).where(Translation.lang == code, Translation.key.in_(obsolete))
+                )
+                logger.info("Removed %d obsolete translations for '%s'", len(obsolete), code)
         await session.commit()
 
 

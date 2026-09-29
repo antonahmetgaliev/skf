@@ -114,7 +114,6 @@ class StandingEntry(CamelModel):
     points: float = 0
     penalties: float = 0
     score: float = 0
-    dsq: bool = False
     race_results: list[DriverRaceResult] = []
 
 

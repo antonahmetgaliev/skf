@@ -67,14 +67,9 @@ _client_semaphore = asyncio.Semaphore(_MAX_CONCURRENT_REQUESTS)
 logger = logging.getLogger(__name__)
 
 
-def _unwrap(payload: Any) -> Any:
-    """Tolerate cached collections stored whole, before we cached ``data`` only.
-
-    Fresh responses are validated by the ``simgrid_raw`` models instead.
-    """
-    if isinstance(payload, dict) and "data" in payload:
-        return payload["data"]
-    return payload
+def _cached_list(payload: Any) -> list | None:
+    """A cached collection, or None to refetch anything that is not a list."""
+    return payload if isinstance(payload, list) else None
 
 
 class SimgridService:
@@ -175,9 +170,9 @@ class SimgridService:
         self, championship_id: int,
     ) -> list[dict]:
         key = f"races_{championship_id}"
-        cached = _unwrap(await read_cache(key, _TTL_STATIC))
+        cached = _cached_list(await read_cache(key, _TTL_STATIC))
         if cached is not None:
-            return cached if isinstance(cached, list) else []
+            return cached
 
         data = await self._request(
             "/api/v1/races", key, page=Envelope[RawRace],
@@ -190,7 +185,7 @@ class SimgridService:
     ) -> list[RawSessionResult]:
         """One session's results (``race_1`` or ``qualifying``); ``[]`` until published."""
         key = f"session_results_{championship_id}_{race_id}_{session}"
-        data = _unwrap(await read_cache(key, _TTL_RESULTS))
+        data = _cached_list(await read_cache(key, _TTL_RESULTS))
         if data is None:
             data = await self._request(
                 f"/api/v1/races/{race_id}/session_results", key,
@@ -359,7 +354,7 @@ class SimgridService:
         self, championship_id: int,
     ) -> list[ParticipatingUser]:
         key = f"participants_{championship_id}"
-        cached = _unwrap(await read_cache(key, _TTL_LIVE))
+        cached = _cached_list(await read_cache(key, _TTL_LIVE))
         if cached is not None:
             return [ParticipatingUser(**u) for u in cached]
 
@@ -411,9 +406,9 @@ class SimgridService:
     async def get_games(self) -> list[dict]:
         """Fetch all games from SimGrid."""
         key = "games_list"
-        cached = _unwrap(await read_cache(key, _TTL_STATIC))
+        cached = _cached_list(await read_cache(key, _TTL_STATIC))
         if cached is not None:
-            return cached if isinstance(cached, list) else []
+            return cached
 
         data = await self._request("/api/v1/games", key, page=Envelope[RawNamed])
         return data if isinstance(data, list) else []
@@ -424,9 +419,9 @@ class SimgridService:
         """Fetch car classes from SimGrid, optionally filtered by game."""
         suffix = f"_{game_id}" if game_id else ""
         key = f"car_classes{suffix}"
-        cached = _unwrap(await read_cache(key, _TTL_STATIC))
+        cached = _cached_list(await read_cache(key, _TTL_STATIC))
         if cached is not None:
-            return cached if isinstance(cached, list) else []
+            return cached
 
         params: dict[str, Any] = {}
         if game_id is not None:
@@ -493,9 +488,9 @@ class SimgridService:
                 cache_key, exc_info=True,
             )
             stale = await read_stale_cache(cache_key)
-            if stale is not None:
+            if stale is not None and (page is None or isinstance(stale, list)):
                 mark_stale()
-                return _unwrap(stale)
+                return stale
             raise
 
     # ------------------------------------------------------------------

@@ -162,9 +162,13 @@ async def test_races_cache_raw_items(monkeypatch, memory_cache):
     assert memory_cache["races_1"] == body["data"]
 
 
-async def test_legacy_wrapped_cache_is_unwrapped(memory_cache):
+async def test_non_list_cache_is_refetched(monkeypatch, memory_cache):
+    """Collections cached whole before 2026-09-28 are treated as a miss."""
     memory_cache["races_1"] = {"data": [{"id": 1}], "pagination": None}
-    assert await SimgridService().get_races(1) == [{"id": 1}]
+    service = SimgridService()
+    body = _fixture("races")
+    _serve(monkeypatch, service, body)
+    assert await service.get_races(1) == body["data"]
 
 
 # ── Live contract (opt-in) ─────────────────────────────────────────────────
