@@ -61,7 +61,6 @@
   "admin.update": "Update",
   "admin.userCount": "user(s)",
   "admin.viewingAs": "Viewing as",
-  "app.maintenanceNotice": "Maintenance in progress: some features may be temporarily unavailable or work with limitations.",
   "auth.logout": "Logout",
   "auth.signInWithDiscord": "Sign in with Discord",
   "bwp.action": "Action",
