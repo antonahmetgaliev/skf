@@ -13,7 +13,6 @@ import { toLocalDateStr, toLocalTime } from '../../utils/date';
 import { CardComponent } from '../card/card.component';
 import { BtnComponent } from '../btn/btn.component';
 import { SpinnerComponent } from '../spinner/spinner.component';
-import { BadgeComponent } from '../badge/badge.component';
 
 interface WeekRace {
   championshipName: string;
@@ -30,25 +29,6 @@ interface WeekRace {
   communityIsSkf: boolean;
 }
 
-interface ChampionshipSummary {
-  id: string;
-  name: string;
-  game: string;
-  carClass: string | null;
-  image: string | null;
-  eventType: 'ongoing' | 'upcoming';
-  nextRaceDate: string | null;
-  nextRaceTrack: string | null;
-  totalRaces: number;
-  completedRaces: number;
-  simgridChampionshipId: number | null;
-  customChampionshipId: string | null;
-  acceptingRegistrations: boolean;
-  capacity: number | null;
-  spotsTaken: number | null;
-  registrationUrl: string | null;
-}
-
 interface NextRaceInfo {
   championshipName: string;
   track: string | null;
@@ -60,7 +40,7 @@ interface NextRaceInfo {
 
 @Component({
   selector: 'app-week-calendar',
-  imports: [RouterLink, TranslocoPipe, CardComponent, BtnComponent, SpinnerComponent, BadgeComponent],
+  imports: [RouterLink, TranslocoPipe, CardComponent, BtnComponent, SpinnerComponent],
   templateUrl: './week-calendar.component.html',
   styleUrl: './week-calendar.component.scss',
 })
@@ -74,7 +54,6 @@ export class WeekCalendarComponent {
   readonly loading = signal(true);
   readonly todayRaces = signal<WeekRace[]>([]);
   readonly weekRaces = signal<WeekRace[]>([]);
-  readonly championships = signal<ChampionshipSummary[]>([]);
   readonly todayBroadcasts = signal<YouTubeVideo[]>([]);
   readonly nextRace = signal<NextRaceInfo | null>(null);
   readonly activeChampionshipCount = signal(0);
@@ -129,10 +108,6 @@ export class WeekCalendarComponent {
       this.todayRaces.set(today);
       this.weekRaces.set(restOfWeek);
       this.todayBroadcasts.set(broadcasts);
-
-      // Build championship summaries
-      const champs = this.buildChampionshipSummaries(events, todayStr);
-      this.championships.set(champs);
 
       this.buildCalendarOverview(events);
 
@@ -195,70 +170,6 @@ export class WeekCalendarComponent {
     return races;
   }
 
-  private buildChampionshipSummaries(
-    events: CalendarEvent[],
-    todayStr: string,
-  ): ChampionshipSummary[] {
-    const summaries: ChampionshipSummary[] = [];
-
-    for (const ev of events) {
-      if (ev.source !== 'simgrid') continue;
-      if (ev.eventType !== 'ongoing' && ev.eventType !== 'upcoming') continue;
-
-      // Find next upcoming race and count completed
-      let nextRaceDate: string | null = null;
-      let nextRaceTrack: string | null = null;
-      let completedRaces = 0;
-
-      for (const race of ev.races) {
-        if (!race.date) continue;
-        const raceDay = toLocalDateStr(race.date);
-        const raceEndDay = race.endDate ? toLocalDateStr(race.endDate) : raceDay;
-        if (raceEndDay < todayStr) {
-          completedRaces++;
-        }
-        if (raceEndDay >= todayStr) {
-          if (!nextRaceDate || race.date < nextRaceDate) {
-            nextRaceDate = race.date;
-            nextRaceTrack = race.track;
-          }
-        }
-      }
-
-      summaries.push({
-        id: ev.id,
-        name: ev.name,
-        game: ev.game,
-        carClass: ev.carClass,
-        image: ev.image,
-        eventType: ev.eventType as 'ongoing' | 'upcoming',
-        nextRaceDate,
-        nextRaceTrack,
-        totalRaces: ev.races.length,
-        completedRaces,
-        simgridChampionshipId: ev.simgridChampionshipId,
-        customChampionshipId: ev.customChampionshipId,
-        acceptingRegistrations: ev.acceptingRegistrations,
-        capacity: ev.capacity,
-        spotsTaken: ev.spotsTaken,
-        registrationUrl: ev.registrationUrl,
-      });
-    }
-
-    // Sort: ongoing first, then by next race date
-    summaries.sort((a, b) => {
-      if (a.eventType !== b.eventType) {
-        return a.eventType === 'ongoing' ? -1 : 1;
-      }
-      if (a.nextRaceDate && b.nextRaceDate) {
-        return a.nextRaceDate.localeCompare(b.nextRaceDate);
-      }
-      return a.nextRaceDate ? -1 : 1;
-    });
-
-    return summaries;
-  }
-
   /** How many championships are still to run, and how many communities run them. */
   private buildCalendarOverview(events: CalendarEvent[]): void {
     const active = events.filter((ev) => ev.eventType !== 'past');
@@ -273,11 +184,6 @@ export class WeekCalendarComponent {
       return;
     }
     this.router.navigate(['/calendar'], { queryParams: { request: 'community' } });
-  }
-
-  formatChampDate(iso: string): string {
-    const d = new Date(iso);
-    return d.toLocaleDateString(this.locale.locale, { day: 'numeric', month: 'short' });
   }
 
   raceLink(race: WeekRace): string | null {
@@ -299,10 +205,6 @@ export class WeekCalendarComponent {
 
   isExternalLink(race: WeekRace): boolean {
     return !!race.customChampionshipId && !!race.communityDiscordUrl;
-  }
-
-  champQueryParams(champ: ChampionshipSummary): Record<string, string> {
-    return { id: String(champ.simgridChampionshipId ?? champ.customChampionshipId ?? '') };
   }
 
   daysUntil(date: Date): number {

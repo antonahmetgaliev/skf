@@ -42,27 +42,48 @@ export class HomeVisitComponent {
     { initialValue: SKF_DISCORD_INVITE },
   );
 
-  /** SKF championships currently taking entries, soonest start first. */
-  readonly openChampionships = toSignal(
+  /** SKF championships running or about to start: ongoing first, then by start date. */
+  readonly championships = toSignal(
     this.calendarApi.getCurrentEvents().pipe(
       map((events) =>
         events
-          .filter((ev) => ev.source === 'simgrid' && ev.acceptingRegistrations && ev.eventType !== 'past')
-          .sort((a, b) => (a.startDate ?? '9999').localeCompare(b.startDate ?? '9999')),
+          .filter((ev) => ev.source === 'simgrid' && (ev.eventType === 'ongoing' || ev.eventType === 'upcoming'))
+          .sort(
+            (a, b) =>
+              Number(b.eventType === 'ongoing') - Number(a.eventType === 'ongoing') ||
+              (a.startDate ?? '9999').localeCompare(b.startDate ?? '9999'),
+          ),
       ),
       catchError(() => of([] as CalendarEvent[])),
     ),
     { initialValue: [] as CalendarEvent[] },
   );
 
-  readonly hasOpenChampionships = computed(() => this.openChampionships().length > 0);
+  readonly hasChampionships = computed(() => this.championships().length > 0);
 
   formatDate(iso: string): string {
     return new Date(iso).toLocaleDateString(this.locale.locale, { day: 'numeric', month: 'long' });
   }
 
-  spotsPercent(ev: CalendarEvent): number {
-    if (!ev.capacity) return 0;
-    return Math.min(100, ((ev.spotsTaken ?? 0) / ev.capacity) * 100);
+  isOngoing(ev: CalendarEvent): boolean {
+    return ev.eventType === 'ongoing';
+  }
+
+  /** Rounds already raced (a multi-day round counts once it has ended). */
+  roundsDone(ev: CalendarEvent): number {
+    const now = Date.now();
+    return ev.races.filter((r) => {
+      const end = r.endDate ?? r.date;
+      return end !== null && new Date(end).getTime() < now;
+    }).length;
+  }
+
+  nextRoundDate(ev: CalendarEvent): string | null {
+    const now = Date.now();
+    const upcoming = ev.races
+      .map((r) => r.date)
+      .filter((d): d is string => d !== null && new Date(d).getTime() >= now)
+      .sort();
+    return upcoming[0] ?? null;
   }
 }

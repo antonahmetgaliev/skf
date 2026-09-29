@@ -50,19 +50,28 @@
     </ol>
   </section>
 
-  <!-- ───── OPEN REGISTRATION ───── -->
-  @if (hasOpenChampionships()) {
+  <!-- ───── CHAMPIONSHIPS ───── -->
+  @if (hasChampionships()) {
     <section class="open-reg">
-      <p class="eyebrow center">{{ 'home.openRegistration.eyebrow' | transloco }}</p>
-      <h2 class="section-title">{{ 'home.openRegistration.title' | transloco }}</h2>
+      <p class="eyebrow center">{{ 'home.championships.eyebrow' | transloco }}</p>
+      <h2 class="section-title">{{ 'home.championships.title' | transloco }}</h2>
       <div class="open-reg-grid">
-        @for (champ of openChampionships(); track champ.id) {
+        @for (champ of championships(); track champ.id) {
           <app-card class="reg-card">
             @if (champ.image) {
               <img class="reg-image" [src]="champ.image" [alt]="champ.name" loading="lazy" />
             }
             <div class="reg-body">
-              <app-badge variant="open">{{ 'calendar.registrationOpen' | transloco }}</app-badge>
+              <div class="reg-badges">
+                @if (isOngoing(champ)) {
+                  <app-badge variant="ongoing">{{ 'calendar.eventType.ongoing' | transloco }}</app-badge>
+                } @else {
+                  <app-badge variant="upcoming">{{ 'calendar.eventType.upcoming' | transloco }}</app-badge>
+                }
+                @if (champ.acceptingRegistrations) {
+                  <app-badge variant="open">{{ 'calendar.registrationOpen' | transloco }}</app-badge>
+                }
+              </div>
               <h3 class="reg-name">{{ champ.name }}</h3>
               <p class="reg-meta">
                 {{ champ.game }}
@@ -71,25 +80,32 @@
                 }
               </p>
               <p class="reg-facts">
-                @if (champ.startDate) {
+                @if (isOngoing(champ) && nextRoundDate(champ); as next) {
+                  <span>{{ 'home.openRegistration.nextRound' | transloco: { date: formatDate(next) } }}</span>
+                } @else if (champ.startDate) {
                   <span>{{ 'home.openRegistration.starts' | transloco: { date: formatDate(champ.startDate) } }}</span>
                 }
                 @if (champ.races.length > 0) {
                   <span>{{ 'home.openRegistration.rounds' | transloco: { count: champ.races.length } }}</span>
                 }
               </p>
-              @if (champ.capacity) {
-                <div class="reg-spots">
-                  <div class="reg-spots-bar">
-                    <div class="reg-spots-fill" [style.width.%]="spotsPercent(champ)"></div>
+              @if (isOngoing(champ) && champ.races.length > 0) {
+                <div class="reg-progress">
+                  <div class="reg-progress-bar">
+                    <div class="reg-progress-fill" [style.width.%]="(roundsDone(champ) / champ.races.length) * 100"></div>
                   </div>
-                  <span class="reg-spots-label">
-                    {{ 'home.openRegistration.spots' | transloco: { taken: champ.spotsTaken ?? 0, capacity: champ.capacity } }}
+                  <span class="reg-progress-label">
+                    {{ 'home.openRegistration.roundsDone' | transloco: { done: roundsDone(champ), total: champ.races.length } }}
                   </span>
                 </div>
               }
+              @if (champ.acceptingRegistrations && champ.capacity) {
+                <span class="reg-spots">
+                  {{ 'home.openRegistration.spots' | transloco: { taken: champ.spotsTaken ?? 0, capacity: champ.capacity } }}
+                </span>
+              }
               <div class="reg-actions">
-                @if (champ.registrationUrl) {
+                @if (champ.acceptingRegistrations && champ.registrationUrl) {
                   <a appBtn variant="accent" size="sm" [href]="champ.registrationUrl" target="_blank" rel="noopener noreferrer">
                     {{ 'home.openRegistration.register' | transloco }}
                   </a>
