@@ -61,6 +61,7 @@
   "admin.update": "Оновити",
   "admin.userCount": "користувач(ів)",
   "admin.viewingAs": "Перегляд як",
+  "app.maintenanceNotice": "Тривають технічні роботи: деякі функції сайту можуть бути тимчасово недоступні або працювати з обмеженнями.",
   "auth.logout": "Вийти",
   "auth.signInWithDiscord": "Увійти через Discord",
   "bwp.action": "Дія",
