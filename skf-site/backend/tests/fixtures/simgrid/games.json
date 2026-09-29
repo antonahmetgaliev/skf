@@ -1,0 +1,31 @@
+{
+  "data": [
+    {
+      "id": 14,
+      "name": "F1 2021",
+      "slug": "f1-2021-pc",
+      "game_type": "PC",
+      "abbreviation": "F1 2021",
+      "namespace_identifier": "F12021",
+      "metadata": {
+        "engine": "",
+        "social": "",
+        "website": "",
+        "location": "",
+        "developer": "",
+        "product_link": "",
+        "release_date": ""
+      }
+    },
+    {
+      "id": 49,
+      "name": "Project Cars 2",
+      "slug": "project-cars-2-pc",
+      "game_type": "PC",
+      "abbreviation": "PC2",
+      "namespace_identifier": "ProjectCars2",
+      "metadata": {}
+    }
+  ],
+  "pagination": null
+}

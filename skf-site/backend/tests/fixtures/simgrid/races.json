@@ -1,0 +1,77 @@
+{
+  "data": [
+    {
+      "id": 256745,
+      "race_name": "SKF LMU Hyper 70 Round 5",
+      "track": {
+        "id": 4839,
+        "game_id": 65,
+        "name": "Michelin Raceway Road Atlanta",
+        "in_game_name": "RoadAtlanta",
+        "photo": "https://cdn.thesimgrid.com/s2x4j2ktx1jmz717akku61egqcd9",
+        "parent_track_id": 4838,
+        "external_data": {
+          "scn": "RoadAtlanta",
+          "name": "Michelin Raceway Road Atlanta",
+          "settings": "Road Atlanta"
+        },
+        "content_type": "vanilla",
+        "mod_download_link": null,
+        "track_layouts_count": 0,
+        "composite_name": "Michelin Raceway Road Atlanta"
+      },
+      "starts_at": "2026-10-03T17:00:00.000Z",
+      "display_name": "SKF LMU Hyper 70 Round 5",
+      "results_available": false,
+      "published_at": null,
+      "hot_lap": false,
+      "ended": false,
+      "host_name": "SKF Racing Hub",
+      "championship_id": 26927,
+      "championship_name": "SKF LMU Hyper 70",
+      "game_name": "Le Mans Ultimate",
+      "game_slug": "le-mans-ultimate-pc",
+      "platform": "PC",
+      "provisional_results": false
+    },
+    {
+      "id": 256744,
+      "race_name": "SKF LMU Hyper 70 Round 4",
+      "track": {
+        "id": 3276,
+        "game_id": 65,
+        "name": "Fuji Speedway (WEC)",
+        "in_game_name": "FujiWEC",
+        "photo": "https://cdn.thesimgrid.com/feuomktgs5b650jxnfntjq7p6nb6",
+        "parent_track_id": 2878,
+        "external_data": {
+          "scn": "FujiWEC",
+          "name": "6 Hours of Fuji",
+          "settings": "Fuji"
+        },
+        "content_type": "vanilla",
+        "mod_download_link": null,
+        "track_layouts_count": 0,
+        "composite_name": "Fuji Speedway (WEC)"
+      },
+      "starts_at": "2026-09-26T16:58:00.000Z",
+      "display_name": "SKF LMU Hyper 70 Round 4",
+      "results_available": false,
+      "published_at": null,
+      "hot_lap": false,
+      "ended": true,
+      "host_name": "SKF Racing Hub",
+      "championship_id": 26927,
+      "championship_name": "SKF LMU Hyper 70",
+      "game_name": "Le Mans Ultimate",
+      "game_slug": "le-mans-ultimate-pc",
+      "platform": "PC",
+      "provisional_results": true
+    }
+  ],
+  "pagination": {
+    "limit": 2,
+    "offset": 0,
+    "total_count": 5
+  }
+}

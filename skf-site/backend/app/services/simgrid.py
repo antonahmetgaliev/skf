@@ -14,6 +14,7 @@ from datetime import timedelta
 from typing import Any
 
 import httpx
+from pydantic import ValidationError
 
 from app.config import settings
 from app.middleware import mark_stale
@@ -24,6 +25,15 @@ from app.schemas.championship import (
     ParticipatingUser,
     StandingEntry,
     StandingRace,
+)
+from app.schemas.simgrid_raw import (
+    RawChampionshipCarClass,
+    RawChampionshipRef,
+    RawNamed,
+    RawParticipant,
+    RawRace,
+    RawStandingsPage,
+    collection,
 )
 from app.services.cache import (
     invalidate_cache_by_keys,
@@ -53,9 +63,9 @@ logger = logging.getLogger(__name__)
 
 
 def _unwrap(payload: Any) -> Any:
-    """SimGrid wraps list responses as ``{"data": [...], "pagination": ...}``.
+    """Tolerate cached collections stored whole, before we cached ``data`` only.
 
-    Also applied to cached payloads, which may predate the unwrapping.
+    Fresh responses are validated by the ``simgrid_raw`` models instead.
     """
     if isinstance(payload, dict) and "data" in payload:
         return payload["data"]
@@ -97,16 +107,14 @@ class SimgridService:
                 )
                 resp.raise_for_status()
                 raw = resp.json()
-                page = _unwrap(raw)
-                if not isinstance(page, list):
-                    raise ValueError(f"Unexpected championships payload: {type(raw).__name__}")
-                if not page:
+                page = collection(RawChampionshipRef, raw)
+                if not page.data:
                     break
-                items.extend(page)
-                total = (raw.get("pagination") or {}).get("total_count") if isinstance(raw, dict) else None
-                if isinstance(total, int) and len(items) >= total:
+                items.extend(raw["data"])
+                total = page.pagination.total_count if page.pagination else None
+                if total is not None and len(items) >= total:
                     break
-                if len(page) < limit or len(items) >= _MAX_CHAMPIONSHIPS:
+                if len(page.data) < limit or len(items) >= _MAX_CHAMPIONSHIPS:
                     break
                 offset += limit
             if items:
@@ -167,7 +175,7 @@ class SimgridService:
             return cached if isinstance(cached, list) else []
 
         data = await self._request(
-            "/api/v1/races", key,
+            "/api/v1/races", key, item=RawRace,
             params={"championship_id": championship_id, "limit": _RACES_LIMIT},
         )
         return data if isinstance(data, list) else []
@@ -228,7 +236,7 @@ class SimgridService:
                     page_params["page"] = page
                 resp = await self._get(base, params=page_params)
                 resp.raise_for_status()
-                raw = resp.json()
+                raw = RawStandingsPage.model_validate(resp.json())
                 parsed = self._parse_standings(raw)
                 if not races:
                     races = parsed.races
@@ -244,12 +252,8 @@ class SimgridService:
                         merged.append(entry)
                         new_entries += 1
 
-                total_pages = self._standings_total_pages(raw)
-                if total_pages is not None and page >= total_pages:
-                    break
-                # Unknown page count: keep going only while pages still add
-                # entries (an ignored ``page`` param repeats and stops here).
-                if total_pages is None and new_entries == 0:
+                # A repeated page (ignored ``page`` param) adds nothing: stop.
+                if page >= self._standings_total_pages(raw) or new_entries == 0:
                     break
                 page += 1
 
@@ -263,26 +267,12 @@ class SimgridService:
         return ChampionshipStandingsData(entries=merged, races=races)
 
     @staticmethod
-    def _standings_total_pages(raw: Any) -> int | None:
-        """Extract the page count from the standings payload's pagination
-        (``raw["pagination"]``, or ``raw[4]`` in the legacy array shape);
-        1 when absent, None when unrecognisable."""
-        if isinstance(raw, dict):
-            pagination = raw.get("pagination")
-        elif isinstance(raw, list) and len(raw) > 4 and isinstance(raw[4], dict):
-            pagination = raw[4].get("pagination")
-        else:
+    def _standings_total_pages(raw: RawStandingsPage) -> int:
+        """Page count from ``pagination`` (``limit`` is the page size); 1 when absent."""
+        p = raw.pagination
+        if p is None or not p.total_count or not p.limit:
             return 1
-        if not isinstance(pagination, dict):
-            return 1
-        total, limit = pagination.get("total_count"), pagination.get("limit")
-        if isinstance(total, int) and isinstance(limit, int) and limit > 0:
-            return max(1, -(-total // limit))
-        for key in ("total_pages", "pages", "last", "last_page", "page_count"):
-            value = pagination.get(key)
-            if isinstance(value, int) and value > 0:
-                return value
-        return None
+        return -(-p.total_count // p.limit)
 
     async def _championship_car_class_ids(
         self, championship_id: int,
@@ -294,11 +284,7 @@ class SimgridService:
                 "/championship_car_classes"
             )
             resp.raise_for_status()
-            data = _unwrap(resp.json())
-            return [
-                c["id"] for c in data
-                if isinstance(c, dict) and c.get("id") is not None
-            ]
+            return [c.id for c in collection(RawChampionshipCarClass, resp.json()).data]
         except Exception:
             logger.warning(
                 "Failed to fetch car classes for %s", championship_id,
@@ -307,60 +293,38 @@ class SimgridService:
             return []
 
     @staticmethod
-    def _parse_standings(raw: Any) -> ChampionshipStandingsData:
-        """Map the REST standings payload into ``ChampionshipStandingsData``.
+    def _parse_standings(raw: RawStandingsPage) -> ChampionshipStandingsData:
+        """Map a standings page into ``ChampionshipStandingsData``.
 
-        The endpoint returns ``{"data": entries, "completed_races": races, ...}``
-        (formerly a heterogeneous array ``[entries, races, ...]``).
         Per-race results (``partial_standings``) are not populated by the API,
         so ``StandingEntry.race_results`` is always empty.
         """
-        if isinstance(raw, dict):
-            entries_raw = raw.get("data") or []
-            races_raw = raw.get("completed_races") or []
-        else:
-            entries_raw = raw[0] if isinstance(raw, list) and raw else []
-            races_raw = raw[1] if isinstance(raw, list) and len(raw) > 1 else []
-
         entries: list[StandingEntry] = []
-        for e in entries_raw if isinstance(entries_raw, list) else []:
-            if not isinstance(e, dict):
-                continue
-            car_class = e.get("class") or ""
-            cc = e.get("championship_car_class")
-            if isinstance(cc, dict) and cc.get("display_name"):
-                car_class = cc["display_name"]
-            participant = e.get("participant")
-            country = (
-                participant.get("country_code", "")
-                if isinstance(participant, dict) else ""
-            )
-            # NOTE: ``e["id"]`` is the *registration* id, a different id space —
-            # never use it as a driver id. Entries without user_id keep id=None.
+        for e in raw.data:
+            cc = e.championship_car_class
             entries.append(StandingEntry(
-                id=e.get("user_id") or None,
-                position=e.get("position_cache"),
-                display_name=e.get("display_name") or "",
-                country_code=country or "",
-                car=e.get("car") or "",
-                car_class=car_class,
-                points=e.get("championship_points") or 0,
-                penalties=e.get("championship_penalties") or 0,
-                score=e.get("championship_score") or 0,
+                id=e.user_id or None,
+                position=e.position_cache,
+                display_name=e.display_name or "",
+                country_code=(e.participant.country_code if e.participant else None) or "",
+                car=e.car or "",
+                car_class=(cc.display_name if cc else None) or e.car_class or "",
+                points=e.championship_points or 0,
+                penalties=e.championship_penalties or 0,
+                score=e.championship_score or 0,
                 race_results=[],
             ))
 
-        races: list[StandingRace] = []
-        for r in races_raw if isinstance(races_raw, list) else []:
-            if not isinstance(r, dict):
-                continue
-            races.append(StandingRace(
-                id=r.get("id") or 0,
-                display_name=r.get("display_name") or r.get("race_name") or "",
-                starts_at=r.get("starts_at"),
-                results_available=bool(r.get("results_available")),
-                ended=bool(r.get("ended")),
-            ))
+        races = [
+            StandingRace(
+                id=r.id,
+                display_name=r.display_name or r.race_name or "",
+                starts_at=r.starts_at,
+                results_available=r.results_available,
+                ended=r.ended,
+            )
+            for r in raw.completed_races
+        ]
         races.sort(key=lambda r: r.starts_at or "")
 
         entries.sort(
@@ -382,6 +346,7 @@ class SimgridService:
 
         data = await self._request(
             f"/api/v1/championships/{championship_id}/participating_users", key,
+            item=RawParticipant,
         )
         items = data if isinstance(data, list) else []
         return [ParticipatingUser(**u) for u in items]
@@ -431,7 +396,7 @@ class SimgridService:
         if cached is not None:
             return cached if isinstance(cached, list) else []
 
-        data = await self._request("/api/v1/games", key)
+        data = await self._request("/api/v1/games", key, item=RawNamed)
         return data if isinstance(data, list) else []
 
     async def get_car_classes(
@@ -448,7 +413,7 @@ class SimgridService:
         if game_id is not None:
             params["game_id"] = game_id
 
-        data = await self._request("/api/v1/car_classes", key, params=params)
+        data = await self._request("/api/v1/car_classes", key, item=RawNamed, params=params)
         return data if isinstance(data, list) else []
 
     # ------------------------------------------------------------------
@@ -484,16 +449,25 @@ class SimgridService:
         url: str,
         cache_key: str,
         *,
+        item: type | None = None,
         params: dict[str, Any] | None = None,
     ) -> Any:
-        """GET from SimGrid API with stale-cache fallback on upstream errors."""
+        """GET from SimGrid API with stale-cache fallback on upstream errors.
+
+        With *item*, the response must be a collection of that raw model; its
+        ``data`` (the raw dicts) is cached and returned. A shape mismatch is
+        treated like an upstream error, never as an empty collection.
+        """
         try:
             resp = await self._get(url, params=params)
             resp.raise_for_status()
-            data = _unwrap(resp.json())
+            data = resp.json()
+            if item is not None:
+                collection(item, data)
+                data = data["data"]
             await write_cache(cache_key, data)
             return data
-        except httpx.HTTPStatusError:
+        except (httpx.HTTPStatusError, ValidationError):
             logger.warning(
                 "SimGrid API error for %s, attempting stale cache fallback",
                 cache_key, exc_info=True,

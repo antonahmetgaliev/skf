@@ -3,7 +3,7 @@
 **Base URL:** `https://www.thesimgrid.com/api/v1`
 **Auth:** `Authorization: Bearer {token}` (`SIMGRID_API_KEY`)
 **Official docs:** <https://gridos.thesimgrid.com/docs/> (Scalar); the raw spec
-is <https://gridos.thesimgrid.com/openapi.yml>.
+is <https://gridos.thesimgrid.com/openapi.yml>, pinned in `simgrid/openapi.yml`.
 
 Everything below was re-verified against the live API and the official
 OpenAPI spec on **2026-09-29**. Where our behaviour differs from the official
@@ -51,10 +51,28 @@ Every endpoint returning a collection answers
 `{"data": [...], "pagination": {"limit", "offset", "total_count"} | null}`;
 single resources are returned bare. Before this change collections were bare
 arrays, and the switch silently emptied our championships list.
-`SimgridService` unwraps via `_unwrap`, also on cached payloads.
 
-Paginated collections default to `limit=10` (cap 500). `/races` accepts
-`limit` but **ignores `offset`**, so we request `limit=100`.
+### Contract checks
+
+- **Spec drift:** `python scripts/check_simgrid_spec.py` diffs the live spec
+  against the pinned copy and exits 1 on any change; `--update` re-pins it.
+- **Typed payloads:** `app/schemas/simgrid_raw.py` models the fields we read.
+  The spec types every body as a bare `object`, which is why we don't generate
+  a client from it. Collections are validated as `Envelope[...]`; a shape
+  mismatch raises (and falls back to stale cache) instead of becoming `[]`.
+- **Tests:** `tests/test_simgrid_contract.py` runs the models over recorded,
+  anonymised payloads in `tests/fixtures/simgrid/`. `RUN_SIMGRID_LIVE=1`
+  also checks them against the live API. Re-record fixtures after a spec change.
+
+### Pagination traps
+
+- `/races` takes `limit` only (no `offset`); its default of 10 would silently
+  truncate round lists.
+- `/championships/:id/standings` pages with `page`/`per_page` (40 per page by
+  default), not `limit`/`offset`.
+
+Paginated collections default to `limit=10` (cap 500). `/races` ignores
+`offset`, so we request `limit=100`.
 
 ### Alternate hosts do not exist
 

@@ -1,0 +1,23 @@
+{
+  "data": [
+    {
+      "user_id": 1001,
+      "username": "driver3",
+      "first_name": "Driver 4",
+      "last_name": "Driver 5",
+      "steam64_id": "76561190000000000",
+      "discord_uid": "100000000000000000",
+      "preferred_language": "english"
+    },
+    {
+      "user_id": 1002,
+      "username": "driver6",
+      "first_name": "Driver 7",
+      "last_name": "Driver 8",
+      "steam64_id": "76561190000000000",
+      "discord_uid": "100000000000000000",
+      "preferred_language": "english"
+    }
+  ],
+  "pagination": null
+}

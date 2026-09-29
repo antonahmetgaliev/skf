@@ -1,0 +1,2258 @@
+openapi: 3.0.3
+
+info:
+  title: GridOS
+  version: "1.0.0"
+  description: |
+    The SimGrid API ("GridOS") exposes sim racing data (events, results, standings, registrations and reference data) for cars, tracks and games.
+
+    ## Authentication
+
+    Every endpoint requires an API token, sent as a bearer token:
+
+    ```
+    Authorization: Bearer <your-token>
+    ```
+
+    Tokens are requested from your community's settings and approved by SimGrid.
+    A community token is scoped to its own events and registrations.
+
+    ## Response shape
+
+    Endpoints that return a collection wrap it:
+
+    ```json
+    {
+      "data": [ { "...": "..." } ],
+      "pagination": { "limit": 25, "offset": 0, "total_count": 240 }
+    }
+    ```
+
+    `pagination` is `null` when a collection is not paginated, so the key is always
+    present. Endpoints that return a single resource return that object directly,
+    with no wrapper.
+
+    A few endpoints return supporting collections beside the primary one — those
+    keys sit alongside `data`, and `data` is always the collection `pagination`
+    counts.
+
+    ## Pagination
+
+    Paginated collections take `limit` and `offset`. `limit` defaults to 10 and is
+    capped at 500; a larger value is silently reduced to the cap, so read
+    `pagination.limit` to see what was applied and `pagination.total_count` to know
+    whether more remain.
+
+    ## Rate limits
+
+    Limits are applied per token, per minute and per hour. Exceeding either returns
+    `429` with a JSON body describing which window was hit.
+
+servers:
+  - url: https://www.thesimgrid.com/api/v1
+    description: Production
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Championships
+  - name: Communities
+  - name: Graphic Blocks
+  - name: Races
+  - name: Reference
+  - name: Registrations
+  - name: Results
+  - name: Rounds
+  - name: Seasons
+  - name: Sponsors
+  - name: Teams
+  - name: Users
+
+paths:
+  # ---------------------------------------------------------------- Championships
+  /championships:
+    get:
+      tags: [Championships]
+      summary: List championships
+      description: |
+        Lists available events. Filter with any combination of the query parameters below.
+      parameters:
+        - { name: races_count, in: query, schema: { type: string, enum: [events, full_championships] }, description: "Return events with either a single race or a full championship." }
+        - { name: entry_fee_required, in: query, schema: { type: boolean }, description: "Filter by free or paid events." }
+        - { name: status, in: query, schema: { type: string, enum: [active, upcoming, completed] } }
+        - { name: driver, in: query, schema: { type: string, enum: [solo, team] }, description: "Solo or team events." }
+        - { name: grid, in: query, schema: { type: string, enum: [closed, opening, open, full] }, description: "Filter by capacity." }
+        - { name: order_by, in: query, schema: { type: string }, description: "Sort by an attribute name. Always descending." }
+        - { name: priority_sort, in: query, schema: { type: boolean }, description: "Use SimGrid's priority ordering. Not for use with order_by." }
+        - { name: seasons, in: query, schema: { type: boolean }, description: "Only return open season championships." }
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: A paginated collection.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 27506
+                  name: ASD DC RACING - 4FUN @ Silverstone
+                - id: 25097
+                  name: EKV - Open Hungaroring GT3
+                pagination:
+                  limit: 5
+                  offset: 0
+                  total_count: 2749
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /championships/{id}:
+    get:
+      tags: [Championships]
+      summary: Retrieve a championship
+      description: |
+        `capacity` is the total number of slots across all splits.
+        `teams_enabled` denotes whether this is a team or solo event.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: A single resource, returned without a wrapper.
+          content:
+            application/json:
+              schema: { type: object }
+              example:
+                id: 27506
+                name: ASD DC RACING - 4FUN @ Silverstone
+                start_date: '2026-09-16T19:15:00.000Z'
+                end_date:
+                capacity: 35
+                spots_taken: 25
+                teams_enabled: false
+                entry_fee_required: false
+                entry_fee_cents:
+                accepting_registrations: false
+                allow_repeated_car_numbers: false
+                races:
+                - id: 266255
+                  race_name: ASD DC RACING TEAM - SILVERSTONE
+                  track:
+                    id: 3593
+                    game_id: 65
+                    name: Silverstone (ELMS)
+                    in_game_name: SilverstoneELMS
+                    photo: https://cdn-staging.thesimgrid.com/aa24871t1a7gm27l53ykwzrhpvu4
+                    parent_track_id: 3592
+                    external_data:
+                      scn: SilverstoneELMS
+                      name: 4 Hours of Silverstone
+                      settings: Silverstone
+                    content_type: vanilla
+                    mod_download_link:
+                    track_layouts_count: 0
+                    composite_name: Silverstone (ELMS)
+                  starts_at: '2026-09-16T19:15:00.000Z'
+                  display_name: ASD DC RACING TEAM - SILVERSTONE
+                  results_available: true
+                  published_at: '2026-09-16T20:56:49.613Z'
+                  hot_lap: false
+                  ended: true
+                image: https://cdn-staging.thesimgrid.com/nqskzajpw5imeyqmmaw6m7raqbow
+                host_name: DC RACING TEAM
+                co_hosted: false
+                game_name: Le Mans Ultimate
+                url: https://staging-6.thesimgrid.com/championships/27506
+                results_url: https://staging-6.thesimgrid.com/championships/27506/results
+                lobby_code_access:
+                race_server_config:
+                scheduled_at: false
+                race_config_server_data:
+                upcoming_race:
+                in_progress_race:
+                round_number:
+                discord_url: https://discord.gg/example
+                hot_lap:
+                all_rounds_number: 0
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /championships/{id}/participating_users:
+    get:
+      tags: [Championships]
+      summary: List participating users
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: A collection that is not paginated. `pagination` is null.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - user_id: 13114
+                  username: alexdriver
+                  first_name: Alex
+                  last_name: Driver
+                  steam64_id: '12345'
+                  discord_uid: uid000
+                  preferred_language: english
+                - user_id: 13817
+                  username: jamieracer
+                  first_name: Jamie
+                  last_name: Racer
+                  steam64_id: '12345'
+                  discord_uid: uid000
+                  preferred_language: italian
+                pagination:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /championships/{id}/championship_car_classes:
+    get:
+      tags: [Championships]
+      summary: List a championship's car classes
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: A collection that is not paginated. `pagination` is null.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 144316
+                  display_name: LMGT3
+                  championship_id: 27506
+                  capacity: 18
+                  split_id:
+                - id: 144317
+                  display_name: LMP2 ELMS
+                  championship_id: 27506
+                  capacity: 12
+                  split_id:
+                pagination:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /championships/{id}/entrylist:
+    get:
+      tags: [Championships]
+      summary: Retrieve an entrylist
+      description: |
+        Returns the entrylist in the requested format. This endpoint does not use the
+        standard collection envelope — the body is the entrylist document itself.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - { name: format, in: query, required: true, schema: { type: string, enum: [json, ini, csv] }, description: "The format to return." }
+        - name: championship_car_class_ids[]
+          in: query
+          schema: { type: array, items: { type: integer } }
+          description: "Filter by championship_car_class_id. Repeatable."
+      responses:
+        '200':
+          description: The entrylist document.
+          content:
+            application/json:
+              schema: { type: object }
+              example:
+                entries:
+                - drivers:
+                  - firstName: Ste
+                    lastName: Din
+                    shortName: DIN
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561198345635846
+                  raceNumber: 265
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 1
+                - drivers:
+                  - firstName: Raf
+                    lastName: Ric
+                    shortName: RIC
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561198016848756
+                  raceNumber: 28
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Ric
+                    lastName: Pan
+                    shortName: PAN
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561199851177603
+                  raceNumber: 42
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Iac
+                    lastName: 'Di '
+                    shortName: IAC
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561198043295850
+                  raceNumber: 130
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Sim
+                    lastName: Bis
+                    shortName: BIS
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561198410436076
+                  raceNumber: 16
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Gui
+                    lastName: Imp
+                    shortName: IMP
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561199166130061
+                  raceNumber: 91
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 1
+                - drivers:
+                  - firstName: Mar
+                    lastName: Par
+                    shortName: PAR
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561198211854869
+                  raceNumber: 24
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Mat
+                    lastName: Cav
+                    shortName: CAV
+                    driverCategory: 0
+                    nationality: 0
+                    playerID: S76561198189429234
+                  raceNumber: 7
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Mat
+                    lastName: 'di '
+                    shortName: MAT
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561199856625814
+                  raceNumber: 25
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Alf
+                    lastName: Att
+                    shortName: ATT
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561199139732478
+                  raceNumber: 44
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: DAN
+                    lastName: TRA
+                    shortName: TRA
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561199586415172
+                  raceNumber: 373
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Dav
+                    lastName: Nav
+                    shortName: NAV
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561198334643073
+                  raceNumber: 46
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Dav
+                    lastName: Lom
+                    shortName: LOM
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561197992527508
+                  raceNumber: 99
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Lor
+                    lastName: Luc
+                    shortName: LUC
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561198930125046
+                  raceNumber: 222
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Iva
+                    lastName: Peg
+                    shortName: PEG
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561199887409685
+                  raceNumber: 83
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Ste
+                    lastName: Car
+                    shortName: CAR
+                    driverCategory: 0
+                    nationality: 0
+                    playerID: S76561199577069165
+                  raceNumber: 4
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Gia
+                    lastName: PIN
+                    shortName: PIN
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561199090303136
+                  raceNumber: 191
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Ita
+                    lastName: 'La '
+                    shortName: ITA
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561198003265520
+                  raceNumber: 88
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: ant
+                    lastName: and
+                    shortName: AND
+                    driverCategory: 0
+                    nationality: 7
+                    playerID: S76561198246642680
+                  raceNumber: 166
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Mic
+                    lastName: det
+                    shortName: DET
+                    driverCategory: 0
+                    nationality: 7
+                    playerID: S76561199421440558
+                  raceNumber: 69
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Ali
+                    lastName: Fav
+                    shortName: FAV
+                    driverCategory: 0
+                    nationality: 3
+                    playerID: S76561199530651354
+                  raceNumber: 17
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Loi
+                    lastName: Dep
+                    shortName: DEP
+                    driverCategory: 0
+                    nationality: 3
+                    playerID: S76561199698759842
+                  raceNumber: 267
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: Fra
+                    lastName: Pez
+                    shortName: PEZ
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561199314733770
+                  raceNumber: 71
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: mir
+                    lastName: fan
+                    shortName: FAN
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561199209245542
+                  raceNumber: 11
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - firstName: sim
+                    lastName: gio
+                    shortName: GIO
+                    driverCategory: 0
+                    nationality: 1
+                    playerID: S76561199072208246
+                  raceNumber: 22
+                  forcedCarModel:
+                  overrideDriverInfo: 1
+                  defaultGridPosition: -1
+                  ballastKg: 0
+                  restrictor: 0
+                  isServerAdmin: 0
+                - drivers:
+                  - playerID: S76561198345635846
+                  isServerAdmin: 1
+                - drivers:
+                  - playerID: S76561199166130061
+                  isServerAdmin: 1
+                - drivers:
+                  - playerID: S76561198357383499
+                  isServerAdmin: 1
+                - drivers:
+                  - playerID: S76561198219433627
+                  isServerAdmin: 1
+                forceEntryList: 1
+        '400': { $ref: '#/components/responses/NotFound' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /championships/{id}/registrations:
+    get:
+      tags: [Championships, Registrations]
+      summary: List a championship's registrations
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - { name: page, in: query, schema: { type: integer, minimum: 1 }, description: "Page number. Omit for the unpaginated collection." }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200':
+          description: A paginated collection.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 1500328
+                  user_id: 70638
+                  registerable_id: 27506
+                  registerable_type: Championship
+                  championship_id: 27506
+                  championship_car_class:
+                    id: 144317
+                    display_name: LMP2 ELMS
+                    championship_id: 27506
+                    capacity: 12
+                    split_id:
+                - id: 1500411
+                  user_id: 334892
+                  registerable_id: 27506
+                  registerable_type: Championship
+                  championship_id: 27506
+                  championship_car_class:
+                    id: 144316
+                    display_name: LMGT3
+                    championship_id: 27506
+                    capacity: 18
+                    split_id:
+                pagination:
+                  limit: 5
+                  offset: 0
+                  total_count: 25
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /championships/{id}/standings:
+    get:
+      tags: [Championships, Results]
+      summary: Retrieve championship standings
+      description: |
+        `data` holds the paginated participant registrations. `standings` holds the
+        scored standings, and `completed_races` the races counted towards them
+        (rounds, on a series).
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 500 } }
+        - { name: overall, in: query, schema: { type: boolean } }
+        - { name: filter_class, in: query, schema: { type: integer } }
+      responses:
+        '200':
+          description: Standings for the championship.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedEnvelope'
+                  - type: object
+                    properties:
+                      standings: { type: array, items: { type: object } }
+                      completed_races: { type: array, items: { type: object } }
+                      is_series: { type: boolean }
+                      grouped_results: { type: object }
+                      results_per_round: { type: integer }
+              example:
+                data:
+                - id: 1501730
+                  user_id: 69570
+                  registerable_id: 27506
+                  registerable_type: Championship
+                  championship_id: 27506
+                  championship_car_class:
+                    id: 144316
+                    display_name: LMGT3
+                    championship_id: 27506
+                    capacity: 18
+                    split_id:
+                  championship_points: 10.0
+                  championship_penalties: 0
+                  championship_score: 10.0
+                  position_cache: 1
+                  partial_standings: []
+                  points_adjustment: 0.0
+                  adjustment_reason:
+                  overall_championship_points:
+                  overall_championship_score:
+                  overall_position_cache:
+                  overall_points_adjustment: 0.0
+                  overall_partial_standings: []
+                  display_name: Sam Tester
+                  car: Aston Martin Vantage AMR LMGT3
+                  car_number: 25
+                  car_logo: https://cdn-staging.thesimgrid.com/3rwh76ws3u8gp1t0x8t0oc2wi3q2
+                  class: LMGT3
+                  participant:
+                    avatar: https://cdn.discordapp.com/avatars/uid69570/a48e72b79dd0f841a43ea6cee901a98c.png?size=160
+                    country_code: IT
+                    grid_rating:
+                      score: 3737
+                      race_count: 42
+                      score_name: gold
+                      score_range: gold
+                    safety_rating:
+                - id: 1501916
+                  user_id: 13817
+                  registerable_id: 27506
+                  registerable_type: Championship
+                  championship_id: 27506
+                  championship_car_class:
+                    id: 144316
+                    display_name: LMGT3
+                    championship_id: 27506
+                    capacity: 18
+                    split_id:
+                  championship_points: 9.0
+                  championship_penalties: 0
+                  championship_score: 9.0
+                  position_cache: 2
+                  partial_standings: []
+                  points_adjustment: 0.0
+                  adjustment_reason:
+                  overall_championship_points:
+                  overall_championship_score:
+                  overall_position_cache:
+                  overall_points_adjustment: 0.0
+                  overall_partial_standings: []
+                  display_name: Jamie Racer
+                  car: BMW M4 LMGT3
+                  car_number: 265
+                  car_logo: https://cdn-staging.thesimgrid.com/0u1xkodyo3b1o2bnvgj5e3zoc36l
+                  class: LMGT3
+                  participant:
+                    avatar: https://cdn.discordapp.com/avatars/uid13817/5bb7572f34bffb50e478e8d5808eaadd.png?size=160
+                    country_code: IT
+                    grid_rating:
+                      score: 3101
+                      race_count: 12
+                      score_name: silver
+                      score_range: silver
+                    safety_rating:
+                pagination:
+                  limit: 5
+                  offset: 0
+                  total_count: 16
+                completed_races:
+                - id: 266255
+                  race_name: ASD DC RACING TEAM - SILVERSTONE
+                  track:
+                    id: 3593
+                    game_id: 65
+                    name: Silverstone (ELMS)
+                    in_game_name: SilverstoneELMS
+                    photo: https://cdn-staging.thesimgrid.com/aa24871t1a7gm27l53ykwzrhpvu4
+                    parent_track_id: 3592
+                    external_data:
+                      scn: SilverstoneELMS
+                      name: 4 Hours of Silverstone
+                      settings: Silverstone
+                    content_type: vanilla
+                    mod_download_link:
+                    track_layouts_count: 0
+                    composite_name: Silverstone (ELMS)
+                  starts_at: '2026-09-16T19:15:00.000Z'
+                  display_name: ASD DC RACING TEAM - SILVERSTONE
+                  results_available: true
+                  published_at: '2026-09-16T20:56:49.613Z'
+                  hot_lap: false
+                  ended: true
+                standings:
+                is_series: false
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ---------------------------------------------------------------- Races
+  /races:
+    get:
+      tags: [Races]
+      summary: List races
+      parameters:
+        - { name: championship_id, in: query, schema: { type: integer } }
+        - { name: round_id, in: query, schema: { type: integer } }
+        - { name: user_id, in: query, schema: { type: integer } }
+        - { name: series, in: query, schema: { type: boolean }, description: "Filter to series or non-series races." }
+        - { name: next, in: query, schema: { type: integer }, description: "Return the next n upcoming races." }
+        - { name: filter, in: query, schema: { type: string, enum: [upcoming] }, description: "Used with user_id." }
+        - { name: exclude_dsq, in: query, schema: { type: boolean, default: true }, description: "Exclude disqualified or retired entries." }
+        - { name: order_by, in: query, schema: { type: string, enum: [starts_at, ends_at, created_at, updated_at, id] } }
+        - { name: order_direction, in: query, schema: { type: string, enum: [asc, desc] } }
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A paginated collection.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 171827
+                  race_name: '12'
+                  track:
+                    id: 1740
+                    game_id: 54
+                    name: 24 Heures du Mans Racing Circuit
+                    in_game_name: c272b2
+                    photo: https://cdn-staging.thesimgrid.com/yjghx4quseku3ok1gdzqpbww0hyd
+                    parent_track_id:
+                    external_data:
+                      id: c272b2
+                      baseId: 1d5980
+                      length: 8.47 miles
+                      length_v: 8.47
+                      nameBase: 24 Heures du Mans race track
+                      nameLong: 24 Heures du Mans race track
+                      straight: 1.04 miles
+                      straight_v: 1.04
+                      cornerCount: 38
+                      countryName: France
+                      elevationGap: 0.02 miles
+                      elevationGap_v: 0.02
+                    content_type: vanilla
+                    mod_download_link:
+                    track_layouts_count: 0
+                    composite_name: 24 Heures du Mans Racing Circuit
+                  starts_at: 202020-02-22T00:00:00.000Z
+                  display_name: '12'
+                  results_available: false
+                  published_at:
+                  hot_lap: false
+                  ended: false
+                  host_name: CRACKD.Racing
+                  championship_id: 21820
+                  championship_name: list test
+                  game_name: Gran Turismo 7
+                  game_slug: gran-turismo-7-playstation
+                  platform: PlayStation
+                  provisional_results: false
+                - id: 84091
+                  race_name: test
+                  track:
+                    id: 2382
+                    game_id: 48
+                    name: Autodromo Internazionale del Mugello
+                    in_game_name: mugello gp
+                    photo: https://cdn-staging.thesimgrid.com/doaww7e6cbf00cj58gt9actetnva
+                    parent_track_id:
+                    external_data:
+                      sku: 10568
+                      logo: "/img/logos/tracks/mugello-logo.png"
+                      opens: '2023-03-01'
+                      price: 14.95
+                      closes: '2023-10-31'
+                      folder: "/img/tracks/mugello"
+                      created: '2023-10-04T13:10:04Z'
+                      is_dirt: false
+                      is_oval: false
+                      retired: false
+                      category: road
+                      latitude: 43.997595
+                      location: Scarperia e San Piero, Tuscany, Italy
+                      max_cars: 60
+                      priority: 1
+                      site_url: https://www.mugellocircuit.com/
+                      track_id: 498
+                      fully_lit: false
+                      longitude: 11.371478
+                      solo_laps: 5
+                      time_zone: Europe/Rome
+                      ai_enabled: true
+                      first_sale: '2023-12-06T15:39:45Z'
+                      package_id: 457
+                      tech_track: false
+                      track_name: Autodromo Internazionale del Mugello
+                      track_type: 5
+                      category_id: 2
+                      config_name: Grand Prix
+                      grid_stalls: 60
+                      has_svg_map: true
+                      lap_scoring: 0
+                      purchasable: true
+                      small_image: mugello-small.jpg
+                      track_types:
+                      - track_type: road
+                      award_exempt: false
+                      has_opt_path: false
+                      qualify_laps: 2
+                      rain_enabled: true
+                      price_display: "$14.95"
+                      start_on_left: false
+                      track_dirpath: mugello gp
+                      has_start_zone: false
+                      night_lighting: false
+                      search_filters: road
+                      corners_per_lap: 15
+                      restart_on_left: false
+                      track_type_text: Road Course
+                      nominal_lap_time: 117.75656
+                      number_pitstalls: 20
+                      is_ps_purchasable: true
+                      allow_rolling_start: true
+                      track_config_length: 3.259
+                      allow_standing_start: true
+                      has_short_parade_lap: true
+                      pit_road_speed_limit: 37
+                      free_with_subscription: false
+                      supports_grip_compound: false
+                      allow_pitlane_collisions: true
+                    content_type: dlc
+                    mod_download_link:
+                    track_layouts_count: 0
+                    composite_name: Autodromo Internazionale del Mugello - Grand Prix
+                  starts_at: 42245-01-10T00:00:00.000Z
+                  display_name: test
+                  results_available: false
+                  published_at:
+                  hot_lap: false
+                  ended: false
+                  host_name: CRACKD.Racing
+                  championship_id: 12868
+                  championship_name: 'test '
+                  game_name: iRacing
+                  game_slug: iracing-pc
+                  platform: PC
+                  provisional_results: true
+                pagination:
+                  limit: 5
+                  offset: 0
+                  total_count: 185590
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /races/{id}:
+    get:
+      tags: [Races]
+      summary: Retrieve a race
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: A single resource, returned without a wrapper.
+          content:
+            application/json:
+              schema: { type: object }
+              example:
+                id: 171827
+                race_name: '12'
+                track:
+                  id: 1740
+                  game_id: 54
+                  name: 24 Heures du Mans Racing Circuit
+                  in_game_name: c272b2
+                  photo: https://cdn-staging.thesimgrid.com/yjghx4quseku3ok1gdzqpbww0hyd
+                  parent_track_id:
+                  external_data:
+                    id: c272b2
+                    baseId: 1d5980
+                    length: 8.47 miles
+                    length_v: 8.47
+                    nameBase: 24 Heures du Mans race track
+                    nameLong: 24 Heures du Mans race track
+                    straight: 1.04 miles
+                    straight_v: 1.04
+                    cornerCount: 38
+                    countryName: France
+                    elevationGap: 0.02 miles
+                    elevationGap_v: 0.02
+                  content_type: vanilla
+                  mod_download_link:
+                  track_layouts_count: 0
+                  composite_name: 24 Heures du Mans Racing Circuit
+                starts_at: 202020-02-22T00:00:00.000Z
+                display_name: '12'
+                results_available: false
+                published_at:
+                hot_lap: false
+                ended: false
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /races/{id}/entrylist:
+    get:
+      tags: [Races]
+      summary: Retrieve a race entrylist
+      description: Does not use the collection envelope — the body is the entrylist document.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: The entrylist document.
+          content:
+            application/json:
+              schema: { type: object }
+              example:
+                entries:
+                - drivers:
+                  - playerID: P
+                  isServerAdmin: 1
+                - drivers:
+                  - playerID: P
+                  isServerAdmin: 1
+                - drivers:
+                  - playerID: P
+                  isServerAdmin: 1
+                - drivers:
+                  - playerID: P
+                  isServerAdmin: 1
+                forceEntryList: 1
+        '400': { $ref: '#/components/responses/NotFound' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /races/{race_id}/session_results:
+    get:
+      tags: [Races, Results]
+      summary: List session results for a race
+      description: |
+        `data` holds the session results; `session_laps` the laps for the same session.
+      parameters:
+        - { name: race_id, in: path, required: true, schema: { type: integer } }
+        - { name: session_type, in: query, schema: { type: string, enum: [qualifying, race_1, race_2, race_3, hot_lap] } }
+        - { name: result_type, in: query, schema: { type: string, enum: [results, laps, incidents, manufacturers, teams, hosts] } }
+        - { name: overall, in: query, schema: { type: boolean } }
+        - { name: filter_class, in: query, schema: { type: integer } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 500 } }
+      responses:
+        '200':
+          description: Session results for the race.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedEnvelope'
+                  - type: object
+                    properties:
+                      session_laps: { type: array, items: { type: object } }
+              example:
+                data: []
+                pagination:
+                session_laps: []
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /race_signouts:
+    get:
+      tags: [Races]
+      summary: List race signouts
+      parameters:
+        - { name: race_id, in: query, schema: { type: integer }, description: "Required unless race_ids is given." }
+        - name: race_ids
+          in: query
+          schema: { type: array, items: { type: integer } }
+          description: "Batch lookup across several races."
+      responses:
+        '200':
+          description: A collection that is not paginated. `pagination` is null.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data: []
+                pagination:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+
+  # ---------------------------------------------------------------- Rounds & Seasons
+  /rounds:
+    get:
+      tags: [Rounds]
+      summary: List rounds
+      parameters:
+        - { name: championship_id, in: query, schema: { type: integer } }
+        - { name: user_id, in: query, schema: { type: integer } }
+        - { name: first_race_from, in: query, schema: { type: string, format: date-time } }
+        - { name: first_race_to, in: query, schema: { type: string, format: date-time } }
+        - { name: last_race_from, in: query, schema: { type: string, format: date-time } }
+        - { name: last_race_to, in: query, schema: { type: string, format: date-time } }
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A paginated collection.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 719
+                  championship_id: 488
+                  name:
+                  track_ids:
+                  first_race_at:
+                  last_race_at:
+                  frequency:
+                  day_slots: []
+                  time_slot_start: '2000-01-01T00:00:00.000Z'
+                  time_slot_end: '2000-01-01T23:59:59.000Z'
+                  created_at: '2025-01-09T14:43:58.081Z'
+                  updated_at: '2025-01-09T14:43:58.081Z'
+                  hot_lap: false
+                  hot_lap_laps_required: 1
+                  hot_lap_drivers_required: 1
+                  hot_lap_force_registration_car: false
+                - id: 4923
+                  championship_id: 2465
+                  name:
+                  track_ids:
+                  first_race_at:
+                  last_race_at:
+                  frequency:
+                  day_slots: []
+                  time_slot_start: '2000-01-01T00:00:00.000Z'
+                  time_slot_end: '2000-01-01T23:59:59.000Z'
+                  created_at: '2025-01-09T14:44:29.445Z'
+                  updated_at: '2025-01-09T14:44:29.445Z'
+                  hot_lap: false
+                  hot_lap_laps_required: 1
+                  hot_lap_drivers_required: 1
+                  hot_lap_force_registration_car: false
+                pagination:
+                  limit: 5
+                  offset: 0
+                  total_count: 64950
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /rounds/{id}:
+    get:
+      tags: [Rounds]
+      summary: Retrieve a round
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: A single resource, returned without a wrapper.
+          content:
+            application/json:
+              schema: { type: object }
+              example:
+                id: 719
+                championship_id: 488
+                name:
+                track_ids:
+                first_race_at:
+                last_race_at:
+                frequency:
+                day_slots: []
+                time_slot_start: '2000-01-01T00:00:00.000Z'
+                time_slot_end: '2000-01-01T23:59:59.000Z'
+                created_at: '2025-01-09T14:43:58.081Z'
+                updated_at: '2025-01-09T14:43:58.081Z'
+                hot_lap: false
+                hot_lap_laps_required: 1
+                hot_lap_drivers_required: 1
+                hot_lap_force_registration_car: false
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /seasons:
+    get:
+      tags: [Seasons]
+      summary: List seasons
+      parameters:
+        - { name: user_id, in: query, schema: { type: integer }, description: "Scope to seasons a user has raced in." }
+        - { name: active, in: query, schema: { type: boolean } }
+        - { name: visible, in: query, schema: { type: boolean } }
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A paginated collection.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 1
+                  name: Season One
+                  game_id: 61
+                  start_date: '2024-06-19T14:00:00.000Z'
+                  end_date: '2024-08-06T07:59:00.000Z'
+                  created_at: '2024-06-19T08:38:36.821Z'
+                  updated_at: '2025-10-27T14:20:14.484Z'
+                  visible: true
+                  host_id: 1
+                - id: 2
+                  name: Season Two
+                  game_id: 61
+                  start_date: '2024-08-06T08:00:00.000Z'
+                  end_date: '2024-09-17T07:59:00.000Z'
+                  created_at: '2024-06-26T09:08:39.994Z'
+                  updated_at: '2025-10-27T14:20:15.242Z'
+                  visible: true
+                  host_id: 1
+                pagination:
+                  limit: 5
+                  offset: 0
+                  total_count: 37
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /seasons/{id}:
+    get:
+      tags: [Seasons]
+      summary: Retrieve a season
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: A single resource, returned without a wrapper.
+          content:
+            application/json:
+              schema: { type: object }
+              example:
+                id: 1
+                name: Season One
+                game_id: 61
+                start_date: '2024-06-19T14:00:00.000Z'
+                end_date: '2024-08-06T07:59:00.000Z'
+                created_at: '2024-06-19T08:38:36.821Z'
+                updated_at: '2025-10-27T14:20:14.484Z'
+                visible: true
+                host_id: 1
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ---------------------------------------------------------------- Registrations
+  /registrations:
+    get:
+      tags: [Registrations]
+      summary: List registrations
+      parameters:
+        - { name: registerable_type, in: query, schema: { type: string, enum: [Championship, Race], default: Championship } }
+        - { name: registerable_id, in: query, required: true, schema: { type: integer }, description: "ID of the championship or race." }
+        - { name: user_id, in: query, schema: { type: integer }, description: "Scope to one driver's registration." }
+        - { name: championship_car_class_id, in: query, schema: { type: integer } }
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: A paginated collection.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 1501916
+                  user_id: 13817
+                  registerable_id: 27506
+                  registerable_type: Championship
+                  championship_id: 27506
+                  championship_car_class:
+                    id: 144316
+                    display_name: LMGT3
+                    championship_id: 27506
+                    capacity: 18
+                    split_id:
+                - id: 1502096
+                  user_id: 92772
+                  registerable_id: 27506
+                  registerable_type: Championship
+                  championship_id: 27506
+                  championship_car_class:
+                    id: 144316
+                    display_name: LMGT3
+                    championship_id: 27506
+                    capacity: 18
+                    split_id:
+                pagination:
+                  limit: 5
+                  offset: 0
+                  total_count: 25
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /registrations/{id}:
+    get:
+      tags: [Registrations]
+      summary: Retrieve a registration
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - { name: registration_type, in: query, schema: { type: string, enum: [UserChampionship, TeamRegistration], default: TeamRegistration }, description: "UserChampionship for solo entries, TeamRegistration for team entries." }
+        - { name: user_id, in: query, schema: { type: integer }, description: "Required for UserChampionship lookups." }
+      responses:
+        '200': { $ref: '#/components/responses/SingleResource' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ---------------------------------------------------------------- Results
+  /session_results:
+    get:
+      tags: [Results]
+      summary: List session results
+      parameters:
+        - { name: user_id, in: query, schema: { type: integer } }
+        - { name: session_type, in: query, schema: { type: string } }
+        - { name: with_results, in: query, schema: { type: boolean } }
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: A paginated collection.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 4012002
+                  created_at: '2026-09-16T20:56:09.540Z'
+                  updated_at: '2026-09-16T20:56:09.540Z'
+                  race_id: 266255
+                  session_type: qualifying
+                  lap_count: 7
+                  best_lap: 103232
+                  total_time: 769133
+                  points_given:
+                  penalty_points:
+                  points_total:
+                  dnf: false
+                  dns: false
+                  car_class_id:
+                  position_cache: 3
+                  fastest_lap: false
+                  imported_name: Simone Bisoglio
+                  sessionable_id: 1502631
+                  sessionable_type: UserChampionship
+                  external_data:
+                    rfactor:
+                      status: Finished Normally
+                      class_fn: '3'
+                      class_st: ''
+                      finished: '3'
+                      starting: ''
+                      missing_data: true
+                  championship_car_class_id: 144317
+                  manual_result: false
+                  manual_position:
+                  reactions_count: 0
+                  old_sessionable_id:
+                  wildcard: false
+                  overall_points_given:
+                  overall_points_total:
+                  overall_position_cache:
+                  overall_fastest_lap:
+                  total_time_penalty: 0
+                  car_id:
+                  fingerprint_hashes:
+                  - e240f8792c3fa35ea984194a36c44717aaa51617cadd6a31a367584ac9ae5b2d
+                  - 164725951143354bbfc823297ad98837a88aa787d11a88c182ead1d85ebd12a4
+                  championship_id: 27506
+                  sessionable:
+                    id: 1502631
+                    user_id: 13114
+                    registerable_id: 27506
+                    registerable_type: Championship
+                    championship_id: 27506
+                    championship_car_class:
+                      id: 144317
+                      display_name: LMP2 ELMS
+                      championship_id: 27506
+                      capacity: 12
+                      split_id:
+                  sessionable_name: Alex Driver
+                  car_number: 16
+                  car_name: Oreca 07 ELMS
+                  car_logo: https://cdn-staging.thesimgrid.com/umu9bku4wgl5p86z605p108xqjz1
+                  latest_social_grades:
+                    total_crashy_votes: 0
+                    total_clean_votes: 0
+                - id: 4012026
+                  created_at: '2026-09-16T20:56:10.172Z'
+                  updated_at: '2026-09-16T20:56:10.172Z'
+                  race_id: 266255
+                  session_type: race_1
+                  lap_count: 19
+                  best_lap: 104841
+                  total_time: 2244336
+                  points_given: 4.0
+                  penalty_points:
+                  points_total: 4.0
+                  dnf: false
+                  dns: false
+                  car_class_id:
+                  position_cache: 7
+                  fastest_lap: false
+                  imported_name: Simone Bisoglio
+                  sessionable_id: 1502631
+                  sessionable_type: UserChampionship
+                  external_data:
+                    delta:
+                      id:
+                      attempts: 1
+                      checked_at: '2026-09-16T20:57:18Z'
+                    rfactor:
+                      status: DNF
+                      class_fn: '7'
+                      class_st: '3'
+                      finished: '21'
+                      starting: '3'
+                      missing_data: true
+                  championship_car_class_id: 144317
+                  manual_result: false
+                  manual_position:
+                  reactions_count: 0
+                  old_sessionable_id:
+                  wildcard: false
+                  overall_points_given:
+                  overall_points_total:
+                  overall_position_cache:
+                  overall_fastest_lap:
+                  total_time_penalty: 0
+                  car_id:
+                  fingerprint_hashes:
+                  - 922da9bfd971c183e3bbd384d658ac993068d639eec31c99b4e9744f229dcbe7
+                  - 203f92f0808cc3d8ceae8b9f5482f530a29419be6bf259bf203849e915873981
+                  championship_id: 27506
+                  sessionable:
+                    id: 1502631
+                    user_id: 13114
+                    registerable_id: 27506
+                    registerable_type: Championship
+                    championship_id: 27506
+                    championship_car_class:
+                      id: 144317
+                      display_name: LMP2 ELMS
+                      championship_id: 27506
+                      capacity: 12
+                      split_id:
+                  sessionable_name: Alex Driver
+                  car_number: 16
+                  car_name: Oreca 07 ELMS
+                  car_logo: https://cdn-staging.thesimgrid.com/umu9bku4wgl5p86z605p108xqjz1
+                  grid_rating_change: -39
+                  latest_social_grades:
+                    total_crashy_votes: 0
+                    total_clean_votes: 0
+                pagination:
+                  limit: 5
+                  offset: 0
+                  total_count: 156
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /session_results/fingerprint:
+    get:
+      tags: [Results]
+      summary: Look up session results by fingerprint
+      parameters:
+        - name: hashes
+          in: query
+          required: true
+          schema: { type: array, items: { type: string } }
+          description: "One or more fingerprint hashes."
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { $ref: '#/components/responses/PaginatedCollection' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /leaderboards/lap_times:
+    get:
+      tags: [Results]
+      summary: Fastest lap times
+      parameters:
+        - { name: track_id, in: query, required: true, schema: { type: integer } }
+        - { name: car_id, in: query, schema: { type: integer } }
+        - { name: filter, in: query, schema: { type: string, enum: [followers] } }
+        - { name: user_id, in: query, schema: { type: integer }, description: "Required when filtering by followers." }
+        - { name: attribute, in: query, schema: { type: string, enum: [discord, steam] }, description: "Look the user up by an external identifier instead of the SimGrid ID." }
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A paginated collection.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - user_id: 109392
+                  track_id: 2730
+                  car_id: 4194
+                  lap_time: 16651
+                - user_id: 133178
+                  track_id: 2730
+                  car_id: 3952
+                  lap_time: 22575
+                pagination:
+                  limit: 5
+                  offset: 0
+                  total_count: 131
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # ---------------------------------------------------------------- Communities & Teams
+  /communities:
+    get:
+      tags: [Communities]
+      summary: List communities
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - { name: sort, in: query, schema: { type: string } }
+        - { name: dir, in: query, schema: { type: string, enum: [asc, desc] } }
+      responses:
+        '200':
+          description: A paginated collection.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 2911
+                  name: LANINIPE
+                  slug: laninipe
+                  location: PE
+                  follows_count: 0
+                  logo_image: https://cdn-staging.thesimgrid.com/ytv16fecst9mv28tutbx7yszlapj
+                  banner_image: https://cdn-staging.thesimgrid.com/k4g9oikwi6uy8xlrtowvxpw1b3m6
+                - id: 3560
+                  name: zerna race
+                  slug: zerna-race
+                  location: IT
+                  follows_count: 0
+                  logo_image: https://cdn-staging.thesimgrid.com/hep1r9iaavmqthrawkn2895q4eoz
+                  banner_image: https://cdn-staging.thesimgrid.com/79c3u6aj4adtp4mcr9hfhiq00isp
+                pagination:
+                  limit: 5
+                  offset: 0
+                  total_count: 3404
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /teams:
+    get:
+      tags: [Teams]
+      summary: List teams
+      parameters:
+        - { name: user_id, in: query, schema: { type: integer }, description: "Only teams this user belongs to." }
+        - { name: as_manager, in: query, schema: { type: boolean }, description: "Only teams this user manages." }
+        - { name: members_only, in: query, schema: { type: boolean }, description: "Omit team registrations from the response." }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 100, maximum: 500 }
+          description: "Maximum teams to return. Defaults to 100 so a driver's full set comes back in one call. Values above 500 are reduced to 500."
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: A paginated collection.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example: {"data":[{"team_id":11233,"name":"Sachsen Power ","total_races_started":0,"total_wins":0,"total_podiums":0,"total_penalty_rate":0.0,"avatar":"https://cdn-staging.thesimgrid.com/us5pwpb4pte46srzjkysi5xxv2kb"}],"pagination":{"limit":100,"offset":0,"total_count":1}}
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /teams/{id}:
+    get:
+      tags: [Teams]
+      summary: Retrieve a team
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200': { $ref: '#/components/responses/SingleResource' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ---------------------------------------------------------------- Users
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Retrieve a user
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - { name: attribute, in: query, schema: { type: string, enum: [discord, steam] }, description: "Look up by an external identifier instead of the SimGrid ID." }
+        - { name: platforms, in: query, schema: { type: boolean }, description: "Include external platform identifiers." }
+        - { name: social_platforms, in: query, schema: { type: boolean }, description: "Include social handles." }
+      responses:
+        '200':
+          description: A single resource, returned without a wrapper.
+          content:
+            application/json:
+              schema: { type: object }
+              example:
+                user_id: 13114
+                username: alexdriver
+                first_name: Alex
+                last_name: Driver
+                steam64_id: '12345'
+                discord_uid: uid000
+                preferred_language: english
+                email: user13114@example.invalid
+                preferred_name: Alex Driver
+                teams:
+                - team_id: 2164
+                  name: Gladius Competitions
+                  total_races_started: 140
+                  total_wins: 12
+                  total_podiums: 27
+                  total_penalty_rate: 0.0
+                  avatar: https://cdn-staging.thesimgrid.com/2t3ypp7erhqwtb26oun9gdz5drbd
+                total_races_started: 76
+                total_wins: 16
+                total_podiums: 33
+                simgrid_pro_active: false
+                boosted_hosts: []
+                grid_ratings:
+                - game_id: 1
+                  score: 3937
+                  score_name: gold
+                  game_abbr: ACC
+                  game_type: PC
+                  race_count: 33
+                  preferred: true
+                - game_id: 65
+                  score: 3362
+                  score_name: silver
+                  game_abbr: LMU
+                  game_type: PC
+                  race_count: 39
+                  preferred: false
+                safety_ratings: []
+                quick_races_count: 0
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+
+  # ---------------------------------------------------------------- Reference data
+  /games:
+    get:
+      tags: [Reference]
+      summary: List games
+      parameters:
+        - name: ids
+          in: query
+          schema: { type: array, items: { type: integer } }
+      responses:
+        '200':
+          description: A collection that is not paginated. `pagination` is null.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 14
+                  name: F1 2021
+                  slug: f1-2021-pc
+                  game_type: PC
+                  abbreviation: F1 2021
+                  namespace_identifier: F12021
+                  metadata:
+                    engine: ''
+                    social: ''
+                    website: ''
+                    location: ''
+                    developer: ''
+                    product_link: ''
+                    release_date: ''
+                - id: 49
+                  name: Project Cars 2
+                  slug: project-cars-2-pc
+                  game_type: PC
+                  abbreviation: PC2
+                  namespace_identifier: ProjectCars2
+                  metadata: {}
+                pagination:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /games/{id}:
+    get:
+      tags: [Reference]
+      summary: Retrieve a game
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: A single resource, returned without a wrapper.
+          content:
+            application/json:
+              schema: { type: object }
+              example:
+                id: 14
+                name: F1 2021
+                slug: f1-2021-pc
+                game_type: PC
+                abbreviation: F1 2021
+                namespace_identifier: F12021
+                metadata:
+                  engine: ''
+                  social: ''
+                  website: ''
+                  location: ''
+                  developer: ''
+                  product_link: ''
+                  release_date: ''
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /games/{id}/cars:
+    get:
+      tags: [Reference]
+      deprecated: true
+      summary: List a game's cars (deprecated)
+      description: Use `/cars?game_id=` instead.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - { name: manufacturer, in: query, schema: { type: boolean } }
+        - { name: car_classes, in: query, schema: { type: boolean } }
+      responses:
+        '200':
+          description: A collection that is not paginated. `pagination` is null.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 260
+                  name: McLaren F1 Team
+                  in_game_id:
+                  in_game_name: ''
+                  image: "/assets/default-avatar-27a4daee.png"
+                  content_type: vanilla
+                  mod_download_link:
+                - id: 258
+                  name: Mercedes-AMG Petronas F1 Team
+                  in_game_id:
+                  in_game_name: ''
+                  image: "/assets/default-avatar-27a4daee.png"
+                  content_type: vanilla
+                  mod_download_link:
+                pagination:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /games/{id}/tracks:
+    get:
+      tags: [Reference]
+      deprecated: true
+      summary: List a game's tracks (deprecated)
+      description: Use `/tracks?game_id=` instead.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: A collection that is not paginated. `pagination` is null.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 178
+                  game_id: 14
+                  name: Abu Dhabi
+                  in_game_name:
+                  photo: https://cdn-staging.thesimgrid.com/go97df72ixpmcfvo3tpgqp1xqu5r
+                  parent_track_id:
+                  external_data:
+                  content_type: vanilla
+                  mod_download_link:
+                  track_layouts_count: 0
+                  composite_name: Abu Dhabi
+                - id: 176
+                  game_id: 14
+                  name: Australia
+                  in_game_name:
+                  photo: https://cdn-staging.thesimgrid.com/m9avt0679n5litg1w5lxve8o80z0
+                  parent_track_id:
+                  external_data:
+                  content_type: vanilla
+                  mod_download_link:
+                  track_layouts_count: 0
+                  composite_name: Australia
+                pagination:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /cars:
+    get:
+      tags: [Reference]
+      summary: List cars
+      parameters:
+        - { name: game_id, in: query, schema: { type: integer } }
+        - { name: car_class_id, in: query, schema: { type: integer } }
+        - { name: content_types, in: query, schema: { type: string } }
+        - { name: order_by, in: query, schema: { type: string } }
+        - { name: manufacturer, in: query, schema: { type: boolean } }
+        - { name: car_classes, in: query, schema: { type: boolean } }
+      responses:
+        '200':
+          description: A collection that is not paginated. `pagination` is null.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 1
+                  name: Porsche 991 GT3
+                  in_game_id: 0
+                  in_game_name: porsche_991_gt3_r
+                  image: "/assets/default-avatar-27a4daee.png"
+                  content_type: vanilla
+                  mod_download_link:
+                - id: 38
+                  name: 1960 Indy Roadster
+                  in_game_id:
+                  in_game_name:
+                  image: "/assets/default-avatar-27a4daee.png"
+                  content_type: vanilla
+                  mod_download_link:
+                pagination:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /cars/{id}:
+    get:
+      tags: [Reference]
+      summary: Retrieve a car
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: A single resource, returned without a wrapper.
+          content:
+            application/json:
+              schema: { type: object }
+              example:
+                id: 1
+                name: Porsche 991 GT3
+                in_game_id: 0
+                in_game_name: porsche_991_gt3_r
+                image: "/assets/default-avatar-27a4daee.png"
+                content_type: vanilla
+                mod_download_link:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /car_classes:
+    get:
+      tags: [Reference]
+      summary: List car classes
+      parameters:
+        - { name: game_id, in: query, schema: { type: integer } }
+        - { name: content_types, in: query, schema: { type: string } }
+        - { name: include_live_count, in: query, schema: { type: boolean } }
+      responses:
+        '200':
+          description: A collection that is not paginated. `pagination` is null.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 641
+                  name: 106 Supercopa
+                  game_id: 62
+                  scoped_slug: 106-supercopa
+                  cars_count: 1
+                  logo: "/assets/default-avatar-27a4daee.png"
+                - id: 586
+                  name: 1HOR GTS
+                  game_id: 60
+                  scoped_slug: 1hor-gts
+                  cars_count: 6
+                  logo: "/assets/default-avatar-27a4daee.png"
+                pagination:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /car_classes/{id}:
+    get:
+      tags: [Reference]
+      summary: Retrieve a car class
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: A single resource, returned without a wrapper.
+          content:
+            application/json:
+              schema: { type: object }
+              example:
+                id: 641
+                name: 106 Supercopa
+                game_id: 62
+                scoped_slug: 106-supercopa
+                cars_count: 1
+                logo: "/assets/default-avatar-27a4daee.png"
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /tracks:
+    get:
+      tags: [Reference]
+      summary: List tracks
+      parameters:
+        - { name: game_id, in: query, schema: { type: integer } }
+        - { name: parents_only, in: query, schema: { type: boolean } }
+        - { name: parent_track_id, in: query, schema: { type: integer } }
+        - { name: content_types, in: query, schema: { type: string } }
+        - { name: include_live_count, in: query, schema: { type: boolean } }
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A paginated collection.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 2730
+                  game_id: 62
+                  name: 2023 North Wilkesboro Speedway
+                  in_game_name:
+                  photo: https://cdn-staging.thesimgrid.com/pzxrucfneb4ik4rxanxttv9ssz9k
+                  parent_track_id:
+                  external_data:
+                  content_type: free_mod
+                  mod_download_link: https://www.overtake.gg/downloads/2023-north-wilkesboro-speedway.60632/
+                  track_layouts_count: 0
+                  composite_name: 2023 North Wilkesboro Speedway (mod)
+                - id: 3981
+                  game_id: 66
+                  name: 24h
+                  in_game_name: ''
+                  photo: https://cdn-staging.thesimgrid.com/9epwqwlu7widixz28gkjaho56y6p
+                  parent_track_id: 3980
+                  external_data:
+                    uuid: b6aea286-05f9-4480-b39d-600d445be79a
+                    trackevent:
+                    - name: 24h Race
+                      uuid: 06e96729-e6e5-49aa-a4e3-c808eeadcfe2
+                      is_drift: false
+                      is_a_to_b: false
+                      is_practice: false
+                      is_hot_stint: false
+                      max_pit_slot: 30
+                      is_time_attack: false
+                      is_instant_race: true
+                      is_race_weekend: true
+                      track_layout_uuid: b6aea286-05f9-4480-b39d-600d445be79a
+                    - name: 24h Time Attack
+                      uuid: 4905a0e1-50c5-4f24-a288-ef772a019dc5
+                      is_drift: false
+                      is_a_to_b: false
+                      is_practice: true
+                      is_hot_stint: false
+                      max_pit_slot: 30
+                      is_time_attack: false
+                      is_instant_race: false
+                      is_race_weekend: false
+                      track_layout_uuid: b6aea286-05f9-4480-b39d-600d445be79a
+                  content_type: vanilla
+                  mod_download_link:
+                  track_layouts_count: 0
+                  composite_name: Nurburgring - 24h
+                pagination:
+                  limit: 5
+                  offset: 0
+                  total_count: 3061
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /tracks/{id}:
+    get:
+      tags: [Reference]
+      summary: Retrieve a track
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: A single resource, returned without a wrapper.
+          content:
+            application/json:
+              schema: { type: object }
+              example:
+                id: 2730
+                game_id: 62
+                name: 2023 North Wilkesboro Speedway
+                in_game_name:
+                photo: https://cdn-staging.thesimgrid.com/pzxrucfneb4ik4rxanxttv9ssz9k
+                parent_track_id:
+                external_data:
+                content_type: free_mod
+                mod_download_link: https://www.overtake.gg/downloads/2023-north-wilkesboro-speedway.60632/
+                track_layouts_count: 0
+                composite_name: 2023 North Wilkesboro Speedway (mod)
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+
+  /brands:
+    get:
+      tags: [Reference]
+      summary: List brands
+      responses:
+        '200':
+          description: A collection that is not paginated. `pagination` is null.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 1
+                  full_name: Race Anywhere
+                - id: 3
+                  full_name: Digital Motorsports
+                pagination:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /brands/{id}:
+    get:
+      tags: [Reference]
+      summary: Retrieve a brand
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: A single resource, returned without a wrapper.
+          content:
+            application/json:
+              schema: { type: object }
+              example:
+                id: 1
+                full_name: Race Anywhere
+                short_name: Race Anywhere
+                website: https://www.raceanywhere.co.uk/
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # ---------------------------------------------------------------- Sponsors & Graphic Blocks
+  /sponsors:
+    get:
+      tags: [Sponsors]
+      summary: List sponsors
+      parameters:
+        - { name: championship_id, in: query, schema: { type: integer } }
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: A paginated collection.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 1
+                  name: Thrustmaster
+                  championship_id: 59
+                  description: Thrustmaster is a designer, developer and manufacturer of game controllers
+                    and steering wheels for sim racing games on Console and PC.
+                  link_url: https://www.thrustmaster.com/?utm_source=simgrid&utm_medium=sponsor
+                  logo: https://cdn-staging.thesimgrid.com/58gmggnzrp7czfv4w8jwf31qq6li
+                - id: 2
+                  name: V-Rig
+                  championship_id: 132
+                  description: V-Rig are producers of the most customisable and adjust sim racing
+                    rigs on the market. Simply put, it’s the swiss army knife of rigs.
+                  link_url: https://vrig.com/
+                  logo: https://cdn-staging.thesimgrid.com/qo6c2vmq9e3sqwmbu0c0yc2bimaf
+                pagination:
+                  limit: 5
+                  offset: 0
+                  total_count: 3851
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /graphic_blocks:
+    get:
+      tags: [Graphic Blocks]
+      summary: List graphic blocks
+      description: Listing does not increment the `impressions` of the returned records.
+      responses:
+        '200':
+          description: A collection that is not paginated. `pagination` is null.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 486
+                  title: Get Faster With Delta Now
+                - id: 604
+                  title: CPP EVO V2 — Engineered for Real Braking
+                pagination:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /graphic_blocks/{id}:
+    get:
+      tags: [Graphic Blocks]
+      summary: Retrieve a graphic block
+      description: |
+        Retrieving assumes a public view was made and increments the record's `impressions`.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: A single resource, returned without a wrapper.
+          content:
+            application/json:
+              schema: { type: object }
+              example:
+                id: 486
+                title: Get Faster With Delta Now
+                description: The Best Delta Ever. Making you FASTER on LMU, iRacing, ACC, AC, AMS2,
+                  AC Evo and GT7. Don't leave lap time on the table any longer! Get Setup IQ, Video
+                  Analysis, AI Coaching, Pro Setups and more!
+                link: https://staging-6.thesimgrid.com/graphic_blocks/486/redirect
+                image: https://cdn-staging.thesimgrid.com/cbzu0uxbe8t2d2l5r6lklubypdox
+                call_to_action: buy_now
+                brand_id: 2
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /graphic_blocks/draw:
+    get:
+      tags: [Graphic Blocks]
+      summary: Draw a random set of graphic blocks
+      description: |
+        Returns a subset selected for display. Drawing assumes a public view was made and
+        increments the `impressions` of the returned records.
+      parameters:
+        - { name: count, in: query, schema: { type: integer, default: 1 }, description: "How many blocks to draw." }
+        - { name: seed, in: query, schema: { type: number }, description: "Seed so repeated requests form part of the same draw." }
+      responses:
+        '200':
+          description: The drawn blocks.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+              example:
+                data:
+                - id: 560
+                  title: Setup IQ Live in Delta 6.0
+                  description: Take ANY setup you have. A default setup, your own, a teammate's, and
+                    even other setup shops, and Setup IQ will tailor it to your driving style, making
+                    YOU faster! All in Delta 6.0.
+                  link: https://staging-6.thesimgrid.com/graphic_blocks/560/redirect
+                  image: https://cdn-staging.thesimgrid.com/98morai6ztlyyffu9krkqv1226d8
+                  call_to_action: subscribe
+                  brand_id: 2
+                - id: 554
+                  title: Sim Motion summer sale! Discounts on Simagic!
+                  description: Simagic summer sale is now on. Get your Simagic bundle now!
+                  link: https://staging-6.thesimgrid.com/graphic_blocks/554/redirect
+                  image: https://cdn-staging.thesimgrid.com/exeqiyclodk3cj4ogyojgu7nwswi
+                  call_to_action: buy_now
+                  brand_id: 102
+                pagination: null
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: A SimGrid API token, requested from your community's settings.
+
+  parameters:
+    PathId:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, default: 10, maximum: 500 }
+      description: "Maximum records to return. Values above 500 are reduced to 500."
+    Offset:
+      name: offset
+      in: query
+      schema: { type: integer, default: 0 }
+      description: "Records to skip. Use with limit to page."
+  schemas:
+    Pagination:
+      type: object
+      nullable: true
+      properties:
+        limit: { type: integer, example: 25 }
+        offset: { type: integer, example: 0 }
+        total_count: { type: integer, nullable: true, example: 240 }
+
+    PaginatedEnvelope:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items: { type: object }
+        pagination: { $ref: '#/components/schemas/Pagination' }
+
+    Error:
+      type: object
+      properties:
+        errors:
+          oneOf:
+            - type: string
+            - type: array
+              items: { type: string }
+
+  responses:
+    PaginatedCollection:
+      description: A paginated collection.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+
+    UnpaginatedCollection:
+      description: A collection that is not paginated. `pagination` is null.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+
+    SingleResource:
+      description: A single resource, returned without a wrapper.
+      content:
+        application/json:
+          schema: { type: object }
+
+    BadRequest:
+      description: The request was malformed or a required parameter was missing.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+    Unauthorized:
+      description: The API token is missing, invalid, inactive or not yet approved.
+
+    NotFound:
+      description: The resource does not exist, or this token cannot reach it.
+
+    UnprocessableEntity:
+      description: The resource could not be found or the request could not be processed.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+    RateLimited:
+      description: The token exceeded its per-minute or per-hour rate limit.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string, example: "Minute rate limit exceeded" }

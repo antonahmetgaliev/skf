@@ -1,0 +1,151 @@
+{
+  "data": [
+    {
+      "id": 901001,
+      "user_id": 1001,
+      "registerable_id": 26927,
+      "registerable_type": "Championship",
+      "championship_id": 26927,
+      "championship_car_class": {
+        "id": 139154,
+        "display_name": "LMGT3",
+        "championship_id": 26927,
+        "capacity": 23,
+        "split_id": null
+      },
+      "championship_points": 106.0,
+      "championship_penalties": 0,
+      "championship_score": 109.0,
+      "position_cache": 1,
+      "partial_standings": [],
+      "points_adjustment": 0.0,
+      "adjustment_reason": null,
+      "overall_championship_points": null,
+      "overall_championship_score": null,
+      "overall_position_cache": null,
+      "overall_points_adjustment": 0.0,
+      "overall_partial_standings": [],
+      "display_name": "Driver 1",
+      "car": "BMW M4 LMGT3",
+      "car_number": 98,
+      "car_logo": "https://cdn.thesimgrid.com/0u1xkodyo3b1o2bnvgj5e3zoc36l",
+      "class": "LMGT3",
+      "participant": {
+        "avatar": null,
+        "country_code": "UA",
+        "grid_rating": {
+          "score": 2743,
+          "race_count": 37,
+          "score_name": "silver",
+          "score_range": "silver"
+        },
+        "safety_rating": null
+      }
+    },
+    {
+      "id": 901002,
+      "user_id": 1002,
+      "registerable_id": 26927,
+      "registerable_type": "Championship",
+      "championship_id": 26927,
+      "championship_car_class": {
+        "id": 139154,
+        "display_name": "LMGT3",
+        "championship_id": 26927,
+        "capacity": 23,
+        "split_id": null
+      },
+      "championship_points": 64.0,
+      "championship_penalties": 0,
+      "championship_score": 64.0,
+      "position_cache": 2,
+      "partial_standings": [],
+      "points_adjustment": 0.0,
+      "adjustment_reason": null,
+      "overall_championship_points": null,
+      "overall_championship_score": null,
+      "overall_position_cache": null,
+      "overall_points_adjustment": 0.0,
+      "overall_partial_standings": [],
+      "display_name": "Driver 2",
+      "car": "BMW M4 LMGT3",
+      "car_number": 42,
+      "car_logo": "https://cdn.thesimgrid.com/0u1xkodyo3b1o2bnvgj5e3zoc36l",
+      "class": "LMGT3",
+      "participant": {
+        "avatar": null,
+        "country_code": "UA",
+        "grid_rating": {
+          "score": 2747,
+          "race_count": 33,
+          "score_name": "silver",
+          "score_range": "silver"
+        },
+        "safety_rating": null
+      }
+    }
+  ],
+  "pagination": {
+    "limit": 40,
+    "offset": 0,
+    "total_count": 21
+  },
+  "completed_races": [
+    {
+      "id": 256741,
+      "race_name": "SKF LMU Hyper 70 Round 1",
+      "track": {
+        "id": 3287,
+        "game_id": 65,
+        "name": "Algarve (WEC)",
+        "in_game_name": "PortimaoWEC",
+        "photo": "https://cdn.thesimgrid.com/yp5h9ux4fiw9y75b0q9tnvacyahu",
+        "parent_track_id": 2874,
+        "external_data": {
+          "scn": "PortimaoWEC",
+          "name": "6 Hours of Portimao",
+          "settings": "Portimao"
+        },
+        "content_type": "vanilla",
+        "mod_download_link": null,
+        "track_layouts_count": 0,
+        "composite_name": "Algarve (WEC)"
+      },
+      "starts_at": "2026-09-05T17:00:00.000Z",
+      "display_name": "SKF LMU Hyper 70 Round 1",
+      "results_available": true,
+      "published_at": "2026-09-12T13:32:03.885Z",
+      "hot_lap": false,
+      "ended": true
+    },
+    {
+      "id": 256742,
+      "race_name": "SKF LMU Hyper 70 Round 2",
+      "track": {
+        "id": 4806,
+        "game_id": 65,
+        "name": "WeatherTech Raceway Laguna Seca",
+        "in_game_name": "LagunaSeca",
+        "photo": "https://cdn.thesimgrid.com/ul05t14kjmeo5havprf50044759f",
+        "parent_track_id": 4805,
+        "external_data": {
+          "scn": "LagunaSeca",
+          "name": "WeatherTech Raceway Laguna Seca",
+          "settings": "LagunaSeca"
+        },
+        "content_type": "vanilla",
+        "mod_download_link": null,
+        "track_layouts_count": 0,
+        "composite_name": "WeatherTech Raceway Laguna Seca"
+      },
+      "starts_at": "2026-09-12T17:00:00.000Z",
+      "display_name": "SKF LMU Hyper 70 Round 2",
+      "results_available": true,
+      "published_at": "2026-09-19T11:47:39.482Z",
+      "hot_lap": false,
+      "ended": true
+    }
+  ],
+  "standings": null,
+  "is_series": false
+}

@@ -1,0 +1,84 @@
+{
+  "id": 26927,
+  "name": "SKF LMU Hyper 70",
+  "start_date": "2026-09-05T17:00:00.000Z",
+  "end_date": null,
+  "capacity": 38,
+  "spots_taken": 28,
+  "teams_enabled": false,
+  "entry_fee_required": false,
+  "entry_fee_cents": null,
+  "accepting_registrations": true,
+  "allow_repeated_car_numbers": false,
+  "races": [
+    {
+      "id": 256741,
+      "race_name": "SKF LMU Hyper 70 Round 1",
+      "track": {
+        "id": 3287,
+        "game_id": 65,
+        "name": "Algarve (WEC)",
+        "in_game_name": "PortimaoWEC",
+        "photo": "https://cdn.thesimgrid.com/yp5h9ux4fiw9y75b0q9tnvacyahu",
+        "parent_track_id": 2874,
+        "external_data": {
+          "scn": "PortimaoWEC",
+          "name": "6 Hours of Portimao",
+          "settings": "Portimao"
+        },
+        "content_type": "vanilla",
+        "mod_download_link": null,
+        "track_layouts_count": 0,
+        "composite_name": "Algarve (WEC)"
+      },
+      "starts_at": "2026-09-05T17:00:00.000Z",
+      "display_name": "SKF LMU Hyper 70 Round 1",
+      "results_available": true,
+      "published_at": "2026-09-12T13:32:03.885Z",
+      "hot_lap": false,
+      "ended": true
+    }
+  ],
+  "image": "https://cdn.thesimgrid.com/7pyyjcwwc08b5yv0l1t4w64uebiy",
+  "host_name": "SKF Racing Hub",
+  "co_hosted": false,
+  "game_name": "Le Mans Ultimate",
+  "url": "https://www.thesimgrid.com/championships/26927",
+  "results_url": "https://www.thesimgrid.com/championships/26927/results",
+  "lobby_code_access": null,
+  "race_server_config": null,
+  "scheduled_at": false,
+  "race_config_server_data": null,
+  "upcoming_race": {
+    "id": 256745,
+    "race_name": "SKF LMU Hyper 70 Round 5",
+    "track": {
+      "id": 4839,
+      "game_id": 65,
+      "name": "Michelin Raceway Road Atlanta",
+      "in_game_name": "RoadAtlanta",
+      "photo": "https://cdn.thesimgrid.com/s2x4j2ktx1jmz717akku61egqcd9",
+      "parent_track_id": 4838,
+      "external_data": {
+        "scn": "RoadAtlanta",
+        "name": "Michelin Raceway Road Atlanta",
+        "settings": "Road Atlanta"
+      },
+      "content_type": "vanilla",
+      "mod_download_link": null,
+      "track_layouts_count": 0,
+      "composite_name": "Michelin Raceway Road Atlanta"
+    },
+    "starts_at": "2026-10-03T17:00:00.000Z",
+    "display_name": "SKF LMU Hyper 70 Round 5",
+    "results_available": false,
+    "published_at": null,
+    "hot_lap": false,
+    "ended": false
+  },
+  "in_progress_race": null,
+  "round_number": 5,
+  "discord_url": "https://discord.gg/XhNsUerTFp",
+  "hot_lap": null,
+  "all_rounds_number": 0
+}

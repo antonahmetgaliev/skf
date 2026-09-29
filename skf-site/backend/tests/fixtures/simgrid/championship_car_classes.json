@@ -1,0 +1,19 @@
+{
+  "data": [
+    {
+      "id": 139154,
+      "display_name": "LMGT3",
+      "championship_id": 26927,
+      "capacity": 23,
+      "split_id": null
+    },
+    {
+      "id": 139155,
+      "display_name": "Hypercar",
+      "championship_id": 26927,
+      "capacity": 15,
+      "split_id": null
+    }
+  ],
+  "pagination": null
+}

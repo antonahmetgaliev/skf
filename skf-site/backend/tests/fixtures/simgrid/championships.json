@@ -1,0 +1,17 @@
+{
+  "data": [
+    {
+      "id": 23259,
+      "name": "SKF iRacing Ignition League 2026 S2"
+    },
+    {
+      "id": 23260,
+      "name": "SKF iRacing Challenger League 2026 S2"
+    }
+  ],
+  "pagination": {
+    "limit": 2,
+    "offset": 0,
+    "total_count": 9
+  }
+}

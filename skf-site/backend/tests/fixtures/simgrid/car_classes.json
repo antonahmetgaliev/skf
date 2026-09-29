@@ -1,0 +1,21 @@
+{
+  "data": [
+    {
+      "id": 564,
+      "name": "Hypercar",
+      "game_id": 65,
+      "scoped_slug": "hypercar",
+      "cars_count": 14,
+      "logo": "/assets/default-avatar-27a4daee.png"
+    },
+    {
+      "id": 628,
+      "name": "LMGT3",
+      "game_id": 65,
+      "scoped_slug": "lmgt3",
+      "cars_count": 10,
+      "logo": "/assets/default-avatar-27a4daee.png"
+    }
+  ],
+  "pagination": null
+}
