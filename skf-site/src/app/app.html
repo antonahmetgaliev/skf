@@ -13,7 +13,15 @@
         id="viewAsRole"
         class="view-as-select"
         [ngModel]="auth.viewAsRole() ?? (auth.isRealSuperAdmin() ? 'super_admin' : 'admin')"
-        (ngModelChange)="auth.viewAsCommunityId.set(null); auth.viewAsRole.set(($event === 'super_admin' && auth.isRealSuperAdmin()) || ($event === 'admin' && !auth.isRealSuperAdmin()) ? null : $event)"
+        (ngModelChange)="
+          auth.viewAsCommunityId.set(null);
+          auth.viewAsRole.set(
+            ($event === 'super_admin' && auth.isRealSuperAdmin()) ||
+              ($event === 'admin' && !auth.isRealSuperAdmin())
+              ? null
+              : $event
+          )
+        "
       >
         @if (auth.isRealSuperAdmin()) {
           <option value="super_admin">Super Admin</option>
@@ -41,104 +49,137 @@
     </div>
   }
   <div class="sticky-top">
-  <header class="site-header">
-    <a class="brand" routerLink="/home">
-      <img class="brand-logo" src="skf-logo.png" alt="SKF Racing Hub logo" />
-      <div class="brand-text">
-        <span class="brand-title">SKF Racing Hub</span>
-      </div>
-    </a>
-    <button
-      type="button"
-      class="hamburger"
-      [class.open]="mobileMenuOpen()"
-      (click)="toggleMobileMenu()"
-      [attr.aria-label]="'nav.toggleMenu' | transloco"
-      [attr.aria-expanded]="mobileMenuOpen()"
-    >
-      <span class="hamburger-line"></span>
-      <span class="hamburger-line"></span>
-      <span class="hamburger-line"></span>
-    </button>
-    <nav class="site-nav" [class.site-nav--open]="mobileMenuOpen()" aria-label="Primary">
-      <a routerLink="/championships" routerLinkActive="active">{{ 'nav.championships' | transloco }}</a>
-      <a routerLink="/calendar" routerLinkActive="active">{{ 'nav.calendar' | transloco }}</a>
-      <a routerLink="/bwp-license" routerLinkActive="active">{{ 'nav.bwpLicense' | transloco }}</a>
-      <div class="site-nav-dropdown" [class.open]="regulationsOpen()">
-        <button
-          type="button"
-          class="site-nav-dropdown-trigger"
-          [class.active]="regulationsActive()"
-          [attr.aria-expanded]="regulationsOpen()"
-          aria-haspopup="menu"
-          (click)="toggleRegulations()"
-        >
-          {{ 'nav.regulations' | transloco }}
-          <span class="site-nav-dropdown-chevron" aria-hidden="true">▾</span>
-        </button>
-        @if (regulationsOpen()) {
-          <div class="site-nav-dropdown-menu" role="menu">
-            @for (regPage of regulationPages(); track regPage.slug) {
-              <a
-                [routerLink]="regPage.slug === 'general' ? '/regulations' : '/regulations/' + regPage.slug"
-                routerLinkActive="active"
-                [routerLinkActiveOptions]="regPage.slug === 'general' ? { exact: true } : { exact: false }"
-                (click)="closeRegulations()"
-                role="menuitem"
-              >{{ regPage.title }}</a>
-            }
-          </div>
+    <header class="site-header">
+      <a class="brand" routerLink="/home">
+        <img class="brand-logo" src="skf-logo.png" alt="SKF Racing Hub logo" />
+        <div class="brand-text">
+          <span class="brand-title">SKF Racing Hub</span>
+        </div>
+      </a>
+      <button
+        type="button"
+        class="hamburger"
+        [class.open]="mobileMenuOpen()"
+        (click)="toggleMobileMenu()"
+        [attr.aria-label]="'nav.toggleMenu' | transloco"
+        [attr.aria-expanded]="mobileMenuOpen()"
+      >
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+      <nav class="site-nav" [class.site-nav--open]="mobileMenuOpen()" aria-label="Primary">
+        <a routerLink="/championships" routerLinkActive="active">{{
+          'nav.championships' | transloco
+        }}</a>
+        <a routerLink="/calendar" routerLinkActive="active">{{ 'nav.calendar' | transloco }}</a>
+        <a routerLink="/bwp-license" routerLinkActive="active">{{
+          'nav.bwpLicense' | transloco
+        }}</a>
+        <div class="site-nav-dropdown" [class.open]="regulationsOpen()">
+          <button
+            type="button"
+            class="site-nav-dropdown-trigger"
+            [class.active]="regulationsActive()"
+            [attr.aria-expanded]="regulationsOpen()"
+            aria-haspopup="menu"
+            (click)="toggleRegulations()"
+          >
+            {{ 'nav.regulations' | transloco }}
+            <span class="site-nav-dropdown-chevron" aria-hidden="true">▾</span>
+          </button>
+          @if (regulationsOpen()) {
+            <div class="site-nav-dropdown-menu" role="menu">
+              @for (regPage of regulationPages(); track regPage.slug) {
+                <a
+                  [routerLink]="
+                    regPage.slug === 'general' ? '/regulations' : '/regulations/' + regPage.slug
+                  "
+                  routerLinkActive="active"
+                  [routerLinkActiveOptions]="
+                    regPage.slug === 'general' ? { exact: true } : { exact: false }
+                  "
+                  (click)="closeRegulations()"
+                  role="menuitem"
+                  >{{ regPage.title }}</a
+                >
+              }
+            </div>
+          }
+        </div>
+        <a routerLink="/media" routerLinkActive="active">{{ 'nav.media' | transloco }}</a>
+        @if (auth.isAdmin()) {
+          <a routerLink="/admin" routerLinkActive="active">{{ 'nav.admin' | transloco }}</a>
         }
-      </div>
-      <a routerLink="/media" routerLinkActive="active">{{ 'nav.media' | transloco }}</a>
-      @if (auth.isAdmin()) {
-        <a routerLink="/admin" routerLinkActive="active">{{ 'nav.admin' | transloco }}</a>
-      }
-      <a routerLink="/incidents" routerLinkActive="active">{{ 'nav.incidents' | transloco }}</a>
-      <div class="auth-zone auth-zone--mobile">
+        <a routerLink="/incidents" routerLinkActive="active">{{ 'nav.incidents' | transloco }}</a>
+        <div class="auth-zone auth-zone--mobile">
+          <app-lang-switcher></app-lang-switcher>
+          @if (auth.isLoggedIn()) {
+            <a routerLink="/profile" class="user-badge">
+              @if (auth.user()?.avatarUrl) {
+                <img class="avatar" [src]="auth.user()!.avatarUrl" alt="Avatar" />
+              } @else {
+                <span class="avatar avatar--fallback">{{
+                  auth.user()!.displayName.charAt(0) || '?'
+                }}</span>
+              }
+              <span class="user-name">{{ auth.user()!.displayName }}</span>
+            </a>
+            <button class="btn-logout" type="button" (click)="auth.logout()">
+              {{ 'auth.logout' | transloco }}
+            </button>
+          } @else {
+            <button class="btn-discord" type="button" (click)="auth.login()">
+              <svg
+                class="discord-icon"
+                viewBox="0 0 127.14 96.36"
+                fill="currentColor"
+                width="20"
+                height="18"
+              >
+                <path
+                  d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"
+                />
+              </svg>
+              {{ 'auth.signInWithDiscord' | transloco }}
+            </button>
+          }
+        </div>
+      </nav>
+      <div class="auth-zone auth-zone--desktop">
         <app-lang-switcher></app-lang-switcher>
         @if (auth.isLoggedIn()) {
           <a routerLink="/profile" class="user-badge">
             @if (auth.user()?.avatarUrl) {
               <img class="avatar" [src]="auth.user()!.avatarUrl" alt="Avatar" />
             } @else {
-              <span class="avatar avatar--fallback">{{ auth.user()!.displayName.charAt(0) || '?' }}</span>
+              <span class="avatar avatar--fallback">{{
+                auth.user()!.displayName.charAt(0) || '?'
+              }}</span>
             }
             <span class="user-name">{{ auth.user()!.displayName }}</span>
           </a>
-          <button class="btn-logout" type="button" (click)="auth.logout()">{{ 'auth.logout' | transloco }}</button>
+          <button class="btn-logout" type="button" (click)="auth.logout()">
+            {{ 'auth.logout' | transloco }}
+          </button>
         } @else {
           <button class="btn-discord" type="button" (click)="auth.login()">
-            <svg class="discord-icon" viewBox="0 0 127.14 96.36" fill="currentColor" width="20" height="18">
-              <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
+            <svg
+              class="discord-icon"
+              viewBox="0 0 127.14 96.36"
+              fill="currentColor"
+              width="20"
+              height="18"
+            >
+              <path
+                d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"
+              />
             </svg>
             {{ 'auth.signInWithDiscord' | transloco }}
           </button>
         }
       </div>
-    </nav>
-    <div class="auth-zone auth-zone--desktop">
-      <app-lang-switcher></app-lang-switcher>
-      @if (auth.isLoggedIn()) {
-        <a routerLink="/profile" class="user-badge">
-          @if (auth.user()?.avatarUrl) {
-            <img class="avatar" [src]="auth.user()!.avatarUrl" alt="Avatar" />
-          } @else {
-            <span class="avatar avatar--fallback">{{ auth.user()!.displayName.charAt(0) || '?' }}</span>
-          }
-          <span class="user-name">{{ auth.user()!.displayName }}</span>
-        </a>
-        <button class="btn-logout" type="button" (click)="auth.logout()">{{ 'auth.logout' | transloco }}</button>
-      } @else {
-        <button class="btn-discord" type="button" (click)="auth.login()">
-          <svg class="discord-icon" viewBox="0 0 127.14 96.36" fill="currentColor" width="20" height="18">
-            <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
-          </svg>
-          {{ 'auth.signInWithDiscord' | transloco }}
-        </button>
-      }
-    </div>
-  </header>
+    </header>
   </div>
   <main class="site-main">
     <router-outlet></router-outlet>

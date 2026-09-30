@@ -2,11 +2,12 @@
   @if (error()) {
     <app-card [animated]="true" class="error-card">
       <p>{{ error() }}</p>
-      <app-btn variant="ghost" routerLink="/bwp-license">{{ 'driverProfile.backToBwp' | transloco }}</app-btn>
+      <app-btn variant="ghost" routerLink="/bwp-license">{{
+        'driverProfile.backToBwp' | transloco
+      }}</app-btn>
     </app-card>
   } @else if (driver(); as d) {
     <app-card [animated]="true" class="driver-page-card">
-
       <div class="driver-header">
         <div class="driver-identity">
           <div class="driver-avatar">
@@ -18,7 +19,12 @@
               <span class="country-tag">{{ d.countryCode }}</span>
             }
             @if (d.simgridDriverId) {
-              <a class="simgrid-link" [href]="'https://www.thesimgrid.com/drivers/' + d.simgridDriverId" target="_blank" rel="noopener noreferrer">
+              <a
+                class="simgrid-link"
+                [href]="'https://www.thesimgrid.com/drivers/' + d.simgridDriverId"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 SimGrid profile ↗
               </a>
             }
@@ -48,17 +54,20 @@
             @for (point of d.points; track point.id) {
               <div class="point-row" [class.expired]="point.expired">
                 <span class="point-value">{{ point.points }} BWP</span>
-                <span>{{ point.issuedOn | date:'dd MMM yyyy' }}</span>
-                <span>{{ point.expiresOn | date:'dd MMM yyyy' }}</span>
+                <span>{{ point.issuedOn | date: 'dd MMM yyyy' }}</span>
+                <span>{{ point.expiresOn | date: 'dd MMM yyyy' }}</span>
                 <app-badge [variant]="point.expired ? 'closed' : 'open'">
-                  {{ point.expired ? ('driverProfile.expired' | transloco) : ('driverProfile.active' | transloco) }}
+                  {{
+                    point.expired
+                      ? ('driverProfile.expired' | transloco)
+                      : ('driverProfile.active' | transloco)
+                  }}
                 </app-badge>
               </div>
             }
           </div>
         </div>
       }
-
     </app-card>
   } @else {
     <!-- loading state handled by global overlay -->

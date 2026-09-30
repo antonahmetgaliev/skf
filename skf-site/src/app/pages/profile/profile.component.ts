@@ -13,7 +13,17 @@ import { DriverPublic, ProfileApiService } from '../../services/profile-api.serv
 
 @Component({
   selector: 'app-profile',
-  imports: [DatePipe, FormsModule, TranslocoPipe, InputDirective, BadgeComponent, BtnComponent, CardComponent, PageLayoutComponent, SpinnerComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    TranslocoPipe,
+    InputDirective,
+    BadgeComponent,
+    BtnComponent,
+    CardComponent,
+    PageLayoutComponent,
+    SpinnerComponent,
+  ],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
 })

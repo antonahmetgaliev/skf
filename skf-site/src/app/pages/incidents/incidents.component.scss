@@ -415,10 +415,6 @@
   margin-top: 1.1rem;
 }
 
-
-
-
-
 .rule-radio {
   appearance: none;
   width: 15px;
@@ -448,7 +444,6 @@
   cursor: default;
   text-decoration: none;
 }
-
 
 // ── Stewarding settings modal ─────────────────────────────────────────────
 .settings-panel {
@@ -547,7 +542,9 @@
   line-height: 1;
   border-radius: var(--radius-xs);
   cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
 
   &:hover:not(:disabled) {
     color: var(--ink);

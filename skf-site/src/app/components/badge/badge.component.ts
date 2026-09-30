@@ -1,13 +1,25 @@
 import { Component, HostBinding, input } from '@angular/core';
 
 export type BadgeVariant =
-  | 'live' | 'ended'
-  | 'open' | 'closed'
-  | 'pending' | 'resolved' | 'applied' | 'bwp-pending'
-  | 'upcoming' | 'past' | 'ongoing' | 'future'
+  | 'live'
+  | 'ended'
+  | 'open'
+  | 'closed'
+  | 'pending'
+  | 'resolved'
+  | 'applied'
+  | 'bwp-pending'
+  | 'upcoming'
+  | 'past'
+  | 'ongoing'
+  | 'future'
   | 'completed'
-  | 'role-super-admin' | 'role-admin' | 'role-community-manager'
-  | 'role-moderator' | 'role-judge' | 'role-driver'
+  | 'role-super-admin'
+  | 'role-admin'
+  | 'role-community-manager'
+  | 'role-moderator'
+  | 'role-judge'
+  | 'role-driver'
   | 'blocked';
 
 @Component({

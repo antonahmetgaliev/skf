@@ -6,7 +6,6 @@
     <div class="loader"><app-spinner /></div>
   } @else {
     <div class="schedule-grid" [class.no-today]="!hasTodayContent()">
-
       <!-- ── Today's races + broadcasts (hero) ── -->
       @if (hasTodayContent()) {
         <div class="schedule-panel today-panel">
@@ -29,13 +28,26 @@
                   }
                   @if (race.communityName) {
                     <div class="race-community-row">
-                      <span class="race-community-name" [style.color]="race.communityColor">{{ race.communityName }}</span>
+                      <span class="race-community-name" [style.color]="race.communityColor">{{
+                        race.communityName
+                      }}</span>
                       @if (raceLink(race); as link) {
                         <span class="race-community-sep">·</span>
                         @if (isExternalLink(race)) {
-                          <a class="race-community-link" [href]="link" target="_blank" rel="noopener">Discord ↗</a>
+                          <a
+                            class="race-community-link"
+                            [href]="link"
+                            target="_blank"
+                            rel="noopener"
+                            >Discord ↗</a
+                          >
                         } @else {
-                          <a class="race-community-link" [routerLink]="link" [queryParams]="raceQueryParams(race)!">{{ 'calendar.openChampionship' | transloco }}</a>
+                          <a
+                            class="race-community-link"
+                            [routerLink]="link"
+                            [queryParams]="raceQueryParams(race)!"
+                            >{{ 'calendar.openChampionship' | transloco }}</a
+                          >
                         }
                       }
                     </div>
@@ -95,12 +107,18 @@
                         <span class="week-race-track">{{ race.track }}</span>
                       }
                       @if (race.communityName) {
-                        <span class="week-race-community" [style.color]="race.communityColor">{{ race.communityName }}</span>
+                        <span class="week-race-community" [style.color]="race.communityColor">{{
+                          race.communityName
+                        }}</span>
                       }
                     </div>
                   </a>
                 } @else if (raceLink(race)) {
-                  <a class="week-race-row" [routerLink]="raceLink(race)" [queryParams]="raceQueryParams(race)!">
+                  <a
+                    class="week-race-row"
+                    [routerLink]="raceLink(race)"
+                    [queryParams]="raceQueryParams(race)!"
+                  >
                     <div class="week-race-date">
                       <span class="week-race-day">{{ formatDate(race.date) }}</span>
                       @if (race.time) {
@@ -113,7 +131,9 @@
                         <span class="week-race-track">{{ race.track }}</span>
                       }
                       @if (race.communityName) {
-                        <span class="week-race-community" [style.color]="race.communityColor">{{ race.communityName }}</span>
+                        <span class="week-race-community" [style.color]="race.communityColor">{{
+                          race.communityName
+                        }}</span>
                       }
                     </div>
                   </a>
@@ -131,7 +151,9 @@
                         <span class="week-race-track">{{ race.track }}</span>
                       }
                       @if (race.communityName) {
-                        <span class="week-race-community" [style.color]="race.communityColor">{{ race.communityName }}</span>
+                        <span class="week-race-community" [style.color]="race.communityColor">{{
+                          race.communityName
+                        }}</span>
                       }
                     </div>
                   </div>
@@ -148,10 +170,7 @@
       @if (!hasWeekContent() && nextRace(); as next) {
         <div class="schedule-panel next-race-panel">
           <div class="panel-label">{{ 'calendar.upNext' | transloco }}</div>
-          <a
-            class="next-race-card"
-            routerLink="/calendar"
-          >
+          <a class="next-race-card" routerLink="/calendar">
             @if (next.image) {
               <img
                 class="next-race-image"
@@ -177,7 +196,6 @@
           </a>
         </div>
       }
-
     </div>
 
     <app-card class="calendar-promo">
@@ -186,13 +204,21 @@
         <p>{{ 'calendar.promo.desc' | transloco }}</p>
         @if (activeChampionshipCount() > 0 && communityCount() > 0) {
           <p class="calendar-promo-stats">
-            {{ 'calendar.promo.stats' | transloco: { championships: activeChampionshipCount(), communities: communityCount() } }}
+            {{
+              'calendar.promo.stats'
+                | transloco
+                  : { championships: activeChampionshipCount(), communities: communityCount() }
+            }}
           </p>
         }
       </div>
       <div class="calendar-promo-actions">
-        <app-btn variant="accent" routerLink="/calendar">{{ 'calendar.promo.open' | transloco }}</app-btn>
-        <button class="calendar-promo-add" type="button" (click)="requestCommunity()">{{ 'calendar.promo.addCommunity' | transloco }}</button>
+        <app-btn variant="accent" routerLink="/calendar">{{
+          'calendar.promo.open' | transloco
+        }}</app-btn>
+        <button class="calendar-promo-add" type="button" (click)="requestCommunity()">
+          {{ 'calendar.promo.addCommunity' | transloco }}
+        </button>
       </div>
     </app-card>
   }

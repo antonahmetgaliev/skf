@@ -2,10 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import {
-  CalendarApiService,
-  CalendarEvent,
-} from '../../services/calendar-api.service';
+import { CalendarApiService, CalendarEvent } from '../../services/calendar-api.service';
 import { AuthService } from '../../services/auth.service';
 import { LocaleService } from '../../services/locale.service';
 import { MediaApiService, YouTubeVideo } from '../../services/media-api.service';
@@ -59,20 +56,22 @@ export class WeekCalendarComponent {
   readonly activeChampionshipCount = signal(0);
   readonly communityCount = signal(0);
 
-  readonly hasTodayContent = computed(() =>
-    this.todayRaces().length > 0 || this.todayBroadcasts().length > 0,
+  readonly hasTodayContent = computed(
+    () => this.todayRaces().length > 0 || this.todayBroadcasts().length > 0,
   );
 
-  readonly hasWeekContent = computed(() =>
-    this.hasTodayContent() || this.weekRaces().length > 0,
-  );
+  readonly hasWeekContent = computed(() => this.hasTodayContent() || this.weekRaces().length > 0);
 
   constructor() {
     this.load();
   }
 
   formatDate(date: Date): string {
-    return date.toLocaleDateString(this.locale.locale, { weekday: 'short', day: 'numeric', month: 'short' });
+    return date.toLocaleDateString(this.locale.locale, {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    });
   }
 
   formatTime(date: Date): string {

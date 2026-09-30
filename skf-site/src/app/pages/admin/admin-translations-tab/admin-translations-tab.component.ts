@@ -22,7 +22,14 @@ interface TranslationRow {
 @Component({
   selector: 'app-admin-translations-tab',
   standalone: true,
-  imports: [FormsModule, BtnComponent, CardComponent, FormFieldComponent, SpinnerComponent, InputDirective],
+  imports: [
+    FormsModule,
+    BtnComponent,
+    CardComponent,
+    FormFieldComponent,
+    SpinnerComponent,
+    InputDirective,
+  ],
   templateUrl: './admin-translations-tab.component.html',
   styleUrl: './admin-translations-tab.component.scss',
 })
@@ -57,7 +64,7 @@ export class AdminTranslationsTabComponent implements OnInit {
     return this.rows().filter(
       (r) =>
         r.key.toLowerCase().includes(q) ||
-        Object.values(r.values).some((v) => v.toLowerCase().includes(q))
+        Object.values(r.values).some((v) => v.toLowerCase().includes(q)),
     );
   });
 
@@ -91,7 +98,7 @@ export class AdminTranslationsTabComponent implements OnInit {
         acc[lang.code] = this.api.getTranslations(lang.code);
         return acc;
       },
-      {} as Record<string, ReturnType<TranslationApiService['getTranslations']>>
+      {} as Record<string, ReturnType<TranslationApiService['getTranslations']>>,
     );
 
     forkJoin(requests).subscribe({
@@ -122,9 +129,7 @@ export class AdminTranslationsTabComponent implements OnInit {
 
   updateValue(key: string, lang: string, value: string): void {
     this.rows.update((list) =>
-      list.map((r) =>
-        r.key === key ? { ...r, values: { ...r.values, [lang]: value } } : r
-      )
+      list.map((r) => (r.key === key ? { ...r, values: { ...r.values, [lang]: value } } : r)),
     );
     this.modified.update((set) => new Set(set).add(`${lang}:${key}`));
   }
@@ -147,7 +152,7 @@ export class AdminTranslationsTabComponent implements OnInit {
     this.message.set('');
 
     const saves = Object.entries(byLang).map(([lang, items]) =>
-      this.api.saveTranslations(lang, items)
+      this.api.saveTranslations(lang, items),
     );
 
     forkJoin(saves).subscribe({
@@ -194,7 +199,7 @@ export class AdminTranslationsTabComponent implements OnInit {
     const vals = this.newValues();
     const langs = this.languages();
     const saves = langs.map((lang) =>
-      this.api.saveTranslations(lang.code, { [key]: vals[lang.code] ?? '' })
+      this.api.saveTranslations(lang.code, { [key]: vals[lang.code] ?? '' }),
     );
 
     forkJoin(saves).subscribe({
@@ -204,7 +209,7 @@ export class AdminTranslationsTabComponent implements OnInit {
           values[lang.code] = vals[lang.code] ?? '';
         }
         this.rows.update((list) =>
-          [...list, { key, values }].sort((a, b) => a.key.localeCompare(b.key))
+          [...list, { key, values }].sort((a, b) => a.key.localeCompare(b.key)),
         );
         this.newKey.set('');
         this.newValues.set({});
@@ -227,7 +232,7 @@ export class AdminTranslationsTabComponent implements OnInit {
         this.languages.update((list) => [...list, lang]);
         // Add empty column to all rows
         this.rows.update((list) =>
-          list.map((r) => ({ ...r, values: { ...r.values, [code]: '' } }))
+          list.map((r) => ({ ...r, values: { ...r.values, [code]: '' } })),
         );
         this.newLangCode.set('');
         this.newLangName.set('');
@@ -244,7 +249,7 @@ export class AdminTranslationsTabComponent implements OnInit {
           list.map((r) => {
             const { [code]: _, ...rest } = r.values;
             return { ...r, values: rest };
-          })
+          }),
         );
       },
     });

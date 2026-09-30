@@ -22,14 +22,22 @@ import {
   ChampionshipFormComponent,
   ChampionshipFormData,
 } from '../../../components/championship-form/championship-form.component';
-import {
-  ChampionshipListItem,
-  SimgridApiService,
-} from '../../../services/simgrid-api.service';
+import { ChampionshipListItem, SimgridApiService } from '../../../services/simgrid-api.service';
 
 @Component({
   selector: 'app-admin-calendar-tab',
-  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, BtnComponent, CardComponent, ChampionshipFormComponent, FormFieldComponent, ModalComponent, SpinnerComponent],
+  imports: [
+    FormsModule,
+    DatePipe,
+    TranslocoPipe,
+    InputDirective,
+    BtnComponent,
+    CardComponent,
+    ChampionshipFormComponent,
+    FormFieldComponent,
+    ModalComponent,
+    SpinnerComponent,
+  ],
   templateUrl: './admin-calendar-tab.component.html',
   styleUrl: './admin-calendar-tab.component.scss',
 })
@@ -51,7 +59,11 @@ export class AdminCalendarTabComponent implements OnInit {
   readonly activeChampionshipIds = signal<Set<number>>(new Set());
   readonly simgridLoading = signal(false);
 
-  readonly communityForm = signal<CommunityCreate>({ name: '', color: '#ffd600', discordUrl: null });
+  readonly communityForm = signal<CommunityCreate>({
+    name: '',
+    color: '#ffd600',
+    discordUrl: null,
+  });
   readonly editingCommunityId = signal<string | null>(null);
 
   readonly editingChampId = signal<string | null>(null);
@@ -110,29 +122,33 @@ export class AdminCalendarTabComponent implements OnInit {
 
     const editId = this.editingCommunityId();
     if (editId) {
-      this.calendarApi.updateCommunity(editId, {
-        name: form.name.trim(),
-        color: form.color,
-        discordUrl: form.discordUrl?.trim() || null,
-      }).subscribe({
-        next: (updated) => {
-          this.communities.update((list) => list.map((c) => c.id === updated.id ? updated : c));
-          this.resetCommunityForm();
-          this.communityModalOpen.set(false);
-        },
-      });
+      this.calendarApi
+        .updateCommunity(editId, {
+          name: form.name.trim(),
+          color: form.color,
+          discordUrl: form.discordUrl?.trim() || null,
+        })
+        .subscribe({
+          next: (updated) => {
+            this.communities.update((list) => list.map((c) => (c.id === updated.id ? updated : c)));
+            this.resetCommunityForm();
+            this.communityModalOpen.set(false);
+          },
+        });
     } else {
-      this.calendarApi.createCommunity({
-        name: form.name.trim(),
-        color: form.color,
-        discordUrl: form.discordUrl?.trim() || null,
-      }).subscribe({
-        next: (created) => {
-          this.communities.update((list) => [...list, created]);
-          this.resetCommunityForm();
-          this.communityModalOpen.set(false);
-        },
-      });
+      this.calendarApi
+        .createCommunity({
+          name: form.name.trim(),
+          color: form.color,
+          discordUrl: form.discordUrl?.trim() || null,
+        })
+        .subscribe({
+          next: (created) => {
+            this.communities.update((list) => [...list, created]);
+            this.resetCommunityForm();
+            this.communityModalOpen.set(false);
+          },
+        });
     }
   }
 
@@ -214,31 +230,44 @@ export class AdminCalendarTabComponent implements OnInit {
 
     const editId = this.editingChampId();
     if (editId) {
-      this.calendarApi.updateCustomChampionship(editId, {
-        name: form.name.trim(),
-        game: form.game.trim(),
-        carClass: form.carClass?.trim() || null,
-        description: form.description?.trim() || null,
-      }).subscribe({
-        next: () => {
-          const racesToSync = form.races
-            .filter((r) => r.id || r.track.trim() || r.date)
-            .map((r) => ({
-              id: r.id,
-              track: r.track.trim() || null,
-              date: withLocalTzOffset(r.date || null),
-              endDate: withLocalTzOffset(r.endDate || null),
-            }));
-          this.calendarApi.syncRaces(editId, racesToSync).subscribe({
-            next: (syncedRaces) => {
-              this.communityChampionships.update((list) => list.map((c) =>
-                c.id === editId ? { ...c, name: form.name.trim(), game: form.game.trim(), carClass: form.carClass?.trim() || null, description: form.description?.trim() || null, races: syncedRaces } : c,
-              ));
-              this.champModalOpen.set(false);
-            },
-          });
-        },
-      });
+      this.calendarApi
+        .updateCustomChampionship(editId, {
+          name: form.name.trim(),
+          game: form.game.trim(),
+          carClass: form.carClass?.trim() || null,
+          description: form.description?.trim() || null,
+        })
+        .subscribe({
+          next: () => {
+            const racesToSync = form.races
+              .filter((r) => r.id || r.track.trim() || r.date)
+              .map((r) => ({
+                id: r.id,
+                track: r.track.trim() || null,
+                date: withLocalTzOffset(r.date || null),
+                endDate: withLocalTzOffset(r.endDate || null),
+              }));
+            this.calendarApi.syncRaces(editId, racesToSync).subscribe({
+              next: (syncedRaces) => {
+                this.communityChampionships.update((list) =>
+                  list.map((c) =>
+                    c.id === editId
+                      ? {
+                          ...c,
+                          name: form.name.trim(),
+                          game: form.game.trim(),
+                          carClass: form.carClass?.trim() || null,
+                          description: form.description?.trim() || null,
+                          races: syncedRaces,
+                        }
+                      : c,
+                  ),
+                );
+                this.champModalOpen.set(false);
+              },
+            });
+          },
+        });
     } else {
       const payload: CustomChampionshipCreate = {
         name: form.name.trim(),
@@ -273,10 +302,10 @@ export class AdminCalendarTabComponent implements OnInit {
     });
     if (!ok) return;
     this.calendarApi.deleteCustomChampionship(champ.id).subscribe({
-      next: () => this.communityChampionships.update((list) => list.filter((c) => c.id !== champ.id)),
+      next: () =>
+        this.communityChampionships.update((list) => list.filter((c) => c.id !== champ.id)),
     });
   }
-
 
   // -- SimGrid championships (SKF community) --
 
@@ -320,5 +349,4 @@ export class AdminCalendarTabComponent implements OnInit {
       this.activeChampionshipIds.set(new Set([...ids, id]));
     }
   }
-
 }

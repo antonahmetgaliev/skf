@@ -5,30 +5,32 @@
     <div class="broadcast-grid">
       @for (stream of streams(); track stream.videoId) {
         <app-card class="broadcast-card">
-        <a
-          class="broadcast-link"
-          [href]="'https://www.youtube.com/watch?v=' + stream.videoId"
-          target="_blank"
-          rel="noopener"
-        >
-          @if (stream.thumbnailUrl) {
-            <img
-              class="broadcast-thumb"
-              [src]="stream.thumbnailUrl"
-              [alt]="stream.title"
-              loading="lazy"
-            />
-          }
-          <div class="broadcast-info">
-            <h3 class="broadcast-title">{{ stream.title }}</h3>
-            <span class="broadcast-date">{{ formatDate(stream.publishedAt) }}</span>
-          </div>
-        </a>
+          <a
+            class="broadcast-link"
+            [href]="'https://www.youtube.com/watch?v=' + stream.videoId"
+            target="_blank"
+            rel="noopener"
+          >
+            @if (stream.thumbnailUrl) {
+              <img
+                class="broadcast-thumb"
+                [src]="stream.thumbnailUrl"
+                [alt]="stream.title"
+                loading="lazy"
+              />
+            }
+            <div class="broadcast-info">
+              <h3 class="broadcast-title">{{ stream.title }}</h3>
+              <span class="broadcast-date">{{ formatDate(stream.publishedAt) }}</span>
+            </div>
+          </a>
         </app-card>
       }
     </div>
     <div class="view-all">
-      <app-btn variant="outline" routerLink="/media">{{ 'media.viewAllMedia' | transloco }}</app-btn>
+      <app-btn variant="outline" routerLink="/media">{{
+        'media.viewAllMedia' | transloco
+      }}</app-btn>
     </div>
   </div>
 }

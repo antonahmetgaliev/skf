@@ -26,7 +26,6 @@ function makeState(api: MockApi) {
   let driverError = '';
   const collapsedSet = new Set<string>();
 
-
   function addDriver() {
     const selection = newDriverSelection;
 
@@ -59,13 +58,27 @@ function makeState(api: MockApi) {
 
   return {
     addDriver,
-    get newDriverSelection() { return newDriverSelection; },
-    set newDriverSelection(v) { newDriverSelection = v; },
-    get newDriverNameOverride() { return newDriverNameOverride; },
-    set newDriverNameOverride(v) { newDriverNameOverride = v; },
-    get selectedDriverId() { return selectedDriverId; },
-    get driverError() { return driverError; },
-    get collapsedSet() { return collapsedSet; },
+    get newDriverSelection() {
+      return newDriverSelection;
+    },
+    set newDriverSelection(v) {
+      newDriverSelection = v;
+    },
+    get newDriverNameOverride() {
+      return newDriverNameOverride;
+    },
+    set newDriverNameOverride(v) {
+      newDriverNameOverride = v;
+    },
+    get selectedDriverId() {
+      return selectedDriverId;
+    },
+    get driverError() {
+      return driverError;
+    },
+    get collapsedSet() {
+      return collapsedSet;
+    },
   };
 }
 
@@ -102,7 +115,9 @@ describe('BwpLicenseComponent.addDriver — __new__ branch', () => {
   it('calls api.createDriver with the trimmed name', () => {
     const api = {
       createDriver: vi.fn().mockReturnValue({
-        subscribe: (_handlers: any) => { /* noop – test just checks that createDriver is called */ },
+        subscribe: (_handlers: any) => {
+          /* noop – test just checks that createDriver is called */
+        },
       }),
     };
     const state = makeState(api);

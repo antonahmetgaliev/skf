@@ -52,7 +52,26 @@ export interface PendingPenalty {
 
 @Component({
   selector: 'app-incidents',
-  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, TextareaDirective, BadgeComponent, CardComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, BtnComponent, ModalComponent, TabsComponent, IncidentCardComponent, IncidentWindowGroupsComponent],
+  imports: [
+    FormsModule,
+    DatePipe,
+    TranslocoPipe,
+    InputDirective,
+    SelectDirective,
+    TextareaDirective,
+    BadgeComponent,
+    CardComponent,
+    EmptyComponent,
+    FormFieldComponent,
+    PageIntroComponent,
+    PageLayoutComponent,
+    SpinnerComponent,
+    BtnComponent,
+    ModalComponent,
+    TabsComponent,
+    IncidentCardComponent,
+    IncidentWindowGroupsComponent,
+  ],
   templateUrl: './incidents.component.html',
   styleUrl: './incidents.component.scss',
 })
@@ -67,22 +86,20 @@ export class IncidentsComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly verdictRules = signal<VerdictRule[]>([]);
-  readonly verdictPresets = computed(() => this.verdictRules().map(r => r.verdict));
+  readonly verdictPresets = computed(() => this.verdictRules().map((r) => r.verdict));
 
   /** The verdict pre-selected for every unresolved driver. */
-  readonly defaultRule = computed(
-    () => this.verdictRules().find(r => r.isDefault) ?? null
-  );
+  readonly defaultRule = computed(() => this.verdictRules().find((r) => r.isDefault) ?? null);
 
   /** Verdict chips, default pinned first so muscle memory has a stable target. */
   readonly orderedRules = computed(() =>
     [...this.verdictRules()].sort(
-      (a, b) => Number(b.isDefault) - Number(a.isDefault) || a.sortOrder - b.sortOrder
-    )
+      (a, b) => Number(b.isDefault) - Number(a.isDefault) || a.sortOrder - b.sortOrder,
+    ),
   );
 
   readonly descriptionPresets = signal<DescriptionPreset[]>([]);
-  readonly descriptionPresetTexts = computed(() => this.descriptionPresets().map(p => p.text));
+  readonly descriptionPresetTexts = computed(() => this.descriptionPresets().map((p) => p.text));
 
   // ── Data ──────────────────────────────────────────────────────────
   readonly windows = signal<IncidentWindowListItem[]>([]);
@@ -99,7 +116,7 @@ export class IncidentsComponent implements OnInit {
   readonly backfillRunning = signal(false);
   readonly backfillResult = signal<BwpBackfillResult | null>(null);
   readonly hasMatchableAuditEntries = computed(() =>
-    (this.bwpAuditEntries() ?? []).some(e => e.matchedDriverId !== null)
+    (this.bwpAuditEntries() ?? []).some((e) => e.matchedDriverId !== null),
   );
 
   // ── Window groups (championship → rounds) ─────────────────────────
@@ -145,8 +162,8 @@ export class IncidentsComponent implements OnInit {
       .sort(([a], [b]) => sessionOrder(a) - sessionOrder(b))
       .map(([session, items]) => ({
         session,
-        autoItems: items.filter(i => i.source !== 'filed').sort(sortByTime),
-        filedItems: items.filter(i => i.source === 'filed').sort(sortByLapCorner),
+        autoItems: items.filter((i) => i.source !== 'filed').sort(sortByTime),
+        filedItems: items.filter((i) => i.source === 'filed').sort(sortByLapCorner),
       }));
   });
 
@@ -159,9 +176,7 @@ export class IncidentsComponent implements OnInit {
   readonly publishBwpTotal = signal(0);
   readonly publishVerdictCount = signal(0);
   readonly publishNoPenaltyCount = signal(0);
-  readonly hasUnlinkedPenalty = computed(() =>
-    this.publishPenalties().some(p => !p.linked)
-  );
+  readonly hasUnlinkedPenalty = computed(() => this.publishPenalties().some((p) => !p.linked));
 
   // ── Modal visibility ──────────────────────────────────────────────
   readonly showNewWindowModal = signal(false);
@@ -208,12 +223,8 @@ export class IncidentsComponent implements OnInit {
 
       if (canAdmin && !this.adminDataLoaded) {
         this.adminDataLoaded = true;
-        firstValueFrom(this.bwpApi.getDrivers()).then((ds) =>
-          this.bwpDrivers.set(ds)
-        );
-        firstValueFrom(this.simgridApi.getChampionships()).then((cs) =>
-          this.championships.set(cs)
-        );
+        firstValueFrom(this.bwpApi.getDrivers()).then((ds) => this.bwpDrivers.set(ds));
+        firstValueFrom(this.simgridApi.getChampionships()).then((cs) => this.championships.set(cs));
       }
     });
   }
@@ -229,7 +240,9 @@ export class IncidentsComponent implements OnInit {
       }
       if (!windowId && initial.size === 0) {
         // Nothing linked: show where protests can be filed right now.
-        this.windowGroups().filter(g => g.openCount > 0).forEach(g => initial.add(g.key));
+        this.windowGroups()
+          .filter((g) => g.openCount > 0)
+          .forEach((g) => initial.add(g.key));
       }
       this.expandedGroups.set(initial);
       if (windowId) void this.selectWindow(windowId);
@@ -275,7 +288,7 @@ export class IncidentsComponent implements OnInit {
   /** Expanding a championship puts it in the URL, so the view can be linked. */
   toggleGroup(key: string): void {
     const next = new Set(this.expandedGroups());
-    const group = this.windowGroups().find(g => g.key === key);
+    const group = this.windowGroups().find((g) => g.key === key);
     const opening = !next.has(key);
     if (opening) next.add(key);
     else next.delete(key);
@@ -325,9 +338,7 @@ export class IncidentsComponent implements OnInit {
     if (!champId) return;
     this.loadingRaces.set(true);
     try {
-      const data = await firstValueFrom(
-        this.simgridApi.getChampionshipStandings(champId)
-      );
+      const data = await firstValueFrom(this.simgridApi.getChampionshipStandings(champId));
       this.availableRaces.set(data.races);
     } finally {
       this.loadingRaces.set(false);
@@ -356,7 +367,7 @@ export class IncidentsComponent implements OnInit {
           raceId: this.nwRaceId,
           raceName: this.nwRaceName,
           intervalHours: this.nwIntervalHours,
-        })
+        }),
       );
       this.showNewWindowModal.set(false);
       await this.loadWindows();
@@ -368,9 +379,7 @@ export class IncidentsComponent implements OnInit {
   }
 
   async closeWindow(windowId: string): Promise<void> {
-    await firstValueFrom(
-      this.incidentsApi.updateWindow(windowId, { isManuallyClosed: true })
-    );
+    await firstValueFrom(this.incidentsApi.updateWindow(windowId, { isManuallyClosed: true }));
     await this.loadWindows();
     const detail = this.windowDetail();
     if (detail?.id === windowId) {
@@ -436,7 +445,7 @@ export class IncidentsComponent implements OnInit {
           corner: this.niCorner.trim() || undefined,
           description: this.niDescription.trim() || undefined,
           drivers,
-        })
+        }),
       );
       this.showNewIncidentModal.set(false);
       await this.selectWindow(windowId, true);
@@ -450,9 +459,7 @@ export class IncidentsComponent implements OnInit {
   // ── Expand / Collapse incidents ────────────────────────────────────
 
   toggleIncident(incidentId: string): void {
-    this.expandedIncidentId.set(
-      this.expandedIncidentId() === incidentId ? null : incidentId
-    );
+    this.expandedIncidentId.set(this.expandedIncidentId() === incidentId ? null : incidentId);
   }
 
   // ── Per-driver resolve ─────────────────────────────────────────────
@@ -471,15 +478,14 @@ export class IncidentsComponent implements OnInit {
     }
   }
 
-
   // ── Publish / Duplicate / Add-Remove Driver ────────────────────────
 
   hasUnpublished(w: IncidentWindowOut): boolean {
-    return w.incidents.some(inc => !inc.isPublished);
+    return w.incidents.some((inc) => !inc.isPublished);
   }
 
   unresolvedCount(w: IncidentWindowOut): number {
-    return w.incidents.filter(inc => inc.status !== 'resolved').length;
+    return w.incidents.filter((inc) => inc.status !== 'resolved').length;
   }
 
   resolvedCount(w: IncidentWindowOut): number {
@@ -520,7 +526,7 @@ export class IncidentsComponent implements OnInit {
 
   totalPendingBwp(w: IncidentWindowOut): number {
     return this.pendingPenalties(w)
-      .filter(p => p.linked)
+      .filter((p) => p.linked)
       .reduce((sum, p) => sum + p.bwpPoints, 0);
   }
 
@@ -528,7 +534,7 @@ export class IncidentsComponent implements OnInit {
     this.publishPenalties.set(this.pendingPenalties(w));
     this.publishBwpTotal.set(this.totalPendingBwp(w));
     this.publishVerdictCount.set(
-      w.incidents.reduce((n, i) => n + i.drivers.filter(d => d.resolution).length, 0)
+      w.incidents.reduce((n, i) => n + i.drivers.filter((d) => d.resolution).length, 0),
     );
     this.publishNoPenaltyCount.set(this.pendingWithoutPenalty(w));
     this.showPublishPreview.set(true);
@@ -549,11 +555,9 @@ export class IncidentsComponent implements OnInit {
 
   /** Attach an unmatched name to a real driver so the penalty can be issued. */
   async linkPenaltyDriver(row: PendingPenalty, driverName: string): Promise<void> {
-    const driver = this.bwpDrivers().find(d => d.name === driverName);
+    const driver = this.bwpDrivers().find((d) => d.name === driverName);
     if (!driver) return;
-    await firstValueFrom(
-      this.incidentsApi.linkIncidentDriver(row.incidentDriverId, driver.id)
-    );
+    await firstValueFrom(this.incidentsApi.linkIncidentDriver(row.incidentDriverId, driver.id));
     const windowId = this.windowDetail()?.id;
     if (windowId) {
       await this.selectWindow(windowId, true);
@@ -577,7 +581,6 @@ export class IncidentsComponent implements OnInit {
     }
   }
 
-
   async duplicateIncident(incidentId: string): Promise<void> {
     await firstValueFrom(this.incidentsApi.duplicateIncident(incidentId));
     const windowId = this.windowDetail()?.id;
@@ -586,20 +589,22 @@ export class IncidentsComponent implements OnInit {
 
   async addIncidentDriver(incidentId: string, name: string): Promise<void> {
     if (!name.trim()) return;
-    const driver = await firstValueFrom(this.incidentsApi.addDriverToIncident(incidentId, name.trim()));
+    const driver = await firstValueFrom(
+      this.incidentsApi.addDriverToIncident(incidentId, name.trim()),
+    );
     // Merge the new driver in place; it has no verdict yet, so the incident is open again.
-    this.windowDetail.update(w =>
-      w && {
-        ...w,
-        incidents: w.incidents.map(inc =>
-          inc.id === incidentId
-            ? { ...inc, status: 'open', drivers: [...inc.drivers, driver] }
-            : inc
-        ),
-      }
+    this.windowDetail.update(
+      (w) =>
+        w && {
+          ...w,
+          incidents: w.incidents.map((inc) =>
+            inc.id === incidentId
+              ? { ...inc, status: 'open', drivers: [...inc.drivers, driver] }
+              : inc,
+          ),
+        },
     );
   }
-
 
   async removeIncidentDriver(incidentDriverId: string): Promise<void> {
     const ok = await this.confirmSvc.confirm({
@@ -636,9 +641,7 @@ export class IncidentsComponent implements OnInit {
         const desc = drv.resolution.description ?? '';
         if (desc) parts.push(desc);
         parts.push(drv.resolution.verdict);
-        const bwp = drv.resolution.bwpPoints
-          ? `${drv.resolution.bwpPoints} BWP`
-          : '-';
+        const bwp = drv.resolution.bwpPoints ? `${drv.resolution.bwpPoints} BWP` : '-';
         parts.push(bwp);
         lines.push(parts.join(' | '));
       }
@@ -679,7 +682,9 @@ export class IncidentsComponent implements OnInit {
     try {
       const rules = await firstValueFrom(this.incidentsApi.getVerdictRules());
       this.verdictRules.set(rules);
-    } catch { /* silent — rules are optional for page load */ }
+    } catch {
+      /* silent — rules are optional for page load */
+    }
   }
 
   async addVerdictRule(): Promise<void> {
@@ -688,7 +693,7 @@ export class IncidentsComponent implements OnInit {
       this.incidentsApi.createVerdictRule({
         verdict: this.newRuleVerdict.trim(),
         defaultBwp: this.newRuleDefaultBwp,
-      })
+      }),
     );
     this.newRuleVerdict = '';
     this.newRuleDefaultBwp = 0;
@@ -717,7 +722,7 @@ export class IncidentsComponent implements OnInit {
 
   /** Move a rule one slot; sort_order has existed all along with no way to set it. */
   async moveRule(index: number, delta: number): Promise<void> {
-    const ids = this.verdictRules().map(r => r.id);
+    const ids = this.verdictRules().map((r) => r.id);
     const target = index + delta;
     if (target < 0 || target >= ids.length) return;
     [ids[index], ids[target]] = [ids[target], ids[index]];
@@ -752,13 +757,15 @@ export class IncidentsComponent implements OnInit {
     try {
       const presets = await firstValueFrom(this.incidentsApi.getDescriptionPresets());
       this.descriptionPresets.set(presets);
-    } catch { /* silent */ }
+    } catch {
+      /* silent */
+    }
   }
 
   async addDescriptionPreset(): Promise<void> {
     if (!this.newPresetText.trim()) return;
     await firstValueFrom(
-      this.incidentsApi.createDescriptionPreset({ text: this.newPresetText.trim() })
+      this.incidentsApi.createDescriptionPreset({ text: this.newPresetText.trim() }),
     );
     this.newPresetText = '';
     await this.loadDescriptionPresets();

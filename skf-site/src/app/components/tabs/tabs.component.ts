@@ -13,7 +13,9 @@ import { TranslocoPipe } from '@jsverse/transloco';
           type="button"
           [class.active]="activeTab() === tab.key"
           (click)="tabChange.emit(tab.key)"
-        >{{ tab.label | transloco }}</button>
+        >
+          {{ tab.label | transloco }}
+        </button>
       }
     </div>
   `,

@@ -11,7 +11,9 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   background: rgba(30, 30, 36, 0.92);
-  transition: opacity 0.15s ease, border-color 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .user-item--blocked {
@@ -107,8 +109,12 @@
   align-items: flex-end;
   gap: 0.75rem;
 
-  app-form-field { margin-bottom: 0; }
-  select { text-transform: capitalize; }
+  app-form-field {
+    margin-bottom: 0;
+  }
+  select {
+    text-transform: capitalize;
+  }
 }
 
 .user-item__actions {
@@ -133,7 +139,10 @@
   background: transparent;
   color: var(--muted);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 
   &:hover,
   &:focus-visible,

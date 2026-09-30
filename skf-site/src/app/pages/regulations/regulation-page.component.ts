@@ -12,7 +12,14 @@ import { RegulationApiService, RegulationContentOut } from '../../services/regul
 
 @Component({
   selector: 'app-regulation-page',
-  imports: [CardComponent, EmptyComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, MarkdownPipe],
+  imports: [
+    CardComponent,
+    EmptyComponent,
+    PageIntroComponent,
+    PageLayoutComponent,
+    SpinnerComponent,
+    MarkdownPipe,
+  ],
   template: `
     <app-page>
       @if (loading()) {
@@ -28,7 +35,9 @@ import { RegulationApiService, RegulationContentOut } from '../../services/regul
     </app-page>
   `,
   styles: `
-    :host { display: block; }
+    :host {
+      display: block;
+    }
   `,
 })
 export class RegulationPageComponent implements OnInit, OnDestroy {
@@ -42,10 +51,12 @@ export class RegulationPageComponent implements OnInit, OnDestroy {
   private sub?: Subscription;
 
   ngOnInit(): void {
-    this.sub = combineLatest([this.route.paramMap, this.transloco.langChanges$]).subscribe(([params, lang]) => {
-      const slug = params.get('slug') ?? this.route.snapshot.data['slug'] ?? 'general';
-      this.loadContent(slug, lang);
-    });
+    this.sub = combineLatest([this.route.paramMap, this.transloco.langChanges$]).subscribe(
+      ([params, lang]) => {
+        const slug = params.get('slug') ?? this.route.snapshot.data['slug'] ?? 'general';
+        this.loadContent(slug, lang);
+      },
+    );
   }
 
   ngOnDestroy(): void {

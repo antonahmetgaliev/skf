@@ -16,10 +16,7 @@ import {
   UnmatchedName,
 } from '../../../services/giveaway-api.service';
 import { RaceResultsApiService, RaceRound } from '../../../services/race-results-api.service';
-import {
-  ChampionshipListItem,
-  SimgridApiService,
-} from '../../../services/simgrid-api.service';
+import { ChampionshipListItem, SimgridApiService } from '../../../services/simgrid-api.service';
 import { classesOf, driversInClass, hasEnoughRounds, pickWinner } from './giveaway-eligibility';
 
 /**
@@ -32,7 +29,18 @@ import { classesOf, driversInClass, hasEnoughRounds, pickWinner } from './giveaw
  */
 @Component({
   selector: 'app-admin-giveaway-tab',
-  imports: [FormsModule, DatePipe, TranslocoPipe, InputDirective, SelectDirective, BtnComponent, CardComponent, EmptyComponent, FormFieldComponent, SpinnerComponent],
+  imports: [
+    FormsModule,
+    DatePipe,
+    TranslocoPipe,
+    InputDirective,
+    SelectDirective,
+    BtnComponent,
+    CardComponent,
+    EmptyComponent,
+    FormFieldComponent,
+    SpinnerComponent,
+  ],
   templateUrl: './admin-giveaway-tab.component.html',
   styleUrl: './admin-giveaway-tab.component.scss',
 })
@@ -118,19 +126,17 @@ export class AdminGiveawayTabComponent implements OnInit {
     const championshipId = this.selectedChampionshipId();
     if (championshipId === null) return;
     this.eligibilityLoading.set(true);
-    this.api
-      .getEligibility(championshipId, this.minDistancePct(), this.minRounds())
-      .subscribe({
-        next: (data) => {
-          this.eligibility.set(data);
-          this.eligibilityLoading.set(false);
-          const classes = this.carClasses();
-          if (this.selectedClass() === null || !classes.includes(this.selectedClass()!)) {
-            this.selectedClass.set(classes[0] ?? null);
-          }
-        },
-        error: () => this.eligibilityLoading.set(false),
-      });
+    this.api.getEligibility(championshipId, this.minDistancePct(), this.minRounds()).subscribe({
+      next: (data) => {
+        this.eligibility.set(data);
+        this.eligibilityLoading.set(false);
+        const classes = this.carClasses();
+        if (this.selectedClass() === null || !classes.includes(this.selectedClass()!)) {
+          this.selectedClass.set(classes[0] ?? null);
+        }
+      },
+      error: () => this.eligibilityLoading.set(false),
+    });
   }
 
   /** Changing the rules invalidates the winner they produced. */

@@ -2,7 +2,8 @@
   <app-page-intro [title]="'media.title' | transloco" [subtitle]="'media.subtitle' | transloco" />
 
   <div class="search-bar">
-    <input appInput
+    <input
+      appInput
       type="text"
       [placeholder]="'media.filterPlaceholder' | transloco"
       [value]="searchQuery()"
@@ -49,7 +50,9 @@
         </div>
         @if (hasMoreUpcoming()) {
           <div class="show-more">
-            <app-btn variant="outline" size="sm" (click)="showMoreUpcoming()">{{ 'media.showMore' | transloco }}</app-btn>
+            <app-btn variant="outline" size="sm" (click)="showMoreUpcoming()">{{
+              'media.showMore' | transloco
+            }}</app-btn>
           </div>
         }
       </section>
@@ -85,7 +88,9 @@
         </div>
         @if (hasMorePast()) {
           <div class="show-more">
-            <app-btn variant="outline" size="sm" (click)="showMorePast()">{{ 'media.showMore' | transloco }}</app-btn>
+            <app-btn variant="outline" size="sm" (click)="showMorePast()">{{
+              'media.showMore' | transloco
+            }}</app-btn>
           </div>
         }
       </section>

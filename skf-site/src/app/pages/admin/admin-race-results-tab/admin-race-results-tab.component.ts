@@ -20,10 +20,7 @@ import {
   SIM_FILE_ACCEPT,
   SIM_LABELS,
 } from '../../../services/race-results-api.service';
-import {
-  ChampionshipListItem,
-  SimgridApiService,
-} from '../../../services/simgrid-api.service';
+import { ChampionshipListItem, SimgridApiService } from '../../../services/simgrid-api.service';
 
 /**
  * Admin tab for each round's game-server result file.
@@ -34,7 +31,19 @@ import {
  */
 @Component({
   selector: 'app-admin-race-results-tab',
-  imports: [FormsModule, DatePipe, RouterLink, TranslocoPipe, SelectDirective, BadgeComponent, BtnComponent, CardComponent, EmptyComponent, FormFieldComponent, SpinnerComponent],
+  imports: [
+    FormsModule,
+    DatePipe,
+    RouterLink,
+    TranslocoPipe,
+    SelectDirective,
+    BadgeComponent,
+    BtnComponent,
+    CardComponent,
+    EmptyComponent,
+    FormFieldComponent,
+    SpinnerComponent,
+  ],
   templateUrl: './admin-race-results-tab.component.html',
   styleUrl: './admin-race-results-tab.component.scss',
 })

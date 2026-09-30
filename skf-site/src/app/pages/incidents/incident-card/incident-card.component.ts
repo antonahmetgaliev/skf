@@ -147,7 +147,9 @@ export class IncidentCardComponent {
   // ── Display helpers ───────────────────────────────────────────────
 
   readonly driverNames = computed(() =>
-    this.incident().drivers.map((d) => d.driverName).join(', '),
+    this.incident()
+      .drivers.map((d) => d.driverName)
+      .join(', '),
   );
 
   /** Penalties only, and nothing at all while the round is withheld. */
@@ -171,9 +173,7 @@ export class IncidentCardComponent {
    *  instead, and an unjudged incident has nothing to head. */
   readonly decisionSectionShown = computed(
     () =>
-      !this.canJudge() &&
-      this.showsVerdicts() &&
-      this.incident().drivers.some((d) => d.resolution),
+      !this.canJudge() && this.showsVerdicts() && this.incident().drivers.some((d) => d.resolution),
   );
 
   /** Null when a badge would only repeat the chip row or the card header. */

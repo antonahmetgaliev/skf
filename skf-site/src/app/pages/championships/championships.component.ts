@@ -13,7 +13,10 @@ import {
   StandingRace,
 } from '../../services/simgrid-api.service';
 import { API } from '../../api';
-import { ChampionshipIncidentWindow, IncidentsApiService } from '../../services/incidents-api.service';
+import {
+  ChampionshipIncidentWindow,
+  IncidentsApiService,
+} from '../../services/incidents-api.service';
 import { ChampionshipEntry, ChampionshipService } from '../../services/championship.service';
 import { DataFreshnessService } from '../../services/data-freshness.service';
 import { formatDate, formatGap, formatLapTime, formatNumber } from '../../utils/format';
@@ -72,7 +75,6 @@ export class ChampionshipsComponent {
   /** The selected championship's incident windows by SimGrid race id. */
   readonly incidentWindows = signal<Map<number, ChampionshipIncidentWindow>>(new Map());
 
-
   readonly isStaleData = computed(() => {
     const key = this.selectedChampionshipKey();
     if (!key) return false;
@@ -97,7 +99,13 @@ export class ChampionshipsComponent {
   });
 
   readonly carClasses = computed(() => {
-    const classes = [...new Set(this.standings().map((e) => e.carClass).filter((c) => c.length > 0))];
+    const classes = [
+      ...new Set(
+        this.standings()
+          .map((e) => e.carClass)
+          .filter((c) => c.length > 0),
+      ),
+    ];
     return classes.sort();
   });
   readonly isMulticlass = computed(() => this.carClasses().length > 1);
@@ -111,7 +119,9 @@ export class ChampionshipsComponent {
     if (cls === null) return this.standings();
     return this.standings().filter((e) => e.carClass === cls);
   });
-  readonly hasRaceBreakdown = computed(() => this.standings().some((e) => e.raceResults.length > 0));
+  readonly hasRaceBreakdown = computed(() =>
+    this.standings().some((e) => e.raceResults.length > 0),
+  );
 
   // Races tab: one expanded race at a time, results cached per race and session.
   readonly expandedRaceId = signal<number | null>(null);
@@ -123,9 +133,13 @@ export class ChampionshipsComponent {
 
   readonly expandedResults = computed(() => {
     const raceId = this.expandedRaceId();
-    return raceId === null ? null : (this.raceResults().get(`${raceId}:${this.raceSession()}`) ?? null);
+    return raceId === null
+      ? null
+      : (this.raceResults().get(`${raceId}:${this.raceSession()}`) ?? null);
   });
-  readonly raceClasses = computed(() => [...new Set((this.expandedResults() ?? []).map((e) => e.carClass))].sort());
+  readonly raceClasses = computed(() =>
+    [...new Set((this.expandedResults() ?? []).map((e) => e.carClass))].sort(),
+  );
   readonly activeRaceClass = computed(() => {
     const classes = this.raceClasses();
     if (classes.length < 2) return null;
@@ -293,7 +307,8 @@ export class ChampionshipsComponent {
       }));
 
       const sorted = entries.sort(
-        (a, b) => this.cs.getStatusOrder(a) - this.cs.getStatusOrder(b) || a.name.localeCompare(b.name),
+        (a, b) =>
+          this.cs.getStatusOrder(a) - this.cs.getStatusOrder(b) || a.name.localeCompare(b.name),
       );
       this.championships.set(sorted);
 
@@ -307,7 +322,9 @@ export class ChampionshipsComponent {
 
       const currentKey = this.selectedChampionshipKey();
       const selectedKey =
-        currentKey !== null && sorted.some((e) => e.key === currentKey) ? currentKey : sorted[0].key;
+        currentKey !== null && sorted.some((e) => e.key === currentKey)
+          ? currentKey
+          : sorted[0].key;
 
       await this.selectAndLoad(selectedKey, true);
     } catch (error) {
@@ -426,7 +443,9 @@ export class ChampionshipsComponent {
   private async loadIncidentWindows(championshipId: number): Promise<void> {
     this.incidentWindows.set(new Map());
     try {
-      const windows = await firstValueFrom(this.incidentsApi.getChampionshipWindows(championshipId));
+      const windows = await firstValueFrom(
+        this.incidentsApi.getChampionshipWindows(championshipId),
+      );
       if (this.getSelectedSimgridId() === championshipId) {
         this.incidentWindows.set(new Map(windows.map((w) => [w.raceId, w])));
       }
@@ -457,7 +476,9 @@ export class ChampionshipsComponent {
     this.pendingRaceId = null;
     if (!race || !this.canExpandRace(race)) return;
     this.toggleRace(race);
-    setTimeout(() => document.getElementById(`race-${race.id}`)?.scrollIntoView({ block: 'start' }));
+    setTimeout(() =>
+      document.getElementById(`race-${race.id}`)?.scrollIntoView({ block: 'start' }),
+    );
   }
 
   private async loadRaceResults(): Promise<void> {

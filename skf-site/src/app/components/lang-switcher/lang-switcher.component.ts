@@ -14,29 +14,34 @@ import { TranslocoService } from '@jsverse/transloco';
       {{ activeLang().toUpperCase() }}
     </button>
   `,
-  styles: [`
-    .lang-switcher-btn {
-      background: var(--gold);
-      border: 1px solid var(--gold);
-      color: var(--text-on-gold);
-      padding: 4px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      transition: background 0.2s, border-color 0.2s, transform 0.1s;
+  styles: [
+    `
+      .lang-switcher-btn {
+        background: var(--gold);
+        border: 1px solid var(--gold);
+        color: var(--text-on-gold);
+        padding: 4px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        transition:
+          background 0.2s,
+          border-color 0.2s,
+          transform 0.1s;
 
-      &:hover {
-        background: var(--gold-deep);
-        border-color: var(--gold-deep);
-      }
+        &:hover {
+          background: var(--gold-deep);
+          border-color: var(--gold-deep);
+        }
 
-      &:active {
-        transform: translateY(1px);
+        &:active {
+          transform: translateY(1px);
+        }
       }
-    }
-  `],
+    `,
+  ],
 })
 export class LangSwitcherComponent implements OnInit {
   private readonly transloco = inject(TranslocoService);

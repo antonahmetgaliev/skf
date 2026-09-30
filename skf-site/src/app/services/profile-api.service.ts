@@ -67,7 +67,7 @@ export class ProfileApiService {
           if (d.simgridDriverId) bySimgridId.set(d.simgridDriverId, d.id);
         }
         return bySimgridId;
-      })
+      }),
     );
   }
 
@@ -83,7 +83,7 @@ export class ProfileApiService {
           map((drivers) => {
             if (!drivers.length) throw new Error('Driver not found.');
             return drivers[0];
-          })
+          }),
         );
     }
     return this.http.get<DriverPublic>(`${API}/drivers/${driverId}`);

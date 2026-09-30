@@ -28,7 +28,9 @@
   border-radius: var(--radius-card-sm);
   padding: 0;
   overflow: hidden;
-  transition: transform 0.2s, border-color 0.2s;
+  transition:
+    transform 0.2s,
+    border-color 0.2s;
 
   &:hover {
     transform: translateY(-3px);

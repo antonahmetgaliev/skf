@@ -1,16 +1,24 @@
-<div class="incident-card"
+<div
+  class="incident-card"
   [class.incident-card--resolved]="incident().status === 'resolved'"
-  [class.incident-card--filed]="incident().source === 'filed'">
-
-  <button class="incident-card-header" type="button"
-    [attr.aria-expanded]="expanded()" (click)="toggled.emit()">
-
+  [class.incident-card--filed]="incident().source === 'filed'"
+>
+  <button
+    class="incident-card-header"
+    type="button"
+    [attr.aria-expanded]="expanded()"
+    (click)="toggled.emit()"
+  >
     <span class="incident-meta">
       <span class="incident-num">#{{ index() }}</span>
       @if (incident().source === 'filed') {
-        <span class="incident-source incident-source--filed">{{ 'incidents.report' | transloco }}</span>
+        <span class="incident-source incident-source--filed">{{
+          'incidents.report' | transloco
+        }}</span>
       } @else {
-        <span class="incident-source incident-source--ingested">{{ 'incidents.auto' | transloco }}</span>
+        <span class="incident-source incident-source--ingested">{{
+          'incidents.auto' | transloco
+        }}</span>
       }
 
       @if (incident().sessionName) {
@@ -79,7 +87,9 @@
               <span class="driver-name">{{ drv.driverName }}</span>
               @if (showsStewardDetail()) {
                 @if (!drv.driverId) {
-                  <app-badge variant="bwp-pending">{{ 'incidents.notLinked' | transloco }}</app-badge>
+                  <app-badge variant="bwp-pending">{{
+                    'incidents.notLinked' | transloco
+                  }}</app-badge>
                 }
                 @if (statusBadge(drv); as badge) {
                   <app-badge [variant]="badge.variant">{{ badge.label | transloco }}</app-badge>
@@ -87,10 +97,15 @@
               }
               <span class="driver-row-spacer"></span>
               @if (canJudge() && incident().drivers.length > 1) {
-                <button class="row-remove" type="button"
+                <button
+                  class="row-remove"
+                  type="button"
                   [attr.aria-label]="'incidents.removeFromIncident' | transloco"
                   [title]="'incidents.removeFromIncident' | transloco"
-                  (click)="removeDriver.emit(drv.id)">&times;</button>
+                  (click)="removeDriver.emit(drv.id)"
+                >
+                  &times;
+                </button>
               }
               @if (!canJudge() && showsVerdicts() && drv.resolution) {
                 <span class="driver-resolution">
@@ -108,14 +123,25 @@
 
             @if (canJudge()) {
               <div class="verdict-row">
-                <div class="chips" role="radiogroup" [attr.aria-label]="'incidents.verdict' | transloco">
+                <div
+                  class="chips"
+                  role="radiogroup"
+                  [attr.aria-label]="'incidents.verdict' | transloco"
+                >
                   @for (rule of orderedRules(); track rule.id) {
-                    <button class="chip" type="button" role="radio"
+                    <button
+                      class="chip"
+                      type="button"
+                      role="radio"
                       [class.chip--selected]="isSelected(drv.id, rule)"
                       [attr.aria-checked]="isSelected(drv.id, rule)"
                       [attr.tabindex]="isSelected(drv.id, rule) ? 0 : -1"
-                      (click)="selectVerdict(drv.id, rule)">
-                      {{ rule.verdict }}@if (rule.defaultBwp) {<sup>{{ rule.defaultBwp }}</sup>}
+                      (click)="selectVerdict(drv.id, rule)"
+                    >
+                      {{ rule.verdict }}
+                      @if (rule.defaultBwp) {
+                        <sup>{{ rule.defaultBwp }}</sup>
+                      }
                     </button>
                   }
                 </div>
@@ -123,19 +149,29 @@
                 @if (showsBwp(drv.id)) {
                   <div class="bwp-field">
                     <label class="label-eyebrow" [for]="'rv-bwp-' + drv.id">BWP</label>
-                    <input appInput size="sm" type="number" min="0"
+                    <input
+                      appInput
+                      size="sm"
+                      type="number"
+                      min="0"
                       [id]="'rv-bwp-' + drv.id"
                       [ngModel]="draftFor(drv.id).bwpPoints"
-                      (ngModelChange)="setBwp(drv.id, $event)" />
+                      (ngModelChange)="setBwp(drv.id, $event)"
+                    />
                   </div>
                 }
               </div>
 
               @if (isCustom(drv.id)) {
-                <input appInput size="sm" type="text" class="custom-verdict"
+                <input
+                  appInput
+                  size="sm"
+                  type="text"
+                  class="custom-verdict"
                   [ngModel]="draftFor(drv.id).verdict"
                   (ngModelChange)="setCustomVerdict(drv.id, $event)"
-                  [placeholder]="'incidents.customVerdict' | transloco" />
+                  [placeholder]="'incidents.customVerdict' | transloco"
+                />
               }
             }
           </div>
@@ -145,34 +181,54 @@
       @if (canJudge()) {
         @if (addDriverShown()) {
           <div class="add-driver-row">
-            <input type="text" appInput size="sm"
+            <input
+              type="text"
+              appInput
+              size="sm"
               [attr.list]="'add-drv-list-' + incident().id"
               [ngModel]="addDriverName()"
               (ngModelChange)="addDriverName.set($event)"
               [placeholder]="'incidents.driverNamePlaceholder' | transloco"
-              autocomplete="off" />
+              autocomplete="off"
+            />
             <datalist [id]="'add-drv-list-' + incident().id">
               @for (d of knownDrivers(); track d.id) {
                 <option [value]="d.name"></option>
               }
             </datalist>
-            <app-btn variant="accent" size="sm" (click)="confirmAddDriver()"
-              [disabled]="!addDriverName().trim()">{{ 'incidents.add' | transloco }}</app-btn>
-            <button class="btn-link btn-link--muted" type="button"
-              (click)="addDriverShown.set(false)">{{ 'incidents.cancel' | transloco }}</button>
+            <app-btn
+              variant="accent"
+              size="sm"
+              (click)="confirmAddDriver()"
+              [disabled]="!addDriverName().trim()"
+              >{{ 'incidents.add' | transloco }}</app-btn
+            >
+            <button
+              class="btn-link btn-link--muted"
+              type="button"
+              (click)="addDriverShown.set(false)"
+            >
+              {{ 'incidents.cancel' | transloco }}
+            </button>
           </div>
         }
 
         <div class="incident-resolve-footer">
           <div class="resolve-field resolve-field--description">
-            <label class="label-eyebrow" [for]="'rv-desc-' + incident().id">{{ 'incidents.decisionDescription' | transloco }}</label>
-            <input appInput size="sm" type="text"
+            <label class="label-eyebrow" [for]="'rv-desc-' + incident().id">{{
+              'incidents.decisionDescription' | transloco
+            }}</label>
+            <input
+              appInput
+              size="sm"
+              type="text"
               [id]="'rv-desc-' + incident().id"
               [attr.list]="'desc-options-' + incident().id"
               [ngModel]="description()"
               (ngModelChange)="description.set($event)"
               [placeholder]="'incidents.chooseOrTypeDescription' | transloco"
-              autocomplete="off" />
+              autocomplete="off"
+            />
             <datalist [id]="'desc-options-' + incident().id">
               @for (opt of descriptionPresets(); track opt) {
                 <option [value]="opt"></option>
@@ -189,12 +245,18 @@
       }
 
       <div class="incident-card-footer">
-        <span class="incident-filed">{{ 'incidents.filed' | transloco }} {{ incident().createdAt | date:'dd MMM yyyy HH:mm' }}</span>
+        <span class="incident-filed"
+          >{{ 'incidents.filed' | transloco }}
+          {{ incident().createdAt | date: 'dd MMM yyyy HH:mm' }}</span
+        >
         @if (canJudge()) {
           <div class="footer-actions">
-            <button class="btn-link" type="button"
-              (click)="addDriverShown.set(!addDriverShown())">{{ 'incidents.addDriver' | transloco }}</button>
-            <button class="btn-link" type="button" (click)="duplicate.emit()">{{ 'incidents.duplicate' | transloco }}</button>
+            <button class="btn-link" type="button" (click)="addDriverShown.set(!addDriverShown())">
+              {{ 'incidents.addDriver' | transloco }}
+            </button>
+            <button class="btn-link" type="button" (click)="duplicate.emit()">
+              {{ 'incidents.duplicate' | transloco }}
+            </button>
           </div>
         }
       </div>

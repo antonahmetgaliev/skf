@@ -128,18 +128,18 @@ export class SimgridApiService {
   }
 
   getChampionshipStandings(championshipId: number): Observable<ChampionshipStandingsData> {
-    return this.http.get<ChampionshipStandingsData>(
-      `${this.base}/${championshipId}/standings`
-    );
+    return this.http.get<ChampionshipStandingsData>(`${this.base}/${championshipId}/standings`);
   }
 
   getChampionshipRaces(championshipId: number): Observable<ChampionshipRace[]> {
-    return this.http.get<ChampionshipRace[]>(
-      `${this.base}/${championshipId}/races`
-    );
+    return this.http.get<ChampionshipRace[]>(`${this.base}/${championshipId}/races`);
   }
 
-  getRaceResults(championshipId: number, raceId: number, session: RaceSessionKind): Observable<RaceSession> {
+  getRaceResults(
+    championshipId: number,
+    raceId: number,
+    session: RaceSessionKind,
+  ): Observable<RaceSession> {
     return this.http.get<RaceSession>(`${this.base}/${championshipId}/races/${raceId}/results`, {
       params: { session },
     });

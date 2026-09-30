@@ -7,6 +7,6 @@ import { PageLayoutComponent } from '../../components/page-layout/page-layout.co
   selector: 'app-skf-history',
   imports: [TranslocoPipe, PageIntroComponent, PageLayoutComponent],
   templateUrl: './skf-history.component.html',
-  styleUrl: './skf-history.component.scss'
+  styleUrl: './skf-history.component.scss',
 })
 export class SkfHistoryComponent {}

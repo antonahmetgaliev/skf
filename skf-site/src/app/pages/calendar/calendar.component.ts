@@ -74,7 +74,25 @@ const VIEW_TABS: { key: string; label: string }[] = [
 
 @Component({
   selector: 'app-calendar',
-  imports: [NgTemplateOutlet, FormsModule, RouterLink, TranslocoPipe, InputDirective, TextareaDirective, TooltipDirective, AlertComponent, BtnComponent, CalendarSidebarComponent, CardComponent, ChampionshipFormComponent, FormFieldComponent, ModalComponent, PageLayoutComponent, SpinnerComponent, ToggleComponent],
+  imports: [
+    NgTemplateOutlet,
+    FormsModule,
+    RouterLink,
+    TranslocoPipe,
+    InputDirective,
+    TextareaDirective,
+    TooltipDirective,
+    AlertComponent,
+    BtnComponent,
+    CalendarSidebarComponent,
+    CardComponent,
+    ChampionshipFormComponent,
+    FormFieldComponent,
+    ModalComponent,
+    PageLayoutComponent,
+    SpinnerComponent,
+    ToggleComponent,
+  ],
 
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
@@ -132,9 +150,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   });
 
-  readonly canNavigateBack = computed(() =>
-    this.viewMode() === 'year' ? true : this.canGoBack(),
-  );
+  readonly canNavigateBack = computed(() => (this.viewMode() === 'year' ? true : this.canGoBack()));
 
   // Filtered events for month view
   readonly filteredEvents = computed(() => this.applyFilters(this.events()));
@@ -237,12 +253,14 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     return columns;
   });
 
-
   readonly availableSimulators = computed(() => {
-    const sims = new Set(this.yearEvents().map((e) => e.game).filter(Boolean));
+    const sims = new Set(
+      this.yearEvents()
+        .map((e) => e.game)
+        .filter(Boolean),
+    );
     return [...sims].sort();
   });
-
 
   private managedCommunitiesLoaded = false;
 
@@ -288,7 +306,9 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     for (let el = grid.parentElement; el && el !== document.body; el = el.parentElement) {
       const cs = getComputedStyle(el);
       below +=
-        parseFloat(cs.paddingBottom) + parseFloat(cs.borderBottomWidth) + parseFloat(cs.marginBottom);
+        parseFloat(cs.paddingBottom) +
+        parseFloat(cs.borderBottomWidth) +
+        parseFloat(cs.marginBottom);
     }
 
     // Round up: a sub-pixel shortfall is enough to bring the scrollbar back.
@@ -363,7 +383,11 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
   formatRaceDate(isoDate: string, isoEndDate?: string | null): string {
     const d = new Date(isoDate);
     if (isNaN(d.getTime())) return isoDate.slice(0, 10);
-    const date = d.toLocaleDateString(this.locale.locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const date = d.toLocaleDateString(this.locale.locale, {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
     const hasTime = /T\d{2}:\d{2}/.test(isoDate) && !isoDate.includes('T00:00:00');
     const startStr = hasTime
       ? `${date} ${d.toLocaleTimeString(this.locale.locale, { hour: '2-digit', minute: '2-digit' })}`
@@ -372,7 +396,11 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     if (isoEndDate) {
       const ed = new Date(isoEndDate);
       if (!isNaN(ed.getTime())) {
-        const endDate = ed.toLocaleDateString(this.locale.locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const endDate = ed.toLocaleDateString(this.locale.locale, {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        });
         const endHasTime = /T\d{2}:\d{2}/.test(isoEndDate) && !isoEndDate.includes('T00:00:00');
         const endStr = endHasTime
           ? `${endDate} ${ed.toLocaleTimeString(this.locale.locale, { hour: '2-digit', minute: '2-digit' })}`
@@ -426,7 +454,6 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedSimulator.set(null);
     this.selectedCommunityIds.set(new Set());
   }
-
 
   getCommunityColor(event: CalendarEvent): string {
     return event.communityColor ?? DEFAULT_COLOR;
@@ -527,9 +554,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     } catch (err: unknown) {
       const status = (err as { status?: number })?.status;
       const key =
-        status === 429
-          ? 'calendar.requestCommunityTooSoon'
-          : 'calendar.requestCommunityError';
+        status === 429 ? 'calendar.requestCommunityTooSoon' : 'calendar.requestCommunityError';
       this.reqError.set(this.transloco.translate(key));
     } finally {
       this.reqSubmitting.set(false);
@@ -576,7 +601,10 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     if (this.auth.isAdmin()) return true;
     if (!communityId) return false;
-    return user.role === 'community_manager' && (user.managedCommunityIds?.includes(communityId) ?? false);
+    return (
+      user.role === 'community_manager' &&
+      (user.managedCommunityIds?.includes(communityId) ?? false)
+    );
   }
 
   openAddChampionship(communityId: string): void {
@@ -625,29 +653,31 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
   saveChampionship(form: ChampionshipFormData): void {
     const editId = this.editingChampId();
     if (editId) {
-      this.calendarApi.updateCustomChampionship(editId, {
-        name: form.name.trim(),
-        game: form.game.trim(),
-        carClass: form.carClass?.trim() || null,
-        description: form.description?.trim() || null,
-      }).subscribe({
-        next: () => {
-          const racesToSync = form.races
-            .filter((r) => r.id || r.track.trim() || r.date)
-            .map((r) => ({
-              id: r.id,
-              track: r.track.trim() || null,
-              date: withLocalTzOffset(r.date || null),
-              endDate: withLocalTzOffset(r.endDate || null),
-            }));
-          this.calendarApi.syncRaces(editId, racesToSync).subscribe({
-            next: () => {
-              this.champModalOpen.set(false);
-              this.reloadCalendar();
-            },
-          });
-        },
-      });
+      this.calendarApi
+        .updateCustomChampionship(editId, {
+          name: form.name.trim(),
+          game: form.game.trim(),
+          carClass: form.carClass?.trim() || null,
+          description: form.description?.trim() || null,
+        })
+        .subscribe({
+          next: () => {
+            const racesToSync = form.races
+              .filter((r) => r.id || r.track.trim() || r.date)
+              .map((r) => ({
+                id: r.id,
+                track: r.track.trim() || null,
+                date: withLocalTzOffset(r.date || null),
+                endDate: withLocalTzOffset(r.endDate || null),
+              }));
+            this.calendarApi.syncRaces(editId, racesToSync).subscribe({
+              next: () => {
+                this.champModalOpen.set(false);
+                this.reloadCalendar();
+              },
+            });
+          },
+        });
     } else {
       const communityId = this.champCommunityId();
       if (!communityId) return;
@@ -693,7 +723,6 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loadYearEvents();
   }
 
-
   private getEarliestDate(event: CalendarEvent): Date | null {
     const dates: Date[] = [];
     for (const race of event.races) {
@@ -728,9 +757,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loading.set(true);
     this.errorMessage.set('');
     try {
-      const data = await firstValueFrom(
-        this.calendarApi.getYearEvents(this.currentYear()),
-      );
+      const data = await firstValueFrom(this.calendarApi.getYearEvents(this.currentYear()));
       this.yearEvents.set(data);
     } catch {
       this.errorMessage.set('Failed to load calendar events.');
@@ -739,15 +766,14 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-
   private static readonly SIM_COLORS: Record<string, string> = {
-    'iracing': '#0153db',
+    iracing: '#0153db',
     'assetto corsa competizione': '#d4132a',
     'assetto corsa': '#d4132a',
     'le mans ultimate': '#004d99',
     'rfactor 2': '#e87722',
     'automobilista 2': '#2dbe60',
-    'rennsport': '#8b5cf6',
+    rennsport: '#8b5cf6',
     'forza motorsport': '#107c10',
     'gran turismo': '#003791',
     'ea sports wrc': '#00a2e8',
@@ -784,8 +810,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     const prevMonthDays = new Date(year, month - 1, 0).getDate();
 
     const today = new Date();
-    const isCurrentMonthToday =
-      today.getFullYear() === year && today.getMonth() + 1 === month;
+    const isCurrentMonthToday = today.getFullYear() === year && today.getMonth() + 1 === month;
 
     const cells: CalendarDay[] = [];
 
@@ -805,8 +830,10 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     // Current month days
     for (let d = 1; d <= daysInMonth; d++) {
       const dayEvents = events.filter((e) => this.eventFallsOnDay(e, year, month, d));
-      const isPast = isCurrentMonthToday ? d < todayDate
-        : year < today.getFullYear() || (year === today.getFullYear() && month < today.getMonth() + 1);
+      const isPast = isCurrentMonthToday
+        ? d < todayDate
+        : year < today.getFullYear() ||
+          (year === today.getFullYear() && month < today.getMonth() + 1);
       cells.push({
         dayNumber: d,
         isCurrentMonth: true,
@@ -873,12 +900,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     return false;
   }
 
-  private eventFallsOnDay(
-    event: CalendarEvent,
-    year: number,
-    month: number,
-    day: number,
-  ): boolean {
+  private eventFallsOnDay(event: CalendarEvent, year: number, month: number, day: number): boolean {
     const dayStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
     // Check individual races (including multi-day ranges)
@@ -901,5 +923,4 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 
     return false;
   }
-
 }

@@ -35,10 +35,7 @@ describe('incidentStatusChip', () => {
     it('reads "under review" while unpublished, even once judged', () => {
       // The regression this exists to prevent: the card claimed Resolved while
       // every driver row claimed Open, and no verdict was anywhere to be seen.
-      const chip = incidentStatusChip(
-        incident({ status: 'resolved', isPublished: false }),
-        DRIVER,
-      );
+      const chip = incidentStatusChip(incident({ status: 'resolved', isPublished: false }), DRIVER);
       expect(chip.label).toBe('incidents.underReview');
       expect(chip.variant).toBe('pending');
     });
@@ -53,10 +50,7 @@ describe('incidentStatusChip', () => {
     });
 
     it('becomes resolved once the round is published', () => {
-      const chip = incidentStatusChip(
-        incident({ status: 'resolved', isPublished: true }),
-        DRIVER,
-      );
+      const chip = incidentStatusChip(incident({ status: 'resolved', isPublished: true }), DRIVER);
       expect(chip.label).toBe('incidents.resolved');
       expect(chip.variant).toBe('resolved');
     });
@@ -141,8 +135,9 @@ describe('incidentPenalties', () => {
       ...penalised,
       resolution: { ...penalised.resolution, verdict: 'NFA', bwpPoints: null },
     };
-    expect(incidentPenalties(incident({ isPublished: true, drivers: [nfa] }), 'NFA', DRIVER))
-      .toEqual([]);
+    expect(
+      incidentPenalties(incident({ isPublished: true, drivers: [nfa] }), 'NFA', DRIVER),
+    ).toEqual([]);
   });
 
   it('names only the driver who was penalised, not the rest of the incident', () => {
@@ -153,14 +148,19 @@ describe('incidentPenalties', () => {
       penalised,
       withVerdict('drv-3', 'Andrii Mochulskyi', 'NFA'),
     ];
-    expect(incidentPenalties(incident({ isPublished: true, drivers }), 'NFA', DRIVER))
-      .toEqual([{ driverName: 'Oleksandr Dovmat', verdict: 'TP +15s' }]);
+    expect(incidentPenalties(incident({ isPublished: true, drivers }), 'NFA', DRIVER)).toEqual([
+      { driverName: 'Oleksandr Dovmat', verdict: 'TP +15s' },
+    ]);
   });
 
   it('skips drivers nobody has judged', () => {
     const unjudged = { ...penalised, id: 'drv-9', driverName: 'Arsen Budzyk', resolution: null };
     expect(
-      incidentPenalties(incident({ isPublished: true, drivers: [penalised, unjudged] }), 'NFA', DRIVER),
+      incidentPenalties(
+        incident({ isPublished: true, drivers: [penalised, unjudged] }),
+        'NFA',
+        DRIVER,
+      ),
     ).toEqual([{ driverName: 'Oleksandr Dovmat', verdict: 'TP +15s' }]);
   });
 
@@ -187,19 +187,21 @@ describe('incidentPenalties', () => {
         withVerdict('drv-1', 'Kostiantyn Kryvenko', 'NFA'),
         withVerdict('drv-2', 'Bohdan Hulobov', 'NFA'),
       ];
-      expect(incidentPenalties(incident({ isPublished: true, drivers }), undefined, DRIVER))
-        .toEqual([]);
+      expect(
+        incidentPenalties(incident({ isPublished: true, drivers }), undefined, DRIVER),
+      ).toEqual([]);
     });
 
     it('names everyone when the decision was split', () => {
       // Without a baseline there is no telling which half is the penalty, and
       // hiding a real one is the worse failure.
       const drivers = [withVerdict('drv-1', 'Bohdan Tseliuk', 'NFA'), penalised];
-      expect(incidentPenalties(incident({ isPublished: true, drivers }), undefined, DRIVER))
-        .toEqual([
-          { driverName: 'Bohdan Tseliuk', verdict: 'NFA' },
-          { driverName: 'Oleksandr Dovmat', verdict: 'TP +15s' },
-        ]);
+      expect(
+        incidentPenalties(incident({ isPublished: true, drivers }), undefined, DRIVER),
+      ).toEqual([
+        { driverName: 'Bohdan Tseliuk', verdict: 'NFA' },
+        { driverName: 'Oleksandr Dovmat', verdict: 'TP +15s' },
+      ]);
     });
   });
 });

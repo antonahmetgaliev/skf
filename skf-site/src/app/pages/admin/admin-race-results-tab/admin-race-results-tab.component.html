@@ -6,9 +6,12 @@
     @if (championshipsLoading()) {
       <app-spinner />
     } @else {
-      <select appSelect id="raceResultsChampionship"
+      <select
+        appSelect
+        id="raceResultsChampionship"
         [ngModel]="selectedChampionshipId()"
-        (ngModelChange)="selectChampionship($event)">
+        (ngModelChange)="selectChampionship($event)"
+      >
         <option [ngValue]="null">{{ 'giveaway.choosePlaceholder' | transloco }}</option>
         @for (champ of championships(); track champ.id) {
           <option [ngValue]="champ.id">{{ champ.name }}</option>
@@ -30,17 +33,27 @@
             {{ 'raceImports.expects' | transloco }} <code>{{ fileExtension() }}</code>
           </span>
           <label class="rr-check">
-            <input type="checkbox" [ngModel]="createIncidents()" (ngModelChange)="createIncidents.set($event)" />
+            <input
+              type="checkbox"
+              [ngModel]="createIncidents()"
+              (ngModelChange)="createIncidents.set($event)"
+            />
             {{ 'raceImports.createIncidents' | transloco }}
           </label>
         }
-        <a class="rr-link" routerLink="/incidents" [queryParams]="{ championship: d.championshipId }">
+        <a
+          class="rr-link"
+          routerLink="/incidents"
+          [queryParams]="{ championship: d.championshipId }"
+        >
           {{ 'raceImports.championshipIncidents' | transloco }} &rarr;
         </a>
       </div>
 
       @if (!d.sim) {
-        <p class="rr-warning">{{ 'raceImports.unsupportedGame' | transloco: { game: d.gameName } }}</p>
+        <p class="rr-warning">
+          {{ 'raceImports.unsupportedGame' | transloco: { game: d.gameName } }}
+        </p>
       }
       @if (!d.storageEnabled) {
         <p class="rr-warning">{{ 'raceImports.storageDisabled' | transloco }}</p>
@@ -60,7 +73,9 @@
                   <span class="sim-chip sim-chip--sm">{{ simLabels[record.sim] }}</span>
                   {{ record.entryCount }} {{ 'giveaway.driversImported' | transloco }}
                   @if (record.unmatchedCount > 0) {
-                    <span class="round-warn">· {{ record.unmatchedCount }} {{ 'giveaway.unlinked' | transloco }}</span>
+                    <span class="round-warn"
+                      >· {{ record.unmatchedCount }} {{ 'giveaway.unlinked' | transloco }}</span
+                    >
                   }
                   · {{ record.contactsCount }} {{ 'raceImports.contacts' | transloco }}
                   @if (record.autoGrouped) {
@@ -69,11 +84,15 @@
                 </span>
                 <span class="round-meta round-file">
                   {{ record.sourceFilename }}
-                  @if (record.fileSize) { · {{ formatSize(record.fileSize) }} }
+                  @if (record.fileSize) {
+                    · {{ formatSize(record.fileSize) }}
+                  }
                   · {{ record.createdAt | date: 'dd.MM.yyyy HH:mm' }}
                 </span>
               } @else {
-                <span class="round-meta round-meta--missing">{{ 'giveaway.noResults' | transloco }}</span>
+                <span class="round-meta round-meta--missing">{{
+                  'giveaway.noResults' | transloco
+                }}</span>
               }
             </div>
 
@@ -94,22 +113,37 @@
               } @else {
                 @if (d.sim) {
                   <label class="upload-btn">
-                    <input type="file" [accept]="accept()"
+                    <input
+                      type="file"
+                      [accept]="accept()"
                       [disabled]="busyRoundId() !== null"
-                      (change)="onFileSelected(round, $event)" />
-                    <span>{{ (record ? 'raceImports.replace' : 'raceImports.upload') | transloco }}</span>
+                      (change)="onFileSelected(round, $event)"
+                    />
+                    <span>{{
+                      (record ? 'raceImports.replace' : 'raceImports.upload') | transloco
+                    }}</span>
                   </label>
                 }
                 @if (record?.hasFile) {
                   <app-btn variant="ghost" size="xs" (click)="download(record!)">
                     {{ 'raceImports.download' | transloco }}
                   </app-btn>
-                  <app-btn variant="ghost" size="xs" [disabled]="busyRoundId() !== null" (click)="reparse(round, record!)">
+                  <app-btn
+                    variant="ghost"
+                    size="xs"
+                    [disabled]="busyRoundId() !== null"
+                    (click)="reparse(round, record!)"
+                  >
                     {{ 'raceImports.reparse' | transloco }}
                   </app-btn>
                 }
                 @if (record) {
-                  <app-btn variant="danger" size="xs" [disabled]="busyRoundId() !== null" (click)="deleteImport(round, record)">
+                  <app-btn
+                    variant="danger"
+                    size="xs"
+                    [disabled]="busyRoundId() !== null"
+                    (click)="deleteImport(round, record)"
+                  >
                     {{ 'common.confirm.delete' | transloco }}
                   </app-btn>
                 }
@@ -123,11 +157,15 @@
 
       @if (lastResult(); as r) {
         <p class="rr-success">
-          {{ 'raceImports.imported' | transloco: {
-            drivers: r.raceImport.entryCount,
-            created: r.incidentsCreated,
-            kept: r.incidentsKept
-          } }}
+          {{
+            'raceImports.imported'
+              | transloco
+                : {
+                    drivers: r.raceImport.entryCount,
+                    created: r.incidentsCreated,
+                    kept: r.incidentsKept,
+                  }
+          }}
         </p>
       }
       @if (error()) {

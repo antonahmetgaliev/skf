@@ -80,7 +80,9 @@
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.03);
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 
   &:hover {
     border-color: rgba(255, 214, 0, 0.4);

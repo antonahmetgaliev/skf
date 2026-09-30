@@ -1,6 +1,7 @@
 <div class="modal-form">
   <app-form-field label="Name" fieldId="champFormName">
-    <input appInput
+    <input
+      appInput
       id="champFormName"
       type="text"
       placeholder="Championship name"
@@ -10,7 +11,8 @@
     />
   </app-form-field>
   <app-form-field label="Simulator" fieldId="champFormSim">
-    <select appSelect
+    <select
+      appSelect
       id="champFormSim"
       [ngModel]="form().game"
       (ngModelChange)="updateField('game', $event)"
@@ -22,7 +24,8 @@
     </select>
   </app-form-field>
   <app-form-field label="Car Class" fieldId="champFormClass">
-    <input appInput
+    <input
+      appInput
       id="champFormClass"
       type="text"
       placeholder="e.g. GT3, LMP2"
@@ -32,7 +35,8 @@
     />
   </app-form-field>
   <app-form-field label="Description" fieldId="champFormDesc">
-    <input appInput
+    <input
+      appInput
       id="champFormDesc"
       type="text"
       placeholder="Optional description"
@@ -53,7 +57,9 @@
     </div>
     @for (race of form().races; track $index) {
       <div class="race-row-form">
-        <input appInput size="sm"
+        <input
+          appInput
+          size="sm"
           type="text"
           placeholder="Track name"
           [ngModel]="race.track"
@@ -61,21 +67,27 @@
           autocomplete="off"
         />
         <div class="race-dates">
-          <input appInput size="sm"
+          <input
+            appInput
+            size="sm"
             type="datetime-local"
             [ngModel]="race.date"
             (ngModelChange)="updateRaceRow($index, 'date', $event)"
             [title]="multiDay() ? 'Start date' : 'Date'"
           />
           @if (multiDay()) {
-            <input appInput size="sm"
+            <input
+              appInput
+              size="sm"
               type="datetime-local"
               [ngModel]="race.endDate"
               (ngModelChange)="updateRaceRow($index, 'endDate', $event)"
               title="End date"
             />
           }
-          <app-btn class="race-remove" variant="danger" size="sm" (click)="removeRaceRow($index)">x</app-btn>
+          <app-btn class="race-remove" variant="danger" size="sm" (click)="removeRaceRow($index)"
+            >x</app-btn
+          >
         </div>
       </div>
     }

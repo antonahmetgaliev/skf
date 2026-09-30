@@ -59,7 +59,10 @@ export class BwpApiService {
     return this.http.post<Driver>(`${API}/drivers`, { name });
   }
 
-  updateDriver(driverId: string, patch: { name: string; simgridDriverId?: number | null }): Observable<Driver> {
+  updateDriver(
+    driverId: string,
+    patch: { name: string; simgridDriverId?: number | null },
+  ): Observable<Driver> {
     return this.http.patch<Driver>(`${API}/drivers/${driverId}`, patch);
   }
 
@@ -71,12 +74,9 @@ export class BwpApiService {
 
   addPoint(
     driverId: string,
-    payload: { points: number; issuedOn: string; expiresOn: string }
+    payload: { points: number; issuedOn: string; expiresOn: string },
   ): Observable<BwpPoint> {
-    return this.http.post<BwpPoint>(
-      `${API}/drivers/${driverId}/bwp-points`,
-      payload
-    );
+    return this.http.post<BwpPoint>(`${API}/drivers/${driverId}/bwp-points`, payload);
   }
 
   deletePoint(pointId: string): Observable<void> {
@@ -93,21 +93,15 @@ export class BwpApiService {
     return this.http.get<PenaltyRule[]>(`${API}/penalty-rules`);
   }
 
-  createPenaltyRule(payload: {
-    threshold: number;
-    label: string;
-  }): Observable<PenaltyRule> {
+  createPenaltyRule(payload: { threshold: number; label: string }): Observable<PenaltyRule> {
     return this.http.post<PenaltyRule>(`${API}/penalty-rules`, payload);
   }
 
   updatePenaltyRule(
     ruleId: string,
-    patch: { threshold?: number; label?: string }
+    patch: { threshold?: number; label?: string },
   ): Observable<PenaltyRule> {
-    return this.http.patch<PenaltyRule>(
-      `${API}/penalty-rules/${ruleId}`,
-      patch
-    );
+    return this.http.patch<PenaltyRule>(`${API}/penalty-rules/${ruleId}`, patch);
   }
 
   deletePenaltyRule(ruleId: string): Observable<void> {
@@ -116,20 +110,12 @@ export class BwpApiService {
 
   // ── Penalty Clearances ───────────────────────────────────────────
 
-  setClearance(
-    driverId: string,
-    ruleId: string
-  ): Observable<PenaltyClearance> {
-    return this.http.put<PenaltyClearance>(
-      `${API}/drivers/${driverId}/clearances/${ruleId}`,
-      null
-    );
+  setClearance(driverId: string, ruleId: string): Observable<PenaltyClearance> {
+    return this.http.put<PenaltyClearance>(`${API}/drivers/${driverId}/clearances/${ruleId}`, null);
   }
 
   removeClearance(driverId: string, ruleId: string): Observable<void> {
-    return this.http.delete<void>(
-      `${API}/drivers/${driverId}/clearances/${ruleId}`
-    );
+    return this.http.delete<void>(`${API}/drivers/${driverId}/clearances/${ruleId}`);
   }
 
   expireAllPoints(driverId: string, note: string): Observable<Driver> {

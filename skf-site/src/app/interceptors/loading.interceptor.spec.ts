@@ -10,9 +10,7 @@ function run(url: string, handler: () => any, loading: LoadingService, method = 
   });
   const req =
     method === 'GET' ? new HttpRequest('GET', url) : new HttpRequest(method as 'PATCH', url, {});
-  return runInInjectionContext(injector, () =>
-    loadingInterceptor(req, handler as any),
-  );
+  return runInInjectionContext(injector, () => loadingInterceptor(req, handler as any));
 }
 
 describe('loadingInterceptor', () => {
@@ -24,10 +22,14 @@ describe('loadingInterceptor', () => {
 
   it('is loading while the request is in flight', () => {
     let wasLoading = false;
-    const result = run('/api/v1/incident-windows', () => {
-      wasLoading = loading.loading();
-      return of({} as any);
-    }, loading);
+    const result = run(
+      '/api/v1/incident-windows',
+      () => {
+        wasLoading = loading.loading();
+        return of({} as any);
+      },
+      loading,
+    );
 
     result.subscribe();
     expect(wasLoading).toBe(true);
@@ -39,8 +41,9 @@ describe('loadingInterceptor', () => {
   });
 
   it('clears loading when the request errors', () => {
-    run('/api/v1/incident-windows', () => throwError(() => new Error('boom')), loading)
-      .subscribe({ error: () => {} });
+    run('/api/v1/incident-windows', () => throwError(() => new Error('boom')), loading).subscribe({
+      error: () => {},
+    });
     expect(loading.loading()).toBe(false);
   });
 
@@ -52,19 +55,28 @@ describe('loadingInterceptor', () => {
 
   it('ignores translation bundle loads', () => {
     let wasLoading = true;
-    run('/api/v1/languages/ua/translations', () => {
-      wasLoading = loading.loading();
-      return of({} as any);
-    }, loading).subscribe();
+    run(
+      '/api/v1/languages/ua/translations',
+      () => {
+        wasLoading = loading.loading();
+        return of({} as any);
+      },
+      loading,
+    ).subscribe();
     expect(wasLoading).toBe(false);
   });
 
   it('still tracks admin translation edits', () => {
     let wasLoading = false;
-    run('/api/v1/languages/ua/translations', () => {
-      wasLoading = loading.loading();
-      return of({} as any);
-    }, loading, 'PATCH').subscribe();
+    run(
+      '/api/v1/languages/ua/translations',
+      () => {
+        wasLoading = loading.loading();
+        return of({} as any);
+      },
+      loading,
+      'PATCH',
+    ).subscribe();
     expect(wasLoading).toBe(true);
   });
 });

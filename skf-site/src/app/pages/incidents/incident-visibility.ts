@@ -98,9 +98,7 @@ export function incidentPenalties(
  */
 export function sharedDecisionDescription(incident: Incident): string | null {
   const descriptions = new Set(
-    incident.drivers
-      .map((d) => d.resolution?.description)
-      .filter((text): text is string => !!text),
+    incident.drivers.map((d) => d.resolution?.description).filter((text): text is string => !!text),
   );
   return descriptions.size === 1 ? [...descriptions][0] : null;
 }
@@ -115,10 +113,7 @@ export function sharedDecisionDescription(incident: Incident): string | null {
  * otherwise show is where the penalty *went*: decided but not yet on the
  * licence, or issued. Those get a badge; the rest do not.
  */
-export function driverStatusBadge(
-  driver: IncidentDriver,
-  incident: Incident,
-): StatusChip | null {
+export function driverStatusBadge(driver: IncidentDriver, incident: Incident): StatusChip | null {
   // Deliberately blind to the verdict text: a league may rename or delete any
   // rule, so behaviour keys off BWP, which is what actually has consequences.
   if (!driver.resolution) {

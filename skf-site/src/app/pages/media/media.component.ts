@@ -13,7 +13,14 @@ const PAGE_SIZE = 12;
 
 @Component({
   selector: 'app-media',
-  imports: [TranslocoPipe, InputDirective, PageIntroComponent, PageLayoutComponent, CardComponent, BtnComponent],
+  imports: [
+    TranslocoPipe,
+    InputDirective,
+    PageIntroComponent,
+    PageLayoutComponent,
+    CardComponent,
+    BtnComponent,
+  ],
   templateUrl: './media.component.html',
   styleUrl: './media.component.scss',
 })
@@ -34,9 +41,13 @@ export class MediaComponent {
   private readonly filteredUpcoming = computed(() => this.filterByName(this.allUpcomingVideos()));
 
   readonly pastVideos = computed(() => this.filteredPast().slice(0, this.pastVisible()));
-  readonly upcomingVideos = computed(() => this.filteredUpcoming().slice(0, this.upcomingVisible()));
+  readonly upcomingVideos = computed(() =>
+    this.filteredUpcoming().slice(0, this.upcomingVisible()),
+  );
   readonly hasMorePast = computed(() => this.pastVisible() < this.filteredPast().length);
-  readonly hasMoreUpcoming = computed(() => this.upcomingVisible() < this.filteredUpcoming().length);
+  readonly hasMoreUpcoming = computed(
+    () => this.upcomingVisible() < this.filteredUpcoming().length,
+  );
 
   constructor() {
     this.loadVideos();
@@ -59,17 +70,17 @@ export class MediaComponent {
   }
 
   showMorePast(): void {
-    this.pastVisible.update(v => v + PAGE_SIZE);
+    this.pastVisible.update((v) => v + PAGE_SIZE);
   }
 
   showMoreUpcoming(): void {
-    this.upcomingVisible.update(v => v + PAGE_SIZE);
+    this.upcomingVisible.update((v) => v + PAGE_SIZE);
   }
 
   private filterByName(videos: YouTubeVideo[]): YouTubeVideo[] {
     const q = this.searchQuery().trim().toLowerCase();
     if (!q) return videos;
-    return videos.filter(v => v.title.toLowerCase().includes(q));
+    return videos.filter((v) => v.title.toLowerCase().includes(q));
   }
 
   private async loadVideos(): Promise<void> {

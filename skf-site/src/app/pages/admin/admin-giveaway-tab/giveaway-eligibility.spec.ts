@@ -3,10 +3,20 @@ import { EligibleDriver } from '../../../services/giveaway-api.service';
 import { classesOf, driversInClass, hasEnoughRounds, pickWinner } from './giveaway-eligibility';
 
 function driver(displayName: string, carClass: string, qualifyingRounds = 3): EligibleDriver {
-  return { identity: displayName.toLowerCase(), displayName, carClass, qualifyingRounds, rounds: [] };
+  return {
+    identity: displayName.toLowerCase(),
+    displayName,
+    carClass,
+    qualifyingRounds,
+    rounds: [],
+  };
 }
 
-const POOL = [driver('Max Tarasenko', 'Hyper'), driver('Bohdan Tseliuk', 'GT3'), driver('Roma Fedin', 'GT3')];
+const POOL = [
+  driver('Max Tarasenko', 'Hyper'),
+  driver('Bohdan Tseliuk', 'GT3'),
+  driver('Roma Fedin', 'GT3'),
+];
 
 describe('classesOf', () => {
   it('lists each class once, alphabetically', () => {

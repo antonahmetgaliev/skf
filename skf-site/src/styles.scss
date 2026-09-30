@@ -99,8 +99,12 @@ body {
 }
 
 @keyframes bg-grid-drift {
-  0%   { transform: translateY(0); }
-  100% { transform: translateY(80px); }
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(80px);
+  }
 }
 
 // Geometric speed lines
@@ -119,19 +123,44 @@ body {
   animation: speed-line-move 4s ease-in-out infinite;
   opacity: 0.12;
 
-  &:nth-child(1) { top: 15%; width: 400px; animation-delay: 0s; }
-  &:nth-child(2) { top: 35%; width: 500px; animation-delay: 1s; }
-  &:nth-child(3) { top: 65%; width: 450px; animation-delay: 2s; }
-  &:nth-child(4) { top: 85%; width: 350px; animation-delay: 3s; }
+  &:nth-child(1) {
+    top: 15%;
+    width: 400px;
+    animation-delay: 0s;
+  }
+  &:nth-child(2) {
+    top: 35%;
+    width: 500px;
+    animation-delay: 1s;
+  }
+  &:nth-child(3) {
+    top: 65%;
+    width: 450px;
+    animation-delay: 2s;
+  }
+  &:nth-child(4) {
+    top: 85%;
+    width: 350px;
+    animation-delay: 3s;
+  }
 }
 
 @keyframes speed-line-move {
-  0%   { transform: translateX(-100%); opacity: 0; }
-  20%  { opacity: 0.12; }
-  50%  { opacity: 0.18; }
-  100% { transform: translateX(100vw); opacity: 0; }
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.18;
+  }
+  100% {
+    transform: translateX(100vw);
+    opacity: 0;
+  }
 }
-
 
 img {
   display: block;
@@ -164,7 +193,9 @@ pre {
   font-size: var(--text-md);
   font-family: inherit;
   box-sizing: border-box;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:focus {
     outline: none;
@@ -238,7 +269,9 @@ pre {
     font-size: var(--heading-lg);
     color: var(--ink);
 
-    &:first-child { margin-top: 0; }
+    &:first-child {
+      margin-top: 0;
+    }
   }
 
   h3 {
@@ -337,7 +370,8 @@ pre {
     border-radius: var(--radius-md);
     overflow: hidden;
 
-    th, td {
+    th,
+    td {
       padding: 0.55rem 0.75rem;
       text-align: left;
       border-bottom: 1px solid rgba(255, 214, 0, 0.15);
@@ -360,7 +394,8 @@ pre {
 
 @media (max-width: 600px) {
   .regulation-content {
-    ol, ul {
+    ol,
+    ul {
       padding-left: 1.2rem;
     }
   }
@@ -374,7 +409,9 @@ pre {
   font-weight: 700;
   color: var(--gold-deep);
 
-  &.center { text-align: center; }
+  &.center {
+    text-align: center;
+  }
 }
 
 // ── Tooltip ─────────────────────────────────────────────────────────────────

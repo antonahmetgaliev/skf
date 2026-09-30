@@ -164,7 +164,7 @@ export class IncidentsApiService {
   /** A championship's windows, one per round, keyed by SimGrid race id. */
   getChampionshipWindows(championshipId: number): Observable<ChampionshipIncidentWindow[]> {
     return this.http.get<ChampionshipIncidentWindow[]>(
-      `${API}/championships/${championshipId}/incident-windows`
+      `${API}/championships/${championshipId}/incident-windows`,
     );
   }
 
@@ -182,7 +182,7 @@ export class IncidentsApiService {
 
   updateWindow(
     windowId: string,
-    payload: Partial<{ isManuallyClosed: boolean; intervalHours: number }>
+    payload: Partial<{ isManuallyClosed: boolean; intervalHours: number }>,
   ): Observable<IncidentWindowOut> {
     return this.http.patch<IncidentWindowOut>(`${this.windows}/${windowId}`, payload);
   }
@@ -199,7 +199,7 @@ export class IncidentsApiService {
   resolveRemaining(windowId: string): Observable<ResolveRemainingResult> {
     return this.http.post<ResolveRemainingResult>(
       `${this.windows}/${windowId}/default-resolutions`,
-      {}
+      {},
     );
   }
 
@@ -224,10 +224,13 @@ export class IncidentsApiService {
     return this.http.delete<void>(`${API}/incident-drivers/${incidentDriverId}`);
   }
 
-  resolveDriver(incidentDriverId: string, payload: ResolveDriverIncident): Observable<IncidentDriver> {
+  resolveDriver(
+    incidentDriverId: string,
+    payload: ResolveDriverIncident,
+  ): Observable<IncidentDriver> {
     return this.http.put<IncidentDriver>(
       `${API}/incident-drivers/${incidentDriverId}/resolution`,
-      payload
+      payload,
     );
   }
 
@@ -275,7 +278,10 @@ export class IncidentsApiService {
     return this.http.post<DescriptionPreset>(`${API}/description-presets`, payload);
   }
 
-  updateDescriptionPreset(id: string, payload: Partial<DescriptionPresetCreate>): Observable<DescriptionPreset> {
+  updateDescriptionPreset(
+    id: string,
+    payload: Partial<DescriptionPresetCreate>,
+  ): Observable<DescriptionPreset> {
     return this.http.patch<DescriptionPreset>(`${API}/description-presets/${id}`, payload);
   }
 

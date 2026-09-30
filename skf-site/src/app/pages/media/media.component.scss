@@ -52,7 +52,9 @@ app-card.video-card {
   flex-direction: column;
   overflow: hidden;
   padding: 0;
-  transition: transform 0.2s, border-color 0.2s;
+  transition:
+    transform 0.2s,
+    border-color 0.2s;
 
   &:hover {
     transform: translateY(-3px);

@@ -9,29 +9,44 @@
     <app-spinner />
   } @else {
     <div class="section-toolbar">
-      <app-btn variant="primary" size="sm" (click)="openCommunityModal()">{{ 'admin.addCommunity' | transloco }}</app-btn>
+      <app-btn variant="primary" size="sm" (click)="openCommunityModal()">{{
+        'admin.addCommunity' | transloco
+      }}</app-btn>
     </div>
 
     <!-- Community list -->
     <div class="community-list">
       @for (c of communities(); track c.id) {
-        <article
-          class="community-row"
-          [class.selected]="selectedCommunity()?.id === c.id"
-        >
-          <div class="community-identity" role="button" tabindex="0" (click)="selectCommunity(c)" (keydown.enter)="selectCommunity(c)">
+        <article class="community-row" [class.selected]="selectedCommunity()?.id === c.id">
+          <div
+            class="community-identity"
+            role="button"
+            tabindex="0"
+            (click)="selectCommunity(c)"
+            (keydown.enter)="selectCommunity(c)"
+          >
             <span class="community-color-swatch" [style.background]="c.color"></span>
             <div>
               <h4 class="community-name">{{ c.name }}</h4>
               @if (c.discordUrl) {
-                <a class="community-discord" [href]="c.discordUrl" target="_blank" (click)="$event.stopPropagation()">{{ 'admin.discord' | transloco }}</a>
+                <a
+                  class="community-discord"
+                  [href]="c.discordUrl"
+                  target="_blank"
+                  (click)="$event.stopPropagation()"
+                  >{{ 'admin.discord' | transloco }}</a
+                >
               }
             </div>
           </div>
           <div class="action-buttons">
-            <app-btn variant="ghost" size="sm" (click)="editCommunity(c)">{{ 'admin.edit' | transloco }}</app-btn>
+            <app-btn variant="ghost" size="sm" (click)="editCommunity(c)">{{
+              'admin.edit' | transloco
+            }}</app-btn>
             @if (!c.isSkf) {
-              <app-btn variant="danger" size="sm" (click)="deleteCommunity(c)">{{ 'admin.delete' | transloco }}</app-btn>
+              <app-btn variant="danger" size="sm" (click)="deleteCommunity(c)">{{
+                'admin.delete' | transloco
+              }}</app-btn>
             }
           </div>
         </article>
@@ -67,10 +82,14 @@
                   <h4 class="champ-name">{{ champ.name }}</h4>
                   <p class="champ-meta">
                     SimGrid #{{ champ.id }}
-                    @if (champ.startDate) { · {{ champ.startDate | date:'mediumDate' }} }
+                    @if (champ.startDate) {
+                      · {{ champ.startDate | date: 'mediumDate' }}
+                    }
                   </p>
                 </div>
-                <app-btn variant="danger" size="sm" (click)="toggleSimgridActive(champ.id)">{{ 'admin.deactivate' | transloco }}</app-btn>
+                <app-btn variant="danger" size="sm" (click)="toggleSimgridActive(champ.id)">{{
+                  'admin.deactivate' | transloco
+                }}</app-btn>
               </div>
             </div>
           }
@@ -85,10 +104,14 @@
                   <h4 class="champ-name">{{ champ.name }}</h4>
                   <p class="champ-meta">
                     SimGrid #{{ champ.id }}
-                    @if (champ.startDate) { · {{ champ.startDate | date:'mediumDate' }} }
+                    @if (champ.startDate) {
+                      · {{ champ.startDate | date: 'mediumDate' }}
+                    }
                   </p>
                 </div>
-                <app-btn variant="primary" size="sm" (click)="toggleSimgridActive(champ.id)">{{ 'admin.activate' | transloco }}</app-btn>
+                <app-btn variant="primary" size="sm" (click)="toggleSimgridActive(champ.id)">{{
+                  'admin.activate' | transloco
+                }}</app-btn>
               </div>
             </div>
           }
@@ -107,7 +130,9 @@
     </h3>
 
     <div class="section-toolbar">
-      <app-btn variant="primary" size="sm" (click)="openChampModal()">{{ 'admin.addChampionship' | transloco }}</app-btn>
+      <app-btn variant="primary" size="sm" (click)="openChampModal()">{{
+        'admin.addChampionship' | transloco
+      }}</app-btn>
     </div>
 
     @if (champsLoading()) {
@@ -121,12 +146,18 @@
               <h4 class="champ-name">{{ champ.name }}</h4>
               <p class="champ-meta">
                 {{ champ.game }}
-                @if (champ.carClass) { · {{ champ.carClass }} }
+                @if (champ.carClass) {
+                  · {{ champ.carClass }}
+                }
               </p>
             </div>
             <div class="action-buttons">
-              <app-btn variant="ghost" size="sm" (click)="editChampionship(champ)">{{ 'admin.edit' | transloco }}</app-btn>
-              <app-btn variant="danger" size="sm" (click)="deleteChampionship(champ)">{{ 'admin.delete' | transloco }}</app-btn>
+              <app-btn variant="ghost" size="sm" (click)="editChampionship(champ)">{{
+                'admin.edit' | transloco
+              }}</app-btn>
+              <app-btn variant="danger" size="sm" (click)="deleteChampionship(champ)">{{
+                'admin.delete' | transloco
+              }}</app-btn>
             </div>
           </div>
 
@@ -135,17 +166,23 @@
             @for (race of champ.races; track race.id) {
               <div class="race-row">
                 <span class="race-info">
-                  @if (race.track) { {{ race.track }} }
-                  @if (race.date) {
-                    <span class="race-date-text">{{ race.date | date:'mediumDate' }}</span>
+                  @if (race.track) {
+                    {{ race.track }}
                   }
-                  @if (!race.track && !race.date) { {{ 'admin.round' | transloco }} {{ race.sortOrder + 1 }} }
+                  @if (race.date) {
+                    <span class="race-date-text">{{ race.date | date: 'mediumDate' }}</span>
+                  }
+                  @if (!race.track && !race.date) {
+                    {{ 'admin.round' | transloco }} {{ race.sortOrder + 1 }}
+                  }
                 </span>
               </div>
             }
           </div>
 
-          <app-btn variant="ghost" size="sm" (click)="editChampionship(champ)">{{ 'admin.editRaces' | transloco }}</app-btn>
+          <app-btn variant="ghost" size="sm" (click)="editChampionship(champ)">{{
+            'admin.editRaces' | transloco
+          }}</app-btn>
         </div>
       }
       @if (communityChampionships().length === 0) {
@@ -157,13 +194,16 @@
 
 <!-- Community Modal -->
 <app-modal
-  [title]="editingCommunityId() ? ('admin.editCommunity' | transloco) : ('admin.addCommunity' | transloco)"
+  [title]="
+    editingCommunityId() ? ('admin.editCommunity' | transloco) : ('admin.addCommunity' | transloco)
+  "
   width="md"
   [(open)]="communityModalOpen"
 >
   <div class="modal-form">
     <app-form-field [label]="'admin.name' | transloco" fieldId="communityName">
-      <input appInput
+      <input
+        appInput
         id="communityName"
         type="text"
         [placeholder]="'admin.communityNamePlaceholder' | transloco"
@@ -181,7 +221,8 @@
       />
     </app-form-field>
     <app-form-field [label]="'admin.discordUrl' | transloco" fieldId="communityDiscord">
-      <input appInput
+      <input
+        appInput
         id="communityDiscord"
         type="url"
         placeholder="https://discord.gg/..."
@@ -192,7 +233,9 @@
     </app-form-field>
   </div>
   <div modal-footer>
-    <app-btn variant="ghost" size="sm" (click)="communityModalOpen.set(false)">{{ 'admin.cancel' | transloco }}</app-btn>
+    <app-btn variant="ghost" size="sm" (click)="communityModalOpen.set(false)">{{
+      'admin.cancel' | transloco
+    }}</app-btn>
     <app-btn variant="primary" size="sm" (click)="saveCommunity()">
       {{ editingCommunityId() ? ('admin.update' | transloco) : ('admin.add' | transloco) }}
     </app-btn>
@@ -201,7 +244,11 @@
 
 <!-- Championship Modal -->
 <app-modal
-  [title]="editingChampId() ? ('admin.editChampionship' | transloco) : ('admin.addChampionship' | transloco)"
+  [title]="
+    editingChampId()
+      ? ('admin.editChampionship' | transloco)
+      : ('admin.addChampionship' | transloco)
+  "
   width="md"
   [(open)]="champModalOpen"
 >
@@ -213,7 +260,9 @@
     (save)="saveChampionship($event)"
   />
   <div modal-footer>
-    <app-btn variant="ghost" size="sm" (click)="champModalOpen.set(false)">{{ 'admin.cancel' | transloco }}</app-btn>
+    <app-btn variant="ghost" size="sm" (click)="champModalOpen.set(false)">{{
+      'admin.cancel' | transloco
+    }}</app-btn>
     <app-btn variant="primary" size="sm" (click)="champFormRef.onSave()">
       {{ editingChampId() ? ('admin.update' | transloco) : ('admin.add' | transloco) }}
     </app-btn>

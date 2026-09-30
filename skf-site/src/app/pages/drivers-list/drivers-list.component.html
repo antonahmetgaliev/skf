@@ -1,15 +1,21 @@
 <app-page>
-  <app-page-intro [title]="'drivers.title' | transloco" [subtitle]="'drivers.subtitle' | transloco" />
+  <app-page-intro
+    [title]="'drivers.title' | transloco"
+    [subtitle]="'drivers.subtitle' | transloco"
+  />
 
   <div class="toolbar">
-    <input appInput
+    <input
+      appInput
       type="text"
       [placeholder]="'drivers.searchPlaceholder' | transloco"
       [ngModel]="search()"
       (ngModelChange)="search.set($event)"
       autocomplete="off"
     />
-    <span class="count">{{ filtered().length }} driver{{ filtered().length === 1 ? '' : 's' }}</span>
+    <span class="count"
+      >{{ filtered().length }} driver{{ filtered().length === 1 ? '' : 's' }}</span
+    >
   </div>
 
   @if (loading()) {

@@ -1,25 +1,50 @@
 <!-- Languages management -->
 <app-card [animated]="true">
   <h3 class="section-title">Languages</h3>
-  <p class="section-description">Manage available languages. Translations for all languages are shown side by side below.</p>
+  <p class="section-description">
+    Manage available languages. Translations for all languages are shown side by side below.
+  </p>
 
   <div class="section-toolbar">
     @for (lang of languages(); track lang.code) {
       <span class="lang-tag">
         {{ lang.name }} ({{ lang.code }})
-        <button type="button" class="lang-tag-remove" (click)="removeLanguage(lang.code)" title="Remove">&times;</button>
+        <button
+          type="button"
+          class="lang-tag-remove"
+          (click)="removeLanguage(lang.code)"
+          title="Remove"
+        >
+          &times;
+        </button>
       </span>
     }
-    <app-btn variant="ghost" size="sm" (click)="showAddLang.set(!showAddLang())">+ Add Language</app-btn>
+    <app-btn variant="ghost" size="sm" (click)="showAddLang.set(!showAddLang())"
+      >+ Add Language</app-btn
+    >
   </div>
 
   @if (showAddLang()) {
     <div class="inline-form">
       <app-form-field label="Code" fieldId="newLangCode">
-        <input appInput id="newLangCode" type="text" placeholder="e.g. fr" [ngModel]="newLangCode()" (ngModelChange)="newLangCode.set($event)" />
+        <input
+          appInput
+          id="newLangCode"
+          type="text"
+          placeholder="e.g. fr"
+          [ngModel]="newLangCode()"
+          (ngModelChange)="newLangCode.set($event)"
+        />
       </app-form-field>
       <app-form-field label="Name" fieldId="newLangName">
-        <input appInput id="newLangName" type="text" placeholder="e.g. Français" [ngModel]="newLangName()" (ngModelChange)="newLangName.set($event)" />
+        <input
+          appInput
+          id="newLangName"
+          type="text"
+          placeholder="e.g. Français"
+          [ngModel]="newLangName()"
+          (ngModelChange)="newLangName.set($event)"
+        />
       </app-form-field>
       <app-btn variant="primary" size="sm" (click)="addLanguage()">Add</app-btn>
     </div>
@@ -31,13 +56,23 @@
   <div class="toolbar">
     <div class="filter-field">
       <app-form-field label="Filter" fieldId="transFilter">
-        <input appInput id="transFilter" type="text" placeholder="Search by key or value" [ngModel]="filter()" (ngModelChange)="filter.set($event)" autocomplete="off" />
+        <input
+          appInput
+          id="transFilter"
+          type="text"
+          placeholder="Search by key or value"
+          [ngModel]="filter()"
+          (ngModelChange)="filter.set($event)"
+          autocomplete="off"
+        />
       </app-form-field>
     </div>
     <div class="action-buttons">
       <app-btn variant="ghost" size="sm" (click)="showAddKey.set(!showAddKey())">+ Add Key</app-btn>
       @for (lang of languages(); track lang.code) {
-        <app-btn variant="ghost" size="sm" (click)="exportJson(lang.code)">Export {{ lang.code.toUpperCase() }}</app-btn>
+        <app-btn variant="ghost" size="sm" (click)="exportJson(lang.code)"
+          >Export {{ lang.code.toUpperCase() }}</app-btn
+        >
         <label class="import-label">
           <app-btn variant="ghost" size="sm">Import {{ lang.code.toUpperCase() }}</app-btn>
           <input type="file" accept=".json" hidden (change)="importJson($event, lang.code)" />
@@ -56,11 +91,25 @@
   @if (showAddKey()) {
     <div class="inline-form">
       <app-form-field label="Key" fieldId="newKey">
-        <input appInput id="newKey" type="text" placeholder="e.g. nav.home" [ngModel]="newKey()" (ngModelChange)="newKey.set($event)" />
+        <input
+          appInput
+          id="newKey"
+          type="text"
+          placeholder="e.g. nav.home"
+          [ngModel]="newKey()"
+          (ngModelChange)="newKey.set($event)"
+        />
       </app-form-field>
       @for (lang of languages(); track lang.code) {
         <app-form-field [label]="lang.code.toUpperCase()" [fieldId]="'newVal_' + lang.code">
-          <input appInput [id]="'newVal_' + lang.code" type="text" [placeholder]="'Value (' + lang.code + ')'" [ngModel]="newValues()[lang.code] || ''" (ngModelChange)="updateNewValue(lang.code, $event)" />
+          <input
+            appInput
+            [id]="'newVal_' + lang.code"
+            type="text"
+            [placeholder]="'Value (' + lang.code + ')'"
+            [ngModel]="newValues()[lang.code] || ''"
+            (ngModelChange)="updateNewValue(lang.code, $event)"
+          />
         </app-form-field>
       }
       <app-btn variant="primary" size="sm" (click)="addKey()">Add</app-btn>
@@ -98,7 +147,14 @@
                 </td>
               }
               <td class="cell-actions">
-                <button type="button" class="delete-btn" (click)="deleteKey(row.key)" title="Delete">&times;</button>
+                <button
+                  type="button"
+                  class="delete-btn"
+                  (click)="deleteKey(row.key)"
+                  title="Delete"
+                >
+                  &times;
+                </button>
               </td>
             </tr>
           }

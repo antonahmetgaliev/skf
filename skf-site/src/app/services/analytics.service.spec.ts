@@ -78,11 +78,7 @@ describe('AnalyticsService', () => {
     consent.accept();
     TestBed.tick();
     expect(gtagUrl()).toContain('id=G-TEST123');
-    expect(gtagCalls()).toContainEqual([
-      'config',
-      'G-TEST123',
-      { send_page_view: false },
-    ]);
+    expect(gtagCalls()).toContainEqual(['config', 'G-TEST123', { send_page_view: false }]);
   });
 
   it('denies advertising storage', () => {

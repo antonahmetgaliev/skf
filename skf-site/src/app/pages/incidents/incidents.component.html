@@ -10,180 +10,201 @@
   <div class="incidents-layout">
     <!-- Windows sidebar -->
     <aside>
-    <app-card>
-      <h2 class="sidebar-heading">{{ 'championships.title' | transloco }}</h2>
+      <app-card>
+        <h2 class="sidebar-heading">{{ 'championships.title' | transloco }}</h2>
 
-      @if (loadingWindows()) {
-        <app-spinner />
-      } @else if (windows().length === 0) {
-        <app-empty>{{ 'incidents.noWindows' | transloco }}</app-empty>
-      } @else {
-        <app-incident-window-groups
-          [groups]="windowGroups()"
-          [expanded]="expandedGroups()"
-          [activeWindowId]="windowDetail()?.id ?? null"
-          (groupToggle)="toggleGroup($event)"
-          (windowSelect)="selectWindow($event)" />
-      }
-    </app-card>
-
+        @if (loadingWindows()) {
+          <app-spinner />
+        } @else if (windows().length === 0) {
+          <app-empty>{{ 'incidents.noWindows' | transloco }}</app-empty>
+        } @else {
+          <app-incident-window-groups
+            [groups]="windowGroups()"
+            [expanded]="expandedGroups()"
+            [activeWindowId]="windowDetail()?.id ?? null"
+            (groupToggle)="toggleGroup($event)"
+            (windowSelect)="selectWindow($event)"
+          />
+        }
+      </app-card>
     </aside>
 
     <!-- Window detail panel -->
     <section>
-    <app-card>
-      @if (!windowDetail() && !loadingDetail()) {
-        <div class="empty-detail">{{ 'incidents.selectRaceHint' | transloco }}</div>
-      } @else if (loadingDetail()) {
-        <app-spinner />
-      } @else if (windowDetail(); as w) {
-        <div class="detail-header">
-          <div class="detail-title-block">
-            <h2 class="detail-title">{{ w.raceName }}</h2>
-            @if (w.championshipName) {
-              <span class="detail-race">{{ w.championshipName }}</span>
-            }
-            @if (w.date) {
-              <span class="detail-race">{{ w.date }}</span>
-            }
-          </div>
-          <div class="detail-meta">
-            @if (w.isOpen) {
-              <app-badge variant="open">{{ 'incidents.open' | transloco }}</app-badge>
-              <span class="detail-closes">{{ 'incidents.closes' | transloco }} {{ w.closesAt | date:'dd MMM yyyy HH:mm' }} UTC · {{ closesIn(w.closesAt) }} {{ 'incidents.remaining' | transloco }}</span>
-            } @else {
-              <app-badge variant="closed">{{ 'incidents.closed' | transloco }}</app-badge>
-            }
-          </div>
-          @if (auth.isAdmin()) {
-            <div class="detail-actions">
-              @if (w.isOpen) {
-                <app-btn variant="ghost" size="sm" (click)="closeWindow(w.id)">
-                  {{ 'incidents.closeWindow' | transloco }}
-                </app-btn>
+      <app-card>
+        @if (!windowDetail() && !loadingDetail()) {
+          <div class="empty-detail">{{ 'incidents.selectRaceHint' | transloco }}</div>
+        } @else if (loadingDetail()) {
+          <app-spinner />
+        } @else if (windowDetail(); as w) {
+          <div class="detail-header">
+            <div class="detail-title-block">
+              <h2 class="detail-title">{{ w.raceName }}</h2>
+              @if (w.championshipName) {
+                <span class="detail-race">{{ w.championshipName }}</span>
               }
-              <app-btn variant="danger" size="sm" (click)="deleteWindow(w.id)">
-                {{ 'incidents.delete' | transloco }}
+              @if (w.date) {
+                <span class="detail-race">{{ w.date }}</span>
+              }
+            </div>
+            <div class="detail-meta">
+              @if (w.isOpen) {
+                <app-badge variant="open">{{ 'incidents.open' | transloco }}</app-badge>
+                <span class="detail-closes"
+                  >{{ 'incidents.closes' | transloco }}
+                  {{ w.closesAt | date: 'dd MMM yyyy HH:mm' }} UTC · {{ closesIn(w.closesAt) }}
+                  {{ 'incidents.remaining' | transloco }}</span
+                >
+              } @else {
+                <app-badge variant="closed">{{ 'incidents.closed' | transloco }}</app-badge>
+              }
+            </div>
+            @if (auth.isAdmin()) {
+              <div class="detail-actions">
+                @if (w.isOpen) {
+                  <app-btn variant="ghost" size="sm" (click)="closeWindow(w.id)">
+                    {{ 'incidents.closeWindow' | transloco }}
+                  </app-btn>
+                }
+                <app-btn variant="danger" size="sm" (click)="deleteWindow(w.id)">
+                  {{ 'incidents.delete' | transloco }}
+                </app-btn>
+              </div>
+            }
+          </div>
+
+          <div class="incidents-toolbar">
+            @if (w.incidents.length === 0) {
+              <span class="incident-count">{{ 'incidents.noIncidents' | transloco }}</span>
+            } @else if (auth.isJudge()) {
+              <span class="incident-count">
+                {{
+                  'incidents.resolvedOfTotal'
+                    | transloco: { resolved: resolvedCount(w), total: w.incidents.length }
+                }}
+              </span>
+            } @else {
+              <span class="incident-count">
+                {{ 'incidents.incidentCount' | transloco: { count: w.incidents.length } }}
+              </span>
+            }
+            @if (auth.isAdmin() || auth.isJudge()) {
+              <app-btn variant="ghost" size="sm" (click)="showSettingsModal.set(true)">
+                {{ 'incidents.settings' | transloco }}
               </app-btn>
+              <app-btn variant="ghost" size="sm" (click)="openDiscordPreview(w)">
+                {{ 'incidents.copyForDiscord' | transloco }}
+              </app-btn>
+            }
+            @if (auth.isJudge() && w.incidents.length > 0 && hasUnpublished(w)) {
+              <app-btn
+                variant="accent"
+                size="sm"
+                [disabled]="unresolvedCount(w) > 0"
+                (click)="openPublishPreview(w)"
+              >
+                {{ 'incidents.publishAllVerdicts' | transloco }}
+              </app-btn>
+            }
+            @if (w.isOpen) {
+              <app-btn variant="accent" size="sm" (click)="openNewIncidentModal()">
+                + {{ 'incidents.fileIncident' | transloco }}
+              </app-btn>
+            }
+          </div>
+
+          <!-- Hidden-ness is a property of the round, so it is stated once here
+             rather than repeated as a badge on every card. -->
+          @if (w.incidents.length > 0 && hasUnpublished(w)) {
+            <div class="window-notice">
+              @if (auth.isJudge()) {
+                <span>{{ 'incidents.windowVerdictsHidden' | transloco }}</span>
+              } @else {
+                <span>{{ 'incidents.verdictsPendingPublication' | transloco }}</span>
+              }
             </div>
           }
-        </div>
 
-        <div class="incidents-toolbar">
+          @if (auth.isJudge() && unresolvedCount(w) > 0) {
+            <div class="window-notice window-notice--warn">
+              <span>{{
+                'incidents.unresolvedRemaining' | transloco: { count: unresolvedCount(w) }
+              }}</span>
+              @if (defaultRule(); as rule) {
+                <app-btn
+                  variant="outline"
+                  size="sm"
+                  [disabled]="resolvingRemaining()"
+                  (click)="resolveRemaining(w)"
+                >
+                  {{
+                    resolvingRemaining()
+                      ? ('incidents.resolving' | transloco)
+                      : ('incidents.resolveRemainingAs' | transloco: { verdict: rule.verdict })
+                  }}
+                </app-btn>
+              } @else {
+                <span class="notice-hint">{{
+                  'incidents.noDefaultVerdictConfigured' | transloco
+                }}</span>
+              }
+            </div>
+          }
+
           @if (w.incidents.length === 0) {
-            <span class="incident-count">{{ 'incidents.noIncidents' | transloco }}</span>
-          } @else if (auth.isJudge()) {
-            <span class="incident-count">
-              {{ 'incidents.resolvedOfTotal' | transloco:{ resolved: resolvedCount(w), total: w.incidents.length } }}
-            </span>
+            <app-empty>{{ 'incidents.noIncidents' | transloco }}</app-empty>
           } @else {
-            <span class="incident-count">
-              {{ 'incidents.incidentCount' | transloco:{ count: w.incidents.length } }}
-            </span>
+            <div class="incident-cards">
+              @for (group of groupedIncidents(); track group.session) {
+                @if (group.session) {
+                  <div class="incident-group-label">{{ group.session }}</div>
+                }
+                @for (inc of group.autoItems; track inc.id; let i = $index) {
+                  <app-incident-card
+                    [incident]="inc"
+                    [index]="i + 1"
+                    [expanded]="expandedIncidentId() === inc.id"
+                    [verdictRules]="verdictRules()"
+                    [defaultRule]="defaultRule()"
+                    [descriptionPresets]="descriptionPresetTexts()"
+                    [knownDrivers]="bwpDrivers()"
+                    [canJudge]="auth.isJudge()"
+                    [submitting]="!!rvIncSubmitting[inc.id]"
+                    [error]="rvIncError[inc.id] || ''"
+                    (toggled)="toggleIncident(inc.id)"
+                    (resolve)="submitResolveIncident(inc, $event)"
+                    (addDriver)="addIncidentDriver(inc.id, $event)"
+                    (removeDriver)="removeIncidentDriver($event)"
+                    (duplicate)="duplicateIncident(inc.id)"
+                  />
+                }
+                @if (group.filedItems.length > 0) {
+                  <div class="incident-subgroup-label">{{ 'incidents.reports' | transloco }}</div>
+                }
+                @for (inc of group.filedItems; track inc.id; let i = $index) {
+                  <app-incident-card
+                    [incident]="inc"
+                    [index]="group.autoItems.length + i + 1"
+                    [expanded]="expandedIncidentId() === inc.id"
+                    [verdictRules]="verdictRules()"
+                    [defaultRule]="defaultRule()"
+                    [descriptionPresets]="descriptionPresetTexts()"
+                    [knownDrivers]="bwpDrivers()"
+                    [canJudge]="auth.isJudge()"
+                    [submitting]="!!rvIncSubmitting[inc.id]"
+                    [error]="rvIncError[inc.id] || ''"
+                    (toggled)="toggleIncident(inc.id)"
+                    (resolve)="submitResolveIncident(inc, $event)"
+                    (addDriver)="addIncidentDriver(inc.id, $event)"
+                    (removeDriver)="removeIncidentDriver($event)"
+                    (duplicate)="duplicateIncident(inc.id)"
+                  />
+                }
+              }
+            </div>
           }
-          @if (auth.isAdmin() || auth.isJudge()) {
-            <app-btn variant="ghost" size="sm" (click)="showSettingsModal.set(true)">
-              {{ 'incidents.settings' | transloco }}
-            </app-btn>
-            <app-btn variant="ghost" size="sm" (click)="openDiscordPreview(w)">
-              {{ 'incidents.copyForDiscord' | transloco }}
-            </app-btn>
-          }
-          @if (auth.isJudge() && w.incidents.length > 0 && hasUnpublished(w)) {
-            <app-btn variant="accent" size="sm"
-              [disabled]="unresolvedCount(w) > 0"
-              (click)="openPublishPreview(w)">
-              {{ 'incidents.publishAllVerdicts' | transloco }}
-            </app-btn>
-          }
-          @if (w.isOpen) {
-            <app-btn variant="accent" size="sm" (click)="openNewIncidentModal()">
-              + {{ 'incidents.fileIncident' | transloco }}
-            </app-btn>
-          }
-        </div>
-
-        <!-- Hidden-ness is a property of the round, so it is stated once here
-             rather than repeated as a badge on every card. -->
-        @if (w.incidents.length > 0 && hasUnpublished(w)) {
-          <div class="window-notice">
-            @if (auth.isJudge()) {
-              <span>{{ 'incidents.windowVerdictsHidden' | transloco }}</span>
-            } @else {
-              <span>{{ 'incidents.verdictsPendingPublication' | transloco }}</span>
-            }
-          </div>
         }
-
-        @if (auth.isJudge() && unresolvedCount(w) > 0) {
-          <div class="window-notice window-notice--warn">
-            <span>{{ 'incidents.unresolvedRemaining' | transloco:{ count: unresolvedCount(w) } }}</span>
-            @if (defaultRule(); as rule) {
-              <app-btn variant="outline" size="sm"
-                [disabled]="resolvingRemaining()"
-                (click)="resolveRemaining(w)">
-                {{ resolvingRemaining()
-                    ? ('incidents.resolving' | transloco)
-                    : ('incidents.resolveRemainingAs' | transloco:{ verdict: rule.verdict }) }}
-              </app-btn>
-            } @else {
-              <span class="notice-hint">{{ 'incidents.noDefaultVerdictConfigured' | transloco }}</span>
-            }
-          </div>
-        }
-
-        @if (w.incidents.length === 0) {
-          <app-empty>{{ 'incidents.noIncidents' | transloco }}</app-empty>
-        } @else {
-          <div class="incident-cards">
-            @for (group of groupedIncidents(); track group.session) {
-              @if (group.session) {
-                <div class="incident-group-label">{{ group.session }}</div>
-              }
-              @for (inc of group.autoItems; track inc.id; let i = $index) {
-                <app-incident-card
-                  [incident]="inc"
-                  [index]="i + 1"
-                  [expanded]="expandedIncidentId() === inc.id"
-                  [verdictRules]="verdictRules()"
-                  [defaultRule]="defaultRule()"
-                  [descriptionPresets]="descriptionPresetTexts()"
-                  [knownDrivers]="bwpDrivers()"
-                  [canJudge]="auth.isJudge()"
-                  [submitting]="!!rvIncSubmitting[inc.id]"
-                  [error]="rvIncError[inc.id] || ''"
-                  (toggled)="toggleIncident(inc.id)"
-                  (resolve)="submitResolveIncident(inc, $event)"
-                  (addDriver)="addIncidentDriver(inc.id, $event)"
-                  (removeDriver)="removeIncidentDriver($event)"
-                  (duplicate)="duplicateIncident(inc.id)" />
-              }
-              @if (group.filedItems.length > 0) {
-                <div class="incident-subgroup-label">{{ 'incidents.reports' | transloco }}</div>
-              }
-              @for (inc of group.filedItems; track inc.id; let i = $index) {
-                <app-incident-card
-                  [incident]="inc"
-                  [index]="group.autoItems.length + i + 1"
-                  [expanded]="expandedIncidentId() === inc.id"
-                  [verdictRules]="verdictRules()"
-                  [defaultRule]="defaultRule()"
-                  [descriptionPresets]="descriptionPresetTexts()"
-                  [knownDrivers]="bwpDrivers()"
-                  [canJudge]="auth.isJudge()"
-                  [submitting]="!!rvIncSubmitting[inc.id]"
-                  [error]="rvIncError[inc.id] || ''"
-                  (toggled)="toggleIncident(inc.id)"
-                  (resolve)="submitResolveIncident(inc, $event)"
-                  (addDriver)="addIncidentDriver(inc.id, $event)"
-                  (removeDriver)="removeIncidentDriver($event)"
-                  (duplicate)="duplicateIncident(inc.id)" />
-              }
-            }
-          </div>
-        }
-      }
-    </app-card>
+      </app-card>
     </section>
   </div>
 </app-page>
@@ -193,7 +214,11 @@
      season, the race list changes every round, and they were competing for the
      same 260px column. -->
 <app-modal [title]="'incidents.settings' | transloco" width="lg" [(open)]="showSettingsModal">
-  <app-tabs [tabs]="settingsTabs()" [activeTab]="settingsTab()" (tabChange)="settingsTab.set($event)" />
+  <app-tabs
+    [tabs]="settingsTabs()"
+    [activeTab]="settingsTab()"
+    (tabChange)="settingsTab.set($event)"
+  />
 
   @if (settingsTab() === 'verdicts') {
     <div class="settings-panel">
@@ -206,7 +231,8 @@
         <app-btn
           [variant]="rulesEditMode() ? 'accent' : 'outline'"
           size="sm"
-          (click)="rulesEditMode.set(!rulesEditMode())">
+          (click)="rulesEditMode.set(!rulesEditMode())"
+        >
           {{ (rulesEditMode() ? 'incidents.doneEditing' : 'incidents.editRules') | transloco }}
         </app-btn>
       </div>
@@ -234,35 +260,67 @@
             <tr>
               @if (rulesEditMode()) {
                 <td class="col-handle">
-                  <button class="icon-btn" type="button" [disabled]="idx === 0"
+                  <button
+                    class="icon-btn"
+                    type="button"
+                    [disabled]="idx === 0"
                     [title]="'incidents.moveUp' | transloco"
-                    (click)="moveRule(idx, -1)">&#9650;</button>
-                  <button class="icon-btn" type="button"
+                    (click)="moveRule(idx, -1)"
+                  >
+                    &#9650;
+                  </button>
+                  <button
+                    class="icon-btn"
+                    type="button"
                     [disabled]="idx === verdictRules().length - 1"
                     [title]="'incidents.moveDown' | transloco"
-                    (click)="moveRule(idx, 1)">&#9660;</button>
+                    (click)="moveRule(idx, 1)"
+                  >
+                    &#9660;
+                  </button>
                 </td>
                 <td class="col-name">
-                  <input type="text" appInput size="sm"
+                  <input
+                    type="text"
+                    appInput
+                    size="sm"
                     [ngModel]="rule.verdict"
-                    (blur)="saveRuleVerdict(rule, $any($event.target).value)" />
+                    (blur)="saveRuleVerdict(rule, $any($event.target).value)"
+                  />
                 </td>
                 <td class="col-default">
-                  <input class="rule-radio" type="radio" name="defaultRule"
+                  <input
+                    class="rule-radio"
+                    type="radio"
+                    name="defaultRule"
                     [checked]="rule.isDefault"
                     [attr.aria-label]="'incidents.setAsDefault' | transloco"
-                    (change)="setDefaultRule(rule)" />
+                    (change)="setDefaultRule(rule)"
+                  />
                 </td>
                 <td class="col-bwp">
-                  <input type="text" inputmode="numeric" appInput size="sm"
+                  <input
+                    type="text"
+                    inputmode="numeric"
+                    appInput
+                    size="sm"
                     [ngModel]="rule.defaultBwp"
-                    (blur)="saveRuleBwp(rule, $any($event.target).value)" />
+                    (blur)="saveRuleBwp(rule, $any($event.target).value)"
+                  />
                 </td>
                 <td class="col-actions">
-                  <button class="icon-btn icon-btn--danger" type="button"
+                  <button
+                    class="icon-btn icon-btn--danger"
+                    type="button"
                     [disabled]="rule.isDefault"
-                    [title]="(rule.isDefault ? 'incidents.cannotDeleteDefaultVerdict' : 'incidents.delete') | transloco"
-                    (click)="deleteVerdictRule(rule.id)">&times;</button>
+                    [title]="
+                      (rule.isDefault ? 'incidents.cannotDeleteDefaultVerdict' : 'incidents.delete')
+                        | transloco
+                    "
+                    (click)="deleteVerdictRule(rule.id)"
+                  >
+                    &times;
+                  </button>
                 </td>
               } @else {
                 <td class="col-name">
@@ -280,13 +338,29 @@
 
       @if (rulesEditMode()) {
         <div class="panel-add">
-          <input type="text" appInput size="sm" class="add-name"
+          <input
+            type="text"
+            appInput
+            size="sm"
+            class="add-name"
             [(ngModel)]="newRuleVerdict"
-            [placeholder]="'incidents.verdictNamePlaceholder' | transloco" />
-          <input type="number" min="0" appInput size="sm" class="add-bwp"
-            [(ngModel)]="newRuleDefaultBwp" placeholder="BWP" />
-          <app-btn variant="accent" size="sm" (click)="addVerdictRule()"
-            [disabled]="!newRuleVerdict.trim()">
+            [placeholder]="'incidents.verdictNamePlaceholder' | transloco"
+          />
+          <input
+            type="number"
+            min="0"
+            appInput
+            size="sm"
+            class="add-bwp"
+            [(ngModel)]="newRuleDefaultBwp"
+            placeholder="BWP"
+          />
+          <app-btn
+            variant="accent"
+            size="sm"
+            (click)="addVerdictRule()"
+            [disabled]="!newRuleVerdict.trim()"
+          >
             {{ 'incidents.add' | transloco }}
           </app-btn>
         </div>
@@ -303,7 +377,8 @@
         <app-btn
           [variant]="presetsEditMode() ? 'accent' : 'outline'"
           size="sm"
-          (click)="presetsEditMode.set(!presetsEditMode())">
+          (click)="presetsEditMode.set(!presetsEditMode())"
+        >
           {{ (presetsEditMode() ? 'incidents.doneEditing' : 'incidents.editRules') | transloco }}
         </app-btn>
       </div>
@@ -314,18 +389,27 @@
             <tr>
               <td class="col-name">
                 @if (presetsEditMode()) {
-                  <input type="text" appInput size="sm"
+                  <input
+                    type="text"
+                    appInput
+                    size="sm"
                     [ngModel]="preset.text"
-                    (blur)="savePresetText(preset, $any($event.target).value)" />
+                    (blur)="savePresetText(preset, $any($event.target).value)"
+                  />
                 } @else {
                   {{ preset.text }}
                 }
               </td>
               @if (presetsEditMode()) {
                 <td class="col-actions">
-                  <button class="icon-btn icon-btn--danger" type="button"
+                  <button
+                    class="icon-btn icon-btn--danger"
+                    type="button"
                     [title]="'incidents.delete' | transloco"
-                    (click)="deleteDescriptionPreset(preset.id)">&times;</button>
+                    (click)="deleteDescriptionPreset(preset.id)"
+                  >
+                    &times;
+                  </button>
                 </td>
               }
             </tr>
@@ -335,11 +419,20 @@
 
       @if (presetsEditMode()) {
         <div class="panel-add">
-          <input type="text" appInput size="sm" class="add-name"
+          <input
+            type="text"
+            appInput
+            size="sm"
+            class="add-name"
             [(ngModel)]="newPresetText"
-            [placeholder]="'incidents.descriptionTextPlaceholder' | transloco" />
-          <app-btn variant="accent" size="sm" (click)="addDescriptionPreset()"
-            [disabled]="!newPresetText.trim()">
+            [placeholder]="'incidents.descriptionTextPlaceholder' | transloco"
+          />
+          <app-btn
+            variant="accent"
+            size="sm"
+            (click)="addDescriptionPreset()"
+            [disabled]="!newPresetText.trim()"
+          >
             {{ 'incidents.add' | transloco }}
           </app-btn>
         </div>
@@ -385,15 +478,24 @@
 
         @if (hasMatchableAuditEntries()) {
           <div class="panel-add">
-            <app-btn variant="accent" size="sm" (click)="runBwpBackfill()"
-              [disabled]="backfillRunning()">
-              {{ backfillRunning() ? ('incidents.fixing' | transloco) : ('incidents.fixAllMatched' | transloco) }}
+            <app-btn
+              variant="accent"
+              size="sm"
+              (click)="runBwpBackfill()"
+              [disabled]="backfillRunning()"
+            >
+              {{
+                backfillRunning()
+                  ? ('incidents.fixing' | transloco)
+                  : ('incidents.fixAllMatched' | transloco)
+              }}
             </app-btn>
             @if (backfillResult()) {
               <span class="audit-result">
                 {{ 'incidents.fixed' | transloco }} {{ backfillResult()!.fixed }}
                 @if (backfillResult()!.unmatched.length > 0) {
-                  · {{ 'incidents.unmatched' | transloco }}: {{ backfillResult()!.unmatched.join(', ') }}
+                  · {{ 'incidents.unmatched' | transloco }}:
+                  {{ backfillResult()!.unmatched.join(', ') }}
                 }
               </span>
             }
@@ -405,9 +507,16 @@
 </app-modal>
 
 <!-- ── Publish Preview Modal ─────────────────────────────────────────────── -->
-<app-modal [title]="'incidents.publishPreviewTitle' | transloco" width="lg" [(open)]="showPublishPreview">
+<app-modal
+  [title]="'incidents.publishPreviewTitle' | transloco"
+  width="lg"
+  [(open)]="showPublishPreview"
+>
   <p class="publish-summary">
-    {{ 'incidents.publishPreviewSummary' | transloco:{ verdicts: publishVerdictCount(), points: publishBwpTotal() } }}
+    {{
+      'incidents.publishPreviewSummary'
+        | transloco: { verdicts: publishVerdictCount(), points: publishBwpTotal() }
+    }}
   </p>
 
   @if (publishPenalties().length > 0) {
@@ -422,11 +531,15 @@
         @if (!row.linked) {
           <div class="publish-note">
             <span>{{ 'incidents.driverNotMatched' | transloco }}</span>
-            <input appInput size="sm" type="text"
+            <input
+              appInput
+              size="sm"
+              type="text"
               [attr.list]="'link-drv-' + row.incidentDriverId"
               [placeholder]="'incidents.driverNamePlaceholder' | transloco"
               (change)="linkPenaltyDriver(row, $any($event.target).value)"
-              autocomplete="off" />
+              autocomplete="off"
+            />
             <datalist [id]="'link-drv-' + row.incidentDriverId">
               @for (d of bwpDrivers(); track d.id) {
                 <option [value]="d.name"></option>
@@ -440,7 +553,7 @@
 
   @if (publishNoPenaltyCount() > 0) {
     <p class="publish-rest">
-      {{ 'incidents.publishPreviewRestCount' | transloco:{ count: publishNoPenaltyCount() } }}
+      {{ 'incidents.publishPreviewRestCount' | transloco: { count: publishNoPenaltyCount() } }}
     </p>
   }
   <p class="publish-warn">{{ 'incidents.publishPreviewWarning' | transloco }}</p>
@@ -450,15 +563,24 @@
       {{ 'incidents.cancel' | transloco }}
     </app-btn>
     <app-btn variant="accent" [disabled]="publishing()" (click)="confirmPublish()">
-      {{ publishing() ? ('incidents.publishing' | transloco) : ('incidents.publishAllVerdicts' | transloco) }}
+      {{
+        publishing()
+          ? ('incidents.publishing' | transloco)
+          : ('incidents.publishAllVerdicts' | transloco)
+      }}
     </app-btn>
   </div>
 </app-modal>
 
 <!-- ── New Window Modal ──────────────────────────────────────────────────── -->
-<app-modal [title]="'incidents.openIncidentWindow' | transloco" width="md" [(open)]="showNewWindowModal">
+<app-modal
+  [title]="'incidents.openIncidentWindow' | transloco"
+  width="md"
+  [(open)]="showNewWindowModal"
+>
   <app-form-field [label]="'incidents.championshipOptional' | transloco" fieldId="nwChamp">
-    <select appSelect
+    <select
+      appSelect
       id="nwChamp"
       [ngModel]="nwChampId ?? ''"
       (ngModelChange)="onChampionshipChange($event)"
@@ -472,19 +594,27 @@
 
   <app-form-field [label]="'incidents.race' | transloco" fieldId="nwRace">
     @if (nwChampId) {
-      <select appSelect
+      <select
+        appSelect
         id="nwRace"
         [disabled]="loadingRaces()"
         [ngModel]="nwRaceId ?? ''"
         (ngModelChange)="onRaceChange($event)"
       >
-        <option value="">{{ loadingRaces() ? ('incidents.loading' | transloco) : ('incidents.selectRace' | transloco) }}</option>
+        <option value="">
+          {{
+            loadingRaces()
+              ? ('incidents.loading' | transloco)
+              : ('incidents.selectRace' | transloco)
+          }}
+        </option>
         @for (r of availableRaces(); track r.id) {
           <option [value]="r.id">{{ r.displayName }}</option>
         }
       </select>
     } @else {
-      <input appInput
+      <input
+        appInput
         id="nwRace"
         type="text"
         [(ngModel)]="nwRaceName"
@@ -493,37 +623,39 @@
     }
   </app-form-field>
 
-  <app-form-field [label]="'incidents.reportingWindowHours' | transloco" fieldId="nwInterval" [error]="nwError">
-    <input appInput
-      id="nwInterval"
-      type="number"
-      min="1"
-      max="168"
-      [(ngModel)]="nwIntervalHours"
-    />
+  <app-form-field
+    [label]="'incidents.reportingWindowHours' | transloco"
+    fieldId="nwInterval"
+    [error]="nwError"
+  >
+    <input appInput id="nwInterval" type="number" min="1" max="168" [(ngModel)]="nwIntervalHours" />
   </app-form-field>
 
   <div modal-footer>
     <app-btn variant="ghost" (click)="showNewWindowModal.set(false)">
       {{ 'incidents.cancel' | transloco }}
     </app-btn>
-    <app-btn
-      variant="accent"
-      [disabled]="nwSubmitting"
-      (click)="submitNewWindow()"
-    >
+    <app-btn variant="accent" [disabled]="nwSubmitting" (click)="submitNewWindow()">
       {{ nwSubmitting ? ('incidents.opening' | transloco) : ('incidents.openWindow' | transloco) }}
     </app-btn>
   </div>
 </app-modal>
 
 <!-- ── File Incident Modal ───────────────────────────────────────────────── -->
-<app-modal [title]="'incidents.fileIncident' | transloco" width="md" [(open)]="showNewIncidentModal">
+<app-modal
+  [title]="'incidents.fileIncident' | transloco"
+  width="md"
+  [(open)]="showNewIncidentModal"
+>
   <div class="driver-inputs">
     @for (name of niDriverNames; track trackByIndex($index); let i = $index) {
       <div class="driver-input-row">
-        <app-form-field [label]="('common.driver' | transloco) + ' ' + (i + 1)" [fieldId]="'niD' + i">
-          <input appInput
+        <app-form-field
+          [label]="('common.driver' | transloco) + ' ' + (i + 1)"
+          [fieldId]="'niD' + i"
+        >
+          <input
+            appInput
             [id]="'niD' + i"
             type="text"
             [attr.list]="'driver-list-' + i"
@@ -538,15 +670,24 @@
           </datalist>
         </app-form-field>
         @if (niDriverNames.length > 1) {
-          <button class="btn-link btn-link--danger remove-driver" type="button" (click)="removeDriver(i)">✕</button>
+          <button
+            class="btn-link btn-link--danger remove-driver"
+            type="button"
+            (click)="removeDriver(i)"
+          >
+            ✕
+          </button>
         }
       </div>
     }
-    <button class="btn-link add-driver" type="button" (click)="addDriver()">{{ 'incidents.addDriverBtn' | transloco }}</button>
+    <button class="btn-link add-driver" type="button" (click)="addDriver()">
+      {{ 'incidents.addDriverBtn' | transloco }}
+    </button>
   </div>
 
   <app-form-field [label]="'incidents.sessionOptional' | transloco" fieldId="niSession">
-    <input appInput
+    <input
+      appInput
       id="niSession"
       type="text"
       list="niSessionList"
@@ -565,25 +706,20 @@
 
   <div class="form-row">
     <app-form-field [label]="'incidents.lapOptional' | transloco" fieldId="niLap">
-      <input appInput
-        id="niLap"
-        type="text"
-        [(ngModel)]="niLap"
-        placeholder="e.g. 5"
-      />
+      <input appInput id="niLap" type="text" [(ngModel)]="niLap" placeholder="e.g. 5" />
     </app-form-field>
     <app-form-field [label]="'incidents.cornerOptional' | transloco" fieldId="niCorner">
-      <input appInput
-        id="niCorner"
-        type="text"
-        [(ngModel)]="niCorner"
-        placeholder="e.g. Turn 1"
-      />
+      <input appInput id="niCorner" type="text" [(ngModel)]="niCorner" placeholder="e.g. Turn 1" />
     </app-form-field>
   </div>
 
-  <app-form-field [label]="'incidents.descriptionOptional' | transloco" fieldId="niDesc" [error]="niError">
-    <textarea appTextarea
+  <app-form-field
+    [label]="'incidents.descriptionOptional' | transloco"
+    fieldId="niDesc"
+    [error]="niError"
+  >
+    <textarea
+      appTextarea
       id="niDesc"
       rows="4"
       [(ngModel)]="niDescription"
@@ -595,22 +731,30 @@
     <app-btn variant="ghost" (click)="showNewIncidentModal.set(false)">
       {{ 'incidents.cancel' | transloco }}
     </app-btn>
-    <app-btn
-      variant="accent"
-      [disabled]="niSubmitting"
-      (click)="submitIncident()"
-    >
-      {{ niSubmitting ? ('incidents.submitting' | transloco) : ('incidents.submitIncident' | transloco) }}
+    <app-btn variant="accent" [disabled]="niSubmitting" (click)="submitIncident()">
+      {{
+        niSubmitting
+          ? ('incidents.submitting' | transloco)
+          : ('incidents.submitIncident' | transloco)
+      }}
     </app-btn>
   </div>
 </app-modal>
 
 <!-- Discord preview modal -->
-<app-modal [title]="'incidents.discordPreview' | transloco" width="md" [(open)]="showDiscordPreview">
+<app-modal
+  [title]="'incidents.discordPreview' | transloco"
+  width="md"
+  [(open)]="showDiscordPreview"
+>
   <pre class="discord-preview">{{ discordPreviewText }}</pre>
   <div modal-footer>
     <app-btn variant="accent" (click)="copyDiscordText()">
-      {{ copiedDecisions ? ('incidents.copied' | transloco) : ('incidents.copyToClipboard' | transloco) }}
+      {{
+        copiedDecisions
+          ? ('incidents.copied' | transloco)
+          : ('incidents.copyToClipboard' | transloco)
+      }}
     </app-btn>
     <app-btn variant="ghost" (click)="showDiscordPreview.set(false)">
       {{ 'incidents.close' | transloco }}

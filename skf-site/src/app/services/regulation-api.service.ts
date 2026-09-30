@@ -57,10 +57,9 @@ export class RegulationApiService {
 
   /** Public: get single page content */
   getPage(slug: string, lang: string): Observable<RegulationContentOut> {
-    return this.http.get<RegulationContentOut>(
-      `${API}/regulations/${encodeURIComponent(slug)}`,
-      { params: { lang } },
-    );
+    return this.http.get<RegulationContentOut>(`${API}/regulations/${encodeURIComponent(slug)}`, {
+      params: { lang },
+    });
   }
 
   /** Admin: list all pages with all contents */

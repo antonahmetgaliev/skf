@@ -11,7 +11,16 @@ import { DriverPublic, ProfileApiService } from '../../services/profile-api.serv
 
 @Component({
   selector: 'app-drivers-list',
-  imports: [RouterLink, FormsModule, TranslocoPipe, InputDirective, PageIntroComponent, PageLayoutComponent, SpinnerComponent, EmptyComponent],
+  imports: [
+    RouterLink,
+    FormsModule,
+    TranslocoPipe,
+    InputDirective,
+    PageIntroComponent,
+    PageLayoutComponent,
+    SpinnerComponent,
+    EmptyComponent,
+  ],
   templateUrl: './drivers-list.component.html',
   styleUrl: './drivers-list.component.scss',
 })

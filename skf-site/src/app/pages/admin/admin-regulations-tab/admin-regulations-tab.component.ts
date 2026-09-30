@@ -18,7 +18,16 @@ import {
 @Component({
   selector: 'app-admin-regulations-tab',
   standalone: true,
-  imports: [FormsModule, BtnComponent, CardComponent, EmptyComponent, FormFieldComponent, SpinnerComponent, InputDirective, MarkdownPipe],
+  imports: [
+    FormsModule,
+    BtnComponent,
+    CardComponent,
+    EmptyComponent,
+    FormFieldComponent,
+    SpinnerComponent,
+    InputDirective,
+    MarkdownPipe,
+  ],
   templateUrl: './admin-regulations-tab.component.html',
   styleUrl: './admin-regulations-tab.component.scss',
 })
@@ -106,48 +115,52 @@ export class AdminRegulationsTabComponent implements OnInit {
     this.saving.set(true);
     this.message.set('');
 
-    this.api.updatePage(page.id, {
-      slug: this.editSlug !== page.slug ? this.editSlug : undefined,
-      sortOrder: this.editSortOrder,
-      isVisible: this.editIsVisible,
-      contents: this.editContents,
-    }).subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.message.set('Saved');
-        this.loadPages();
-        setTimeout(() => this.message.set(''), 2000);
-      },
-      error: (err) => {
-        this.saving.set(false);
-        this.message.set(err?.error?.detail ?? 'Failed to save.');
-      },
-    });
+    this.api
+      .updatePage(page.id, {
+        slug: this.editSlug !== page.slug ? this.editSlug : undefined,
+        sortOrder: this.editSortOrder,
+        isVisible: this.editIsVisible,
+        contents: this.editContents,
+      })
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.message.set('Saved');
+          this.loadPages();
+          setTimeout(() => this.message.set(''), 2000);
+        },
+        error: (err) => {
+          this.saving.set(false);
+          this.message.set(err?.error?.detail ?? 'Failed to save.');
+        },
+      });
   }
 
   createPage(): void {
     if (!this.newSlug.trim()) return;
 
     this.saving.set(true);
-    this.api.createPage({
-      slug: this.newSlug.trim(),
-      sortOrder: this.newSortOrder,
-      contents: {},
-    }).subscribe({
-      next: (page) => {
-        this.saving.set(false);
-        this.showNewForm.set(false);
-        this.newSlug = '';
-        this.newSortOrder = 0;
-        this.pages.update((list) => [...list, page]);
-        this.selectPage(page.id);
-        this.loadPages();
-      },
-      error: (err) => {
-        this.saving.set(false);
-        this.message.set(err?.error?.detail ?? 'Failed to create.');
-      },
-    });
+    this.api
+      .createPage({
+        slug: this.newSlug.trim(),
+        sortOrder: this.newSortOrder,
+        contents: {},
+      })
+      .subscribe({
+        next: (page) => {
+          this.saving.set(false);
+          this.showNewForm.set(false);
+          this.newSlug = '';
+          this.newSortOrder = 0;
+          this.pages.update((list) => [...list, page]);
+          this.selectPage(page.id);
+          this.loadPages();
+        },
+        error: (err) => {
+          this.saving.set(false);
+          this.message.set(err?.error?.detail ?? 'Failed to create.');
+        },
+      });
   }
 
   toggleVisibility(page: RegulationPageOut): void {

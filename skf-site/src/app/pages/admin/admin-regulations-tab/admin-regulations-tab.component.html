@@ -14,12 +14,24 @@
       @if (showNewForm()) {
         <div class="new-page-form">
           <app-form-field label="Slug" fieldId="newRegSlug">
-            <input appInput id="newRegSlug" type="text" [(ngModel)]="newSlug" placeholder="e.g. my-regulations" autocomplete="off" />
+            <input
+              appInput
+              id="newRegSlug"
+              type="text"
+              [(ngModel)]="newSlug"
+              placeholder="e.g. my-regulations"
+              autocomplete="off"
+            />
           </app-form-field>
           <app-form-field label="Sort Order" fieldId="newRegSort">
             <input appInput id="newRegSort" type="number" [(ngModel)]="newSortOrder" />
           </app-form-field>
-          <app-btn variant="accent" size="sm" [disabled]="saving() || !newSlug.trim()" (click)="createPage()">
+          <app-btn
+            variant="accent"
+            size="sm"
+            [disabled]="saving() || !newSlug.trim()"
+            (click)="createPage()"
+          >
             Create
           </app-btn>
         </div>
@@ -52,7 +64,13 @@
                 >
                   {{ page.isVisible ? 'Hide' : 'Show' }}
                 </button>
-                <button class="btn-link btn-link--danger" type="button" (click)="deletePage(page); $event.stopPropagation()">×</button>
+                <button
+                  class="btn-link btn-link--danger"
+                  type="button"
+                  (click)="deletePage(page); $event.stopPropagation()"
+                >
+                  ×
+                </button>
               </div>
             </li>
           }
@@ -107,7 +125,8 @@
           @if (activeLang() === lang) {
             <div class="content-editor">
               <app-form-field label="Title" [fieldId]="'regTitle-' + lang">
-                <input appInput
+                <input
+                  appInput
                   [id]="'regTitle-' + lang"
                   type="text"
                   [ngModel]="editContents[lang]?.title ?? ''"
@@ -116,7 +135,8 @@
                 />
               </app-form-field>
               <app-form-field label="Subtitle" [fieldId]="'regSubtitle-' + lang">
-                <input appInput
+                <input
+                  appInput
                   [id]="'regSubtitle-' + lang"
                   type="text"
                   [ngModel]="editContents[lang]?.subtitle ?? ''"
@@ -127,7 +147,10 @@
 
               @if (showPreview()) {
                 <div class="preview-container">
-                  <div class="regulation-content" [innerHTML]="editContents[lang]?.content | markdown"></div>
+                  <div
+                    class="regulation-content"
+                    [innerHTML]="editContents[lang]?.content | markdown"
+                  ></div>
                 </div>
               } @else {
                 <app-form-field label="Content (Markdown)" [fieldId]="'regContent-' + lang">

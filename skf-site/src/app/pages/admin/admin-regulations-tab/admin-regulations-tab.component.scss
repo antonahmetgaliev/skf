@@ -99,7 +99,9 @@
   cursor: pointer;
   user-select: none;
 
-  input { cursor: pointer; }
+  input {
+    cursor: pointer;
+  }
 }
 
 .page-item-info {
@@ -184,7 +186,10 @@
   padding: 0.35rem 0.75rem;
   border-radius: 999px;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
 
   &:hover {
     background: rgba(255, 255, 255, 0.06);

@@ -11,7 +11,16 @@ import { DriverPublic, ProfileApiService } from '../../services/profile-api.serv
 
 @Component({
   selector: 'app-driver-profile',
-  imports: [DatePipe, RouterLink, TranslocoPipe, BadgeComponent, BtnComponent, CardComponent, EmptyComponent, PageLayoutComponent],
+  imports: [
+    DatePipe,
+    RouterLink,
+    TranslocoPipe,
+    BadgeComponent,
+    BtnComponent,
+    CardComponent,
+    EmptyComponent,
+    PageLayoutComponent,
+  ],
   templateUrl: './driver-profile.component.html',
   styleUrl: './driver-profile.component.scss',
 })

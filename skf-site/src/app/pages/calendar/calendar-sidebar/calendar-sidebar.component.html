@@ -5,7 +5,9 @@
     class="filters-close"
     (click)="closed.emit()"
     [title]="'calendar.close' | transloco"
-  >&times;</button>
+  >
+    &times;
+  </button>
 </div>
 
 <ul class="community-list">
@@ -46,7 +48,9 @@
 
 <div class="filter-section">
   <label class="filter-label" for="simulatorFilter">{{ 'calendar.simulator' | transloco }}</label>
-  <select appSelect size="sm"
+  <select
+    appSelect
+    size="sm"
     id="simulatorFilter"
     [ngModel]="selectedSimulator()"
     (ngModelChange)="simulatorChange.emit($event || null)"

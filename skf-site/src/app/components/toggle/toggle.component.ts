@@ -13,7 +13,9 @@ import { TranslocoPipe } from '@jsverse/transloco';
           type="button"
           [class.active]="activeKey() === option.key"
           (click)="keyChange.emit(option.key)"
-        >{{ option.label | transloco }}</button>
+        >
+          {{ option.label | transloco }}
+        </button>
       }
     </div>
   `,

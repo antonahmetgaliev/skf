@@ -35,7 +35,11 @@ export class ChampionshipFormComponent {
   readonly save = output<ChampionshipFormData>();
 
   readonly form = signal<ChampionshipFormData>({
-    name: '', game: '', carClass: null, description: null, races: [],
+    name: '',
+    game: '',
+    carClass: null,
+    description: null,
+    races: [],
   });
   readonly multiDay = signal(false);
 

@@ -13,9 +13,19 @@ import { RegulationApiService, RegulationPageListItem } from './services/regulat
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, TranslocoPipe, LangSwitcherComponent, ConfirmDialogComponent, CookieConsentComponent, LoadingBarComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    FormsModule,
+    TranslocoPipe,
+    LangSwitcherComponent,
+    ConfirmDialogComponent,
+    CookieConsentComponent,
+    LoadingBarComponent,
+  ],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.scss',
 })
 export class App implements OnInit {
   readonly auth = inject(AuthService);
@@ -92,6 +102,8 @@ export class App implements OnInit {
   }
 
   private updateRegulationsActive(url: string): void {
-    this.regulationsActive.set(url === '/regulations' || url.startsWith('/regulations/') || url.startsWith('/regulations?'));
+    this.regulationsActive.set(
+      url === '/regulations' || url.startsWith('/regulations/') || url.startsWith('/regulations?'),
+    );
   }
 }

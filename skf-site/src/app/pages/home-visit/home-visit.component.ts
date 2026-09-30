@@ -47,7 +47,11 @@ export class HomeVisitComponent {
     this.calendarApi.getCurrentEvents().pipe(
       map((events) =>
         events
-          .filter((ev) => ev.source === 'simgrid' && (ev.eventType === 'ongoing' || ev.eventType === 'upcoming'))
+          .filter(
+            (ev) =>
+              ev.source === 'simgrid' &&
+              (ev.eventType === 'ongoing' || ev.eventType === 'upcoming'),
+          )
           .sort(
             (a, b) =>
               Number(b.eventType === 'ongoing') - Number(a.eventType === 'ongoing') ||

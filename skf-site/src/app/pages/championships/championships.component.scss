@@ -53,7 +53,10 @@ h2 {
   text-align: left;
   display: grid;
   gap: 0.2rem;
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
 .championship-button:hover {
@@ -196,7 +199,10 @@ h2 {
   color: var(--gold-deep);
   background: rgba(255, 214, 0, 0.06);
   text-decoration: none;
-  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
 
   &:hover {
     color: #100c02;
@@ -290,7 +296,6 @@ tbody tr:hover {
   color: var(--muted);
   padding: 1rem;
 }
-
 
 // ------------------------------------------------------------------
 // Races tab
@@ -534,7 +539,9 @@ tbody tr:hover {
   font-weight: 700;
   letter-spacing: var(--tracking-normal);
   text-transform: uppercase;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
   color: var(--ink-soft);
 
   &.active {
@@ -666,7 +673,6 @@ $class-palette: #ffd600, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
     transition: none;
   }
 }
-
 
 .details-actions {
   display: flex;

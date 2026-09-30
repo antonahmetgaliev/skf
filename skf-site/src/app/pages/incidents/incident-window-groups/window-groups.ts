@@ -34,12 +34,14 @@ export function groupWindows(windows: IncidentWindowListItem[]): WindowGroup[] {
       group = { key, championshipId: w.championshipId, name: null, windows: [], openCount: 0 };
       groups.set(key, group);
     }
-    group.name ??= w.championshipName ?? (w.championshipId !== null ? `#${w.championshipId}` : null);
+    group.name ??=
+      w.championshipName ?? (w.championshipId !== null ? `#${w.championshipId}` : null);
     group.windows.push(w);
     if (w.isOpen) group.openCount++;
   }
 
-  const latest = (g: WindowGroup) => g.windows.reduce((max, w) => (w.openedAt > max ? w.openedAt : max), '');
+  const latest = (g: WindowGroup) =>
+    g.windows.reduce((max, w) => (w.openedAt > max ? w.openedAt : max), '');
   for (const g of groups.values()) {
     g.windows.sort((a, b) => raceOrder(a).localeCompare(raceOrder(b)));
   }

@@ -6,9 +6,12 @@
     @if (championshipsLoading()) {
       <app-spinner />
     } @else {
-      <select appSelect id="giveawayChampionship"
+      <select
+        appSelect
+        id="giveawayChampionship"
         [ngModel]="selectedChampionshipId()"
-        (ngModelChange)="selectChampionship($event)">
+        (ngModelChange)="selectChampionship($event)"
+      >
         <option [ngValue]="null">{{ 'giveaway.choosePlaceholder' | transloco }}</option>
         @for (champ of championships(); track champ.id) {
           <option [ngValue]="champ.id">{{ champ.name }}</option>
@@ -77,22 +80,35 @@
 
           @if (aliasTarget()?.normalizedName === name.normalizedName) {
             <div class="alias-form">
-              <input appInput size="sm" type="text"
+              <input
+                appInput
+                size="sm"
+                type="text"
                 [placeholder]="'giveaway.canonicalPlaceholder' | transloco"
                 [ngModel]="aliasCanonical()"
-                (ngModelChange)="aliasCanonical.set($event)" />
+                (ngModelChange)="aliasCanonical.set($event)"
+              />
               @if (name.suggestions.length > 0) {
                 <div class="alias-suggestions">
                   @for (suggestion of name.suggestions; track suggestion) {
-                    <button type="button" class="alias-chip"
-                      (click)="aliasCanonical.set(suggestion)">{{ suggestion }}</button>
+                    <button
+                      type="button"
+                      class="alias-chip"
+                      (click)="aliasCanonical.set(suggestion)"
+                    >
+                      {{ suggestion }}
+                    </button>
                   }
                 </div>
               }
               <div class="alias-actions">
-                <app-btn variant="accent" size="xs"
+                <app-btn
+                  variant="accent"
+                  size="xs"
                   [disabled]="!aliasCanonical().trim()"
-                  (click)="confirmAlias()">{{ 'giveaway.merge' | transloco }}</app-btn>
+                  (click)="confirmAlias()"
+                  >{{ 'giveaway.merge' | transloco }}</app-btn
+                >
                 <app-btn variant="ghost" size="xs" (click)="cancelAlias()">
                   {{ 'giveaway.cancel' | transloco }}
                 </app-btn>
@@ -116,16 +132,29 @@
 
     <div class="rules-row">
       <app-form-field [label]="'giveaway.minDistance' | transloco" fieldId="minDistancePct">
-        <input appInput size="sm" id="minDistancePct" type="number" min="0" max="100"
+        <input
+          appInput
+          size="sm"
+          id="minDistancePct"
+          type="number"
+          min="0"
+          max="100"
           [ngModel]="minDistancePct()"
           (ngModelChange)="minDistancePct.set($event)"
-          (change)="onRulesChanged()" />
+          (change)="onRulesChanged()"
+        />
       </app-form-field>
       <app-form-field [label]="'giveaway.minRounds' | transloco" fieldId="minRounds">
-        <input appInput size="sm" id="minRounds" type="number" min="1"
+        <input
+          appInput
+          size="sm"
+          id="minRounds"
+          type="number"
+          min="1"
           [ngModel]="minRounds()"
           (ngModelChange)="minRounds.set($event)"
-          (change)="onRulesChanged()" />
+          (change)="onRulesChanged()"
+        />
       </app-form-field>
     </div>
 
@@ -142,9 +171,14 @@
       @if (carClasses().length > 1) {
         <div class="class-switch">
           @for (carClass of carClasses(); track carClass) {
-            <button type="button" class="class-chip"
+            <button
+              type="button"
+              class="class-chip"
               [class.active]="selectedClass() === carClass"
-              (click)="selectClass(carClass)">{{ carClass }}</button>
+              (click)="selectClass(carClass)"
+            >
+              {{ carClass }}
+            </button>
           }
         </div>
       }
@@ -160,9 +194,13 @@
       }
 
       <div class="draw-row">
-        <app-btn variant="accent" size="sm"
+        <app-btn
+          variant="accent"
+          size="sm"
           [disabled]="poolForSelectedClass().length === 0"
-          (click)="draw()">{{ 'giveaway.getRandom' | transloco }}</app-btn>
+          (click)="draw()"
+          >{{ 'giveaway.getRandom' | transloco }}</app-btn
+        >
         <span class="draw-count">
           {{ poolForSelectedClass().length }} {{ 'giveaway.driversEligible' | transloco }}
         </span>
@@ -172,7 +210,11 @@
         <app-empty>{{ 'giveaway.noDriversMatch' | transloco }}</app-empty>
       } @else {
         <div class="driver-list">
-          @for (driver of poolForSelectedClass(); track driver.identity + driver.carClass; let i = $index) {
+          @for (
+            driver of poolForSelectedClass();
+            track driver.identity + driver.carClass;
+            let i = $index
+          ) {
             <div class="driver-row">
               <span class="driver-rank">{{ i + 1 }}</span>
               <span class="driver-name">{{ driver.displayName }}</span>
@@ -181,8 +223,11 @@
               </span>
               <span class="driver-breakdown">
                 @for (round of driver.rounds; track round.roundKey) {
-                  <span class="lap-pct" [class.lap-pct--out]="!round.qualifies"
-                    [title]="round.roundLabel + ': ' + round.laps + '/' + round.classLeaderLaps">
+                  <span
+                    class="lap-pct"
+                    [class.lap-pct--out]="!round.qualifies"
+                    [title]="round.roundLabel + ': ' + round.laps + '/' + round.classLeaderLaps"
+                  >
                     {{ round.distancePct }}%
                   </span>
                 }

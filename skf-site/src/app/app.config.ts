@@ -33,5 +33,5 @@ export const appConfig: ApplicationConfig = {
       loader: TranslocoHttpLoader,
     }),
     provideAppInitializer(() => inject(AnalyticsService).init()),
-  ]
+  ],
 };

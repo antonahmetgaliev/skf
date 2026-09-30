@@ -11,11 +11,7 @@ import { PageLayoutComponent } from '../../components/page-layout/page-layout.co
 import { BtnComponent } from '../../components/btn/btn.component';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { RouterLink } from '@angular/router';
-import {
-  BwpApiService,
-  BwpPoint,
-  PenaltyRule
-} from '../../services/bwp-api.service';
+import { BwpApiService, BwpPoint, PenaltyRule } from '../../services/bwp-api.service';
 import { DriverPublic, ProfileApiService } from '../../services/profile-api.service';
 import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
@@ -26,9 +22,22 @@ const GUIDE_COLLAPSED_KEY = 'bwp.guideCollapsed';
 
 @Component({
   selector: 'app-bwp-license',
-  imports: [FormsModule, RouterLink, TranslocoPipe, InputDirective, SelectDirective, CardComponent, EmptyComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, BtnComponent, ModalComponent],
+  imports: [
+    FormsModule,
+    RouterLink,
+    TranslocoPipe,
+    InputDirective,
+    SelectDirective,
+    CardComponent,
+    EmptyComponent,
+    FormFieldComponent,
+    PageIntroComponent,
+    PageLayoutComponent,
+    BtnComponent,
+    ModalComponent,
+  ],
   templateUrl: './bwp-license.component.html',
-  styleUrl: './bwp-license.component.scss'
+  styleUrl: './bwp-license.component.scss',
 })
 export class BwpLicenseComponent {
   private readonly api = inject(BwpApiService);
@@ -39,13 +48,13 @@ export class BwpLicenseComponent {
 
   readonly drivers = signal<DriverPublic[]>([]);
   readonly sortedDrivers = computed(() =>
-    [...this.drivers()].sort((a, b) => a.name.localeCompare(b.name))
+    [...this.drivers()].sort((a, b) => a.name.localeCompare(b.name)),
   );
   readonly penaltyRules = signal<PenaltyRule[]>([]);
   readonly sortedPenaltyRules = computed(() =>
     [...this.penaltyRules()]
       .filter((rule) => Number.isFinite(rule.threshold) && rule.threshold > 0)
-      .sort((a, b) => a.threshold - b.threshold)
+      .sort((a, b) => a.threshold - b.threshold),
   );
   readonly maxThreshold = computed(() => {
     const rules = this.sortedPenaltyRules();
@@ -142,23 +151,21 @@ export class BwpLicenseComponent {
         this.drivers.set(drivers);
         this.collapsedDrivers.set(new Set(drivers.map((d) => d.id)));
         if (drivers.length > 0 && !this.selectedDriverId) {
-          this.selectedDriverId = [...drivers].sort((a, b) =>
-            a.name.localeCompare(b.name)
-          )[0].id;
+          this.selectedDriverId = [...drivers].sort((a, b) => a.name.localeCompare(b.name))[0].id;
         }
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
 
     this.api.getPenaltyRules().subscribe({
-      next: (rules) => this.penaltyRules.set(rules)
+      next: (rules) => this.penaltyRules.set(rules),
     });
   }
 
   private refreshDrivers(): void {
     this.profileApi.getPublicDrivers().subscribe({
-      next: (drivers) => this.drivers.set(drivers)
+      next: (drivers) => this.drivers.set(drivers),
     });
   }
 
@@ -188,7 +195,7 @@ export class BwpLicenseComponent {
         },
         error: (err) => {
           this.driverError = err?.error?.detail ?? 'Failed to add driver.';
-        }
+        },
       });
     } else if (selection !== '__none__') {
       // Driver already in DB — just set them as selected for the points form
@@ -196,7 +203,7 @@ export class BwpLicenseComponent {
       this.newDriverSelection.set('__none__');
       this.driverError = '';
     } else {
-      this.driverError = 'Select a driver or choose \'Add new driver\'.';
+      this.driverError = "Select a driver or choose 'Add new driver'.";
     }
   }
 
@@ -213,10 +220,8 @@ export class BwpLicenseComponent {
 
     this.api.deleteDriver(driverId).subscribe({
       next: () => {
-        this.drivers.update((list) =>
-          list.filter((d) => d.id !== driverId)
-        );
-      }
+        this.drivers.update((list) => list.filter((d) => d.id !== driverId));
+      },
     });
   }
 
@@ -237,13 +242,11 @@ export class BwpLicenseComponent {
     this.driverError = '';
     this.api.updateDriver(driverId, { name: nextName }).subscribe({
       next: (updated) => {
-        this.drivers.update((list) =>
-          list.map((d) => (d.id === driverId ? updated : d))
-        );
+        this.drivers.update((list) => list.map((d) => (d.id === driverId ? updated : d)));
       },
       error: (err) => {
         this.driverError = err?.error?.detail ?? 'Failed to rename driver.';
-      }
+      },
     });
   }
 
@@ -266,13 +269,11 @@ export class BwpLicenseComponent {
     this.driverError = '';
     this.api.updateDriver(driverId, { name: driver.name, simgridDriverId: parsed }).subscribe({
       next: (updated) => {
-        this.drivers.update((list) =>
-          list.map((d) => (d.id === driverId ? updated : d))
-        );
+        this.drivers.update((list) => list.map((d) => (d.id === driverId ? updated : d)));
       },
       error: (err) => {
         this.driverError = err?.error?.detail ?? 'Failed to update SimGrid ID.';
-      }
+      },
     });
   }
 
@@ -304,13 +305,13 @@ export class BwpLicenseComponent {
       .addPoint(driverId, {
         points,
         issuedOn: this.formatInputDate(issuedDate),
-        expiresOn: this.formatInputDate(expiresDate)
+        expiresOn: this.formatInputDate(expiresDate),
       })
       .subscribe({
         next: () => this.refreshDrivers(),
         error: () => {
           this.pointError = 'Failed to add point.';
-        }
+        },
       });
   }
 
@@ -324,13 +325,13 @@ export class BwpLicenseComponent {
     if (!ok) return;
 
     this.api.deletePoint(pointId).subscribe({
-      next: () => this.refreshDrivers()
+      next: () => this.refreshDrivers(),
     });
   }
 
   expirePoint(pointId: string): void {
     this.api.expirePoint(pointId, '').subscribe({
-      next: () => this.refreshDrivers()
+      next: () => this.refreshDrivers(),
     });
   }
 
@@ -338,14 +339,11 @@ export class BwpLicenseComponent {
 
   addPenaltyRule(): void {
     const rules = this.penaltyRules();
-    const maxThreshold = rules.reduce(
-      (max, r) => Math.max(max, r.threshold),
-      0
-    );
+    const maxThreshold = rules.reduce((max, r) => Math.max(max, r.threshold), 0);
     const next = maxThreshold > 0 ? maxThreshold + 3 : 3;
 
     this.api.createPenaltyRule({ threshold: next, label: 'New penalty' }).subscribe({
-      next: (rule) => this.penaltyRules.update((list) => [...list, rule])
+      next: (rule) => this.penaltyRules.update((list) => [...list, rule]),
     });
   }
 
@@ -361,7 +359,7 @@ export class BwpLicenseComponent {
         }
         if (patch.label !== undefined) updated.label = String(patch.label);
         return updated;
-      })
+      }),
     );
 
     const apiPatch: { threshold?: number; label?: string } = {};
@@ -385,17 +383,14 @@ export class BwpLicenseComponent {
     });
     if (!ok) return;
     this.api.deletePenaltyRule(ruleId).subscribe({
-      next: () =>
-        this.penaltyRules.update((list) =>
-          list.filter((r) => r.id !== ruleId)
-        )
+      next: () => this.penaltyRules.update((list) => list.filter((r) => r.id !== ruleId)),
     });
   }
 
   expireAllDriverPoints(driverId: string): void {
     if (!window.confirm('Expire all active BWP points for this driver?')) return;
     this.api.expireAllPoints(driverId, '').subscribe({
-      next: () => this.refreshDrivers()
+      next: () => this.refreshDrivers(),
     });
   }
 
@@ -409,7 +404,7 @@ export class BwpLicenseComponent {
     const isCleared = this.isClearedPenalty(driver, ruleId);
     if (isCleared) {
       this.api.removeClearance(driver.id, ruleId).subscribe({
-        next: () => this.refreshDrivers()
+        next: () => this.refreshDrivers(),
       });
     } else {
       this.api.setClearance(driver.id, ruleId).subscribe({
@@ -422,12 +417,12 @@ export class BwpLicenseComponent {
 
           if (allCleared) {
             this.api.expireAllPoints(driver.id, '').subscribe({
-              next: () => this.refreshDrivers()
+              next: () => this.refreshDrivers(),
             });
           } else {
             this.refreshDrivers();
           }
-        }
+        },
       });
     }
   }

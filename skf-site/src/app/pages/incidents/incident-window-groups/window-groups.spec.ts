@@ -33,7 +33,12 @@ describe('groupWindows', () => {
     const groups = groupWindows([
       win({ championshipId: null, openedAt: '2026-09-20T00:00:00Z', isOpen: true }),
       win({ championshipId: 1, championshipName: 'Recent', openedAt: '2026-09-15T00:00:00Z' }),
-      win({ championshipId: 2, championshipName: 'Open', openedAt: '2026-08-01T00:00:00Z', isOpen: true }),
+      win({
+        championshipId: 2,
+        championshipName: 'Open',
+        openedAt: '2026-08-01T00:00:00Z',
+        isOpen: true,
+      }),
       win({ championshipId: 3, championshipName: 'Old', openedAt: '2026-07-01T00:00:00Z' }),
     ]);
     expect(groups.map((g) => g.name ?? g.key)).toEqual(['Open', 'Recent', 'Old', OTHER_GROUP_KEY]);

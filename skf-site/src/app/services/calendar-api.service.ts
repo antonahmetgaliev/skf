@@ -125,7 +125,6 @@ export interface CommunityRequest {
   description: string;
 }
 
-
 @Injectable({ providedIn: 'root' })
 export class CalendarApiService {
   private readonly http = inject(HttpClient);
@@ -264,9 +263,7 @@ export class CalendarApiService {
   }
 
   deleteRace(champId: string, raceId: string): Observable<void> {
-    return this.http.delete<void>(
-      `${this.base}/custom-championships/${champId}/races/${raceId}`,
-    );
+    return this.http.delete<void>(`${this.base}/custom-championships/${champId}/races/${raceId}`);
   }
 
   syncRaces(champId: string, races: CustomRaceSync[]): Observable<CustomRaceOut[]> {

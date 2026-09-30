@@ -1,5 +1,4 @@
 <app-page>
-
   <!-- ───── HERO ───── -->
   <div class="hero">
     <p class="eyebrow">{{ 'home.eyebrow' | transloco }}</p>
@@ -42,8 +41,12 @@
           <h3>{{ 'home.steps.rulesTitle' | transloco }}</h3>
           <p>{{ 'home.steps.rulesDesc' | transloco }}</p>
           <div class="step-actions">
-            <a class="step-link" routerLink="/regulations">{{ 'home.steps.rulesAction' | transloco }} →</a>
-            <a class="step-link" routerLink="/bwp-license">{{ 'home.steps.bwpAction' | transloco }} →</a>
+            <a class="step-link" routerLink="/regulations"
+              >{{ 'home.steps.rulesAction' | transloco }} →</a
+            >
+            <a class="step-link" routerLink="/bwp-license"
+              >{{ 'home.steps.bwpAction' | transloco }} →</a
+            >
           </div>
         </app-card>
       </li>
@@ -64,12 +67,18 @@
             <div class="champ-body">
               <div class="champ-badges">
                 @if (isOngoing(champ)) {
-                  <app-badge variant="ongoing">{{ 'calendar.eventType.ongoing' | transloco }}</app-badge>
+                  <app-badge variant="ongoing">{{
+                    'calendar.eventType.ongoing' | transloco
+                  }}</app-badge>
                 } @else {
-                  <app-badge variant="upcoming">{{ 'calendar.eventType.upcoming' | transloco }}</app-badge>
+                  <app-badge variant="upcoming">{{
+                    'calendar.eventType.upcoming' | transloco
+                  }}</app-badge>
                 }
                 @if (champ.acceptingRegistrations) {
-                  <app-badge variant="open">{{ 'calendar.registrationOpen' | transloco }}</app-badge>
+                  <app-badge variant="open">{{
+                    'calendar.registrationOpen' | transloco
+                  }}</app-badge>
                 }
               </div>
               <h3 class="champ-name">{{ champ.name }}</h3>
@@ -96,7 +105,8 @@
                     <dt>{{ 'home.championships.statRounds' | transloco }}</dt>
                     <dd>
                       @if (isOngoing(champ)) {
-                        {{ roundsDone(champ) }}<span class="champ-stat-total">/{{ champ.races.length }}</span>
+                        {{ roundsDone(champ)
+                        }}<span class="champ-stat-total">/{{ champ.races.length }}</span>
                       } @else {
                         {{ champ.races.length }}
                       }
@@ -106,7 +116,10 @@
                 @if (champ.acceptingRegistrations && champ.capacity) {
                   <div class="champ-stat">
                     <dt>{{ 'home.championships.statSpots' | transloco }}</dt>
-                    <dd>{{ champ.spotsTaken ?? 0 }}<span class="champ-stat-total">/{{ champ.capacity }}</span></dd>
+                    <dd>
+                      {{ champ.spotsTaken ?? 0
+                      }}<span class="champ-stat-total">/{{ champ.capacity }}</span>
+                    </dd>
                   </div>
                 }
               </dl>
@@ -119,11 +132,24 @@
               }
               <div class="champ-actions">
                 @if (champ.acceptingRegistrations && champ.registrationUrl) {
-                  <a appBtn variant="accent" size="sm" [href]="champ.registrationUrl" target="_blank" rel="noopener noreferrer">
+                  <a
+                    appBtn
+                    variant="accent"
+                    size="sm"
+                    [href]="champ.registrationUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     {{ 'home.championships.register' | transloco }}
                   </a>
                 }
-                <a appBtn variant="ghost" size="sm" routerLink="/championships" [queryParams]="{ id: champ.simgridChampionshipId }">
+                <a
+                  appBtn
+                  variant="ghost"
+                  size="sm"
+                  routerLink="/championships"
+                  [queryParams]="{ id: champ.simgridChampionshipId }"
+                >
                   {{ 'home.championships.details' | transloco }}
                 </a>
               </div>

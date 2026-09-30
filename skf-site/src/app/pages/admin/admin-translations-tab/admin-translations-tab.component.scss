@@ -190,7 +190,9 @@
   font-size: 1.1rem;
   padding: 0.2rem 0.4rem;
   border-radius: var(--radius-sm);
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 
   &:hover {
     color: var(--danger);

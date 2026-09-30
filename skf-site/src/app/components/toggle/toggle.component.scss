@@ -23,7 +23,9 @@
   color: var(--muted);
   cursor: pointer;
   border-radius: 999px;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
   white-space: nowrap;
 
   &:hover:not(.active) {

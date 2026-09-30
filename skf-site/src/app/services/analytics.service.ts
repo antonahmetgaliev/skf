@@ -42,7 +42,7 @@ export class AnalyticsService {
           this.start();
         }
       },
-      { injector: this.injector }
+      { injector: this.injector },
     );
   }
 

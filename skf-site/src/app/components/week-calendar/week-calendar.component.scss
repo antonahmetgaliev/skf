@@ -72,18 +72,19 @@
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 /* ── Today panel ── */
 .today-panel {
   border-color: var(--gold-deep);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 214, 0, 0.08) 0%,
-    var(--card-bg) 100%
-  );
+  background: linear-gradient(135deg, rgba(255, 214, 0, 0.08) 0%, var(--card-bg) 100%);
 }
 
 .today-races-grid {
@@ -96,11 +97,7 @@
   text-align: center;
   padding: 1.5rem 1rem;
   border: 1px solid rgba(255, 214, 0, 0.3);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 214, 0, 0.06) 0%,
-    transparent 100%
-  );
+  background: linear-gradient(135deg, rgba(255, 214, 0, 0.06) 0%, transparent 100%);
 }
 
 .race-badge {
@@ -235,7 +232,9 @@
   border: 1px solid var(--border-subtle);
   background: rgba(255, 255, 255, 0.03);
   text-decoration: none;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 
   &:hover {
     border-color: rgba(255, 214, 0, 0.4);
@@ -298,11 +297,7 @@
 /* ── Next race panel (empty week state) ── */
 .next-race-panel {
   border-color: var(--gold-deep);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 214, 0, 0.06) 0%,
-    var(--card-bg) 100%
-  );
+  background: linear-gradient(135deg, rgba(255, 214, 0, 0.06) 0%, var(--card-bg) 100%);
 }
 
 .next-race-card {
@@ -313,7 +308,9 @@
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 214, 0, 0.25);
   background: rgba(255, 255, 255, 0.03);
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 
   &:hover {
     border-color: rgba(255, 214, 0, 0.5);

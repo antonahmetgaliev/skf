@@ -20,11 +20,29 @@ import { AdminRegulationsTabComponent } from './admin-regulations-tab/admin-regu
 import { AdminTranslationsTabComponent } from './admin-translations-tab/admin-translations-tab.component';
 import { UserItemComponent } from './user-item/user-item.component';
 
-type AdminTab = 'users' | 'site' | 'calendar' | 'translations' | 'regulations' | 'raceResults' | 'giveaway';
+type AdminTab =
+  'users' | 'site' | 'calendar' | 'translations' | 'regulations' | 'raceResults' | 'giveaway';
 
 @Component({
   selector: 'app-admin',
-  imports: [FormsModule, TranslocoPipe, InputDirective, AdminCalendarTabComponent, AdminGiveawayTabComponent, AdminRaceResultsTabComponent, AdminRegulationsTabComponent, AdminTranslationsTabComponent, BtnComponent, CardComponent, FormFieldComponent, PageIntroComponent, PageLayoutComponent, SpinnerComponent, TabsComponent, UserItemComponent],
+  imports: [
+    FormsModule,
+    TranslocoPipe,
+    InputDirective,
+    AdminCalendarTabComponent,
+    AdminGiveawayTabComponent,
+    AdminRaceResultsTabComponent,
+    AdminRegulationsTabComponent,
+    AdminTranslationsTabComponent,
+    BtnComponent,
+    CardComponent,
+    FormFieldComponent,
+    PageIntroComponent,
+    PageLayoutComponent,
+    SpinnerComponent,
+    TabsComponent,
+    UserItemComponent,
+  ],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',
 })
@@ -78,21 +96,17 @@ export class AdminComponent implements OnInit {
       (u) =>
         u.displayName.toLowerCase().includes(q) ||
         u.username.toLowerCase().includes(q) ||
-        u.discordId.includes(q)
+        u.discordId.includes(q),
     );
   }
 
   changeRole(user: AuthUser, newRole: Role): void {
-    this.http
-      .patch<AuthUser>(`${API}/users/${user.id}`, { role: newRole })
-      .subscribe({
-        next: (updated) => {
-          this.users.update((list) =>
-            list.map((u) => (u.id === updated.id ? updated : u))
-          );
-          this.exitEdit(user.id);
-        },
-      });
+    this.http.patch<AuthUser>(`${API}/users/${user.id}`, { role: newRole }).subscribe({
+      next: (updated) => {
+        this.users.update((list) => list.map((u) => (u.id === updated.id ? updated : u)));
+        this.exitEdit(user.id);
+      },
+    });
   }
 
   isEditing(user: AuthUser): boolean {
@@ -118,15 +132,11 @@ export class AdminComponent implements OnInit {
   }
 
   toggleBlock(user: AuthUser): void {
-    this.http
-      .patch<AuthUser>(`${API}/users/${user.id}`, { blocked: !user.blocked })
-      .subscribe({
-        next: (updated) => {
-          this.users.update((list) =>
-            list.map((u) => (u.id === updated.id ? updated : u))
-          );
-        },
-      });
+    this.http.patch<AuthUser>(`${API}/users/${user.id}`, { blocked: !user.blocked }).subscribe({
+      next: (updated) => {
+        this.users.update((list) => list.map((u) => (u.id === updated.id ? updated : u)));
+      },
+    });
   }
 
   forceLogout(user: AuthUser): void {
@@ -155,7 +165,7 @@ export class AdminComponent implements OnInit {
       .subscribe({
         next: (result) => {
           this.users.update((list) =>
-            list.map((u) => (u.id === user.id ? { ...u, managedCommunityIds: result } : u))
+            list.map((u) => (u.id === user.id ? { ...u, managedCommunityIds: result } : u)),
           );
           this.exitEdit(user.id);
         },

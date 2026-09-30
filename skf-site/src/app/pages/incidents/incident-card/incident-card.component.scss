@@ -204,7 +204,9 @@
   border-radius: var(--radius-xs);
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.15s ease, color 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease;
 
   .driver-row:hover &,
   &:focus-visible {
@@ -245,7 +247,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
 
   &:hover {
     border-color: var(--border-strong);
@@ -392,4 +397,3 @@
     color: var(--muted);
   }
 }
-

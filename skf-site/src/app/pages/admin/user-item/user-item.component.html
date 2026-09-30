@@ -29,11 +29,13 @@
         }
         @if (u.driverId) {
           <span class="user-item__sep">·</span>
-          <a class="user-item__driver-link" [routerLink]="['/drivers', u.driverId]">{{ 'profile.driverProfile' | transloco }}</a>
+          <a class="user-item__driver-link" [routerLink]="['/drivers', u.driverId]">{{
+            'profile.driverProfile' | transloco
+          }}</a>
         }
         @if (u.lastLoginAt) {
           <span class="user-item__sep">·</span>
-          <span>{{ 'admin.lastLogin' | transloco }} {{ u.lastLoginAt | date:'mediumDate' }}</span>
+          <span>{{ 'admin.lastLogin' | transloco }} {{ u.lastLoginAt | date: 'mediumDate' }}</span>
         }
       </p>
     </div>
@@ -43,10 +45,7 @@
     @if (editing()) {
       <div class="user-item__edit">
         <app-form-field [label]="'admin.role' | transloco">
-          <select appSelect size="sm"
-            [ngModel]="u.role"
-            (ngModelChange)="onRoleChange($event)"
-          >
+          <select appSelect size="sm" [ngModel]="u.role" (ngModelChange)="onRoleChange($event)">
             @for (r of availableRoles(); track r) {
               <option [value]="r">{{ formatRole(r) }}</option>
             }
@@ -55,7 +54,9 @@
 
         @if (u.role === 'community_manager') {
           <app-form-field [label]="'admin.community' | transloco">
-            <select appSelect size="sm"
+            <select
+              appSelect
+              size="sm"
               [ngModel]="assignedCommunityId()"
               (ngModelChange)="onCommunityChange($event)"
             >
@@ -71,11 +72,7 @@
 
     @if (canEdit()) {
       <div class="user-item__actions">
-        <app-btn
-          [variant]="editing() ? 'outline' : 'ghost'"
-          size="sm"
-          (click)="onToggleEdit()"
-        >
+        <app-btn [variant]="editing() ? 'outline' : 'ghost'" size="sm" (click)="onToggleEdit()">
           {{ editing() ? ('admin.cancel' | transloco) : ('admin.edit' | transloco) }}
         </app-btn>
 
