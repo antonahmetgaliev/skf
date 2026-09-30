@@ -112,7 +112,7 @@ async def seed_regulations() -> None:
 
 async def backfill_window_names() -> None:
     """Runs in the background: it calls SimGrid and must not delay startup."""
-    from app.services.race_import import backfill_window_championship_names
+    from app.services.race_incidents import backfill_window_championship_names
 
     try:
         async with async_session() as session:

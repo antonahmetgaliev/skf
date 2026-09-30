@@ -29,7 +29,7 @@ from app.schemas.incidents import (
 )
 from app.services import incident_audit
 from app.services import incidents as svc
-from app.services.race_import import add_ingested_incidents, find_or_create_window
+from app.services.race_incidents import add_ingested_incidents, find_or_create_window
 
 logger = logging.getLogger(__name__)
 

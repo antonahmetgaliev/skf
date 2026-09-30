@@ -326,7 +326,7 @@ async def test_missing_championship_names_are_backfilled(admin_client, db):
     from datetime import timedelta
 
     from app.models.incidents import IncidentWindow
-    from app.services.race_import import backfill_window_championship_names
+    from app.services.race_incidents import backfill_window_championship_names
 
     now = datetime.now(UTC)
     db.add(
