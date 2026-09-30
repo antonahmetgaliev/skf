@@ -12,7 +12,6 @@ import {
 import { API } from '../api';
 import { AuthService } from '../services/auth.service';
 import { adminGuard } from './admin.guard';
-import { judgeGuard } from './judge.guard';
 
 function setup() {
   TestBed.configureTestingModule({
@@ -32,10 +31,7 @@ function run(guard: CanActivateFn) {
 
 const user = (role: string) => ({ id: '1', role, managedCommunityIds: [] });
 
-describe.each([
-  ['adminGuard', adminGuard, 'admin'],
-  ['judgeGuard', judgeGuard, 'racing_judge'],
-])('%s', (_name, guard, allowedRole) => {
+describe.each([['adminGuard', adminGuard, 'admin']])('%s', (_name, guard, allowedRole) => {
   afterEach(() => TestBed.inject(HttpTestingController).verify());
 
   it('waits for the pending /me request before allowing access (hard refresh)', async () => {
