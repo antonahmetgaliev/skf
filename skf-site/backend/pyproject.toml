@@ -1,0 +1,18 @@
+[tool.ruff]
+line-length = 110
+target-version = "py313"
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "ASYNC"]
+ignore = [
+    "E501",  # long lines are left to the formatter
+    "B008",  # FastAPI Depends() in defaults
+    "UP042",  # str+Enum -> StrEnum changes str() output
+    "UP046",  # PEP 695 generics: not worth the churn
+    "UP047",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
