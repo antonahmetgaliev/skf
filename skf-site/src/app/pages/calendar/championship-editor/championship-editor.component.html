@@ -1,0 +1,25 @@
+<app-modal
+  [title]="
+    editingId()
+      ? ('calendar.editChampionship' | transloco)
+      : ('calendar.addChampionship' | transloco)
+  "
+  width="md"
+  [(open)]="open"
+>
+  <app-championship-form
+    #formRef
+    [simulators]="simulators()"
+    [initialData]="formData()"
+    [isEditing]="!!editingId()"
+    (save)="save($event)"
+  />
+  <div modal-footer>
+    <app-btn variant="ghost" size="sm" (click)="open.set(false)">{{
+      'calendar.cancel' | transloco
+    }}</app-btn>
+    <app-btn variant="primary" size="sm" (click)="formRef.onSave()">
+      {{ editingId() ? ('calendar.update' | transloco) : ('calendar.addBtn' | transloco) }}
+    </app-btn>
+  </div>
+</app-modal>

@@ -1,10 +1,10 @@
 <ng-template #manageActions let-event>
   @if (event.source === 'custom' && canManageCommunity(event.communityId)) {
     <div class="event-manage-actions">
-      <app-btn variant="ghost" size="sm" (click)="editChampionship(event)">{{
+      <app-btn variant="ghost" size="sm" (click)="champEditor().edit(event)">{{
         'calendar.edit' | transloco
       }}</app-btn>
-      <app-btn variant="danger" size="sm" (click)="deleteChampionship(event)">{{
+      <app-btn variant="danger" size="sm" (click)="champEditor().delete(event)">{{
         'calendar.delete' | transloco
       }}</app-btn>
     </div>
@@ -90,7 +90,7 @@
               <app-btn
                 variant="accent"
                 size="sm"
-                (click)="openAddChampionship(managedCommunities()[0].id)"
+                (click)="champEditor().openAdd(managedCommunities()[0].id)"
               >
                 + {{ 'calendar.add' | transloco }}
               </app-btn>
@@ -382,32 +382,7 @@
       </div>
     </aside>
   }
-  <!-- ── Championship Modal ── -->
-  <app-modal
-    [title]="
-      editingChampId()
-        ? ('calendar.editChampionship' | transloco)
-        : ('calendar.addChampionship' | transloco)
-    "
-    width="md"
-    [(open)]="champModalOpen"
-  >
-    <app-championship-form
-      #calChampFormRef
-      [simulators]="simulators()"
-      [initialData]="champFormData()"
-      [isEditing]="!!editingChampId()"
-      (save)="saveChampionship($event)"
-    />
-    <div modal-footer>
-      <app-btn variant="ghost" size="sm" (click)="champModalOpen.set(false)">{{
-        'calendar.cancel' | transloco
-      }}</app-btn>
-      <app-btn variant="primary" size="sm" (click)="calChampFormRef.onSave()">
-        {{ editingChampId() ? ('calendar.update' | transloco) : ('calendar.addBtn' | transloco) }}
-      </app-btn>
-    </div>
-  </app-modal>
+  <app-championship-editor (changed)="reloadCalendar()" />
 
   <app-community-request-modal [(open)]="requestModalOpen" />
 </app-page>

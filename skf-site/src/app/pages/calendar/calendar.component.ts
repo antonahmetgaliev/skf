@@ -10,34 +10,24 @@ import {
   OnDestroy,
   OnInit,
   signal,
+  viewChild,
 } from '@angular/core';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { AlertComponent } from '../../components/alert/alert.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { CardComponent } from '../../components/card/card.component';
-import { ModalComponent } from '../../components/modal/modal.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { ToggleComponent } from '../../components/toggle/toggle.component';
 import { TooltipDirective } from '../../directives/tooltip.directive';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import {
-  CalendarApiService,
-  CalendarEvent,
-  Community,
-  CustomChampionshipCreate,
-} from '../../services/calendar-api.service';
-import {
-  ChampionshipFormComponent,
-  ChampionshipFormData,
-} from '../../components/championship-form/championship-form.component';
+import { CalendarApiService, CalendarEvent, Community } from '../../services/calendar-api.service';
 import { AuthService } from '../../services/auth.service';
-import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { LocaleService } from '../../services/locale.service';
 import { CalendarSidebarComponent } from './calendar-sidebar/calendar-sidebar.component';
+import { ChampionshipEditorComponent } from './championship-editor/championship-editor.component';
 import { CommunityRequestModalComponent } from './community-request-modal/community-request-modal.component';
-import { toLocalDatetimeLocal, withLocalTzOffset } from '../../utils/date';
 import {
   buildMonthGrid,
   buildYearColumns,
@@ -74,8 +64,7 @@ const VIEW_TABS: { key: string; label: string }[] = [
     CalendarSidebarComponent,
     CardComponent,
     CommunityRequestModalComponent,
-    ChampionshipFormComponent,
-    ModalComponent,
+    ChampionshipEditorComponent,
     PageLayoutComponent,
     SpinnerComponent,
     ToggleComponent,
@@ -89,8 +78,6 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly calendarApi = inject(CalendarApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly locale = inject(LocaleService);
-  private readonly confirmSvc = inject(ConfirmDialogService);
-  private readonly transloco = inject(TranslocoService);
   readonly auth = inject(AuthService);
 
   private chromeObserver?: ResizeObserver;
@@ -387,12 +374,8 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     return [];
   });
-  readonly simulators = signal<string[]>([]);
-  readonly champFormData = signal<ChampionshipFormData | null>(null);
-  readonly editingChampId = signal<string | null>(null);
-  readonly champCommunityId = signal<string | null>(null);
-  readonly champModalOpen = signal(false);
   readonly addMenuOpen = signal(false);
+  readonly champEditor = viewChild.required(ChampionshipEditorComponent);
 
   // ── Community join request ──
   readonly requestModalOpen = signal(false);
@@ -411,7 +394,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 
   selectAddCommunity(communityId: string): void {
     this.addMenuOpen.set(false);
-    this.openAddChampionship(communityId);
+    this.champEditor().openAdd(communityId);
   }
 
   @HostListener('document:click', ['$event'])
@@ -424,7 +407,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
   @HostListener('document:keydown.escape')
   onEscape(): void {
     // Modals own Escape while they are open.
-    if (this.champModalOpen() || this.requestModalOpen()) return;
+    if (this.champEditor().open() || this.requestModalOpen()) return;
     if (this.addMenuOpen()) {
       this.addMenuOpen.set(false);
       return;
@@ -451,119 +434,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-  openAddChampionship(communityId: string): void {
-    this.champFormData.set({ name: '', game: '', carClass: null, description: null, races: [] });
-    this.editingChampId.set(null);
-    this.champCommunityId.set(communityId);
-    this.champModalOpen.set(true);
-    if (this.simulators().length === 0) {
-      this.calendarApi.getSimulators().subscribe({ next: (d) => this.simulators.set(d) });
-    }
-  }
-
-  editChampionship(event: CalendarEvent): void {
-    if (!event.customChampionshipId) return;
-    this.editingChampId.set(event.customChampionshipId);
-    this.champCommunityId.set(event.communityId);
-    this.champFormData.set({
-      name: event.name,
-      game: event.game,
-      carClass: event.carClass,
-      description: event.description,
-      races: [],
-    });
-    this.champModalOpen.set(true);
-    if (this.simulators().length === 0) {
-      this.calendarApi.getSimulators().subscribe({ next: (d) => this.simulators.set(d) });
-    }
-    this.calendarApi.getCustomChampionship(event.customChampionshipId).subscribe({
-      next: (champ) => {
-        this.champFormData.set({
-          name: champ.name,
-          game: champ.game,
-          carClass: champ.carClass,
-          description: champ.description,
-          races: champ.races.map((r) => ({
-            id: r.id,
-            track: r.track ?? '',
-            date: r.date ? toLocalDatetimeLocal(r.date) : '',
-            endDate: r.endDate ? toLocalDatetimeLocal(r.endDate) : '',
-          })),
-        });
-      },
-    });
-  }
-
-  saveChampionship(form: ChampionshipFormData): void {
-    const editId = this.editingChampId();
-    if (editId) {
-      this.calendarApi
-        .updateCustomChampionship(editId, {
-          name: form.name.trim(),
-          game: form.game.trim(),
-          carClass: form.carClass?.trim() || null,
-          description: form.description?.trim() || null,
-        })
-        .subscribe({
-          next: () => {
-            const racesToSync = form.races
-              .filter((r) => r.id || r.track.trim() || r.date)
-              .map((r) => ({
-                id: r.id,
-                track: r.track.trim() || null,
-                date: withLocalTzOffset(r.date || null),
-                endDate: withLocalTzOffset(r.endDate || null),
-              }));
-            this.calendarApi.syncRaces(editId, racesToSync).subscribe({
-              next: () => {
-                this.champModalOpen.set(false);
-                this.reloadCalendar();
-              },
-            });
-          },
-        });
-    } else {
-      const communityId = this.champCommunityId();
-      if (!communityId) return;
-      const payload: CustomChampionshipCreate = {
-        name: form.name.trim(),
-        game: form.game.trim(),
-        communityId,
-        gameId: null,
-        carClass: form.carClass?.trim() || null,
-        description: form.description?.trim() || null,
-        races: form.races
-          .filter((r) => r.track.trim() || r.date)
-          .map((r) => ({
-            track: r.track.trim() || null,
-            date: withLocalTzOffset(r.date || null),
-            endDate: withLocalTzOffset(r.endDate || null),
-          })),
-      };
-      this.calendarApi.createCustomChampionship(payload).subscribe({
-        next: () => {
-          this.champModalOpen.set(false);
-          this.reloadCalendar();
-        },
-      });
-    }
-  }
-
-  async deleteChampionship(event: CalendarEvent): Promise<void> {
-    if (!event.customChampionshipId) return;
-    const ok = await this.confirmSvc.confirm({
-      title: this.transloco.translate('common.confirm.deleteTitle'),
-      message: this.transloco.translate('calendar.deleteChampionshipConfirm', { name: event.name }),
-      confirmLabel: this.transloco.translate('common.confirm.delete'),
-      danger: true,
-    });
-    if (!ok) return;
-    this.calendarApi.deleteCustomChampionship(event.customChampionshipId).subscribe({
-      next: () => this.reloadCalendar(),
-    });
-  }
-
-  private reloadCalendar(): void {
+  reloadCalendar(): void {
     this.loadYearEvents();
   }
 
