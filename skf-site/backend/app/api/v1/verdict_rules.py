@@ -19,7 +19,7 @@ from app.schemas.incidents import (
     VerdictRuleReorder,
     VerdictRuleUpdate,
 )
-from app.services import incidents as svc
+from app.services import incident_rules as svc
 
 router = APIRouter(tags=["Incidents"])
 

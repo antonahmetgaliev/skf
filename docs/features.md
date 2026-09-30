@@ -9,7 +9,7 @@ Paths are relative to `skf-site/`. Pages live in `src/app/pages/`, frontend serv
 | Drivers and BWP licence points | `bwp-license/`, `drivers-list/`, `driver-profile/` | `bwp-api.service` | `drivers`, `penalty_rules`, `driver_aliases` | `drivers`, `bwp`, `driver_matching` | `bwp` (Driver, BwpPoint, PenaltyRule, PenaltyClearance) |
 | Championships and standings | `championships/`, `home-visit/` | `simgrid-api.service`, `championship.service` | `championships`, `active_championships`, `sim_catalog` | `championships`, `championship_results`, `simgrid`, `cache` | `simgrid_cache`, `active_championship` |
 | Race-result uploads and giveaway | `admin/` (race-results and giveaway tabs) | `race-results-api.service`, `giveaway-api.service` | `race_result_imports`, `championships` (giveaway) | `race_import`, `race_files/`, `file_storage`, `giveaway` | `race_result` |
-| Incidents and judging | `incidents/` | `incidents-api.service` | `incident_windows`, `incidents`, `verdict_rules` | `incidents`, `incident_bwp` | `incidents` |
+| Incidents and judging | `incidents/` | `incidents-api.service` | `incident_windows`, `incidents`, `verdict_rules` | `incidents`, `incident_rules`, `incident_bwp`, `incident_audit` | `incidents` |
 | Calendar and communities | `calendar/`, `admin/` (calendar tab) | `calendar-api.service` | `calendar_events`, `communities`, `custom_championships` | `calendar_events`, `communities`, `custom_championships` | `community` (Community, Game), `custom_championship` |
 | Regulations | `regulations/` | `regulation-api.service` | `regulations` | `regulations` | `regulation` |
 | Translations | `admin/` (translations tab) | `translation-api.service` | `languages` | `translations` | `translation` |

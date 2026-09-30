@@ -27,6 +27,7 @@ from app.schemas.incidents import (
     IncidentWindowOut,
     ResolveDriverIncident,
 )
+from app.services import incident_audit
 from app.services import incidents as svc
 from app.services.race_import import add_ingested_incidents, find_or_create_window
 
@@ -117,7 +118,7 @@ async def list_bwp_audit_entries(
     _: User = Depends(require_admin),
 ):
     """Penalties marked applied whose driver was never linked, so no point exists."""
-    return await svc.bwp_audit(db)
+    return await incident_audit.bwp_audit(db)
 
 
 @router.post("/bwp-backfills", response_model=BwpBackfillOut)
@@ -126,7 +127,7 @@ async def create_bwp_backfill(
     _: User = Depends(require_admin),
 ):
     """Link audit entries whose name now matches a driver and issue their points."""
-    return await svc.bwp_backfill(db)
+    return await incident_audit.bwp_backfill(db)
 
 
 # ── Legacy batch ingestion (token-auth'd) ────────────────────────────────────
