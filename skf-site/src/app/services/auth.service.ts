@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { catchError, firstValueFrom, Observable, of } from 'rxjs';
-import { API } from '../api';
+import { API, Schemas } from '../api';
 
 /** Canonical role names. Mirrors backend `ROLE_*` constants in `models/user.py`. */
 export const ROLES = {
@@ -29,21 +29,8 @@ const ROLE_RANK: Record<Role, number> = {
   [ROLES.SUPER_ADMIN]: 2,
 };
 
-export interface AuthUser {
-  id: string;
-  discordId: string;
-  username: string;
-  displayName: string;
-  /** Nickname on the SKF Discord server (auto-synced, unless set manually). */
-  discordNickname: string | null;
-  avatarUrl: string | null;
-  role: Role;
-  blocked: boolean;
-  createdAt: string;
-  lastLoginAt: string | null;
-  driverId: string | null;
-  managedCommunityIds: string[];
-}
+/** The backend types `role` as a plain string; the UI narrows it to the known roles. */
+export type AuthUser = Omit<Schemas['UserOut'], 'role'> & { role: Role };
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {

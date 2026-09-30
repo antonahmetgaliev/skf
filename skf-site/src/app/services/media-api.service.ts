@@ -1,16 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable, shareReplay } from 'rxjs';
-import { API } from '../api';
+import { API, Schemas } from '../api';
 import { toLocalDateStr } from '../utils/date';
 
-export interface YouTubeVideo {
-  videoId: string;
-  title: string;
-  description: string;
-  publishedAt: string;
-  thumbnailUrl: string;
-}
+export type YouTubeVideo = Schemas['YouTubeVideo'];
 
 @Injectable({ providedIn: 'root' })
 export class MediaApiService {

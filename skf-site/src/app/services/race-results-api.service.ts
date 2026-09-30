@@ -2,10 +2,10 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { API } from '../api';
+import { API, Schemas } from '../api';
 
 /** Simulators whose result file the backend can parse. */
-export type RaceSim = 'lmu' | 'iracing';
+export type RaceSim = Schemas['RaceImportOut']['sim'];
 
 /** File each simulator's upload expects. */
 export const SIM_FILE_ACCEPT: Record<RaceSim, string> = {
@@ -18,54 +18,15 @@ export const SIM_LABELS: Record<RaceSim, string> = {
   iracing: 'iRacing',
 };
 
-export interface RaceImport {
-  id: string;
-  sim: RaceSim;
-  trackEvent: string | null;
-  sessionStartedAt: string | null;
-  sourceFilename: string | null;
-  fileSize: number | null;
-  /** The original file is kept in the bucket. */
-  hasFile: boolean;
-  entryCount: number;
-  unmatchedCount: number;
-  contactsCount: number;
-  autoGrouped: boolean;
-  createdAt: string;
-}
+export type RaceImport = Schemas['RaceImportOut'];
 
-export interface RoundWindow {
-  id: string;
-  isOpen: boolean;
-  closesAt: string;
-  incidentsCount: number;
-}
+export type RoundWindow = Schemas['RoundWindowOut'];
 
-export interface RaceRound {
-  raceId: number;
-  name: string;
-  startsAt: string | null;
-  ended: boolean;
-  raceImport: RaceImport | null;
-  window: RoundWindow | null;
-}
+export type RaceRound = Schemas['RoundOut'];
 
-export interface RaceRounds {
-  championshipId: number;
-  championshipName: string;
-  gameName: string;
-  /** Null when the championship's game has no supported result file. */
-  sim: RaceSim | null;
-  storageEnabled: boolean;
-  rounds: RaceRound[];
-}
+export type RaceRounds = Schemas['RoundsOut'];
 
-export interface ImportResult {
-  raceImport: RaceImport;
-  windowId: string | null;
-  incidentsCreated: number;
-  incidentsKept: number;
-}
+export type ImportResult = Schemas['ImportResultOut'];
 
 @Injectable({ providedIn: 'root' })
 export class RaceResultsApiService {

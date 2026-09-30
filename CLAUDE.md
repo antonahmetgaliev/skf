@@ -24,7 +24,9 @@ Backend (`cd skf-site/backend`, venv in `.venv`, `pip install -r requirements-de
 Frontend (`cd skf-site`):
 - `npm run dev` · `npm test` · `npm run lint` · `npm run format` · `npm run build`
 
-CI (`.github/workflows/ci.yml`) runs all of the above plus `alembic upgrade head` and `alembic check` on a throwaway Postgres.
+After any change to a backend schema or route, refresh the API contract: run `python -m scripts.export_openapi` in `backend/`, then `npm run api:types` in `skf-site/`. Commit `skf-site/openapi.json` and `src/app/api-schema.d.ts` with the change.
+
+CI (`.github/workflows/ci.yml`) runs all of the above. It also runs `alembic upgrade head` and `alembic check` on a throwaway Postgres, and fails if `openapi.json` or the generated types are out of date.
 
 ## Backend conventions
 - Routers in `app/api/v1/` are auto-discovered and stay thin: parse input, call a service, return a schema. Business logic and commits live in `app/services/`.
@@ -37,6 +39,7 @@ CI (`.github/workflows/ci.yml`) runs all of the above plus `alembic upgrade head
 ## Frontend conventions
 - One folder per component (`.ts/.html/.scss`), `app-` prefix, signal `input()`/`output()`, `@if`/`@for` control flow.
 - API calls go through `src/app/services/*-api.service.ts`; base path is `API` from `src/app/api.ts`.
+- API types are generated, never hand-written: `export type Foo = Schemas['FooOut']` (`Schemas` from `src/app/api.ts`). If a type is wrong, fix the Pydantic schema, not the alias.
 - UI strings go through Transloco. Keys live in `skf-site/backend/seed/translations_{en,ua}.json`.
 
 ## Things that are not obvious from the code

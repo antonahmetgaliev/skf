@@ -1,13 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { concat, last, Observable, of } from 'rxjs';
-import { API } from '../api';
+import { API, Schemas } from '../api';
 
-export interface Language {
-  code: string;
-  name: string;
-  isActive: boolean;
-}
+export type Language = Schemas['LanguageOut'];
 
 /** A flat translation bundle: `{ "some.key": "value" }`. */
 export type TranslationMap = Record<string, string>;

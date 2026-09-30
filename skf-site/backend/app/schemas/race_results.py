@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime
 
 from app.schemas.base import CamelModel
+from app.services.race_files.types import Sim
 
 
 class ImportEntryOut(CamelModel):
@@ -26,7 +27,7 @@ class ImportOut(CamelModel):
     track_event: str | None = None
     session_started_at: datetime | None = None
     source_filename: str | None = None
-    sim: str = "lmu"
+    sim: Sim = "lmu"
     created_at: datetime
     entry_count: int
     unmatched_count: int
@@ -34,7 +35,7 @@ class ImportOut(CamelModel):
 
 class RaceImportOut(CamelModel):
     id: uuid.UUID
-    sim: str
+    sim: Sim
     track_event: str | None = None
     session_started_at: datetime | None = None
     source_filename: str | None = None
@@ -68,7 +69,7 @@ class RoundsOut(CamelModel):
     championship_name: str
     game_name: str
     # None when the championship's game has no supported result file.
-    sim: str | None = None
+    sim: Sim | None = None
     storage_enabled: bool
     rounds: list[RoundOut]
 

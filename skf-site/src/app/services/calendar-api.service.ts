@@ -1,129 +1,35 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { forkJoin, map, Observable, shareReplay } from 'rxjs';
-import { API } from '../api';
+import { API, Schemas } from '../api';
 
-export type CalendarEventType = 'past' | 'ongoing' | 'upcoming' | 'future';
+export type CalendarEventType = Schemas['CalendarEventType'];
 
-export interface CalendarRace {
-  date: string | null;
-  endDate: string | null;
-  track: string | null;
-  name: string | null;
-}
+export type CalendarRace = Schemas['CalendarRace'];
 
-export interface CalendarEvent {
-  id: string;
-  name: string;
-  game: string;
-  carClass: string | null;
-  description: string | null;
-  image: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  eventType: CalendarEventType;
-  source: 'simgrid' | 'custom';
-  simgridChampionshipId: number | null;
-  customChampionshipId: string | null;
-  communityId: string | null;
-  communityName: string | null;
-  communityColor: string | null;
-  communityDiscordUrl: string | null;
-  communityIsSkf: boolean;
-  acceptingRegistrations: boolean;
-  capacity: number | null;
-  spotsTaken: number | null;
-  registrationUrl: string | null;
-  races: CalendarRace[];
-}
+export type CalendarEvent = Schemas['CalendarEvent'];
 
-export interface CustomRaceCreate {
-  date: string | null;
-  endDate: string | null;
-  track: string | null;
-}
+export type CustomRaceCreate = Schemas['CustomRaceCreate'];
 
-export interface CustomRaceSync {
-  id?: string;
-  date: string | null;
-  endDate: string | null;
-  track: string | null;
-}
+export type CustomRaceSync = Schemas['CustomRaceSync'];
 
-export interface CustomRaceOut {
-  id: string;
-  date: string | null;
-  endDate: string | null;
-  track: string | null;
-  sortOrder: number;
-  createdAt: string;
-}
+export type CustomRaceOut = Schemas['CustomRaceOut'];
 
-export interface CustomChampionshipCreate {
-  name: string;
-  game: string;
-  carClass: string | null;
-  description: string | null;
-  communityId: string | null;
-  gameId: string | null;
-  races: CustomRaceCreate[];
-}
+export type CustomChampionshipCreate = Schemas['CustomChampionshipCreate'];
 
-export interface CustomChampionshipUpdate {
-  name?: string;
-  game?: string;
-  carClass?: string | null;
-  description?: string | null;
-  isVisible?: boolean;
-  communityId?: string | null;
-  gameId?: string | null;
-}
+export type CustomChampionshipUpdate = Schemas['CustomChampionshipUpdate'];
 
-export interface CustomChampionshipOut {
-  id: string;
-  name: string;
-  game: string;
-  carClass: string | null;
-  description: string | null;
-  isVisible: boolean;
-  races: CustomRaceOut[];
-  createdByUserId: string | null;
-  communityId: string | null;
-  gameId: string | null;
-  gameName: string | null;
-  createdAt: string;
-}
+export type CustomChampionshipOut = Schemas['CustomChampionshipOut'];
 
 // ── Community ───────────────────────────────────────────────────────────────
 
-export interface Community {
-  id: string;
-  name: string;
-  color: string | null;
-  discordUrl: string | null;
-  isVisible: boolean;
-  isSkf: boolean;
-  createdAt: string;
-}
+export type Community = Schemas['CommunityOut'];
 
-export interface CommunityCreate {
-  name: string;
-  color: string | null;
-  discordUrl: string | null;
-}
+export type CommunityCreate = Schemas['CommunityCreate'];
 
-export interface CommunityUpdate {
-  name?: string;
-  color?: string | null;
-  discordUrl?: string | null;
-  isVisible?: boolean;
-}
+export type CommunityUpdate = Schemas['CommunityUpdate'];
 
-export interface CommunityRequest {
-  name: string;
-  discordUrl: string | null;
-  description: string;
-}
+export type CommunityRequest = Schemas['CommunityRequestCreate'];
 
 @Injectable({ providedIn: 'root' })
 export class CalendarApiService {

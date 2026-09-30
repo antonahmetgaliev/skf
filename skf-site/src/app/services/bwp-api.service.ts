@@ -1,46 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { API } from '../api';
+import { API, Schemas } from '../api';
 
-export interface BwpPoint {
-  id: string;
-  points: number;
-  issuedOn: string;
-  expiresOn: string;
-  note: string | null;
-  /** Computed server-side — the single source of truth for expiry. */
-  expired: boolean;
-}
+export type BwpPoint = Schemas['BwpPointOut'];
 
-export interface PenaltyClearance {
-  id: string;
-  driverId: string;
-  penaltyRuleId: string;
-  clearedAt: string;
-}
+export type PenaltyClearance = Schemas['PenaltyClearanceOut'];
 
-export interface Driver {
-  id: string;
-  name: string;
-  simgridDriverId: number | null;
-  simgridDisplayName: string | null;
-  countryCode: string | null;
-  photoUrl: string | null;
-  userId: string | null;
-  createdAt: string;
-  /** Sum of non-expired BWP points, computed server-side. */
-  activeBwp: number;
-  points: BwpPoint[];
-  clearances: PenaltyClearance[];
-}
+export type Driver = Schemas['DriverOut'];
 
-export interface PenaltyRule {
-  id: string;
-  threshold: number;
-  label: string;
-  sortOrder: number;
-}
+export type PenaltyRule = Schemas['PenaltyRuleOut'];
 
 @Injectable({ providedIn: 'root' })
 export class BwpApiService {

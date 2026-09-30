@@ -2,42 +2,15 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { API } from '../api';
+import { API, Schemas } from '../api';
 
-export interface RoundBreakdown {
-  roundKey: string;
-  roundLabel: string;
-  carClass: string;
-  laps: number;
-  classLeaderLaps: number;
-  distancePct: number;
-  qualifies: boolean;
-}
+export type RoundBreakdown = Schemas['RoundBreakdownOut'];
 
-export interface EligibleDriver {
-  identity: string;
-  displayName: string;
-  carClass: string;
-  qualifyingRounds: number;
-  rounds: RoundBreakdown[];
-}
+export type EligibleDriver = Schemas['EligibleDriverOut'];
 
-export interface Eligibility {
-  championshipSimgridId: number;
-  minDistancePct: number;
-  minRounds: number;
-  importedRounds: number;
-  carClasses: string[];
-  drivers: EligibleDriver[];
-}
+export type Eligibility = Schemas['EligibilityOut'];
 
-export interface UnmatchedName {
-  rawName: string;
-  normalizedName: string;
-  rounds: number;
-  /** Ranked spelling hints. Never applied without an admin decision. */
-  suggestions: string[];
-}
+export type UnmatchedName = Schemas['UnmatchedNameOut'];
 
 @Injectable({ providedIn: 'root' })
 export class GiveawayApiService {

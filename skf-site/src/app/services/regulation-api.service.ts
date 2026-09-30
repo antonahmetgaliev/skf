@@ -1,50 +1,19 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { API } from '../api';
+import { API, Schemas } from '../api';
 
-export interface RegulationContentOut {
-  lang: string;
-  title: string;
-  subtitle: string;
-  content: string;
-}
+export type RegulationContentOut = Schemas['RegulationContentOut'];
 
-export interface RegulationPageListItem {
-  id: string;
-  slug: string;
-  sortOrder: number;
-  isVisible: boolean;
-  title: string;
-}
+export type RegulationPageListItem = Schemas['RegulationPageListItem'];
 
-export interface RegulationPageOut {
-  id: string;
-  slug: string;
-  sortOrder: number;
-  isVisible: boolean;
-  contents: Record<string, RegulationContentOut>;
-}
+export type RegulationPageOut = Schemas['RegulationPageOut'];
 
-export interface RegulationContentUpdate {
-  title: string;
-  subtitle: string;
-  content: string;
-}
+export type RegulationContentUpdate = Schemas['RegulationContentUpdate'];
 
-export interface RegulationPageCreate {
-  slug: string;
-  sortOrder: number;
-  isVisible?: boolean;
-  contents: Record<string, RegulationContentUpdate>;
-}
+export type RegulationPageCreate = Schemas['RegulationPageCreate'];
 
-export interface RegulationPageUpdate {
-  slug?: string;
-  sortOrder?: number;
-  isVisible?: boolean;
-  contents?: Record<string, RegulationContentUpdate>;
-}
+export type RegulationPageUpdate = Schemas['RegulationPageUpdate'];
 
 @Injectable({ providedIn: 'root' })
 export class RegulationApiService {

@@ -1,154 +1,49 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { API } from '../api';
+import { API, Schemas } from '../api';
 
 // ── Output types ───────────────────────────────────────────────────────────
 
-export interface IncidentResolution {
-  id: string;
-  incidentDriverId: string;
-  judgeUserId: string | null;
-  verdict: string;
-  bwpPoints: number | null;
-  description: string | null;
-  bwpApplied: boolean;
-  resolvedAt: string;
-}
+export type IncidentResolution = Schemas['IncidentResolutionOut'];
 
-export interface IncidentDriver {
-  id: string;
-  driverName: string;
-  driverId: string | null;
-  sortOrder: number;
-  resolution: IncidentResolution | null;
-}
+export type IncidentDriver = Schemas['IncidentDriverOut'];
 
-export interface Incident {
-  id: string;
-  windowId: string;
-  reporterUserId: string | null;
-  sessionName: string | null;
-  time: string | null;
-  lap: string | null;
-  corner: string | null;
-  description: string | null;
-  source: string;
-  status: string;
-  isPublished: boolean;
-  createdAt: string;
-  drivers: IncidentDriver[];
-}
+export type Incident = Schemas['IncidentOut'];
 
-export interface IncidentWindowListItem {
-  id: string;
-  championshipId: number | null;
-  championshipName: string | null;
-  raceId: number | null;
-  raceName: string;
-  date: string | null;
-  intervalHours: number;
-  openedAt: string;
-  closesAt: string;
-  openedByUserId: string | null;
-  isManuallyClosed: boolean;
-  isOpen: boolean;
-}
+export type IncidentWindowListItem = Schemas['IncidentWindowListItem'];
 
-export interface ChampionshipIncidentWindow {
-  raceId: number;
-  windowId: string;
-  isOpen: boolean;
-  incidentsCount: number;
-}
+export type ChampionshipIncidentWindow = Schemas['ChampionshipIncidentWindowOut'];
 
-export interface IncidentWindowOut extends IncidentWindowListItem {
-  incidents: Incident[];
-}
+export type IncidentWindowOut = Schemas['IncidentWindowOut'];
 
-export interface ResolveRemainingResult extends IncidentWindowOut {
-  /** How many drivers the default verdict was just applied to. */
-  resolvedCount: number;
-}
+export type ResolveRemainingResult = Schemas['ResolveRemainingOut'];
 
-export interface PublishWindowResult extends IncidentWindowOut {
-  /** Penalties that reached no licence because the driver name never matched. */
-  unlinkedCount: number;
-}
+export type PublishWindowResult = Schemas['PublishWindowOut'];
 
 // ── Input types ────────────────────────────────────────────────────────────
 
-export interface IncidentWindowCreate {
-  championshipId?: number | null;
-  championshipName?: string | null;
-  raceId?: number | null;
-  raceName: string;
-  date?: string | null;
-  intervalHours?: number;
-}
+export type IncidentWindowCreate = Schemas['IncidentWindowCreate'];
 
-export interface IncidentFileCreate {
-  sessionName?: string | null;
-  lap?: string | null;
-  corner?: string | null;
-  description?: string | null;
-  drivers: string[];
-}
+export type IncidentFileCreate = Schemas['IncidentFileCreate'];
 
-export interface ResolveDriverIncident {
-  verdict: string;
-  bwpPoints?: number | null;
-}
+export type ResolveDriverIncident = Schemas['ResolveDriverIncident'];
 
-export interface BulkResolveDriverItem {
-  incidentDriverId: string;
-  /** Omit to let the server apply the default verdict rule. */
-  verdict?: string | null;
-  bwpPoints?: number | null;
-}
+export type BulkResolveDriverItem = Schemas['ResolveDriverItem'];
 
-export interface BulkResolveIncident {
-  description?: string | null;
-  drivers: BulkResolveDriverItem[];
-}
+export type BulkResolveIncident = Schemas['BulkResolveIncident'];
 
-export interface VerdictRule {
-  id: string;
-  verdict: string;
-  defaultBwp: number;
-  sortOrder: number;
-  /** Pre-selected for every driver in every incident. Exactly one rule has it. */
-  isDefault: boolean;
-}
+export type VerdictRule = Schemas['VerdictRuleOut'];
 
-export interface VerdictRuleCreate {
-  verdict: string;
-  defaultBwp: number;
-  isDefault?: boolean;
-}
+export type VerdictRuleCreate = Schemas['VerdictRuleCreate'];
 
-export interface DescriptionPreset {
-  id: string;
-  text: string;
-  sortOrder: number;
-}
+export type DescriptionPreset = Schemas['DescriptionPresetOut'];
 
-export interface DescriptionPresetCreate {
-  text: string;
-}
+export type DescriptionPresetCreate = Schemas['DescriptionPresetCreate'];
 
-export interface BwpAuditEntry {
-  incidentDriverId: string;
-  driverName: string;
-  bwpPoints: number;
-  matchedDriverId: string | null;
-  matchedDriverName: string | null;
-}
+export type BwpAuditEntry = Schemas['BwpAuditEntry'];
 
-export interface BwpBackfillResult {
-  fixed: number;
-  unmatched: string[];
-}
+export type BwpBackfillResult = Schemas['BwpBackfillOut'];
 
 // ── Service ────────────────────────────────────────────────────────────────
 

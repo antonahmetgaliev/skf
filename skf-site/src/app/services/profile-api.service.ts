@@ -1,41 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
-import { API } from '../api';
+import { API, Schemas } from '../api';
 
-export interface PublicBwpPoint {
-  id: string;
-  points: number;
-  issuedOn: string;
-  expiresOn: string;
-  note: string | null;
-  /** Computed server-side — the single source of truth for expiry. */
-  expired: boolean;
-}
+export type PublicBwpPoint = Schemas['DriverPublicOut']['points'][number];
 
-export interface DriverPublic {
-  id: string;
-  name: string;
-  simgridDriverId: number | null;
-  simgridDisplayName: string | null;
-  countryCode: string | null;
-  photoUrl: string | null;
-  createdAt: string;
-  /** Sum of non-expired BWP points, computed server-side. */
-  activeBwp: number;
-  points: PublicBwpPoint[];
-  clearances: {
-    id: string;
-    driverId: string;
-    penaltyRuleId: string;
-    clearedAt: string;
-  }[];
-}
+export type DriverPublic = Schemas['DriverPublicOut'];
 
 /** The signed-in user's own driver: the public view plus the account link. */
-export interface MyDriver extends DriverPublic {
-  userId: string | null;
-}
+export type MyDriver = Schemas['DriverOut'];
 
 /**
  * Upper bound the backend allows per page. The directory is fetched in one
