@@ -1,9 +1,6 @@
 .venv/
-.venv-test/
 __pycache__/
 *.pyc
 .env
 tests/
 .gitignore
-README.md
-pytest.ini

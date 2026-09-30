@@ -3,7 +3,7 @@
 Fixtures in ``tests/fixtures/simgrid`` are real responses trimmed to two items.
 When SimGrid changes shape, re-record them and these tests show what broke.
 ``RUN_SIMGRID_LIVE=1`` additionally validates the models against the live API
-(needs ``SIMGRID_API_KEY`` in ``backend/.env``).
+(needs ``SIMGRID_API_KEY`` in the environment).
 """
 
 from __future__ import annotations
@@ -14,7 +14,6 @@ from pathlib import Path
 
 import httpx
 import pytest
-from dotenv import dotenv_values
 from pydantic import ValidationError
 
 from app.schemas.championship import ChampionshipDetails
@@ -182,8 +181,7 @@ async def test_non_list_cache_is_refetched(monkeypatch, memory_cache):
 
 @pytest.mark.skipif(os.environ.get("RUN_SIMGRID_LIVE") != "1", reason="set RUN_SIMGRID_LIVE=1")
 def test_live_api_matches_models():
-    env = dotenv_values(Path(__file__).parent.parent / ".env")
-    headers = {"Authorization": f"Bearer {env['SIMGRID_API_KEY']}"}
+    headers = {"Authorization": f"Bearer {os.environ['SIMGRID_API_KEY']}"}
     cid = LIVE_CHAMPIONSHIP_ID
     paths = {
         "championships": ("/championships", {"limit": 5}),

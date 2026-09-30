@@ -59,8 +59,6 @@ class Settings(BaseSettings):
     # Bootstrap super-admin on first login by Discord user ID
     super_admin_discord_id: str = ""
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
-
     @model_validator(mode="after")
     def _normalise_db_url(self) -> "Settings":
         self.database_url = _fix_async_url(self.database_url)
