@@ -26,8 +26,6 @@ function makeState(api: MockApi) {
   let driverError = '';
   const collapsedSet = new Set<string>();
 
-  function getSelection() { return newDriverSelection; }
-  function setSelection(v: string) { newDriverSelection = v; }
 
   function addDriver() {
     const selection = newDriverSelection;

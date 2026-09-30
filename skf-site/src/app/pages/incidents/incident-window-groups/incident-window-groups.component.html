@@ -2,7 +2,7 @@
   @for (group of groups(); track group.key) {
     @let open = expanded().has(group.key);
     <li class="group" [class.group--open]="open">
-      <button type="button" class="group-header" [attr.aria-expanded]="open" (click)="toggle.emit(group.key)">
+      <button type="button" class="group-header" [attr.aria-expanded]="open" (click)="groupToggle.emit(group.key)">
         <span class="group-chevron" aria-hidden="true">{{ open ? '▾' : '▸' }}</span>
         <span class="group-name">{{ group.name ?? ('incidents.otherWindows' | transloco) }}</span>
         @if (group.openCount > 0) {
@@ -16,7 +16,10 @@
             <li class="round"
               [class.round--open]="w.isOpen"
               [class.round--active]="activeWindowId() === w.id"
-              (click)="select.emit(w.id)">
+              role="button"
+              tabindex="0"
+              (click)="windowSelect.emit(w.id)"
+              (keydown.enter)="windowSelect.emit(w.id)">
               <div class="round-name">{{ w.raceName }}</div>
               <div class="round-meta">
                 @if (w.date) { <span class="round-date">{{ w.date }}</span> }

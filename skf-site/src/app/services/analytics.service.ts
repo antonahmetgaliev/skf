@@ -71,6 +71,7 @@ export class AnalyticsService {
     win.dataLayer = win.dataLayer || [];
     win.gtag = function gtag() {
       // gtag.js requires the raw `arguments` object, not a copied array.
+      // eslint-disable-next-line prefer-rest-params
       win.dataLayer!.push(arguments);
     };
     // Analytics storage only — the site runs no ads and asks for no advertising consent.

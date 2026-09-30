@@ -8,7 +8,10 @@
     "start": "node server.js",
     "watch": "ng build --watch --configuration development",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint": "ng lint",
+    "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,html,scss}\""
   },
   "prettier": {
     "printWidth": 100,
@@ -46,8 +49,13 @@
     "@angular/build": "^21.1.0",
     "@angular/cli": "^21.1.0",
     "@angular/compiler-cli": "^21.1.0",
+    "@eslint/js": "^10.0.1",
+    "angular-eslint": "^21.4.0",
+    "eslint": "^10.11.0",
     "jsdom": "^28.1.0",
+    "prettier": "^3.9.9",
     "typescript": "~5.9.2",
+    "typescript-eslint": "^8.71.0",
     "vitest": "^4.0.18"
   }
 }

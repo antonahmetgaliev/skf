@@ -22,7 +22,7 @@ export class CalendarSidebarComponent {
   readonly simulatorChange = output<string | null>();
   readonly clearFilters = output<void>();
   readonly requestJoin = output<void>();
-  readonly close = output<void>();
+  readonly closed = output<void>();
 
   readonly allSelected = computed(() => this.selectedCommunityIds().size === 0);
 

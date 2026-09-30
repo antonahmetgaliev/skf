@@ -11,6 +11,7 @@
   <!-- ── Layout: filter sidebar + calendar ── -->
   <div class="calendar-layout">
     @if (filtersOpen()) {
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- backdrop; Escape closes -->
       <div class="filter-backdrop" (click)="filtersOpen.set(false)"></div>
     }
 
@@ -30,7 +31,7 @@
         (simulatorChange)="selectedSimulator.set($event)"
         (clearFilters)="clearFilters()"
         (requestJoin)="openRequestModal()"
-        (close)="filtersOpen.set(false)"
+        (closed)="filtersOpen.set(false)"
       />
     </div>
 
@@ -145,7 +146,10 @@
                     [class.today]="day.isToday"
                     [class.selected]="selectedDay() === day.dayNumber && day.isCurrentMonth"
                     [class.has-events]="day.events.length > 0 && day.isCurrentMonth"
+                    role="button"
+                    [attr.tabindex]="day.isCurrentMonth ? 0 : -1"
                     (click)="day.isCurrentMonth ? selectDay(day.dayNumber) : null"
+                    (keydown.enter)="day.isCurrentMonth ? selectDay(day.dayNumber) : null"
                   >
                     <span class="day-number">{{ day.dayNumber }}</span>
                     @if (day.isCurrentMonth && day.events.length > 0) {
@@ -239,6 +243,7 @@
 
   <!-- ── Day detail sidebar ── -->
   @if (selectedDay() !== null && selectedDayEvents().length > 0) {
+    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- backdrop; Escape closes -->
     <div class="sidebar-backdrop" (click)="selectDay(selectedDay()!)"></div>
     <aside class="day-sidebar">
       <div class="sidebar-header">

@@ -24,12 +24,12 @@ export interface DriverPublic {
   /** Sum of non-expired BWP points, computed server-side. */
   activeBwp: number;
   points: PublicBwpPoint[];
-  clearances: Array<{
+  clearances: {
     id: string;
     driverId: string;
     penaltyRuleId: string;
     clearedAt: string;
-  }>;
+  }[];
 }
 
 /** The signed-in user's own driver: the public view plus the account link. */

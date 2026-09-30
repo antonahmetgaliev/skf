@@ -3,7 +3,7 @@
   [class.incident-card--filed]="incident().source === 'filed'">
 
   <button class="incident-card-header" type="button"
-    [attr.aria-expanded]="expanded()" (click)="toggle.emit()">
+    [attr.aria-expanded]="expanded()" (click)="toggled.emit()">
 
     <span class="incident-meta">
       <span class="incident-num">#{{ index() }}</span>

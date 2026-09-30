@@ -5,7 +5,7 @@
            linked driver record only contributes photo, country and BWP. -->
       <div class="profile-header">
         @if (linkedDriver(); as driver) {
-          <div class="avatar-wrap" (click)="startEditPhoto()" [title]="'profile.changePhoto' | transloco">
+          <div class="avatar-wrap" role="button" tabindex="0" (click)="startEditPhoto()" (keydown.enter)="startEditPhoto()" [title]="'profile.changePhoto' | transloco">
             @if (driver.photoUrl) {
               <img class="profile-avatar" [src]="driver.photoUrl" [alt]="user.displayName" />
             } @else if (user.avatarUrl) {

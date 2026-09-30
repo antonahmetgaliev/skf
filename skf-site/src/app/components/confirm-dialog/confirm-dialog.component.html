@@ -1,5 +1,7 @@
 @if (options(); as opts) {
+  <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- backdrop; Escape closes -->
   <div class="confirm-backdrop" (click)="cancel()">
+    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -- stops backdrop close -->
     <div
       class="confirm-panel"
       role="alertdialog"

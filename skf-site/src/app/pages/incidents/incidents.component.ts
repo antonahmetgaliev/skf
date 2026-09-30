@@ -6,7 +6,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { InputDirective } from '../../directives/input.directive';
 import { SelectDirective } from '../../directives/select.directive';
 import { TextareaDirective } from '../../directives/textarea.directive';
-import { BadgeComponent, BadgeVariant } from '../../components/badge/badge.component';
+import { BadgeComponent } from '../../components/badge/badge.component';
 import { CardComponent } from '../../components/card/card.component';
 import { FormFieldComponent } from '../../components/form-field/form-field.component';
 import { EmptyComponent } from '../../components/empty/empty.component';
@@ -30,7 +30,6 @@ import {
 } from '../../services/simgrid-api.service';
 import {
   Incident,
-  IncidentDriver,
   IncidentWindowListItem,
   IncidentWindowOut,
   IncidentsApiService,

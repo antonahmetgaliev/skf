@@ -15,8 +15,8 @@ export class IncidentWindowGroupsComponent {
   readonly expanded = input.required<ReadonlySet<string>>();
   readonly activeWindowId = input<string | null>(null);
 
-  readonly toggle = output<string>();
-  readonly select = output<string>();
+  readonly groupToggle = output<string>();
+  readonly windowSelect = output<string>();
 
   readonly closesIn = closesIn;
 }

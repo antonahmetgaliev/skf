@@ -19,7 +19,7 @@
           class="community-row"
           [class.selected]="selectedCommunity()?.id === c.id"
         >
-          <div class="community-identity" (click)="selectCommunity(c)">
+          <div class="community-identity" role="button" tabindex="0" (click)="selectCommunity(c)" (keydown.enter)="selectCommunity(c)">
             <span class="community-color-swatch" [style.background]="c.color"></span>
             <div>
               <h4 class="community-name">{{ c.name }}</h4>

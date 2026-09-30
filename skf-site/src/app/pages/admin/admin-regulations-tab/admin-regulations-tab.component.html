@@ -34,7 +34,10 @@
               class="page-item"
               [class.page-item--active]="selectedId() === page.id"
               [class.page-item--hidden]="!page.isVisible"
+              role="button"
+              tabindex="0"
               (click)="selectPage(page.id)"
+              (keydown.enter)="selectPage(page.id)"
             >
               <div class="page-item-info">
                 <span class="page-item-slug">{{ page.slug }}</span>

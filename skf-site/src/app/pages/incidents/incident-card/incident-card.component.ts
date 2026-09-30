@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { BadgeComponent, BadgeVariant } from '../../../components/badge/badge.component';
+import { BadgeComponent } from '../../../components/badge/badge.component';
 import { BtnComponent } from '../../../components/btn/btn.component';
 import { InputDirective } from '../../../directives/input.directive';
 import { Driver } from '../../../services/bwp-api.service';
@@ -55,7 +55,7 @@ export class IncidentCardComponent {
   readonly submitting = input(false);
   readonly error = input('');
 
-  readonly toggle = output<void>();
+  readonly toggled = output<void>();
   readonly resolve = output<BulkResolveIncident>();
   readonly addDriver = output<string>();
   readonly removeDriver = output<string>();

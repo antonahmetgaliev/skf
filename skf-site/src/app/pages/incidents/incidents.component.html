@@ -22,8 +22,8 @@
           [groups]="windowGroups()"
           [expanded]="expandedGroups()"
           [activeWindowId]="windowDetail()?.id ?? null"
-          (toggle)="toggleGroup($event)"
-          (select)="selectWindow($event)" />
+          (groupToggle)="toggleGroup($event)"
+          (windowSelect)="selectWindow($event)" />
       }
     </app-card>
 
@@ -152,7 +152,7 @@
                   [canJudge]="auth.isJudge()"
                   [submitting]="!!rvIncSubmitting[inc.id]"
                   [error]="rvIncError[inc.id] || ''"
-                  (toggle)="toggleIncident(inc.id)"
+                  (toggled)="toggleIncident(inc.id)"
                   (resolve)="submitResolveIncident(inc, $event)"
                   (addDriver)="addIncidentDriver(inc.id, $event)"
                   (removeDriver)="removeIncidentDriver($event)"
@@ -173,7 +173,7 @@
                   [canJudge]="auth.isJudge()"
                   [submitting]="!!rvIncSubmitting[inc.id]"
                   [error]="rvIncError[inc.id] || ''"
-                  (toggle)="toggleIncident(inc.id)"
+                  (toggled)="toggleIncident(inc.id)"
                   (resolve)="submitResolveIncident(inc, $event)"
                   (addDriver)="addIncidentDriver(inc.id, $event)"
                   (removeDriver)="removeIncidentDriver($event)"
