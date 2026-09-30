@@ -103,7 +103,7 @@ class RaceResultEntry(Base):
     # or DQ never removes a round on its own.
     finish_status: Mapped[str | None] = mapped_column(String(100), nullable=True)
     driver_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("drivers.id", ondelete="SET NULL"), nullable=True
+        UUID(as_uuid=True), ForeignKey("drivers.id", ondelete="SET NULL"), nullable=True, index=True
     )
 
     race_import: Mapped[RaceResultImport] = relationship(back_populates="entries")

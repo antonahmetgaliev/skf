@@ -24,6 +24,7 @@ class CommunityManager(Base):
         UUID(as_uuid=True),
         ForeignKey("communities.id", ondelete="CASCADE"),
         primary_key=True,
+        index=True,
     )
     assigned_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=True

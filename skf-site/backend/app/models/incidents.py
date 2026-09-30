@@ -60,6 +60,7 @@ class Incident(Base):
         UUID(as_uuid=True),
         ForeignKey("incident_windows.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     reporter_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
@@ -106,12 +107,14 @@ class IncidentDriver(Base):
         UUID(as_uuid=True),
         ForeignKey("incidents.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     driver_name: Mapped[str] = mapped_column(String(200), nullable=False)
     driver_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("drivers.id", ondelete="SET NULL"),
         nullable=True,
+        index=True,
     )
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
