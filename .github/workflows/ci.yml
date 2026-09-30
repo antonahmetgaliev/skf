@@ -35,8 +35,8 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/skf
         run: |
-          alembic upgrade head
-          alembic check
+          python -m alembic upgrade head
+          python -m alembic check
 
   frontend:
     runs-on: ubuntu-latest
