@@ -27,6 +27,7 @@ Backend:
 - `INCIDENT_API_TOKEN` — bearer token for the deprecated incident ingest endpoint.
 - `AWS_*` / `S3_*` — bucket for original race-result files. They are optional: without them uploads still work, but the originals aren't stored.
 - `SESSION_MAX_AGE_HOURS` — optional, defaults to a week.
+- `LOG_LEVEL` — optional, defaults to `INFO`.
 
 Frontend:
 - `BACKEND_URL` — the backend's Railway URL (the proxy target).
@@ -36,6 +37,9 @@ Frontend:
 - They run on every backend start. If a migration fails, the process exits and Railway keeps the previous deployment serving.
 - CI checks every push: it applies all migrations to an empty Postgres and runs `alembic check`, which fails if the models changed without a migration.
 - Migrations only go forward. To undo one, write a new revision.
+
+## Logs
+Railway → service → Logs. Every backend line carries `[request-id]`, and every response has an `X-Request-ID` header. To find all log lines for a failed request, search for its id; a 500 response also returns it in its body as `requestId`.
 
 ## When a deploy goes wrong
 1. Railway → service → Deployments → pick the last good deployment → **Redeploy**. Code rolls back in about a minute.
