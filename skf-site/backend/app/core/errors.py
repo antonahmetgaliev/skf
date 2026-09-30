@@ -13,6 +13,7 @@ request-validation failures — into the same problem document::
 
 from __future__ import annotations
 
+import logging
 from http import HTTPStatus
 from typing import Any
 
@@ -22,6 +23,8 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 PROBLEM_JSON = "application/problem+json"
+
+logger = logging.getLogger("app.errors")
 
 
 class AppError(Exception):
@@ -139,7 +142,23 @@ async def _validation_handler(_: Request, exc: RequestValidationError) -> JSONRe
     return problem_response(422, detail, code="validation_error", errors=errors)
 
 
+async def _unhandled_handler(request: Request, exc: Exception) -> JSONResponse:
+    # Starlette re-raises after this handler, so uvicorn still logs the full
+    # traceback; this line ties it to the request id.
+    request_id = getattr(request.state, "request_id", None)
+    logger.error(
+        "Unhandled error on %s %s [request %s]: %s: %s",
+        request.method,
+        request.url.path,
+        request_id,
+        type(exc).__name__,
+        exc,
+    )
+    return problem_response(500, "Something went wrong on our side.", requestId=request_id)
+
+
 def register_error_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AppError, _app_error_handler)  # type: ignore[arg-type]
     app.add_exception_handler(StarletteHTTPException, _http_exception_handler)  # type: ignore[arg-type]
     app.add_exception_handler(RequestValidationError, _validation_handler)  # type: ignore[arg-type]
+    app.add_exception_handler(Exception, _unhandled_handler)

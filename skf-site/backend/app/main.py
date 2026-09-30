@@ -9,9 +9,10 @@ from app import seed
 from app.api import v1
 from app.config import settings
 from app.core.errors import register_error_handlers
-from app.middleware import StaleHeaderMiddleware
+from app.core.logging import configure_logging
+from app.middleware import RequestIdMiddleware, StaleHeaderMiddleware
 
-logging.basicConfig(level=logging.INFO)
+configure_logging(settings.log_level)
 logger = logging.getLogger(__name__)
 
 origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
@@ -36,9 +37,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["X-Total-Count", "Link", "Location", "X-Data-Stale"],
+    expose_headers=["X-Total-Count", "Link", "Location", "X-Data-Stale", "X-Request-ID"],
 )
 app.add_middleware(StaleHeaderMiddleware)
+app.add_middleware(RequestIdMiddleware)
 register_error_handlers(app)
 
 app.include_router(v1.router)

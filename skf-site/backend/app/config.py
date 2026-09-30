@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     # ``Secure`` flag.
     frontend_url: str = "http://localhost:4200"
     port: int = 8000
+    log_level: str = "INFO"
 
     # YouTube Data API
     youtube_api_key: str = ""
