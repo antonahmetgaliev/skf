@@ -32,6 +32,7 @@ async def discord_authorization_url(response: Response):
         key=OAUTH_STATE_COOKIE,
         value=state,
         httponly=True,
+        secure=auth_service.frontend_is_secure(),
         samesite="lax",
         max_age=600,
         path="/",

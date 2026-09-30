@@ -18,12 +18,12 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import get_current_user, get_current_user_optional, require_admin, require_judge
+from app.auth import JUDGE_ROLES, get_current_user, get_current_user_optional, require_admin, require_judge
 from app.core.errors import Forbidden, Unauthorized
 from app.core.pagination import PageParams, page_params, paginate
 from app.database import get_db
 from app.models.bwp import Driver
-from app.models.user import ROLE_ADMIN, ROLE_SUPER_ADMIN, User
+from app.models.user import User
 from app.schemas.bwp import (
     BwpPointCreate,
     BwpPointOut,
@@ -39,8 +39,6 @@ from app.schemas.bwp import (
 from app.services import bwp as service
 
 router = APIRouter(tags=["Drivers"])
-
-JUDGE_ROLES = ("racing_judge", ROLE_ADMIN, ROLE_SUPER_ADMIN)
 
 Include = Literal["account"]
 include_query = Query(

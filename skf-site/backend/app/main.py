@@ -11,6 +11,8 @@ from app.config import settings
 from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
 from app.middleware import RequestIdMiddleware, StaleHeaderMiddleware
+from app.services.simgrid import simgrid_service
+from app.services.youtube import youtube_service
 
 configure_logging(settings.log_level)
 logger = logging.getLogger(__name__)
@@ -27,6 +29,8 @@ async def lifespan(_: FastAPI):
     logger.info("SKF Racing Hub API started")
     yield
     backfill.cancel()
+    await simgrid_service.aclose()
+    await youtube_service.aclose()
 
 
 app = FastAPI(title="SKF Racing Hub API", version="1.0.0", lifespan=lifespan)

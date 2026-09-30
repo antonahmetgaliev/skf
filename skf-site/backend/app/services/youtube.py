@@ -35,6 +35,9 @@ class YouTubeService:
     def __init__(self) -> None:
         self._client = httpx.AsyncClient(base_url=_YT_BASE, timeout=30.0)
 
+    async def aclose(self) -> None:
+        await self._client.aclose()
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------

@@ -15,7 +15,15 @@ from sqlalchemy.orm import selectinload
 from app.config import settings
 from app.core.errors import Forbidden, ServiceUnavailable, Unauthorized
 from app.database import get_db
-from app.models.user import ROLE_ADMIN, ROLE_COMMUNITY_MANAGER, ROLE_SUPER_ADMIN, Session, User
+from app.models.user import (
+    ROLE_ADMIN,
+    ROLE_COMMUNITY_MANAGER,
+    ROLE_JUDGE,
+    ROLE_MODERATOR,
+    ROLE_SUPER_ADMIN,
+    Session,
+    User,
+)
 
 SESSION_COOKIE = "session_id"
 
@@ -83,8 +91,11 @@ def require_role(*roles: str) -> Callable:
 
 require_admin = require_role(ROLE_ADMIN, ROLE_SUPER_ADMIN)
 require_admin_or_community_manager = require_role(ROLE_ADMIN, ROLE_SUPER_ADMIN, ROLE_COMMUNITY_MANAGER)
-require_moderator = require_role("moderator", ROLE_ADMIN, ROLE_SUPER_ADMIN)
-require_judge = require_role("racing_judge", ROLE_ADMIN, ROLE_SUPER_ADMIN)
+# Roles that may judge incidents and see what only judges see.
+JUDGE_ROLES = (ROLE_JUDGE, ROLE_ADMIN, ROLE_SUPER_ADMIN)
+
+require_moderator = require_role(ROLE_MODERATOR, ROLE_ADMIN, ROLE_SUPER_ADMIN)
+require_judge = require_role(*JUDGE_ROLES)
 
 
 async def check_community_access(user: User, community_id: uuid.UUID, db: AsyncSession) -> None:

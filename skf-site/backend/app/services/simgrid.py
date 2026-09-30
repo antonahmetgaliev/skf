@@ -83,6 +83,9 @@ class SimgridService:
             timeout=30.0,
         )
 
+    async def aclose(self) -> None:
+        await self._client.aclose()
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
