@@ -69,7 +69,14 @@ export class AdminRaceResultsTabComponent implements OnInit {
     this.championshipsLoading.set(true);
     this.simgridApi.getChampionships().subscribe({
       next: (list) => {
-        this.championships.set(list);
+        // Only championships still running, newest first. Filtering on SimGrid's
+        // completed flag rather than endDate keeps the final round uploadable
+        // after its race day.
+        this.championships.set(
+          list
+            .filter((c) => !c.eventCompleted)
+            .sort((a, b) => (b.startDate ?? '').localeCompare(a.startDate ?? '')),
+        );
         this.championshipsLoading.set(false);
       },
       error: () => this.championshipsLoading.set(false),
