@@ -129,6 +129,7 @@ class RaceFile:
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
+
 def _f32(value: float) -> float:
     return struct.unpack("f", struct.pack("f", value))[0]
 
@@ -159,6 +160,7 @@ def race_clock(session_time: float, race_start_delay: float | None) -> tuple[flo
 
 
 # ── Incidents ────────────────────────────────────────────────────────────────
+
 
 def _to_driver(entry: dict) -> Driver:
     lap = entry.get("lap")
@@ -194,9 +196,7 @@ def _parse_incidents(raw: dict) -> list[Incident]:
             continue  # lap times, flags, NIW etc.
 
         session = _get(raw.get("sessionData"), entry.get("session_num")) or {}
-        race_time, pre_green, time = race_clock(
-            entry.get("time") or 0, session.get("race_start_delay")
-        )
+        race_time, pre_green, time = race_clock(entry.get("time") or 0, session.get("race_start_delay"))
         incidents.append(
             Incident(
                 id=key,
@@ -226,9 +226,7 @@ def _track_distance(a: float, b: float) -> float:
 
 def _is_grouping_off(incidents: list[Incident]) -> bool:
     """Grouping is an iRaceControl setting; when off, the log has no real groups."""
-    return not any(
-        i.grouped and any(not d.baseline for d in i.drivers) for i in incidents
-    )
+    return not any(i.grouped and any(not d.baseline for d in i.drivers) for i in incidents)
 
 
 def _group_incidents(incidents: list[Incident]) -> list[Incident]:
@@ -395,6 +393,7 @@ def _lap_label(incident: Incident) -> str | None:
 
 # ── Entry points ─────────────────────────────────────────────────────────────
 
+
 def parse_race_file(payload: bytes) -> RaceFile:
     """Decode a .bin into sessions and **all** incident blocks, unfiltered."""
     try:
@@ -429,9 +428,7 @@ def parse(payload: bytes, rules: FilterRules = DEFAULT_RULES) -> ParsedRaceFile:
     # last, is the round's result.
     races = [s for s in race_file.sessions if s.type == "Race"]
     if not races:
-        raise RaceFileError(
-            "File contains no race session (practice/qualifying exports are not usable)"
-        )
+        raise RaceFileError("File contains no race session (practice/qualifying exports are not usable)")
     race = races[-1]
     entries = [
         ParsedEntry(

@@ -1,4 +1,5 @@
 """Custom championships: CRUD, races and community-manager access (IDOR)."""
+
 from __future__ import annotations
 
 import pytest
@@ -65,7 +66,9 @@ async def test_admin_full_lifecycle(client, setup):
     resp = await client.patch(f"{URL}/{champ['id']}/races/{race['id']}", json={"track": "Imola"})
     assert resp.status_code == 200 and resp.json()["track"] == "Imola"
 
-    resp = await client.put(f"{URL}/{champ['id']}/races", json=[{"id": race["id"], "track": "Imola"}, {"track": "Zandvoort"}])
+    resp = await client.put(
+        f"{URL}/{champ['id']}/races", json=[{"id": race["id"], "track": "Imola"}, {"track": "Zandvoort"}]
+    )
     assert resp.status_code == 200
     assert [r["track"] for r in resp.json()] == ["Imola", "Zandvoort"]
 

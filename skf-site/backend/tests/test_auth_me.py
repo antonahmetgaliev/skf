@@ -1,8 +1,8 @@
 """Tests for /api/v1/me, the session endpoint and the legacy OAuth callback."""
+
 from __future__ import annotations
 
-import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from httpx import AsyncClient
 from sqlalchemy import select
@@ -12,7 +12,7 @@ ME_URL = "/api/v1/me"
 
 
 def _now():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 async def test_me_returns_null_driver_id_when_not_linked(auth_client: AsyncClient):
@@ -22,9 +22,7 @@ async def test_me_returns_null_driver_id_when_not_linked(auth_client: AsyncClien
     assert resp.json()["driverId"] is None
 
 
-async def test_me_returns_driver_id_when_linked(
-    auth_client: AsyncClient, db: AsyncSession, test_user
-):
+async def test_me_returns_driver_id_when_linked(auth_client: AsyncClient, db: AsyncSession, test_user):
     """When the user has a linked driver, driverId matches driver.id."""
     from app.models.bwp import Driver
 
@@ -71,9 +69,7 @@ async def test_me_with_session_cookie(client: AsyncClient, db: AsyncSession, tes
     assert resp.json()["id"] == str(test_user.id)
 
 
-async def test_discord_sync_without_bot_token_is_503_without_env_names(
-    auth_client: AsyncClient, monkeypatch
-):
+async def test_discord_sync_without_bot_token_is_503_without_env_names(auth_client: AsyncClient, monkeypatch):
     from app.config import settings
 
     monkeypatch.setattr(settings, "discord_guild_id", "")
@@ -83,9 +79,7 @@ async def test_discord_sync_without_bot_token_is_503_without_env_names(
     assert "DISCORD_" not in resp.json()["detail"]
 
 
-async def test_logout_deletes_session_and_clears_cookie(
-    client: AsyncClient, db: AsyncSession, test_user
-):
+async def test_logout_deletes_session_and_clears_cookie(client: AsyncClient, db: AsyncSession, test_user):
     from app.auth import SESSION_COOKIE
     from app.models.user import Session
 
@@ -174,9 +168,7 @@ async def test_callback_logs_in_and_redirects_to_frontend(
     assert user.guild_nickname == "New Bie"
 
 
-async def test_callback_incomplete_discord_response_is_502(
-    client: AsyncClient, monkeypatch
-):
+async def test_callback_incomplete_discord_response_is_502(client: AsyncClient, monkeypatch):
     import httpx
 
     from app.services import auth as auth_service

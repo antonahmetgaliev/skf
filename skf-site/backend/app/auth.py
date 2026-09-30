@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import secrets
 import uuid
-from datetime import datetime, timezone
-from typing import Callable
+from collections.abc import Callable
+from datetime import UTC, datetime
 
 from fastapi import Depends, Request
 from sqlalchemy import select
@@ -15,7 +15,7 @@ from sqlalchemy.orm import selectinload
 from app.config import settings
 from app.core.errors import Forbidden, ServiceUnavailable, Unauthorized
 from app.database import get_db
-from app.models.user import Session, User, ROLE_ADMIN, ROLE_SUPER_ADMIN, ROLE_COMMUNITY_MANAGER
+from app.models.user import ROLE_ADMIN, ROLE_COMMUNITY_MANAGER, ROLE_SUPER_ADMIN, Session, User
 
 SESSION_COOKIE = "session_id"
 
@@ -40,7 +40,7 @@ async def get_current_user_optional(
         )
         .where(
             Session.id == session_id,
-            Session.expires_at > datetime.now(timezone.utc),
+            Session.expires_at > datetime.now(UTC),
         )
     )
     session = result.scalar_one_or_none()
@@ -87,9 +87,7 @@ require_moderator = require_role("moderator", ROLE_ADMIN, ROLE_SUPER_ADMIN)
 require_judge = require_role("racing_judge", ROLE_ADMIN, ROLE_SUPER_ADMIN)
 
 
-async def check_community_access(
-    user: User, community_id: uuid.UUID, db: AsyncSession
-) -> None:
+async def check_community_access(user: User, community_id: uuid.UUID, db: AsyncSession) -> None:
     """Raise 403 if user is a community manager without access to this community."""
     if user.role.name in (ROLE_ADMIN, ROLE_SUPER_ADMIN):
         return
@@ -107,16 +105,12 @@ async def check_community_access(
     raise Forbidden("No access to this community.")
 
 
-async def get_managed_community_ids(
-    user: User, db: AsyncSession
-) -> list[uuid.UUID]:
+async def get_managed_community_ids(user: User, db: AsyncSession) -> list[uuid.UUID]:
     """Return community IDs that a community manager is assigned to."""
     from app.models.community_manager import CommunityManager
 
     result = await db.execute(
-        select(CommunityManager.community_id).where(
-            CommunityManager.user_id == user.id
-        )
+        select(CommunityManager.community_id).where(CommunityManager.user_id == user.id)
     )
     return list(result.scalars().all())
 

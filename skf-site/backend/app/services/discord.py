@@ -76,7 +76,5 @@ async def send_community_request(
 
     # Discord returns 204 No Content on success.
     if response.status_code not in (200, 204):
-        logger.warning(
-            "Community request webhook rejected (status %s)", response.status_code
-        )
+        logger.warning("Community request webhook rejected (status %s)", response.status_code)
         raise DiscordSendFailed

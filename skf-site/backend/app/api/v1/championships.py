@@ -20,8 +20,8 @@ from app.schemas.championship import (
 )
 from app.schemas.giveaway import EligibilityOut, UnmatchedNameOut
 from app.schemas.race_results import RoundsOut
-from app.services import championships as service
 from app.services import championship_results, giveaway, race_import
+from app.services import championships as service
 from app.services.drivers import sync_drivers_from_standings
 
 router = APIRouter(prefix="/championships", tags=["Championships"])

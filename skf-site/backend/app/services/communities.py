@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -47,9 +47,7 @@ async def managed_community_ids(db: AsyncSession, user: User) -> set[uuid.UUID]:
     return set(result.scalars().all())
 
 
-async def can_access_community(
-    db: AsyncSession, user: User, community_id: uuid.UUID | None
-) -> bool:
+async def can_access_community(db: AsyncSession, user: User, community_id: uuid.UUID | None) -> bool:
     """Admins reach every community; managers only the ones assigned to them.
 
     ``None`` (a championship not tied to any community) is admin-only.
@@ -61,9 +59,7 @@ async def can_access_community(
     return community_id in await managed_community_ids(db, user)
 
 
-async def ensure_community_access(
-    db: AsyncSession, user: User, community_id: uuid.UUID | None
-) -> None:
+async def ensure_community_access(db: AsyncSession, user: User, community_id: uuid.UUID | None) -> None:
     if not await can_access_community(db, user, community_id):
         raise Forbidden(NO_ACCESS)
 
@@ -103,9 +99,7 @@ async def create(db: AsyncSession, body: CommunityCreate) -> Community:
     return community
 
 
-async def update(
-    db: AsyncSession, user: User, community_id: uuid.UUID, body: CommunityUpdate
-) -> Community:
+async def update(db: AsyncSession, user: User, community_id: uuid.UUID, body: CommunityUpdate) -> Community:
     await ensure_community_access(db, user, community_id)
     community = await get_or_404(db, Community, community_id, detail="Community not found.")
     for field, value in body.model_dump(exclude_unset=True, by_alias=False).items():
@@ -136,7 +130,7 @@ async def submit_request(body: CommunityRequestCreate, user: User) -> None:
 
     Nothing is persisted – the Discord message is the record.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # Drop expired entries so the dict cannot grow unbounded.
     for uid, sent_at in list(_last_request_at.items()):
@@ -145,9 +139,7 @@ async def submit_request(body: CommunityRequestCreate, user: User) -> None:
 
     last_sent = _last_request_at.get(user.id)
     if last_sent is not None and now - last_sent < REQUEST_COOLDOWN:
-        raise TooManyRequests(
-            "You have already sent a request recently. Please wait a little."
-        )
+        raise TooManyRequests("You have already sent a request recently. Please wait a little.")
 
     discord_url = body.discord_url.strip() if body.discord_url else None
     try:
@@ -157,10 +149,10 @@ async def submit_request(body: CommunityRequestCreate, user: User) -> None:
             discord_url=discord_url or None,
             user=user,
         )
-    except DiscordNotConfigured:
+    except DiscordNotConfigured as exc:
         logger.error("Community request webhook is not configured")
-        raise ServiceUnavailable("Community requests are temporarily unavailable.")
-    except DiscordSendFailed:
-        raise BadGateway("Could not deliver the request to Discord. Please try again later.")
+        raise ServiceUnavailable("Community requests are temporarily unavailable.") from exc
+    except DiscordSendFailed as exc:
+        raise BadGateway("Could not deliver the request to Discord. Please try again later.") from exc
 
     _last_request_at[user.id] = now

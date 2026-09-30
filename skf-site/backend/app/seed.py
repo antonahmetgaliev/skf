@@ -66,7 +66,9 @@ async def seed_translations() -> None:
                 continue
             data = json.loads(seed_file.read_text(encoding="utf-8"))
             existing = set(
-                (await session.execute(select(Translation.key).where(Translation.lang == code))).scalars().all()
+                (await session.execute(select(Translation.key).where(Translation.lang == code)))
+                .scalars()
+                .all()
             )
             missing = set(data) - existing
             if missing:

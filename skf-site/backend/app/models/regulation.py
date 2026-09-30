@@ -46,6 +46,4 @@ class RegulationContent(Base):
 
     page: Mapped["RegulationPage"] = relationship(back_populates="contents")
 
-    __table_args__ = (
-        UniqueConstraint("page_id", "lang", name="uq_regulation_content_page_lang"),
-    )
+    __table_args__ = (UniqueConstraint("page_id", "lang", name="uq_regulation_content_page_lang"),)

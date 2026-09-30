@@ -1,4 +1,5 @@
 """Communities: public list, ``?scope=managed`` and admin CRUD."""
+
 from __future__ import annotations
 
 import pytest

@@ -93,10 +93,7 @@ class YouTubeService:
 
             if stream.get("actualEndTime"):
                 # Completed stream — use actual start time as the date
-                stream_date = (
-                    stream.get("actualStartTime")
-                    or stream.get("scheduledStartTime")
-                )
+                stream_date = stream.get("actualStartTime") or stream.get("scheduledStartTime")
                 past.append(self._build_video(vid, snippets[vid], published_at=stream_date))
             else:
                 # Upcoming or currently live
@@ -147,7 +144,8 @@ class YouTubeService:
         return video_ids, snippets
 
     async def _fetch_stream_details(
-        self, video_ids: list[str],
+        self,
+        video_ids: list[str],
     ) -> dict[str, dict[str, Any]]:
         """Batch-fetch liveStreamingDetails for video IDs."""
         result: dict[str, dict[str, Any]] = {}
@@ -175,12 +173,7 @@ class YouTubeService:
         published_at: str | None = None,
     ) -> dict[str, Any]:
         thumbnails = snippet.get("thumbnails", {})
-        thumb = (
-            thumbnails.get("high")
-            or thumbnails.get("medium")
-            or thumbnails.get("default")
-            or {}
-        )
+        thumb = thumbnails.get("high") or thumbnails.get("medium") or thumbnails.get("default") or {}
         return {
             "video_id": vid,
             "title": snippet.get("title", ""),

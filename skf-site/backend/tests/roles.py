@@ -1,4 +1,5 @@
 """Helpers for acting as users of a given role in router tests."""
+
 from __future__ import annotations
 
 import uuid
@@ -19,9 +20,7 @@ async def make_user(db, role_name: str):
     uid = uuid.uuid4()
     db.add(User(id=uid, discord_id=str(uid.int)[:18], username=f"{role_name}-{uid.hex[:6]}", role_id=role.id))
     await db.commit()
-    return (
-        await db.execute(select(User).options(joinedload(User.role)).where(User.id == uid))
-    ).scalar_one()
+    return (await db.execute(select(User).options(joinedload(User.role)).where(User.id == uid))).scalar_one()
 
 
 def act_as(user) -> None:

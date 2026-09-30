@@ -4,6 +4,7 @@ The DATABASE_URL env var is set to an in-memory SQLite URL *before* any app
 module is imported, so that ``app.database.engine`` is created against SQLite
 (which is available locally) instead of PostgreSQL+asyncpg (which is not).
 """
+
 from __future__ import annotations
 
 import os
@@ -12,21 +13,21 @@ import os
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
 import uuid
-from datetime import datetime, timezone
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
+from datetime import UTC, datetime
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import joinedload
 from sqlalchemy.pool import StaticPool
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
 
 # ---------------------------------------------------------------------------
 # Engine / Session helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_engine():
     """Return a fresh in-memory SQLite async engine with StaticPool.
@@ -39,9 +40,9 @@ def _make_engine():
     The ``simgrid_cache`` table is excluded because it uses ``JSONB``
     (a PostgreSQL-only type that has no SQLite equivalent).
     """
-    import app.models.user  # noqa: F401 – registers Role/User/Session on Base
-    import app.models.simgrid_cache  # noqa: F401 – ensure table is registered
     import app.models.incidents  # noqa: F401 – registers IncidentWindow/Incident/IncidentResolution
+    import app.models.simgrid_cache  # noqa: F401 – ensure table is registered
+    import app.models.user  # noqa: F401 – registers Role/User/Session on Base
     from app.models.bwp import Base
 
     engine = create_async_engine(
@@ -50,9 +51,7 @@ def _make_engine():
         poolclass=StaticPool,
     )
     # Only create tables that SQLite can handle (excludes JSONB-typed tables)
-    sqlite_tables = [
-        t for t in Base.metadata.sorted_tables if t.name != "simgrid_cache"
-    ]
+    sqlite_tables = [t for t in Base.metadata.sorted_tables if t.name != "simgrid_cache"]
     return engine, sqlite_tables
 
 
@@ -63,6 +62,7 @@ def _factory(engine):
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest_asyncio.fixture
 async def engine():
@@ -77,7 +77,7 @@ async def engine():
 
 
 @pytest_asyncio.fixture
-async def db(engine) -> AsyncGenerator[AsyncSession, None]:
+async def db(engine) -> AsyncGenerator[AsyncSession]:
     """Open async session against the test engine."""
     async with _factory(engine)() as session:
         yield session
@@ -85,9 +85,11 @@ async def db(engine) -> AsyncGenerator[AsyncSession, None]:
 
 # ── Seed / entity helpers ---------------------------------------------------
 
+
 @pytest_asyncio.fixture
 async def seed_roles(db: AsyncSession):
     from app.models.user import Role
+
     db.add_all([Role(id=1, name="driver"), Role(id=2, name="admin")])
     await db.commit()
 
@@ -103,20 +105,19 @@ async def test_user(db: AsyncSession, seed_roles):
         username="tester",
         display_name="Test Driver",
         role_id=1,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
     db.add(u)
     await db.commit()
 
     # Re-load with the role relationship eagerly joined so that
     # user.role.name is accessible even after the session is released.
-    result = await db.execute(
-        select(User).options(joinedload(User.role)).where(User.id == u.id)
-    )
+    result = await db.execute(select(User).options(joinedload(User.role)).where(User.id == u.id))
     return result.scalar_one()
 
 
 # ── HTTP clients ------------------------------------------------------------
+
 
 @pytest_asyncio.fixture
 async def client(engine):

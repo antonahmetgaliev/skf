@@ -8,8 +8,8 @@ from pydantic import ConfigDict, Field, StringConstraints
 
 from app.schemas.base import CamelModel
 
-
 # ── Window schemas ──────────────────────────────────────────────────────────
+
 
 class IncidentWindowCreate(CamelModel):
     championship_id: int | None = None
@@ -26,6 +26,7 @@ class IncidentWindowUpdate(CamelModel):
 
 
 # ── Batch ingestion schemas ─────────────────────────────────────────────────
+
 
 class IncidentBatchItem(CamelModel):
     session_name: str | None = None
@@ -70,6 +71,7 @@ class WindowIncidentsUpdate(CamelModel):
 
 # ── Per-driver resolve ──────────────────────────────────────────────────────
 
+
 class ResolveDriverIncident(CamelModel):
     verdict: str = Field(min_length=1)
     bwp_points: int | None = Field(default=None, ge=0)
@@ -89,6 +91,7 @@ class BulkResolveIncident(CamelModel):
 
 
 # ── Verdict rule schemas ────────────────────────────────────────────────────
+
 
 class VerdictRuleOut(CamelModel):
     model_config = ConfigDict(from_attributes=True)
@@ -118,6 +121,7 @@ class VerdictRuleReorder(CamelModel):
 
 # ── Description preset schemas ──────────────────────────────────────────────
 
+
 class DescriptionPresetOut(CamelModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -135,6 +139,7 @@ class DescriptionPresetUpdate(CamelModel):
 
 
 # ── Output schemas ──────────────────────────────────────────────────────────
+
 
 class IncidentResolutionOut(CamelModel):
     model_config = ConfigDict(from_attributes=True)

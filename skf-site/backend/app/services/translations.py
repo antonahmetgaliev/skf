@@ -93,14 +93,10 @@ async def get_bundle(db: AsyncSession, lang: str, prefix: str | None = None) -> 
 
 def _validate_patch(entries: dict[str, str]) -> None:
     if len(entries) > MAX_KEYS_PER_PATCH:
-        raise PayloadTooLarge(
-            f"At most {MAX_KEYS_PER_PATCH} translations can be saved per request."
-        )
+        raise PayloadTooLarge(f"At most {MAX_KEYS_PER_PATCH} translations can be saved per request.")
     for key in entries:
         if not key or len(key) > MAX_KEY_LENGTH:
-            raise Unprocessable(
-                f"Translation keys must be 1–{MAX_KEY_LENGTH} characters long."
-            )
+            raise Unprocessable(f"Translation keys must be 1–{MAX_KEY_LENGTH} characters long.")
 
 
 async def merge(db: AsyncSession, lang: str, entries: dict[str, str]) -> None:
@@ -124,9 +120,7 @@ async def merge(db: AsyncSession, lang: str, entries: dict[str, str]) -> None:
 
 
 async def delete_key(db: AsyncSession, lang: str, key: str) -> None:
-    result = await db.execute(
-        delete(Translation).where(Translation.lang == lang, Translation.key == key)
-    )
+    result = await db.execute(delete(Translation).where(Translation.lang == lang, Translation.key == key))
     if result.rowcount == 0:
         raise NotFound("Translation not found.")
     await db.commit()

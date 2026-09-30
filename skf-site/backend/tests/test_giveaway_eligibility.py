@@ -46,21 +46,18 @@ def test_portimao_excludes_only_drivers_under_half_distance():
     everyone = {r.display_name for r in rows}
 
     assert everyone - eligible == {
-        "Artur Ivanov",        # 14/40 = 35.0%
-        "Ars Ilanovich",       # 11/44 = 25.0%
-        "Datian Lozovskyi",    # 10/40 = 25.0%
-        "Maxym Beldij",        #  5/44 = 11.4%
-        "Dan Edvardsen",       #  5/40 = 12.5%
+        "Artur Ivanov",  # 14/40 = 35.0%
+        "Ars Ilanovich",  # 11/44 = 25.0%
+        "Datian Lozovskyi",  # 10/40 = 25.0%
+        "Maxym Beldij",  #  5/44 = 11.4%
+        "Dan Edvardsen",  #  5/40 = 12.5%
     }
 
 
 def test_disqualified_driver_still_counts_when_distance_is_met():
     """DQ is a sanction on the result, not a claim the laps were not driven."""
     rows = _rows("portimao.xml")
-    bondariev = next(
-        d for d in compute_eligibility(rows, 50.0, 1)
-        if d.display_name == "Dmitriy Bondariev"
-    )
+    bondariev = next(d for d in compute_eligibility(rows, 50.0, 1) if d.display_name == "Dmitriy Bondariev")
     breakdown = bondariev.rounds[0]
 
     assert breakdown.laps == 22
@@ -72,10 +69,7 @@ def test_disqualified_driver_still_counts_when_distance_is_met():
 def test_dnf_counts_when_distance_is_met():
     """Gaydabura retired at Laguna Seca having covered 81.8% of the distance."""
     rows = _rows("laguna_seca.xml")
-    driver = next(
-        d for d in compute_eligibility(rows, 50.0, 1)
-        if d.display_name == "Sergiy Gaydabura"
-    )
+    driver = next(d for d in compute_eligibility(rows, 50.0, 1) if d.display_name == "Sergiy Gaydabura")
     assert driver.rounds[0].distance_pct == pytest.approx(81.8, abs=0.1)
 
 
@@ -88,7 +82,10 @@ def test_classes_are_counted_separately():
         by_class.setdefault(driver.car_class, set()).add(driver.display_name)
 
     assert by_class["Hyper"] == {
-        "Arsen Petrosian", "Max Tarasenko", "Sergiy Gaydabura", "Vladyslav Mykhailenko",
+        "Arsen Petrosian",
+        "Max Tarasenko",
+        "Sergiy Gaydabura",
+        "Vladyslav Mykhailenko",
     }
     assert len(by_class["GT3"]) == 10
     assert "Bohdan Hulobov" in by_class["GT3"]  # DQ at 54.5%, still counted
@@ -122,9 +119,7 @@ def test_a_driver_racing_under_two_spellings_splits_without_a_merge():
         RoundEntry("r1", "max tarasenko", "Max Tarasenko", "Hyper", 44),
         RoundEntry("r2", "max tarasenko", "Max Tarasenko", "Hyper", 55),
     ]
-    assert [d.display_name for d in compute_eligibility(merged, 50.0, 2)] == [
-        "Max Tarasenko"
-    ]
+    assert [d.display_name for d in compute_eligibility(merged, 50.0, 2)] == ["Max Tarasenko"]
 
 
 def test_round_where_nobody_completed_a_lap_qualifies_nobody():

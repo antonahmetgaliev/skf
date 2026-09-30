@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 # ── Active championships ────────────────────────────────────────────────────
 
+
 async def active_ids(db: AsyncSession) -> list[int]:
     result = await db.execute(select(ActiveChampionship.simgrid_id).order_by(ActiveChampionship.simgrid_id))
     return list(result.scalars().all())
@@ -52,6 +53,7 @@ async def deactivate(db: AsyncSession, simgrid_id: int) -> None:
 
 # ── SimGrid proxy ───────────────────────────────────────────────────────────
 
+
 async def list_championships(db: AsyncSession, *, include_inactive: bool) -> list[ChampionshipListItem]:
     """Active championships; with *include_inactive* all, inactive ones shown as completed."""
     try:
@@ -62,8 +64,7 @@ async def list_championships(db: AsyncSession, *, include_inactive: bool) -> lis
 
     active = set(await active_ids(db))
     enriched = {
-        item.id: item
-        for item in await simgrid_service.with_details([i for i in items if i.id in active])
+        item.id: item for item in await simgrid_service.with_details([i for i in items if i.id in active])
     }
     if include_inactive:
         return [
@@ -103,6 +104,7 @@ async def get_standings(championship_id: int) -> tuple[ChampionshipStandingsData
 
 
 # ── Incident windows ────────────────────────────────────────────────────────
+
 
 async def incident_windows(db: AsyncSession, championship_id: int) -> list[ChampionshipIncidentWindowOut]:
     """The championship's incident windows, one per round, keyed by race."""

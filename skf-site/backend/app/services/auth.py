@@ -6,7 +6,7 @@ import logging
 import secrets
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import urlencode, urlparse
 
@@ -153,9 +153,7 @@ async def lookup_guild_member(url: str, authorization: str) -> MemberLookup:
 
 
 async def _upsert_user(db: AsyncSession, profile: DiscordProfile, member: MemberLookup | None) -> User:
-    user = (
-        await db.execute(select(User).where(User.discord_id == profile.id))
-    ).scalar_one_or_none()
+    user = (await db.execute(select(User).where(User.discord_id == profile.id))).scalar_one_or_none()
 
     fetched_nickname = member.nickname if member else None
     if user is None:
@@ -183,7 +181,7 @@ async def _upsert_user(db: AsyncSession, profile: DiscordProfile, member: Member
         elif not user.guild_nickname:
             user.guild_nickname = profile.display_name or None
 
-    user.last_login_at = datetime.now(timezone.utc)
+    user.last_login_at = datetime.now(UTC)
     await db.flush()
     return user
 
@@ -213,7 +211,7 @@ async def login_with_discord(db: AsyncSession, code: str) -> tuple[User, Session
 
     session = Session(
         user_id=user.id,
-        expires_at=datetime.now(timezone.utc) + timedelta(hours=settings.session_max_age_hours),
+        expires_at=datetime.now(UTC) + timedelta(hours=settings.session_max_age_hours),
     )
     db.add(session)
     await db.commit()

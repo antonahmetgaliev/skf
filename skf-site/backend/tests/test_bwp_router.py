@@ -7,7 +7,7 @@ os.environ.setdefault("YOUTUBE_API_KEY", "fake")
 os.environ.setdefault("YOUTUBE_CHANNEL_ID", "fake")
 
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -19,19 +19,21 @@ from tests.conftest import _factory
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @pytest_asyncio.fixture
 async def seed_roles(db: AsyncSession):
     from app.models.user import Role
 
-    db.add_all([
-        Role(id=1, name="driver"),
-        Role(id=2, name="admin"),
-        Role(id=3, name="super_admin"),
-        Role(id=4, name="racing_judge"),
-    ])
+    db.add_all(
+        [
+            Role(id=1, name="driver"),
+            Role(id=2, name="admin"),
+            Role(id=3, name="super_admin"),
+            Role(id=4, name="racing_judge"),
+        ]
+    )
     await db.commit()
 
 
@@ -49,9 +51,7 @@ async def _create_user(db: AsyncSession, role_id: int, name: str):
     db.add(user)
     await db.commit()
 
-    result = await db.execute(
-        select(User).options(joinedload(User.role)).where(User.id == user.id)
-    )
+    result = await db.execute(select(User).options(joinedload(User.role)).where(User.id == user.id))
     return result.scalar_one()
 
 
@@ -309,7 +309,7 @@ class TestBwpPoints:
         assert resp.status_code == 200
         assert resp.json()["expired"] is True
         assert resp.json()["note"] == "served"
-        assert resp.json()["expiresOn"] == datetime.now(timezone.utc).date().isoformat()
+        assert resp.json()["expiresOn"] == datetime.now(UTC).date().isoformat()
 
         resp = await shared_client.delete(f"/api/v1/bwp-points/{point['id']}")
         assert resp.status_code == 204
@@ -321,9 +321,7 @@ class TestBwpPoints:
         _set_auth_user(shared_client._admin_user)
         point = (await self._add(shared_client, driver.id)).json()
 
-        resp = await shared_client.patch(
-            f"/api/v1/bwp-points/{point['id']}", json={"expired": False}
-        )
+        resp = await shared_client.patch(f"/api/v1/bwp-points/{point['id']}", json={"expired": False})
         assert resp.status_code == 422
 
     async def test_bwp_reset_expires_points_and_clears(self, shared_client: AsyncClient, db: AsyncSession):
@@ -331,12 +329,12 @@ class TestBwpPoints:
         _set_auth_user(shared_client._admin_user)
         await self._add(shared_client, driver.id, points=4)
         await self._add(shared_client, driver.id, points=5)
-        rule = (await shared_client.post(
-            "/api/v1/penalty-rules", json={"threshold": 5, "label": "Ban"}
-        )).json()
-        assert (await shared_client.put(
-            f"/api/v1/drivers/{driver.id}/clearances/{rule['id']}"
-        )).status_code == 201
+        rule = (
+            await shared_client.post("/api/v1/penalty-rules", json={"threshold": 5, "label": "Ban"})
+        ).json()
+        assert (
+            await shared_client.put(f"/api/v1/drivers/{driver.id}/clearances/{rule['id']}")
+        ).status_code == 201
 
         resp = await shared_client.post(f"/api/v1/drivers/{driver.id}/bwp-resets", json={})
 
@@ -380,9 +378,9 @@ class TestPenaltyRulesAndClearances:
     async def test_clearance_put_is_idempotent(self, shared_client: AsyncClient, db: AsyncSession):
         driver = await _create_driver(db, "Clear Me")
         _set_auth_user(shared_client._admin_user)
-        rule = (await shared_client.post(
-            "/api/v1/penalty-rules", json={"threshold": 5, "label": "Ban"}
-        )).json()
+        rule = (
+            await shared_client.post("/api/v1/penalty-rules", json={"threshold": 5, "label": "Ban"})
+        ).json()
         url = f"/api/v1/drivers/{driver.id}/clearances/{rule['id']}"
 
         created = await shared_client.put(url)

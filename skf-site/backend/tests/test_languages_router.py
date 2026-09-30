@@ -1,4 +1,5 @@
 """Languages and flat translation maps."""
+
 from __future__ import annotations
 
 import pytest
@@ -20,12 +21,14 @@ def _reset():
 
 @pytest.fixture
 async def seeded(db):
-    db.add_all([
-        Language(code="en", name="English"),
-        Language(code="xx", name="Draft", is_active=False),
-        Translation(lang="en", key="home.title", value="Home"),
-        Translation(lang="en", key="nav.home", value="Home page"),
-    ])
+    db.add_all(
+        [
+            Language(code="en", name="English"),
+            Language(code="xx", name="Draft", is_active=False),
+            Translation(lang="en", key="home.title", value="Home"),
+            Translation(lang="en", key="nav.home", value="Home page"),
+        ]
+    )
     await db.commit()
 
 
@@ -43,7 +46,7 @@ async def test_public_language_list_hides_inactive(client, seeded):
 
 
 async def test_admin_sees_inactive_languages(client, admin):
-    assert [l["code"] for l in (await client.get(LANGS)).json()] == ["en", "xx"]
+    assert [lang["code"] for lang in (await client.get(LANGS)).json()] == ["en", "xx"]
 
 
 async def test_public_translation_map(client, seeded):

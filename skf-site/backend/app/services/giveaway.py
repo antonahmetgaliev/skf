@@ -147,6 +147,7 @@ def compute_eligibility(
 
 # ── Database-backed views ───────────────────────────────────────────────────
 
+
 async def _imports_with_entries(db: AsyncSession, championship_id: int) -> list[RaceResultImport]:
     result = await db.execute(
         select(RaceResultImport)
@@ -176,9 +177,7 @@ async def eligibility(
     for record in records:
         key = _round_key(record)
         for entry in record.entries:
-            canonical, display = aliases.get(
-                entry.normalized_name, (entry.normalized_name, entry.raw_name)
-            )
+            canonical, display = aliases.get(entry.normalized_name, (entry.normalized_name, entry.raw_name))
             rows.append(
                 RoundEntry(
                     round_key=key,
@@ -235,9 +234,7 @@ async def unmatched_names(db: AsyncSession, championship_id: int) -> list[Unmatc
         for entry in record.entries:
             if entry.driver_id is not None or entry.normalized_name in aliases:
                 continue
-            bucket = counts.setdefault(
-                entry.normalized_name, {"raw_name": entry.raw_name, "rounds": 0}
-            )
+            bucket = counts.setdefault(entry.normalized_name, {"raw_name": entry.raw_name, "rounds": 0})
             bucket["rounds"] += 1
 
     if not counts:
@@ -258,6 +255,7 @@ async def unmatched_names(db: AsyncSession, championship_id: int) -> list[Unmatc
 
 
 # ── Aliases ─────────────────────────────────────────────────────────────────
+
 
 def aliases_query():
     return select(GiveawayNameAlias).order_by(GiveawayNameAlias.normalized_alias)

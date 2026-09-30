@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import delete, select
@@ -14,22 +14,16 @@ from app.models.simgrid_cache import SimgridCache
 logger = logging.getLogger(__name__)
 
 
-async def read_cache(
-    key: str, ttl: timedelta
-) -> dict | list | None:
+async def read_cache(key: str, ttl: timedelta) -> dict | list | None:
     """Return cached data if fresher than *ttl*, else ``None``."""
     try:
         async with async_session() as session:
             row = (
-                await session.execute(
-                    select(SimgridCache).where(SimgridCache.cache_key == key)
-                )
+                await session.execute(select(SimgridCache).where(SimgridCache.cache_key == key))
             ).scalar_one_or_none()
             if row is None:
                 return None
-            age = datetime.now(timezone.utc) - row.fetched_at.replace(
-                tzinfo=timezone.utc
-            )
+            age = datetime.now(UTC) - row.fetched_at.replace(tzinfo=UTC)
             if age > ttl:
                 return None
             return row.data
@@ -43,9 +37,7 @@ async def read_stale_cache(key: str) -> dict | list | None:
     try:
         async with async_session() as session:
             row = (
-                await session.execute(
-                    select(SimgridCache).where(SimgridCache.cache_key == key)
-                )
+                await session.execute(select(SimgridCache).where(SimgridCache.cache_key == key))
             ).scalar_one_or_none()
             if row is None:
                 return None
@@ -60,18 +52,14 @@ async def write_cache(key: str, data: Any) -> None:
     try:
         async with async_session() as session:
             existing = (
-                await session.execute(
-                    select(SimgridCache).where(SimgridCache.cache_key == key)
-                )
+                await session.execute(select(SimgridCache).where(SimgridCache.cache_key == key))
             ).scalar_one_or_none()
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             if existing:
                 existing.data = data
                 existing.fetched_at = now
             else:
-                session.add(
-                    SimgridCache(cache_key=key, data=data, fetched_at=now)
-                )
+                session.add(SimgridCache(cache_key=key, data=data, fetched_at=now))
             await session.commit()
     except Exception:
         logger.warning("Cache write failed for key=%s", key, exc_info=True)
@@ -81,9 +69,7 @@ async def invalidate_cache_by_keys(*keys: str) -> None:
     """Delete cache entries with exact matching keys."""
     try:
         async with async_session() as session:
-            await session.execute(
-                delete(SimgridCache).where(SimgridCache.cache_key.in_(keys))
-            )
+            await session.execute(delete(SimgridCache).where(SimgridCache.cache_key.in_(keys)))
             await session.commit()
     except Exception:
         logger.warning("Cache invalidation failed for keys=%s", keys, exc_info=True)
@@ -99,9 +85,7 @@ async def invalidate_cache_by_prefix(*prefixes: str) -> None:
             if prefixes:
                 for prefix in prefixes:
                     await session.execute(
-                        delete(SimgridCache).where(
-                            SimgridCache.cache_key.like(f"{prefix}%")
-                        )
+                        delete(SimgridCache).where(SimgridCache.cache_key.like(f"{prefix}%"))
                     )
             else:
                 await session.execute(delete(SimgridCache))

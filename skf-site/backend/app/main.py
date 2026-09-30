@@ -6,10 +6,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import seed
+from app.api import v1
 from app.config import settings
 from app.core.errors import register_error_handlers
 from app.middleware import StaleHeaderMiddleware
-from app.api import v1
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

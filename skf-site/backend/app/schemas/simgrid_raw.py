@@ -106,11 +106,11 @@ class RawStandingsPage(Envelope[RawStandingEntry]):
 class RawRfactorResult(RawModel):
     """LMU (rFactor) extras; iRacing results carry none of this."""
 
-    status: str | None = None     # "Finished Normally", "DNF", "DQ"
-    finished: str | None = None   # overall finishing position
-    starting: str | None = None   # overall grid position
-    class_st: str | None = None   # grid position in class
-    class_fn: str | None = None   # finishing position in class
+    status: str | None = None  # "Finished Normally", "DNF", "DQ"
+    finished: str | None = None  # overall finishing position
+    starting: str | None = None  # overall grid position
+    class_st: str | None = None  # grid position in class
+    class_fn: str | None = None  # finishing position in class
 
 
 class RawResultExternalData(RawModel):

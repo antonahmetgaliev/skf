@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Iterable
+from collections.abc import Iterable
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,9 +38,7 @@ async def build_user_out(user: User, db: AsyncSession) -> UserOut:
     """Single source of truth for serialising one user — every endpoint
     must return the same shape (driver link and managed communities
     included), otherwise the frontend's cached user silently loses fields."""
-    driver_id = (
-        await db.execute(select(Driver.id).where(Driver.user_id == user.id))
-    ).scalars().first()
+    driver_id = (await db.execute(select(Driver.id).where(Driver.user_id == user.id))).scalars().first()
     managed_ids: list[uuid.UUID] = []
     if user.role.name == ROLE_COMMUNITY_MANAGER:
         managed_ids = await get_managed_communities(db, user.id)
@@ -114,9 +112,7 @@ async def revoke_sessions(db: AsyncSession, user_id: uuid.UUID) -> None:
 
 
 async def get_managed_communities(db: AsyncSession, user_id: uuid.UUID) -> list[uuid.UUID]:
-    rows = await db.execute(
-        select(CommunityManager.community_id).where(CommunityManager.user_id == user_id)
-    )
+    rows = await db.execute(select(CommunityManager.community_id).where(CommunityManager.user_id == user_id))
     return list(rows.scalars().all())
 
 

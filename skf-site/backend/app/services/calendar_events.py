@@ -8,7 +8,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from calendar import monthrange
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
@@ -49,11 +49,7 @@ async def list_car_classes(game_id: int | None) -> list[str]:
     except Exception:
         logger.warning("Could not load car classes from SimGrid", exc_info=True)
         return []
-    return sorted(
-        c["name"]
-        for c in classes
-        if isinstance(c, dict) and c.get("name") and c["name"] != "All"
-    )
+    return sorted(c["name"] for c in classes if isinstance(c, dict) and c.get("name") and c["name"] != "All")
 
 
 # ── Date helpers ─────────────────────────────────────────────────────────────
@@ -75,7 +71,7 @@ def _classify_simgrid(
     accepting_registrations: bool,
 ) -> CalendarEventType:
     """Classify a SimGrid championship – uses full datetime for accuracy."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     start = _parse_date(start_date)
     end = _parse_date(end_date)
 
@@ -123,12 +119,12 @@ def _date_range(year: int, month: int | None) -> tuple[datetime, datetime]:
     if month is not None:
         _, days_in_month = monthrange(year, month)
         return (
-            datetime(year, month, 1, tzinfo=timezone.utc),
-            datetime(year, month, days_in_month, 23, 59, 59, tzinfo=timezone.utc),
+            datetime(year, month, 1, tzinfo=UTC),
+            datetime(year, month, days_in_month, 23, 59, 59, tzinfo=UTC),
         )
     return (
-        datetime(year, 1, 1, tzinfo=timezone.utc),
-        datetime(year, 12, 31, 23, 59, 59, tzinfo=timezone.utc),
+        datetime(year, 1, 1, tzinfo=UTC),
+        datetime(year, 12, 31, 23, 59, 59, tzinfo=UTC),
     )
 
 
@@ -155,21 +151,20 @@ async def _fetch_detail(cid: int) -> tuple[int, dict | None]:
 def _simgrid_races(raw_races: list[dict]) -> list[CalendarRace]:
     races: list[CalendarRace] = []
     for r in raw_races:
-        race_date = (
-            r.get("starts_at") or r.get("startsAt")
-            or r.get("start_date") or r.get("startDate")
-        )
+        race_date = r.get("starts_at") or r.get("startsAt") or r.get("start_date") or r.get("startDate")
         track = r.get("track")
         track_name = None
         if isinstance(track, dict):
             track_name = track.get("name")
         elif isinstance(track, str):
             track_name = track
-        races.append(CalendarRace(
-            date=race_date,
-            track=track_name,
-            name=r.get("display_name") or r.get("race_name") or r.get("displayName"),
-        ))
+        races.append(
+            CalendarRace(
+                date=race_date,
+                track=track_name,
+                name=r.get("display_name") or r.get("race_name") or r.get("displayName"),
+            )
+        )
     return races
 
 
@@ -182,9 +177,9 @@ async def _simgrid_events(
 
     active_ids = set((await db.execute(select(ActiveChampionship.simgrid_id))).scalars().all())
     try:
-        championships = await simgrid_service.with_details([
-            c for c in await simgrid_service.get_championships() if c.id in active_ids
-        ])
+        championships = await simgrid_service.with_details(
+            [c for c in await simgrid_service.get_championships() if c.id in active_ids]
+        )
     except Exception:
         logger.warning("Could not load SimGrid championships for the calendar", exc_info=True)
         championships = []
@@ -217,8 +212,10 @@ async def _simgrid_events(
         start = _parse_date(effective_start)
         end = _parse_date(effective_end)
         event_type = _classify_simgrid(
-            effective_start, effective_end,
-            champ.event_completed or all_races_ended, champ.accepting_registrations,
+            effective_start,
+            effective_end,
+            champ.event_completed or all_races_ended,
+            champ.accepting_registrations,
         )
 
         # Dateless championships are included (unscheduled) — skip the range filter.
@@ -226,42 +223,40 @@ async def _simgrid_events(
         if has_any_date and not _overlaps_range(start, end, races, range_start, range_end):
             continue
 
-        events.append(CalendarEvent(
-            id=str(champ.id),
-            name=champ.name,
-            game=detail.get("game_name") or "",
-            description=detail.get("description"),
-            image=detail.get("image"),
-            start_date=effective_start,
-            end_date=effective_end,
-            event_type=event_type,
-            source="simgrid",
-            simgrid_championship_id=champ.id,
-            community_id=skf.id if skf else None,
-            community_name=skf.name if skf else None,
-            community_color=skf.color if skf else None,
-            community_discord_url=skf.discord_url if skf else None,
-            community_is_skf=True,
-            accepting_registrations=(
-                champ.accepting_registrations or bool(detail.get("accepting_registrations"))
-            ),
-            capacity=detail.get("capacity"),
-            spots_taken=detail.get("spots_taken"),
-            registration_url=detail.get("url") or None,
-            races=races,
-        ))
+        events.append(
+            CalendarEvent(
+                id=str(champ.id),
+                name=champ.name,
+                game=detail.get("game_name") or "",
+                description=detail.get("description"),
+                image=detail.get("image"),
+                start_date=effective_start,
+                end_date=effective_end,
+                event_type=event_type,
+                source="simgrid",
+                simgrid_championship_id=champ.id,
+                community_id=skf.id if skf else None,
+                community_name=skf.name if skf else None,
+                community_color=skf.color if skf else None,
+                community_discord_url=skf.discord_url if skf else None,
+                community_is_skf=True,
+                accepting_registrations=(
+                    champ.accepting_registrations or bool(detail.get("accepting_registrations"))
+                ),
+                capacity=detail.get("capacity"),
+                spots_taken=detail.get("spots_taken"),
+                registration_url=detail.get("url") or None,
+                races=races,
+            )
+        )
     return events
 
 
 # ── Custom championships ─────────────────────────────────────────────────────
 
 
-async def _custom_events(
-    db: AsyncSession, range_start: datetime, range_end: datetime
-) -> list[CalendarEvent]:
-    result = await db.execute(
-        select(CustomChampionship).where(CustomChampionship.is_visible.is_(True))
-    )
+async def _custom_events(db: AsyncSession, range_start: datetime, range_end: datetime) -> list[CalendarEvent]:
+    result = await db.execute(select(CustomChampionship).where(CustomChampionship.is_visible.is_(True)))
     events: list[CalendarEvent] = []
     for champ in result.scalars().all():
         race_dates = [r.date for r in champ.races if r.date is not None]
@@ -283,30 +278,30 @@ async def _custom_events(
             continue
 
         community = champ.community
-        events.append(CalendarEvent(
-            id=str(champ.id),
-            name=champ.name,
-            game=champ.game_rel.name if champ.game_rel is not None else champ.game,
-            car_class=champ.car_class,
-            description=champ.description,
-            start_date=earliest.isoformat() if earliest else None,
-            end_date=latest.isoformat() if latest else None,
-            event_type=CalendarEventType.FUTURE,
-            source="custom",
-            custom_championship_id=champ.id,
-            community_id=community.id if community else None,
-            community_name=community.name if community else None,
-            community_color=community.color if community else None,
-            community_discord_url=community.discord_url if community else None,
-            community_is_skf=community.is_skf if community else False,
-            races=races,
-        ))
+        events.append(
+            CalendarEvent(
+                id=str(champ.id),
+                name=champ.name,
+                game=champ.game_rel.name if champ.game_rel is not None else champ.game,
+                car_class=champ.car_class,
+                description=champ.description,
+                start_date=earliest.isoformat() if earliest else None,
+                end_date=latest.isoformat() if latest else None,
+                event_type=CalendarEventType.FUTURE,
+                source="custom",
+                custom_championship_id=champ.id,
+                community_id=community.id if community else None,
+                community_name=community.name if community else None,
+                community_color=community.color if community else None,
+                community_discord_url=community.discord_url if community else None,
+                community_is_skf=community.is_skf if community else False,
+                races=races,
+            )
+        )
     return events
 
 
-async def list_calendar_events(
-    db: AsyncSession, year: int, month: int | None
-) -> list[CalendarEvent]:
+async def list_calendar_events(db: AsyncSession, year: int, month: int | None) -> list[CalendarEvent]:
     """Merged SimGrid + custom championship events for a month (or a whole year).
 
     Always includes every visible community's championships alongside SKF

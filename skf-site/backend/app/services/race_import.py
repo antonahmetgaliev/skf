@@ -11,7 +11,7 @@ import logging
 import uuid
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi import UploadFile
 from sqlalchemy import case, delete, func, select, update
@@ -26,7 +26,6 @@ from app.core.errors import (
     ServiceUnavailable,
     Unprocessable,
 )
-
 from app.models.incidents import Incident, IncidentDriver, IncidentWindow
 from app.models.race_result import (
     GiveawayNameAlias,
@@ -84,9 +83,7 @@ class ImportResult:
     incidents_kept: int
 
 
-async def entry_counts(
-    db: AsyncSession, import_ids: Iterable[uuid.UUID]
-) -> dict[uuid.UUID, tuple[int, int]]:
+async def entry_counts(db: AsyncSession, import_ids: Iterable[uuid.UUID]) -> dict[uuid.UUID, tuple[int, int]]:
     """``{import_id: (entries, unmatched entries)}`` counted in SQL."""
     ids = list(import_ids)
     if not ids:
@@ -120,9 +117,7 @@ async def championship_name_for(championship_id: int) -> str | None:
     try:
         return (await simgrid_service.get_championship(championship_id)).name
     except Exception:  # noqa: BLE001 - a missing name must not block incidents
-        logger.warning(
-            "Could not load championship %s from SimGrid", championship_id, exc_info=True
-        )
+        logger.warning("Could not load championship %s from SimGrid", championship_id, exc_info=True)
         return None
 
 
@@ -134,13 +129,17 @@ async def backfill_window_championship_names(db: AsyncSession) -> int:
     number of windows updated.
     """
     windows = (
-        await db.execute(
-            select(IncidentWindow).where(
-                IncidentWindow.championship_id.is_not(None),
-                IncidentWindow.championship_name.is_(None),
+        (
+            await db.execute(
+                select(IncidentWindow).where(
+                    IncidentWindow.championship_id.is_not(None),
+                    IncidentWindow.championship_name.is_(None),
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     names: dict[int, str | None] = {}
     updated = 0
     for window in windows:
@@ -180,7 +179,7 @@ async def find_or_create_window(
 
     if championship_name is None and championship_id is not None:
         championship_name = await championship_name_for(championship_id)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     window = IncidentWindow(
         championship_id=championship_id,
         championship_name=championship_name,
@@ -311,9 +310,7 @@ async def import_race_file(
         auto_grouped=parsed.auto_grouped,
         uploaded_by_user_id=user_id,
     )
-    storage_key = (
-        f"race-results/{championship_id}/{race_id}/{record.id}.{FILE_EXTENSIONS[sim]}"
-    )
+    storage_key = f"race-results/{championship_id}/{race_id}/{record.id}.{FILE_EXTENSIONS[sim]}"
 
     window: IncidentWindow | None = None
     kept: list[Incident] = []
@@ -444,9 +441,7 @@ def import_out(record: RaceResultImport, entry_count: int, unmatched: int) -> Ra
 def result_out(result: ImportResult) -> ImportResultOut:
     entries = result.entries
     return ImportResultOut(
-        race_import=import_out(
-            result.record, len(entries), sum(1 for e in entries if e.driver_id is None)
-        ),
+        race_import=import_out(result.record, len(entries), sum(1 for e in entries if e.driver_id is None)),
         window_id=result.window.id if result.window else None,
         incidents_created=result.incidents_created,
         incidents_kept=result.incidents_kept,
@@ -466,9 +461,7 @@ def result_out(result: ImportResult) -> ImportResultOut:
 
 def imports_query(championship_id: int | None = None):
     """Uploads in round order, optionally for one championship."""
-    stmt = select(RaceResultImport).order_by(
-        RaceResultImport.session_started_at, RaceResultImport.created_at
-    )
+    stmt = select(RaceResultImport).order_by(RaceResultImport.session_started_at, RaceResultImport.created_at)
     if championship_id is not None:
         stmt = stmt.where(RaceResultImport.championship_simgrid_id == championship_id)
     return stmt
@@ -559,9 +552,7 @@ async def stored_file(record: RaceResultImport) -> tuple[bytes, str]:
 async def delete_import(db: AsyncSession, record: RaceResultImport) -> None:
     """Remove the round's results. Its incidents stay with the window."""
     storage_key = record.storage_key
-    await db.execute(
-        update(Incident).where(Incident.import_id == record.id).values(import_id=None)
-    )
+    await db.execute(update(Incident).where(Incident.import_id == record.id).values(import_id=None))
     await db.delete(record)
     await db.commit()
     if storage_key:
@@ -598,29 +589,35 @@ async def build_rounds(db: AsyncSession, championship_id: int) -> RoundsOut:
         r.race_simgrid_id: r
         for r in (
             await db.execute(
-                select(RaceResultImport).where(
-                    RaceResultImport.championship_simgrid_id == championship_id
-                )
+                select(RaceResultImport).where(RaceResultImport.championship_simgrid_id == championship_id)
             )
         ).scalars()
     }
     entry_totals = await entry_counts(db, (r.id for r in imports.values()))
     race_ids = [race["id"] for race in races]
-    windows = {
-        w.race_id: w
-        for w in (
-            await db.execute(select(IncidentWindow).where(IncidentWindow.race_id.in_(race_ids)))
-        ).scalars()
-    } if race_ids else {}
-    counts = dict(
-        (
-            await db.execute(
-                select(Incident.window_id, func.count(Incident.id))
-                .where(Incident.window_id.in_([w.id for w in windows.values()]))
-                .group_by(Incident.window_id)
-            )
-        ).all()
-    ) if windows else {}
+    windows = (
+        {
+            w.race_id: w
+            for w in (
+                await db.execute(select(IncidentWindow).where(IncidentWindow.race_id.in_(race_ids)))
+            ).scalars()
+        }
+        if race_ids
+        else {}
+    )
+    counts = (
+        dict(
+            (
+                await db.execute(
+                    select(Incident.window_id, func.count(Incident.id))
+                    .where(Incident.window_id.in_([w.id for w in windows.values()]))
+                    .group_by(Incident.window_id)
+                )
+            ).all()
+        )
+        if windows
+        else {}
+    )
 
     rounds: list[RoundOut] = []
     for race in races:
@@ -632,9 +629,7 @@ async def build_rounds(db: AsyncSession, championship_id: int) -> RoundsOut:
                 name=race.get("display_name") or race.get("race_name") or "",
                 starts_at=race.get("starts_at"),
                 ended=race.get("ended", False),
-                race_import=(
-                    import_out(record, *entry_totals.get(record.id, (0, 0))) if record else None
-                ),
+                race_import=(import_out(record, *entry_totals.get(record.id, (0, 0))) if record else None),
                 window=(
                     RoundWindowOut(
                         id=window.id,

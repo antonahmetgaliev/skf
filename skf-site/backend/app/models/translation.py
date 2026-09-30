@@ -27,6 +27,4 @@ class Translation(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    __table_args__ = (
-        UniqueConstraint("lang", "key", name="uq_translation_lang_key"),
-    )
+    __table_args__ = (UniqueConstraint("lang", "key", name="uq_translation_lang_key"),)

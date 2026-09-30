@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text, func, text
 from sqlalchemy.dialects.postgresql import UUID
@@ -15,9 +15,7 @@ from app.models.bwp import Base
 class IncidentWindow(Base):
     __tablename__ = "incident_windows"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     # SimGrid ids. A round has at most one window, so its result upload and
     # its incidents always meet in the same place.
     championship_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
@@ -35,11 +33,9 @@ class IncidentWindow(Base):
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
-    is_manually_closed: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False
-    )
+    is_manually_closed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    incidents: Mapped[list["Incident"]] = relationship(
+    incidents: Mapped[list[Incident]] = relationship(
         back_populates="window",
         cascade="all, delete-orphan",
         passive_deletes=True,
@@ -49,19 +45,17 @@ class IncidentWindow(Base):
 
     @property
     def is_open(self) -> bool:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         closes = self.closes_at
         if closes.tzinfo is None:
-            closes = closes.replace(tzinfo=timezone.utc)
+            closes = closes.replace(tzinfo=UTC)
         return not self.is_manually_closed and closes > now
 
 
 class Incident(Base):
     __tablename__ = "incidents"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     window_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("incident_windows.id", ondelete="CASCADE"),
@@ -94,9 +88,9 @@ class Incident(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=True
     )
 
-    window: Mapped["IncidentWindow"] = relationship(back_populates="incidents")
+    window: Mapped[IncidentWindow] = relationship(back_populates="incidents")
 
-    drivers: Mapped[list["IncidentDriver"]] = relationship(
+    drivers: Mapped[list[IncidentDriver]] = relationship(
         back_populates="incident",
         cascade="all, delete-orphan",
         lazy="selectin",
@@ -107,9 +101,7 @@ class Incident(Base):
 class IncidentDriver(Base):
     __tablename__ = "incident_drivers"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     incident_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("incidents.id", ondelete="CASCADE"),
@@ -123,9 +115,9 @@ class IncidentDriver(Base):
     )
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
-    incident: Mapped["Incident"] = relationship(back_populates="drivers")
+    incident: Mapped[Incident] = relationship(back_populates="drivers")
 
-    resolution: Mapped["IncidentResolution | None"] = relationship(
+    resolution: Mapped[IncidentResolution | None] = relationship(
         back_populates="incident_driver",
         cascade="all, delete-orphan",
         uselist=False,
@@ -136,9 +128,7 @@ class IncidentDriver(Base):
 class IncidentResolution(Base):
     __tablename__ = "incident_resolutions"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     incident_driver_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("incident_drivers.id", ondelete="CASCADE"),
@@ -164,15 +154,13 @@ class IncidentResolution(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=True
     )
 
-    incident_driver: Mapped["IncidentDriver"] = relationship(back_populates="resolution")
+    incident_driver: Mapped[IncidentDriver] = relationship(back_populates="resolution")
 
 
 class VerdictRule(Base):
     __tablename__ = "verdict_rules"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     verdict: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     default_bwp: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -200,8 +188,6 @@ class VerdictRule(Base):
 class DescriptionPreset(Base):
     __tablename__ = "description_presets"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     text: Mapped[str] = mapped_column(String(200), nullable=False, unique=True)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

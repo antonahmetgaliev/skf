@@ -165,9 +165,7 @@ def test_external_entities_are_not_resolved():
 
 def test_accepts_the_rfactor_doctype():
     """Real server files open with rFactor's one internal entity declaration."""
-    payload = _load("portimao.xml").replace(
-        b"?>", b'?>\n<!DOCTYPE rF [<!ENTITY rFEnt "rFactor Entity">]>', 1
-    )
+    payload = _load("portimao.xml").replace(b"?>", b'?>\n<!DOCTYPE rF [<!ENTITY rFEnt "rFactor Entity">]>', 1)
     assert len(parse_race_results(payload).entries) == 26
 
 
@@ -240,7 +238,11 @@ def test_contacts_from_a_real_race():
     first = race.contacts[0]
     assert first.time == "00:03:05"
     assert first.drivers == [
-        "Bohdan Tseliuk", "Oleksandr Dovmat", "Andrii Mochulskyi", "Artem Reshodko", "Arsen Budzyk",
+        "Bohdan Tseliuk",
+        "Oleksandr Dovmat",
+        "Andrii Mochulskyi",
+        "Artem Reshodko",
+        "Arsen Budzyk",
     ]
     # The giveaway view of the same file is unchanged by the stream.
     assert len(race.entries) == 17

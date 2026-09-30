@@ -26,6 +26,7 @@ router = APIRouter(tags=["Incidents"])
 
 # ── Verdict rules ────────────────────────────────────────────────────────────
 
+
 @router.get("/verdict-rules", response_model=list[VerdictRuleOut])
 async def list_verdict_rules(
     db: AsyncSession = Depends(get_db),
@@ -74,6 +75,7 @@ async def delete_verdict_rule(
 
 
 # ── Description presets ──────────────────────────────────────────────────────
+
 
 @router.get("/description-presets", response_model=list[DescriptionPresetOut])
 async def list_description_presets(

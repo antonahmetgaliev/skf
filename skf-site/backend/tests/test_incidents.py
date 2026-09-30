@@ -1,4 +1,5 @@
 """Tests for the reworked incident system (N-driver, per-driver resolution)."""
+
 from __future__ import annotations
 
 import os
@@ -9,21 +10,21 @@ os.environ.setdefault("YOUTUBE_API_KEY", "fake")
 os.environ.setdefault("YOUTUBE_CHANNEL_ID", "fake")
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
-from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
-from tests.conftest import _make_engine, _factory
-
+from tests.conftest import _factory, _make_engine
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest_asyncio.fixture
 async def engine():
@@ -43,50 +44,51 @@ async def db(engine) -> AsyncSession:
 @pytest_asyncio.fixture
 async def seed_roles(db: AsyncSession):
     from app.models.user import Role
-    db.add_all([
-        Role(id=1, name="driver"),
-        Role(id=2, name="admin"),
-        Role(id=3, name="super_admin"),
-        Role(id=4, name="racing_judge"),
-    ])
+
+    db.add_all(
+        [
+            Role(id=1, name="driver"),
+            Role(id=2, name="admin"),
+            Role(id=3, name="super_admin"),
+            Role(id=4, name="racing_judge"),
+        ]
+    )
     await db.commit()
 
 
 @pytest_asyncio.fixture
 async def admin_user(db: AsyncSession, seed_roles):
     from app.models.user import User
+
     u = User(
         id=uuid.uuid4(),
         discord_id="admin001",
         username="admin",
         display_name="Admin User",
         role_id=2,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
     db.add(u)
     await db.commit()
-    result = await db.execute(
-        select(User).options(joinedload(User.role)).where(User.id == u.id)
-    )
+    result = await db.execute(select(User).options(joinedload(User.role)).where(User.id == u.id))
     return result.scalar_one()
 
 
 @pytest_asyncio.fixture
 async def judge_user(db: AsyncSession, seed_roles):
     from app.models.user import User
+
     u = User(
         id=uuid.uuid4(),
         discord_id="judge001",
         username="judge",
         display_name="Judge User",
         role_id=4,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
     db.add(u)
     await db.commit()
-    result = await db.execute(
-        select(User).options(joinedload(User.role)).where(User.id == u.id)
-    )
+    result = await db.execute(select(User).options(joinedload(User.role)).where(User.id == u.id))
     return result.scalar_one()
 
 
@@ -111,6 +113,7 @@ def _make_client(engine, user=None):
 
     if user is not None:
         from app.auth import get_current_user, get_current_user_optional
+
         app.dependency_overrides[get_current_user] = lambda: user
         app.dependency_overrides[get_current_user_optional] = lambda: user
 
@@ -121,6 +124,7 @@ def _set_auth_user(user):
     """Swap the currently-overridden auth user on the shared app."""
     from app.auth import get_current_user, get_current_user_optional
     from app.main import app
+
     app.dependency_overrides[get_current_user] = lambda: user
     app.dependency_overrides[get_current_user_optional] = lambda: user
 
@@ -129,6 +133,7 @@ def _set_auth_user(user):
 async def client(engine):
     """Unauthenticated client."""
     from app.main import app
+
     async with _make_client(engine) as ac:
         yield ac
     app.dependency_overrides.clear()
@@ -137,6 +142,7 @@ async def client(engine):
 @pytest_asyncio.fixture
 async def admin_client(engine, admin_user):
     from app.main import app
+
     async with _make_client(engine, admin_user) as ac:
         yield ac
     app.dependency_overrides.clear()
@@ -145,6 +151,7 @@ async def admin_client(engine, admin_user):
 @pytest_asyncio.fixture
 async def judge_client(engine, judge_user):
     from app.main import app
+
     async with _make_client(engine, judge_user) as ac:
         yield ac
     app.dependency_overrides.clear()
@@ -154,6 +161,7 @@ async def judge_client(engine, judge_user):
 async def shared_client(engine, admin_user, judge_user):
     """A single client that can switch between admin and judge auth."""
     from app.main import app
+
     async with _make_client(engine, admin_user) as ac:
         ac._admin_user = admin_user
         ac._judge_user = judge_user
@@ -165,6 +173,7 @@ async def shared_client(engine, admin_user, judge_user):
 def _reset_filing_limiter():
     """Each test starts with a clean anonymous-filing budget."""
     from app.api.v1.incident_windows import filing_limiter
+
     filing_limiter.reset()
     yield
     filing_limiter.reset()
@@ -176,9 +185,11 @@ def _reset_filing_limiter():
 
 INGEST_URL = "/api/incidents/ingest"
 
+
 async def _coro(value):
     """Wrap a value in a coroutine (for monkeypatching async methods)."""
     return value
+
 
 BATCH_PAYLOAD = {
     "raceId": 142899,
@@ -202,6 +213,7 @@ BATCH_PAYLOAD = {
 # Token auth
 # =====================================================================
 
+
 class TestTokenAuth:
     @pytest.mark.anyio
     async def test_ingest_no_token(self, client: AsyncClient):
@@ -221,6 +233,7 @@ class TestTokenAuth:
     async def test_ingest_valid_token_no_window(self, client: AsyncClient, monkeypatch):
         """Auth passes, auto-creates window → 201."""
         from app.services import simgrid as sg_mod
+
         monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Test Race"))
         resp = await client.post(
             INGEST_URL,
@@ -234,14 +247,17 @@ class TestTokenAuth:
 # Batch ingestion
 # =====================================================================
 
-class TestBatchIngestion:
 
+class TestBatchIngestion:
     INGEST_HEADERS = {"Authorization": "Bearer test-token-secret"}
 
     @pytest.mark.anyio
     async def test_creates_window_and_incidents(self, client: AsyncClient, monkeypatch):
         from app.services import simgrid as sg_mod
-        monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Ignition League - Round 1"))
+
+        monkeypatch.setattr(
+            sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Ignition League - Round 1")
+        )
         resp = await client.post(
             INGEST_URL,
             json=BATCH_PAYLOAD,
@@ -267,16 +283,15 @@ class TestBatchIngestion:
     @pytest.mark.anyio
     async def test_reuses_existing_window(self, client: AsyncClient, monkeypatch):
         from app.services import simgrid as sg_mod
-        monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Ignition League - Round 1"))
-        resp1 = await client.post(
-            INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS
+
+        monkeypatch.setattr(
+            sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Ignition League - Round 1")
         )
+        resp1 = await client.post(INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS)
         assert resp1.status_code == 201
         window_id_1 = resp1.json()["id"]
 
-        resp2 = await client.post(
-            INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS
-        )
+        resp2 = await client.post(INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS)
         assert resp2.status_code == 201
         window_id_2 = resp2.json()["id"]
         assert window_id_1 == window_id_2
@@ -284,21 +299,19 @@ class TestBatchIngestion:
         assert len(resp2.json()["incidents"]) == 4
 
     @pytest.mark.anyio
-    async def test_driver_matching(
-        self, client: AsyncClient, db: AsyncSession, monkeypatch
-    ):
+    async def test_driver_matching(self, client: AsyncClient, db: AsyncSession, monkeypatch):
         """When a BWP Driver exists with the same name, the incident_driver should link to it."""
         from app.services import simgrid as sg_mod
+
         monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Test Race"))
         from app.models.bwp import Driver
+
         drv = Driver(name="Serhii Kachan")
         db.add(drv)
         await db.commit()
         await db.refresh(drv)
 
-        resp = await client.post(
-            INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS
-        )
+        resp = await client.post(INGEST_URL, json=BATCH_PAYLOAD, headers=self.INGEST_HEADERS)
         assert resp.status_code == 201
         inc0 = resp.json()["incidents"][0]
         matched = [d for d in inc0["drivers"] if d["driverName"] == "Serhii Kachan"]
@@ -308,6 +321,7 @@ class TestBatchIngestion:
 # =====================================================================
 # Manual file incident
 # =====================================================================
+
 
 class TestFileIncident:
     @pytest.mark.anyio
@@ -371,8 +385,9 @@ class TestFileIncident:
         # Clear auth to simulate unauthenticated user
         from app.auth import get_current_user, get_current_user_optional
         from app.main import app
+
         app.dependency_overrides[get_current_user] = lambda: (_ for _ in ()).throw(
-            __import__('fastapi').HTTPException(status_code=401)
+            __import__("fastapi").HTTPException(status_code=401)
         )
         app.dependency_overrides[get_current_user_optional] = lambda: None
 
@@ -399,6 +414,7 @@ class TestFileIncident:
 # =====================================================================
 # Per-driver resolve
 # =====================================================================
+
 
 class TestResolveDriver:
     @pytest.mark.anyio
@@ -477,15 +493,14 @@ class TestResolveDriver:
 # Publishing issues BWP
 # =====================================================================
 
+
 async def _resolved_window(ac: AsyncClient, name: str, rows: list[tuple[str, str, int]]):
     """Window + one incident per row, each resolved with the given verdict/points.
 
     rows: (driver_name, verdict, bwp_points)
     """
     _set_auth_user(ac._admin_user)
-    w_resp = await ac.post(
-        "/api/v1/incident-windows", json={"raceName": name, "intervalHours": 48}
-    )
+    w_resp = await ac.post("/api/v1/incident-windows", json={"raceName": name, "intervalHours": 48})
     window_id = w_resp.json()["id"]
     for driver_name, _verdict, _pts in rows:
         await ac.post(
@@ -497,7 +512,7 @@ async def _resolved_window(ac: AsyncClient, name: str, rows: list[tuple[str, str
     incidents = w.json()["incidents"]
 
     _set_auth_user(ac._judge_user)
-    for inc, (_name, verdict, pts) in zip(incidents, rows):
+    for inc, (_name, verdict, pts) in zip(incidents, rows, strict=True):
         await ac.put(
             f"/api/v1/incidents/{inc['id']}/resolution",
             json={
@@ -517,24 +532,28 @@ class TestPublishAppliesBwp:
     """BWP reaches the licence when the window is published, not by hand."""
 
     @pytest.mark.anyio
-    async def test_publish_all_creates_bwp_points(
-        self, shared_client: AsyncClient, db: AsyncSession
-    ):
-        from app.models.bwp import Driver, BwpPoint
+    async def test_publish_all_creates_bwp_points(self, shared_client: AsyncClient, db: AsyncSession):
+        from app.models.bwp import BwpPoint, Driver
 
-        db.add_all([
-            Driver(id=uuid.uuid4(), name="Penalised One"),
-            Driver(id=uuid.uuid4(), name="Penalised Two"),
-            Driver(id=uuid.uuid4(), name="Innocent"),
-        ])
+        db.add_all(
+            [
+                Driver(id=uuid.uuid4(), name="Penalised One"),
+                Driver(id=uuid.uuid4(), name="Penalised Two"),
+                Driver(id=uuid.uuid4(), name="Innocent"),
+            ]
+        )
         await db.commit()
 
         ac = shared_client
-        window_id = await _resolved_window(ac, "Issue BWP", [
-            ("Penalised One", "TP +5s", 2),
-            ("Penalised Two", "DT", 6),
-            ("Innocent", "NFA", 0),
-        ])
+        window_id = await _resolved_window(
+            ac,
+            "Issue BWP",
+            [
+                ("Penalised One", "TP +5s", 2),
+                ("Penalised Two", "DT", 6),
+                ("Innocent", "NFA", 0),
+            ],
+        )
 
         _set_auth_user(ac._judge_user)
         resp = await ac.patch(f"/api/v1/incident-windows/{window_id}/incidents", json={"isPublished": True})
@@ -549,19 +568,15 @@ class TestPublishAppliesBwp:
             assert inc["isPublished"] is True
 
     @pytest.mark.anyio
-    async def test_publish_all_is_idempotent(
-        self, shared_client: AsyncClient, db: AsyncSession
-    ):
+    async def test_publish_all_is_idempotent(self, shared_client: AsyncClient, db: AsyncSession):
         """Republishing a window must not double anyone's penalty."""
-        from app.models.bwp import Driver, BwpPoint
+        from app.models.bwp import BwpPoint, Driver
 
         db.add(Driver(id=uuid.uuid4(), name="Twice Published"))
         await db.commit()
 
         ac = shared_client
-        window_id = await _resolved_window(
-            ac, "Twice", [("Twice Published", "TP +30s", 5)]
-        )
+        window_id = await _resolved_window(ac, "Twice", [("Twice Published", "TP +30s", 5)])
 
         _set_auth_user(ac._judge_user)
         await ac.patch(f"/api/v1/incident-windows/{window_id}/incidents", json={"isPublished": True})
@@ -572,11 +587,9 @@ class TestPublishAppliesBwp:
         assert points[0].points == 5
 
     @pytest.mark.anyio
-    async def test_publish_links_driver_by_name(
-        self, shared_client: AsyncClient, db: AsyncSession
-    ):
+    async def test_publish_links_driver_by_name(self, shared_client: AsyncClient, db: AsyncSession):
         """A driver created after the incident was filed still gets matched."""
-        from app.models.bwp import Driver, BwpPoint
+        from app.models.bwp import BwpPoint, Driver
         from app.models.incidents import IncidentDriver
 
         ac = shared_client
@@ -601,9 +614,7 @@ class TestUnlinkedDriverBwp:
     """The silent-loss bug: a penalty must never be marked applied with no point."""
 
     @pytest.mark.anyio
-    async def test_unlinked_driver_is_not_marked_applied(
-        self, shared_client: AsyncClient, db: AsyncSession
-    ):
+    async def test_unlinked_driver_is_not_marked_applied(self, shared_client: AsyncClient, db: AsyncSession):
         from app.models.bwp import BwpPoint
         from app.models.incidents import IncidentResolution
 
@@ -632,10 +643,8 @@ class TestUnlinkedDriverBwp:
         assert resp.json()["unlinkedCount"] == 1
 
     @pytest.mark.anyio
-    async def test_link_then_republish_issues_the_point(
-        self, shared_client: AsyncClient, db: AsyncSession
-    ):
-        from app.models.bwp import Driver, BwpPoint
+    async def test_link_then_republish_issues_the_point(self, shared_client: AsyncClient, db: AsyncSession):
+        from app.models.bwp import BwpPoint, Driver
         from app.models.incidents import IncidentDriver
 
         ac = shared_client
@@ -676,6 +685,7 @@ class TestUnlinkedDriverBwp:
 # =====================================================================
 # Window CRUD (basic smoke tests — existing logic mostly unchanged)
 # =====================================================================
+
 
 class TestWindowCrud:
     @pytest.mark.anyio
@@ -786,13 +796,12 @@ class TestVerdictRules:
 # Default verdict rule (is_default)
 # =====================================================================
 
+
 class TestVerdictRuleDefault:
     """Exactly one rule may be the default, and the DB itself enforces it."""
 
     @pytest.mark.anyio
-    async def test_create_rule_with_is_default_demotes_previous(
-        self, admin_client: AsyncClient
-    ):
+    async def test_create_rule_with_is_default_demotes_previous(self, admin_client: AsyncClient):
         first = await admin_client.post(
             RULES_URL, json={"verdict": "First Default", "defaultBwp": 0, "isDefault": True}
         )
@@ -812,12 +821,10 @@ class TestVerdictRuleDefault:
 
     @pytest.mark.anyio
     async def test_patch_is_default_true_moves_default(self, admin_client: AsyncClient):
-        a = (await admin_client.post(
-            RULES_URL, json={"verdict": "Rule A", "defaultBwp": 0, "isDefault": True}
-        )).json()
-        b = (await admin_client.post(
-            RULES_URL, json={"verdict": "Rule B", "defaultBwp": 2}
-        )).json()
+        a = (
+            await admin_client.post(RULES_URL, json={"verdict": "Rule A", "defaultBwp": 0, "isDefault": True})
+        ).json()
+        b = (await admin_client.post(RULES_URL, json={"verdict": "Rule B", "defaultBwp": 2})).json()
 
         resp = await admin_client.patch(f"{RULES_URL}/{b['id']}", json={"isDefault": True})
         assert resp.status_code == 200
@@ -830,18 +837,22 @@ class TestVerdictRuleDefault:
     @pytest.mark.anyio
     async def test_patch_is_default_false_rejected(self, admin_client: AsyncClient):
         """Demoting directly would leave the league with no default at all."""
-        rule = (await admin_client.post(
-            RULES_URL, json={"verdict": "Sole Default", "defaultBwp": 0, "isDefault": True}
-        )).json()
+        rule = (
+            await admin_client.post(
+                RULES_URL, json={"verdict": "Sole Default", "defaultBwp": 0, "isDefault": True}
+            )
+        ).json()
 
         resp = await admin_client.patch(f"{RULES_URL}/{rule['id']}", json={"isDefault": False})
         assert resp.status_code == 400
 
     @pytest.mark.anyio
     async def test_delete_default_rule_conflicts(self, admin_client: AsyncClient):
-        rule = (await admin_client.post(
-            RULES_URL, json={"verdict": "Protected", "defaultBwp": 0, "isDefault": True}
-        )).json()
+        rule = (
+            await admin_client.post(
+                RULES_URL, json={"verdict": "Protected", "defaultBwp": 0, "isDefault": True}
+            )
+        ).json()
 
         resp = await admin_client.delete(f"{RULES_URL}/{rule['id']}")
         assert resp.status_code == 409
@@ -850,6 +861,7 @@ class TestVerdictRuleDefault:
     async def test_two_defaults_rejected_at_db_level(self, db: AsyncSession):
         """Proves the partial unique index, not just the router logic."""
         from sqlalchemy.exc import IntegrityError
+
         from app.models.incidents import VerdictRule
 
         db.add(VerdictRule(verdict="DB One", default_bwp=0, sort_order=1, is_default=True))
@@ -866,9 +878,7 @@ class TestVerdictRuleDefault:
         b = (await admin_client.post(RULES_URL, json={"verdict": "Ord B", "defaultBwp": 0})).json()
         c = (await admin_client.post(RULES_URL, json={"verdict": "Ord C", "defaultBwp": 0})).json()
 
-        resp = await admin_client.put(
-            f"{RULES_URL}/order", json={"ids": [c["id"], a["id"], b["id"]]}
-        )
+        resp = await admin_client.put(f"{RULES_URL}/order", json={"ids": [c["id"], a["id"], b["id"]]})
         assert resp.status_code == 200
 
         rules = (await admin_client.get(RULES_URL)).json()
@@ -881,10 +891,10 @@ class TestVerdictRuleDefault:
         assert resp.status_code in (401, 403)
 
 
-
 # =====================================================================
 # Bulk resolve (one button per incident)
 # =====================================================================
+
 
 class TestBulkResolve:
     @pytest.mark.anyio
@@ -975,16 +985,13 @@ class TestBulkResolve:
 # Bulk resolve falls back to the default verdict rule
 # =====================================================================
 
+
 async def _window_with_drivers(ac: AsyncClient, name: str, drivers: list[str]):
     """Create a window + one filed incident; return (window_id, incident_id, drivers)."""
     _set_auth_user(ac._admin_user)
-    w_resp = await ac.post(
-        "/api/v1/incident-windows", json={"raceName": name, "intervalHours": 48}
-    )
+    w_resp = await ac.post("/api/v1/incident-windows", json={"raceName": name, "intervalHours": 48})
     window_id = w_resp.json()["id"]
-    await ac.post(
-        f"/api/v1/incident-windows/{window_id}/incidents", json={"drivers": drivers}
-    )
+    await ac.post(f"/api/v1/incident-windows/{window_id}/incidents", json={"drivers": drivers})
     w = await ac.get(f"/api/v1/incident-windows/{window_id}")
     inc = w.json()["incidents"][0]
     return window_id, inc["id"], inc["drivers"]
@@ -1042,13 +1049,9 @@ class TestBulkResolveDefaults:
         """Renaming a rule must not rewrite verdicts already handed down."""
         ac = shared_client
         _set_auth_user(ac._admin_user)
-        rule = (await ac.post(
-            RULES_URL, json={"verdict": "NFA", "defaultBwp": 0, "isDefault": True}
-        )).json()
+        rule = (await ac.post(RULES_URL, json={"verdict": "NFA", "defaultBwp": 0, "isDefault": True})).json()
 
-        window_id, incident_id, drivers = await _window_with_drivers(
-            ac, "Rename Later", ["D1"]
-        )
+        window_id, incident_id, drivers = await _window_with_drivers(ac, "Rename Later", ["D1"])
 
         _set_auth_user(ac._judge_user)
         await ac.put(
@@ -1064,9 +1067,7 @@ class TestBulkResolveDefaults:
         assert inc["drivers"][0]["resolution"]["verdict"] == "NFA"
 
     @pytest.mark.anyio
-    async def test_partial_payload_does_not_wipe_description(
-        self, shared_client: AsyncClient
-    ):
+    async def test_partial_payload_does_not_wipe_description(self, shared_client: AsyncClient):
         """Saving one driver must not blank the decision text for the incident."""
         ac = shared_client
         _set_auth_user(ac._admin_user)
@@ -1105,6 +1106,7 @@ class TestBulkResolveDefaults:
 # Resolve the rest of a window in one request
 # =====================================================================
 
+
 class TestResolveRemaining:
     """Closing out a round is one call, not one call per incident."""
 
@@ -1118,9 +1120,7 @@ class TestResolveRemaining:
         )
         window_id = w_resp.json()["id"]
         for drivers in (["A1", "A2"], ["B1"], ["C1", "C2", "C3"]):
-            await ac.post(
-                f"/api/v1/incident-windows/{window_id}/incidents", json={"drivers": drivers}
-            )
+            await ac.post(f"/api/v1/incident-windows/{window_id}/incidents", json={"drivers": drivers})
 
         # One incident already judged — it must not be overwritten.
         w = await ac.get(f"/api/v1/incident-windows/{window_id}")
@@ -1153,13 +1153,9 @@ class TestResolveRemaining:
     async def test_without_default_rule_409(self, shared_client: AsyncClient):
         ac = shared_client
         _set_auth_user(ac._admin_user)
-        w_resp = await ac.post(
-            "/api/v1/incident-windows", json={"raceName": "No Rule", "intervalHours": 48}
-        )
+        w_resp = await ac.post("/api/v1/incident-windows", json={"raceName": "No Rule", "intervalHours": 48})
         window_id = w_resp.json()["id"]
-        await ac.post(
-            f"/api/v1/incident-windows/{window_id}/incidents", json={"drivers": ["X"]}
-        )
+        await ac.post(f"/api/v1/incident-windows/{window_id}/incidents", json={"drivers": ["X"]})
         _set_auth_user(ac._judge_user)
         resp = await ac.post(f"/api/v1/incident-windows/{window_id}/default-resolutions")
         assert resp.status_code == 409
@@ -1271,8 +1267,9 @@ class TestPublishWindow:
         _set_auth_user(ac._admin_user)
         await ac.post(WINDOWS_URL, json={"raceName": "Pub Test", "intervalHours": 48})
 
-        from app.main import app
         from app.auth import require_api_token
+        from app.main import app
+
         app.dependency_overrides[require_api_token] = lambda: None
         resp = await ac.post(
             "/api/incidents/ingest",
@@ -1300,6 +1297,7 @@ class TestPublishWindow:
 
         # Public sees the incident but no verdicts.
         from app.auth import get_current_user, get_current_user_optional
+
         app.dependency_overrides[get_current_user] = lambda: None
         app.dependency_overrides[get_current_user_optional] = lambda: None
         pub = await ac.get(f"{WINDOWS_URL}/{window_id}")
@@ -1313,7 +1311,9 @@ class TestPublishWindow:
         assert all(d["resolution"] is not None for d in judge.json()["incidents"][0]["drivers"])
 
         # Publishing the window reveals them to everyone.
-        assert (await ac.patch(f"{WINDOWS_URL}/{window_id}/incidents", json={"isPublished": True})).status_code == 200
+        assert (
+            await ac.patch(f"{WINDOWS_URL}/{window_id}/incidents", json={"isPublished": True})
+        ).status_code == 200
         app.dependency_overrides[get_current_user] = lambda: None
         app.dependency_overrides[get_current_user_optional] = lambda: None
         after = await ac.get(f"{WINDOWS_URL}/{window_id}")
@@ -1356,6 +1356,7 @@ class TestPublishWindow:
 # Duplicate incident
 # =====================================================================
 
+
 class TestDuplicateIncident:
     @pytest.mark.anyio
     async def test_duplicate_creates_new_incident(self, shared_client: AsyncClient):
@@ -1392,10 +1393,15 @@ class TestDuplicateIncident:
         inc_id = inc_resp.json()["id"]
 
         # Temporarily set no auth
+        from fastapi import HTTPException as FHE
+        from fastapi import status as fs
+
         from app.auth import get_current_user, get_current_user_optional
         from app.main import app
-        from fastapi import HTTPException as FHE, status as fs
-        app.dependency_overrides[get_current_user] = lambda: (_ for _ in ()).throw(FHE(status_code=fs.HTTP_401_UNAUTHORIZED, detail="Not authenticated."))
+
+        app.dependency_overrides[get_current_user] = lambda: (_ for _ in ()).throw(
+            FHE(status_code=fs.HTTP_401_UNAUTHORIZED, detail="Not authenticated.")
+        )
         app.dependency_overrides[get_current_user_optional] = lambda: None
         resp = await ac.post(f"/api/v1/incidents/{inc_id}/copies")
         assert resp.status_code in (401, 403)
@@ -1406,6 +1412,7 @@ class TestDuplicateIncident:
 # =====================================================================
 # Add / remove driver from incident
 # =====================================================================
+
 
 class TestAddRemoveDriver:
     @pytest.mark.anyio
@@ -1469,10 +1476,15 @@ class TestAddRemoveDriver:
         )
         inc_id = inc_resp.json()["id"]
 
+        from fastapi import HTTPException as FHE
+        from fastapi import status as fs
+
         from app.auth import get_current_user, get_current_user_optional
         from app.main import app
-        from fastapi import HTTPException as FHE, status as fs
-        app.dependency_overrides[get_current_user] = lambda: (_ for _ in ()).throw(FHE(status_code=fs.HTTP_401_UNAUTHORIZED, detail="Not authenticated."))
+
+        app.dependency_overrides[get_current_user] = lambda: (_ for _ in ()).throw(
+            FHE(status_code=fs.HTTP_401_UNAUTHORIZED, detail="Not authenticated.")
+        )
         app.dependency_overrides[get_current_user_optional] = lambda: None
         resp = await ac.post(f"/api/v1/incidents/{inc_id}/drivers", json={"driverName": "D2"})
         assert resp.status_code in (401, 403)
@@ -1482,6 +1494,7 @@ class TestAddRemoveDriver:
 # =====================================================================
 # Behaviour introduced with /api/v1
 # =====================================================================
+
 
 async def _window_with_incident(ac: AsyncClient, drivers: list[str]) -> tuple[str, dict]:
     w = await ac.post(WINDOWS_URL, json={"raceName": "V1 Test", "intervalHours": 48})
@@ -1550,9 +1563,7 @@ class TestIncidentStatusFollowsDrivers:
         d1, d2 = inc["drivers"]
 
         _set_auth_user(ac._judge_user)
-        resp = await ac.put(
-            f"/api/v1/incident-drivers/{d1['id']}/resolution", json={"verdict": "Warning"}
-        )
+        resp = await ac.put(f"/api/v1/incident-drivers/{d1['id']}/resolution", json={"verdict": "Warning"})
         assert resp.status_code == 200
         w = await ac.get(f"{WINDOWS_URL}/{window_id}")
         assert w.json()["incidents"][0]["status"] == "open"
@@ -1583,6 +1594,7 @@ class TestAnonymousFilingLimits:
     @staticmethod
     async def _open_window(engine, admin_user) -> str:
         from app.main import app
+
         async with _make_client(engine, admin_user) as ac:
             w = await ac.post(WINDOWS_URL, json={"raceName": "Anon", "intervalHours": 48})
         app.dependency_overrides.clear()
@@ -1592,6 +1604,7 @@ class TestAnonymousFilingLimits:
     async def test_too_many_drivers(self, engine, admin_user):
         window_id = await self._open_window(engine, admin_user)
         from app.main import app
+
         async with _make_client(engine) as ac:
             resp = await ac.post(
                 f"{WINDOWS_URL}/{window_id}/incidents",
@@ -1609,6 +1622,7 @@ class TestAnonymousFilingLimits:
     async def test_overlong_fields(self, engine, admin_user):
         window_id = await self._open_window(engine, admin_user)
         from app.main import app
+
         async with _make_client(engine) as ac:
             url = f"{WINDOWS_URL}/{window_id}/incidents"
             assert (await ac.post(url, json={"drivers": ["A"], "description": "x" * 2001})).status_code == 422
@@ -1620,6 +1634,7 @@ class TestAnonymousFilingLimits:
     async def test_rate_limited_per_ip(self, engine, admin_user):
         window_id = await self._open_window(engine, admin_user)
         from app.main import app
+
         async with _make_client(engine) as ac:
             url = f"{WINDOWS_URL}/{window_id}/incidents"
             for _ in range(10):
@@ -1645,6 +1660,7 @@ class TestLegacyIngest:
     @pytest.mark.anyio
     async def test_marked_deprecated(self, client: AsyncClient, monkeypatch):
         from app.services import simgrid as sg_mod
+
         monkeypatch.setattr(sg_mod.simgrid_service, "get_race_name", lambda _: _coro("Test Race"))
         resp = await client.post(
             INGEST_URL, json=BATCH_PAYLOAD, headers={"Authorization": "Bearer test-token-secret"}
@@ -1655,18 +1671,21 @@ class TestLegacyIngest:
 
     def test_openapi_flags_deprecated(self):
         from app.main import app
+
         op = app.openapi()["paths"]["/api/incidents/ingest"]["post"]
         assert op["deprecated"] is True
 
 
 class TestBwpBackfill:
     @pytest.mark.anyio
-    async def test_backfill_issues_points_and_reports_shape(self, admin_client: AsyncClient, db: AsyncSession):
+    async def test_backfill_issues_points_and_reports_shape(
+        self, admin_client: AsyncClient, db: AsyncSession
+    ):
         from app.models.bwp import BwpPoint, Driver
         from app.models.incidents import Incident, IncidentDriver, IncidentResolution, IncidentWindow
         from app.services.incident_bwp import BWP_ACTIVE_DAYS
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         driver = Driver(name="Known Driver")
         window = IncidentWindow(race_name="Old", opened_at=now, closes_at=now + timedelta(hours=1))
         db.add_all([driver, window])
@@ -1678,10 +1697,16 @@ class TestBwpBackfill:
         ghost = IncidentDriver(incident_id=incident.id, driver_name="Ghost", sort_order=1)
         db.add_all([known, ghost])
         await db.flush()
-        db.add_all([
-            IncidentResolution(incident_driver_id=known.id, verdict="Penalty", bwp_points=3, bwp_applied=True),
-            IncidentResolution(incident_driver_id=ghost.id, verdict="Penalty", bwp_points=2, bwp_applied=True),
-        ])
+        db.add_all(
+            [
+                IncidentResolution(
+                    incident_driver_id=known.id, verdict="Penalty", bwp_points=3, bwp_applied=True
+                ),
+                IncidentResolution(
+                    incident_driver_id=ghost.id, verdict="Penalty", bwp_points=2, bwp_applied=True
+                ),
+            ]
+        )
         await db.commit()
 
         audit = await admin_client.get("/api/v1/bwp-audit-entries")

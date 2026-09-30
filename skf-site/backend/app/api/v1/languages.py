@@ -38,9 +38,7 @@ async def add_language(body: LanguageCreate, response: Response, db: AsyncSessio
     return language
 
 
-@router.delete(
-    "/{code}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin)]
-)
+@router.delete("/{code}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin)])
 async def delete_language(code: str, db: AsyncSession = Depends(get_db)):
     """Delete a language together with its translations and regulation texts."""
     await service.delete_language(db, code)

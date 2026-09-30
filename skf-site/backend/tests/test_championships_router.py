@@ -7,7 +7,7 @@ list and standings calls are stubbed here.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 import pytest_asyncio
@@ -33,7 +33,7 @@ async def admin_user(db: AsyncSession, seed_roles):
         username="admin",
         display_name="Admin User",
         role_id=2,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
     db.add(user)
     await db.commit()
@@ -146,8 +146,12 @@ async def test_simgrid_outage_is_a_502_problem(client, simgrid_lists):
 async def test_championship_details_and_races(admin_client, simgrid_stub):
     simgrid_stub.races[LMU_CHAMPIONSHIP_ID] = [
         {"id": 2, "race_name": "Spa", "starts_at": "2026-09-19T18:00:00Z"},
-        {"id": 1, "display_name": "Laguna Seca", "starts_at": "2026-09-12T18:00:00Z",
-         "track": {"name": "Laguna Seca"}},
+        {
+            "id": 1,
+            "display_name": "Laguna Seca",
+            "starts_at": "2026-09-12T18:00:00Z",
+            "track": {"name": "Laguna Seca"},
+        },
     ]
 
     details = await admin_client.get(f"/api/v1/championships/{LMU_CHAMPIONSHIP_ID}")

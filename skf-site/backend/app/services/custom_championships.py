@@ -38,24 +38,18 @@ def to_out(champ: CustomChampionship) -> CustomChampionshipOut:
     return data
 
 
-async def list_stmt(
-    db: AsyncSession, user: User, community_id: uuid.UUID | None
-) -> Select:
+async def list_stmt(db: AsyncSession, user: User, community_id: uuid.UUID | None) -> Select:
     """The query for the championships *user* may see, newest first."""
     stmt = select(CustomChampionship).order_by(CustomChampionship.created_at.desc())
     if community_id is not None:
         await ensure_community_access(db, user, community_id)
         return stmt.where(CustomChampionship.community_id == community_id)
     if not is_admin(user):
-        stmt = stmt.where(
-            CustomChampionship.community_id.in_(await managed_community_ids(db, user))
-        )
+        stmt = stmt.where(CustomChampionship.community_id.in_(await managed_community_ids(db, user)))
     return stmt
 
 
-async def get_accessible(
-    db: AsyncSession, user: User, champ_id: uuid.UUID
-) -> CustomChampionship:
+async def get_accessible(db: AsyncSession, user: User, champ_id: uuid.UUID) -> CustomChampionship:
     champ = (
         await db.execute(select(CustomChampionship).where(CustomChampionship.id == champ_id))
     ).scalar_one_or_none()
@@ -65,9 +59,7 @@ async def get_accessible(
     return champ
 
 
-async def create(
-    db: AsyncSession, user: User, body: CustomChampionshipCreate
-) -> CustomChampionship:
+async def create(db: AsyncSession, user: User, body: CustomChampionshipCreate) -> CustomChampionship:
     await ensure_community_access(db, user, body.community_id)
     champ = CustomChampionship(
         name=body.name.strip(),
@@ -113,9 +105,7 @@ async def delete(db: AsyncSession, champ: CustomChampionship) -> None:
 async def _get_race(db: AsyncSession, champ: CustomChampionship, race_id: uuid.UUID) -> CustomRace:
     race = (
         await db.execute(
-            select(CustomRace).where(
-                CustomRace.id == race_id, CustomRace.championship_id == champ.id
-            )
+            select(CustomRace).where(CustomRace.id == race_id, CustomRace.championship_id == champ.id)
         )
     ).scalar_one_or_none()
     if race is None:
@@ -174,13 +164,15 @@ async def replace_races(
             race.end_date = item.end_date
             race.sort_order = idx
         else:
-            db.add(CustomRace(
-                championship_id=champ.id,
-                track=_strip(item.track),
-                date=item.date,
-                end_date=item.end_date,
-                sort_order=idx,
-            ))
+            db.add(
+                CustomRace(
+                    championship_id=champ.id,
+                    track=_strip(item.track),
+                    date=item.date,
+                    end_date=item.end_date,
+                    sort_order=idx,
+                )
+            )
 
     await db.commit()
     await db.refresh(champ)

@@ -7,7 +7,7 @@ something lives here. Functions that change data commit, except where noted.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import Select, case, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -65,9 +65,7 @@ async def load_window(db: AsyncSession, window_id: uuid.UUID) -> IncidentWindow:
     """The window with every incident, driver and resolution, freshly read."""
     window = (
         await db.execute(
-            _window_query()
-            .where(IncidentWindow.id == window_id)
-            .execution_options(populate_existing=True)
+            _window_query().where(IncidentWindow.id == window_id).execution_options(populate_existing=True)
         )
     ).scalar_one_or_none()
     if window is None:
@@ -124,6 +122,7 @@ async def update_incident_status(db: AsyncSession, incident_id: uuid.UUID) -> No
 
 # ── Verdict rules ────────────────────────────────────────────────────────────
 
+
 async def list_verdict_rules(db: AsyncSession) -> list[VerdictRule]:
     return list((await db.execute(select(VerdictRule).order_by(VerdictRule.sort_order))).scalars().all())
 
@@ -140,7 +139,9 @@ async def _promote_default_rule(db: AsyncSession, rule_id: uuid.UUID) -> None:
 
 
 async def _default_rule(db: AsyncSession) -> VerdictRule:
-    rule = (await db.execute(select(VerdictRule).where(VerdictRule.is_default.is_(True)))).scalar_one_or_none()
+    rule = (
+        await db.execute(select(VerdictRule).where(VerdictRule.is_default.is_(True)))
+    ).scalar_one_or_none()
     if rule is None:
         raise Conflict("No default verdict is configured.")
     return rule
@@ -173,7 +174,9 @@ async def reorder_verdict_rules(db: AsyncSession, ids: list[uuid.UUID]) -> list[
     return await list_verdict_rules(db)
 
 
-async def update_verdict_rule(db: AsyncSession, rule_id: uuid.UUID, payload: VerdictRuleUpdate) -> VerdictRule:
+async def update_verdict_rule(
+    db: AsyncSession, rule_id: uuid.UUID, payload: VerdictRuleUpdate
+) -> VerdictRule:
     rule = await get_or_404(db, VerdictRule, rule_id)
     if payload.is_default is False:
         # Demoting directly would leave the league with no default at all.
@@ -199,6 +202,7 @@ async def delete_verdict_rule(db: AsyncSession, rule_id: uuid.UUID) -> None:
 
 
 # ── Description presets ──────────────────────────────────────────────────────
+
 
 async def list_description_presets(db: AsyncSession) -> list[DescriptionPreset]:
     return list(
@@ -234,6 +238,7 @@ async def delete_description_preset(db: AsyncSession, preset_id: uuid.UUID) -> N
 
 # ── Windows ──────────────────────────────────────────────────────────────────
 
+
 def list_windows_query(championship_id: int | None = None) -> Select:
     query = select(IncidentWindow).order_by(IncidentWindow.opened_at.desc())
     if championship_id is not None:
@@ -246,7 +251,7 @@ async def create_window(db: AsyncSession, payload: IncidentWindowCreate, user: U
         existing = await db.scalar(select(IncidentWindow.id).where(IncidentWindow.race_id == payload.race_id))
         if existing is not None:
             raise Conflict("This race already has an incident window.")
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     window = IncidentWindow(
         championship_id=payload.championship_id,
         championship_name=payload.championship_name,
@@ -263,7 +268,9 @@ async def create_window(db: AsyncSession, payload: IncidentWindowCreate, user: U
     return await load_window(db, window.id)
 
 
-async def update_window(db: AsyncSession, window_id: uuid.UUID, payload: IncidentWindowUpdate) -> IncidentWindow:
+async def update_window(
+    db: AsyncSession, window_id: uuid.UUID, payload: IncidentWindowUpdate
+) -> IncidentWindow:
     window = await get_or_404(db, IncidentWindow, window_id, detail="Window not found.")
     if payload.is_manually_closed is not None:
         window.is_manually_closed = payload.is_manually_closed
@@ -282,6 +289,7 @@ async def delete_window(db: AsyncSession, window_id: uuid.UUID) -> None:
 
 # ── Incidents ────────────────────────────────────────────────────────────────
 
+
 async def file_incident(
     db: AsyncSession, window_id: uuid.UUID, payload: IncidentFileCreate, reporter: User | None
 ) -> Incident:
@@ -299,12 +307,14 @@ async def file_incident(
     db.add(incident)
     await db.flush()
     for idx, driver_name in enumerate(payload.drivers):
-        db.add(IncidentDriver(
-            incident_id=incident.id,
-            driver_name=driver_name.strip(),
-            driver_id=await match_driver_id_by_name(db, driver_name),
-            sort_order=idx,
-        ))
+        db.add(
+            IncidentDriver(
+                incident_id=incident.id,
+                driver_name=driver_name.strip(),
+                driver_id=await match_driver_id_by_name(db, driver_name),
+                sort_order=idx,
+            )
+        )
     await db.commit()
     return await load_incident(db, incident.id)
 
@@ -330,12 +340,14 @@ async def copy_incident(db: AsyncSession, incident_id: uuid.UUID, user: User) ->
     db.add(copy)
     await db.flush()
     for drv in src.drivers:
-        db.add(IncidentDriver(
-            incident_id=copy.id,
-            driver_name=drv.driver_name,
-            driver_id=drv.driver_id,
-            sort_order=drv.sort_order,
-        ))
+        db.add(
+            IncidentDriver(
+                incident_id=copy.id,
+                driver_name=drv.driver_name,
+                driver_id=drv.driver_id,
+                sort_order=drv.sort_order,
+            )
+        )
     await db.commit()
     return await load_incident(db, copy.id)
 
@@ -366,7 +378,9 @@ async def remove_driver(db: AsyncSession, incident_driver_id: uuid.UUID) -> None
     await db.commit()
 
 
-async def link_driver(db: AsyncSession, incident_driver_id: uuid.UUID, driver_id: uuid.UUID) -> IncidentDriver:
+async def link_driver(
+    db: AsyncSession, incident_driver_id: uuid.UUID, driver_id: uuid.UUID
+) -> IncidentDriver:
     """Attach a free-text incident driver to an actual driver record.
 
     Names arrive as free text and are matched by exact (case-insensitive)
@@ -400,20 +414,22 @@ def _set_resolution(
         entry.resolution.judge_user_id = judge.id
         entry.resolution.resolved_at = now
     else:
-        db.add(IncidentResolution(
-            incident_driver_id=entry.id,
-            judge_user_id=judge.id,
-            verdict=verdict,
-            bwp_points=bwp_points,
-            description=description if set_description else None,
-        ))
+        db.add(
+            IncidentResolution(
+                incident_driver_id=entry.id,
+                judge_user_id=judge.id,
+                verdict=verdict,
+                bwp_points=bwp_points,
+                description=description if set_description else None,
+            )
+        )
 
 
 async def resolve_driver(
     db: AsyncSession, incident_driver_id: uuid.UUID, payload: ResolveDriverIncident, judge: User
 ) -> IncidentDriver:
     entry = await load_incident_driver(db, incident_driver_id)
-    _set_resolution(db, entry, judge, payload.verdict, payload.bwp_points, now=datetime.now(timezone.utc))
+    _set_resolution(db, entry, judge, payload.verdict, payload.bwp_points, now=datetime.now(UTC))
     await db.flush()
     await update_incident_status(db, entry.incident_id)
     await db.commit()
@@ -433,7 +449,7 @@ async def resolve_incident(
     # Only touch the description when it was actually sent. Writing it
     # unconditionally let a partial save blank the text for the whole incident.
     description_sent = "description" in payload.model_fields_set
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     for item in payload.drivers:
         entry = driver_map.get(item.incident_driver_id)
@@ -444,8 +460,14 @@ async def resolve_incident(
         else:
             verdict, bwp_points = item.verdict, item.bwp_points
         _set_resolution(
-            db, entry, judge, verdict, bwp_points,
-            now=now, description=payload.description, set_description=description_sent,
+            db,
+            entry,
+            judge,
+            verdict,
+            bwp_points,
+            now=now,
+            description=payload.description,
+            set_description=description_sent,
         )
 
     await db.flush()
@@ -454,7 +476,9 @@ async def resolve_incident(
     return await load_incident(db, incident_id)
 
 
-async def resolve_remaining(db: AsyncSession, window_id: uuid.UUID, judge: User) -> tuple[IncidentWindow, int]:
+async def resolve_remaining(
+    db: AsyncSession, window_id: uuid.UUID, judge: User
+) -> tuple[IncidentWindow, int]:
     """Apply the default verdict to every driver in the window still awaiting one.
 
     The round is resolved atomically or not at all; drivers that already have
@@ -467,7 +491,7 @@ async def resolve_remaining(db: AsyncSession, window_id: uuid.UUID, judge: User)
         return window, 0
 
     rule = await _default_rule(db)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     for drv in unresolved:
         _set_resolution(db, drv, judge, rule.verdict, rule.default_bwp, now=now)
     await db.flush()
@@ -503,6 +527,7 @@ async def publish_window(db: AsyncSession, window_id: uuid.UUID) -> tuple[Incide
 
 
 # ── BWP audit / backfill ─────────────────────────────────────────────────────
+
 
 def _unlinked_applied_query() -> Select:
     """Applied penalties whose incident driver was never linked to a record."""

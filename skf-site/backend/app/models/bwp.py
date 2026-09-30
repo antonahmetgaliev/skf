@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from sqlalchemy import Date, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -12,23 +12,17 @@ class Base(DeclarativeBase):
 
 def utc_today() -> date:
     """Today's date in UTC — the reference day for BWP point expiry."""
-    return datetime.now(timezone.utc).date()
+    return datetime.now(UTC).date()
 
 
 class Driver(Base):
     __tablename__ = "drivers"
     __table_args__ = (UniqueConstraint("user_id", name="uq_drivers_user_id"),)
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(200), nullable=False, unique=True)
-    simgrid_driver_id: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, index=True
-    )
-    simgrid_display_name: Mapped[str | None] = mapped_column(
-        String(200), nullable=True
-    )
+    simgrid_driver_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    simgrid_display_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     country_code: Mapped[str | None] = mapped_column(String(10), nullable=True)
     photo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     user_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -64,9 +58,7 @@ Index("ux_drivers_name_lower", func.lower(Driver.name), unique=True)
 class BwpPoint(Base):
     __tablename__ = "bwp_points"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     driver_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("drivers.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -85,9 +77,7 @@ class BwpPoint(Base):
 class PenaltyRule(Base):
     __tablename__ = "penalty_rules"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     threshold: Mapped[int] = mapped_column(Integer, nullable=False)
     label: Mapped[str] = mapped_column(Text, nullable=False, default="")
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -100,9 +90,7 @@ class PenaltyRule(Base):
 class PenaltyClearance(Base):
     __tablename__ = "penalty_clearances"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     driver_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("drivers.id", ondelete="CASCADE"),
@@ -115,9 +103,7 @@ class PenaltyClearance(Base):
         nullable=False,
         index=True,
     )
-    cleared_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    cleared_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     driver: Mapped["Driver"] = relationship(back_populates="clearances")
     penalty_rule: Mapped["PenaltyRule"] = relationship(back_populates="clearances")

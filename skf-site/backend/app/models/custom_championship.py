@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -11,13 +12,14 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.bwp import Base
 
+if TYPE_CHECKING:
+    from app.models.community import Community, Game
+
 
 class CustomChampionship(Base):
     __tablename__ = "custom_championships"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     game: Mapped[str] = mapped_column(String(100), nullable=False)
     car_class: Mapped[str | None] = mapped_column(String(100), nullable=True)
@@ -44,43 +46,35 @@ class CustomChampionship(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=True
     )
 
-    races: Mapped[list["CustomRace"]] = relationship(
+    races: Mapped[list[CustomRace]] = relationship(
         back_populates="championship",
         cascade="all, delete-orphan",
         lazy="selectin",
         order_by="CustomRace.sort_order",
     )
-    community: Mapped["Community | None"] = relationship(
+    community: Mapped[Community | None] = relationship(
         back_populates="championships",
         lazy="selectin",
     )
-    game_rel: Mapped["Game | None"] = relationship(lazy="selectin")
+    game_rel: Mapped[Game | None] = relationship(lazy="selectin")
 
 
 class CustomRace(Base):
     __tablename__ = "custom_races"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     championship_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("custom_championships.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    date: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, index=True
-    )
-    end_date: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    end_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     track: Mapped[str | None] = mapped_column(String(200), nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=True
     )
 
-    championship: Mapped["CustomChampionship"] = relationship(
-        back_populates="races"
-    )
+    championship: Mapped[CustomChampionship] = relationship(back_populates="races")

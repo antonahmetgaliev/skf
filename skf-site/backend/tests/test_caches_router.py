@@ -1,4 +1,5 @@
 """Tests for DELETE /api/v1/caches[/{domain}]."""
+
 from __future__ import annotations
 
 import pytest

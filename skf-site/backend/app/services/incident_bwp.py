@@ -6,7 +6,7 @@ cannot drift apart — and so the idempotency guard is impossible to forget.
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,7 +20,7 @@ BWP_ACTIVE_DAYS = 90
 
 def utc_today() -> date:
     """Today's date in UTC, independent of the server's local timezone."""
-    return datetime.now(timezone.utc).date()
+    return datetime.now(UTC).date()
 
 
 async def apply_resolution_bwp(entry: IncidentDriver, db: AsyncSession) -> bool:

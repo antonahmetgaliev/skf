@@ -43,17 +43,13 @@ async def get_driver(db: AsyncSession, driver_id: uuid.UUID) -> Driver:
 
 
 async def get_driver_for_user(db: AsyncSession, user_id: uuid.UUID) -> Driver:
-    driver = (
-        await db.execute(select(Driver).where(Driver.user_id == user_id))
-    ).scalars().first()
+    driver = (await db.execute(select(Driver).where(Driver.user_id == user_id))).scalars().first()
     if driver is None:
         raise NotFound("No linked driver.")
     return driver
 
 
-async def _ensure_name_free(
-    db: AsyncSession, name: str, exclude_id: uuid.UUID | None = None
-) -> None:
+async def _ensure_name_free(db: AsyncSession, name: str, exclude_id: uuid.UUID | None = None) -> None:
     stmt = select(Driver.id).where(Driver.name.ilike(name))
     if exclude_id is not None:
         stmt = stmt.where(Driver.id != exclude_id)
@@ -71,9 +67,7 @@ async def create_driver(db: AsyncSession, body: DriverCreate) -> Driver:
     return driver
 
 
-async def update_driver(
-    db: AsyncSession, driver_id: uuid.UUID, body: DriverUpdate
-) -> Driver:
+async def update_driver(db: AsyncSession, driver_id: uuid.UUID, body: DriverUpdate) -> Driver:
     driver = await get_driver(db, driver_id)
     new_name = body.name.strip()
     await _ensure_name_free(db, new_name, exclude_id=driver_id)
@@ -92,9 +86,7 @@ async def delete_driver(db: AsyncSession, driver_id: uuid.UUID) -> None:
     await db.commit()
 
 
-async def set_my_driver_photo(
-    db: AsyncSession, user_id: uuid.UUID, photo_url: str | None
-) -> Driver:
+async def set_my_driver_photo(db: AsyncSession, user_id: uuid.UUID, photo_url: str | None) -> Driver:
     driver = await get_driver_for_user(db, user_id)
     driver.photo_url = photo_url
     await db.commit()
@@ -107,9 +99,7 @@ async def set_my_driver_photo(
 # ---------------------------------------------------------------------------
 
 
-async def add_point(
-    db: AsyncSession, driver_id: uuid.UUID, body: BwpPointCreate
-) -> BwpPoint:
+async def add_point(db: AsyncSession, driver_id: uuid.UUID, body: BwpPointCreate) -> BwpPoint:
     await get_driver(db, driver_id)
     point = BwpPoint(
         driver_id=driver_id,
@@ -129,9 +119,7 @@ async def delete_point(db: AsyncSession, point_id: uuid.UUID) -> None:
     await db.commit()
 
 
-async def expire_point(
-    db: AsyncSession, point_id: uuid.UUID, body: BwpPointUpdate
-) -> BwpPoint:
+async def expire_point(db: AsyncSession, point_id: uuid.UUID, body: BwpPointUpdate) -> BwpPoint:
     """Expire a single point today; a point that already expired is left as is."""
     point = await get_or_404(db, BwpPoint, point_id, detail="Point not found.")
     today = utc_today()
@@ -144,9 +132,7 @@ async def expire_point(
     return point
 
 
-async def reset_driver(
-    db: AsyncSession, driver_id: uuid.UUID, body: BwpResetCreate
-) -> Driver:
+async def reset_driver(db: AsyncSession, driver_id: uuid.UUID, body: BwpResetCreate) -> Driver:
     """Expire all active points of a driver and drop their clearances.
 
     Used once a driver has served every penalty so they start accumulating
@@ -195,9 +181,7 @@ async def create_penalty_rule(db: AsyncSession, body: PenaltyRuleCreate) -> Pena
     return rule
 
 
-async def update_penalty_rule(
-    db: AsyncSession, rule_id: uuid.UUID, body: PenaltyRuleUpdate
-) -> PenaltyRule:
+async def update_penalty_rule(db: AsyncSession, rule_id: uuid.UUID, body: PenaltyRuleUpdate) -> PenaltyRule:
     rule = await get_penalty_rule(db, rule_id)
     if body.threshold is not None:
         rule.threshold = body.threshold
@@ -247,9 +231,7 @@ async def put_clearance(
     return clearance, True
 
 
-async def delete_clearance(
-    db: AsyncSession, driver_id: uuid.UUID, rule_id: uuid.UUID
-) -> None:
+async def delete_clearance(db: AsyncSession, driver_id: uuid.UUID, rule_id: uuid.UUID) -> None:
     clearance = await _find_clearance(db, driver_id, rule_id)
     if clearance is None:
         raise NotFound("Clearance not found.")

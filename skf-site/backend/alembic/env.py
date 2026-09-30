@@ -1,15 +1,14 @@
 import asyncio
-import os
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from alembic import context
 from app.config import settings
 from app.models.bwp import Base
 from app.models.simgrid_cache import SimgridCache  # noqa: F401 – register model
-from app.models.user import User, Session  # noqa: F401 – register models
+from app.models.user import Session, User  # noqa: F401 – register models
 
 config = context.config
 

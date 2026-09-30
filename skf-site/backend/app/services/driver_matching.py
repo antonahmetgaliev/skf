@@ -16,9 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.bwp import Driver
 
 
-async def match_driver_id_by_name(
-    db: AsyncSession, name: str
-) -> uuid.UUID | None:
+async def match_driver_id_by_name(db: AsyncSession, name: str) -> uuid.UUID | None:
     """Case-insensitive exact match of a driver name against both the
     canonical name and the SimGrid display name."""
     normalized = name.strip().lower()

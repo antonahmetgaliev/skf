@@ -3,6 +3,7 @@
 Fixtures are real SKF sessions, anonymised: LMU Hyper 70 round 1 (race and
 qualifying, two classes) and an iRacing Challenger League race.
 """
+
 from __future__ import annotations
 
 import json
@@ -94,7 +95,7 @@ def test_qualifying_is_ranked_by_best_lap():
         timed = [e.best_lap_ms for e in group if e.best_lap_ms]
         assert timed == sorted(timed)
         assert group[0].is_class_best_lap
-        assert all(e.best_lap_ms is None for e in group[len(timed):])
+        assert all(e.best_lap_ms is None for e in group[len(timed) :])
 
 
 # ── Endpoints ──────────────────────────────────────────────────────────────
@@ -113,7 +114,9 @@ async def test_race_results_endpoint(client, simgrid_stub):
 
     race = (await client.get(base)).json()
     assert race["session"] == "race" and len(race["entries"]) == 31
-    assert {"classPosition", "bestLapMs", "gapMs", "lapsDown", "penaltyS", "status"} <= race["entries"][0].keys()
+    assert {"classPosition", "bestLapMs", "gapMs", "lapsDown", "penaltyS", "status"} <= race["entries"][
+        0
+    ].keys()
 
     quali = (await client.get(base, params={"session": "qualifying"})).json()
     assert quali["session"] == "qualifying" and len(quali["entries"]) == 26
@@ -153,10 +156,15 @@ async def test_standings_carry_round_results(client, simgrid_stub, monkeypatch):
     resp = await client.get(f"/api/v1/championships/{LMU_CHAMPIONSHIP_ID}/standings")
     assert resp.status_code == 200
     rows = {e["displayName"]: e["raceResults"] for e in resp.json()["entries"]}
-    assert rows["Winner"] == [{
-        "raceId": LMU_RACE_ID, "raceIndex": 0, "points": winner["points_total"],
-        "position": 1, "status": "classified",
-    }]
+    assert rows["Winner"] == [
+        {
+            "raceId": LMU_RACE_ID,
+            "raceIndex": 0,
+            "points": winner["points_total"],
+            "position": 1,
+            "status": "classified",
+        }
+    ]
     assert rows["Absent"][0]["status"] == "dns"
     assert rows["Unlinked"] == []
 

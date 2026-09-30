@@ -1,6 +1,5 @@
 import uuid
 from datetime import date, datetime
-
 from typing import Literal
 
 from pydantic import ConfigDict, Field, field_validator

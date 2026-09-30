@@ -19,7 +19,6 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
-    Text,
     UniqueConstraint,
     func,
 )
@@ -45,43 +44,29 @@ class RaceResultImport(Base):
 
     __tablename__ = "race_result_imports"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
-    championship_simgrid_id: Mapped[int] = mapped_column(
-        Integer, nullable=False, index=True
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    championship_simgrid_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     race_simgrid_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     track_event: Mapped[str | None] = mapped_column(String(300), nullable=True)
-    session_started_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    session_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     source_filename: Mapped[str | None] = mapped_column(String(300), nullable=True)
     # "lmu" or "iracing", from the championship's SimGrid game.
-    sim: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="lmu", server_default="lmu"
-    )
+    sim: Mapped[str] = mapped_column(String(20), nullable=False, default="lmu", server_default="lmu")
     # Object key of the original file in the bucket; None when storage was
     # not configured at upload time.
     storage_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     file_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    contacts_count: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0, server_default="0"
-    )
+    contacts_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     # iRacing subsession id, for reference; LMU files carry none.
     external_session_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # iRaceControl recorded without grouping, so contacts were regrouped here.
-    auto_grouped: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False, server_default="false"
-    )
+    auto_grouped: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
     uploaded_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    entries: Mapped[list["RaceResultEntry"]] = relationship(
+    entries: Mapped[list[RaceResultEntry]] = relationship(
         back_populates="race_import", cascade="all, delete-orphan", passive_deletes=True, lazy="raise"
     )
 
@@ -101,9 +86,7 @@ class RaceResultEntry(Base):
 
     __tablename__ = "race_result_entries"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     import_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("race_result_imports.id", ondelete="CASCADE"),
@@ -141,17 +124,11 @@ class GiveawayNameAlias(Base):
     __tablename__ = "giveaway_name_aliases"
     __table_args__ = (Index("ix_giveaway_name_aliases_canonical", "canonical_normalized_name"),)
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
-    normalized_alias: Mapped[str] = mapped_column(
-        String(200), nullable=False, unique=True
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    normalized_alias: Mapped[str] = mapped_column(String(200), nullable=False, unique=True)
     canonical_normalized_name: Mapped[str] = mapped_column(String(200), nullable=False)
     canonical_display_name: Mapped[str] = mapped_column(String(200), nullable=False)
     driver_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("drivers.id", ondelete="SET NULL"), nullable=True
     )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -1,4 +1,5 @@
 """Regulations: public localized views and admin ``regulation-pages`` by UUID."""
+
 from __future__ import annotations
 
 import uuid

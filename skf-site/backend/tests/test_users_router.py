@@ -1,7 +1,9 @@
 """Tests for /api/v1/users (admin user management)."""
+
 from __future__ import annotations
 
 import uuid
+from datetime import UTC
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -79,18 +81,18 @@ async def test_list_users_is_paginated(admin_client: AsyncClient, db: AsyncSessi
     assert [u["username"] for u in resp.json()] == ["user01", "user02"]
 
 
-async def test_list_users_includes_driver_and_communities(
-    admin_client: AsyncClient, db: AsyncSession
-):
+async def test_list_users_includes_driver_and_communities(admin_client: AsyncClient, db: AsyncSession):
     from app.models.bwp import Driver
     from app.models.community_manager import CommunityManager
 
     (user,) = await _add_users(db, 1)
     community = await _add_community(db)
-    db.add_all([
-        Driver(name="Linked", user_id=user.id),
-        CommunityManager(user_id=user.id, community_id=community.id),
-    ])
+    db.add_all(
+        [
+            Driver(name="Linked", user_id=user.id),
+            CommunityManager(user_id=user.id, community_id=community.id),
+        ]
+    )
     await db.commit()
 
     resp = await admin_client.get(USERS_URL, params={"limit": 1000})
@@ -124,12 +126,12 @@ async def test_update_unknown_user_is_404(admin_client: AsyncClient):
 
 
 async def test_revoke_sessions(admin_client: AsyncClient, db: AsyncSession):
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     from app.models.user import Session
 
     (user,) = await _add_users(db, 1)
-    db.add(Session(user_id=user.id, expires_at=datetime.now(timezone.utc) + timedelta(days=1)))
+    db.add(Session(user_id=user.id, expires_at=datetime.now(UTC) + timedelta(days=1)))
     await db.commit()
 
     resp = await admin_client.delete(f"{USERS_URL}/{user.id}/sessions")
@@ -154,9 +156,7 @@ async def test_managed_communities_roundtrip(admin_client: AsyncClient, db: Asyn
     assert resp.json() == []
 
 
-async def test_managed_communities_unknown_id_is_rejected(
-    admin_client: AsyncClient, db: AsyncSession
-):
+async def test_managed_communities_unknown_id_is_rejected(admin_client: AsyncClient, db: AsyncSession):
     (user,) = await _add_users(db, 1)
     community = await _add_community(db)
     resp = await admin_client.put(

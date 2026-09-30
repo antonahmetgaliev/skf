@@ -18,7 +18,7 @@ stewards used before this moved server-side.
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from defusedxml import DefusedXmlException
 from defusedxml.ElementTree import ParseError, fromstring
@@ -35,9 +35,7 @@ from app.services.race_files.types import (
 CONTACT_MERGE_WINDOW_S = 3.0
 
 # The fixed doctype every rFactor2/LMU result file starts with.
-_RFACTOR_DOCTYPE = re.compile(
-    r'<!DOCTYPE\s+rF\s*\[\s*<!ENTITY\s+rFEnt\s+"(?P<value>[^"<>&%]*)"\s*>\s*\]\s*>'
-)
+_RFACTOR_DOCTYPE = re.compile(r'<!DOCTYPE\s+rF\s*\[\s*<!ENTITY\s+rFEnt\s+"(?P<value>[^"<>&%]*)"\s*>\s*\]\s*>')
 
 # "Driver A(7) reported contact (63.41) with another vehicle Driver B(13)".
 # Contacts with "Immovable", "Sign" etc. are single-car and never match.
@@ -101,9 +99,7 @@ def parse(payload: bytes) -> ParsedRaceFile:
 
     race = results.find("Race")
     if race is None:
-        raise RaceFileError(
-            "File contains no race session (practice/qualifying exports are not usable)"
-        )
+        raise RaceFileError("File contains no race session (practice/qualifying exports are not usable)")
 
     entries: list[ParsedEntry] = []
     for driver in race.findall("Driver"):
@@ -207,11 +203,11 @@ def _parse_datetime(results) -> datetime | None:
     """
     epoch = _int_or_none(results.findtext("DateTime"))
     if epoch:
-        return datetime.fromtimestamp(epoch, tz=timezone.utc)
+        return datetime.fromtimestamp(epoch, tz=UTC)
     raw = _text(results, "TimeString")
     if not raw:
         return None
     try:
-        return datetime.strptime(raw, "%Y/%m/%d %H:%M:%S").replace(tzinfo=timezone.utc)
+        return datetime.strptime(raw, "%Y/%m/%d %H:%M:%S").replace(tzinfo=UTC)
     except ValueError:
         return None

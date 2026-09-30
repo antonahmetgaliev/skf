@@ -1,5 +1,3 @@
-import os
-
 from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings
 

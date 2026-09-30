@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pathlib
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 import pytest_asyncio
@@ -38,13 +38,11 @@ async def admin_user(db: AsyncSession, seed_roles):
         username="admin",
         display_name="Admin User",
         role_id=2,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
     db.add(user)
     await db.commit()
-    result = await db.execute(
-        select(User).options(joinedload(User.role)).where(User.id == user.id)
-    )
+    result = await db.execute(select(User).options(joinedload(User.role)).where(User.id == user.id))
     return result.scalar_one()
 
 
@@ -216,7 +214,11 @@ async def test_incidents_from_the_legacy_ingest_are_not_duplicated(admin_client,
             "raceId": 202,
             "championshipId": IRACING_CHAMPIONSHIP_ID,
             "incidents": [
-                {"sessionName": i["sessionName"], "time": i["time"], "drivers": [d["driverName"] for d in i["drivers"]]}
+                {
+                    "sessionName": i["sessionName"],
+                    "time": i["time"],
+                    "drivers": [d["driverName"] for d in i["drivers"]],
+                }
                 for i in window["incidents"][:2]
             ],
         },
@@ -243,9 +245,7 @@ async def test_rounds_show_upload_and_window(admin_client, simgrid_stub):
     ]
     await _upload(admin_client, LMU_FILE, 101)
 
-    resp = await admin_client.get(
-        f"/api/v1/championships/{LMU_CHAMPIONSHIP_ID}/rounds"
-    )
+    resp = await admin_client.get(f"/api/v1/championships/{LMU_CHAMPIONSHIP_ID}/rounds")
     body = resp.json()
     assert body["sim"] == "lmu"
     assert body["gameName"] == "Le Mans Ultimate"
@@ -297,9 +297,7 @@ async def test_championship_links_to_its_incident_windows(admin_client):
     await _upload(admin_client, IR_FILE, 201, IRACING_CHAMPIONSHIP_ID)
 
     resp = await admin_client.get(f"/api/v1/championships/{LMU_CHAMPIONSHIP_ID}/incident-windows")
-    assert resp.json() == [
-        {"raceId": 101, "windowId": lmu["windowId"], "isOpen": True, "incidentsCount": 55}
-    ]
+    assert resp.json() == [{"raceId": 101, "windowId": lmu["windowId"], "isOpen": True, "incidentsCount": 55}]
 
     windows = await admin_client.get(
         "/api/v1/incident-windows", params={"championshipId": LMU_CHAMPIONSHIP_ID}
@@ -317,9 +315,7 @@ async def test_a_round_gets_only_one_window(admin_client):
 
 
 async def test_endpoints_are_closed_to_non_admins(client):
-    resp = await client.get(
-        f"/api/v1/championships/{LMU_CHAMPIONSHIP_ID}/rounds"
-    )
+    resp = await client.get(f"/api/v1/championships/{LMU_CHAMPIONSHIP_ID}/rounds")
     assert resp.status_code in (401, 403)
     resp = await client.post("/api/v1/race-result-imports")
     assert resp.status_code in (401, 403, 422)
@@ -332,7 +328,7 @@ async def test_missing_championship_names_are_backfilled(admin_client, db):
     from app.models.incidents import IncidentWindow
     from app.services.race_import import backfill_window_championship_names
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     db.add(
         IncidentWindow(
             championship_id=LMU_CHAMPIONSHIP_ID,

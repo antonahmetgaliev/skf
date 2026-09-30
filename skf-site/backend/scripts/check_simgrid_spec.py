@@ -33,12 +33,14 @@ def main() -> int:
         print(f"Pinned spec updated: {PINNED}")
         return 0
 
-    sys.stdout.writelines(difflib.unified_diff(
-        pinned.splitlines(keepends=True),
-        live.text.splitlines(keepends=True),
-        fromfile="pinned/openapi.yml",
-        tofile="live/openapi.yml",
-    ))
+    sys.stdout.writelines(
+        difflib.unified_diff(
+            pinned.splitlines(keepends=True),
+            live.text.splitlines(keepends=True),
+            fromfile="pinned/openapi.yml",
+            tofile="live/openapi.yml",
+        )
+    )
     print("\nSimGrid spec changed. Review, adapt app/services/simgrid.py, then rerun with --update.")
     return 1
 

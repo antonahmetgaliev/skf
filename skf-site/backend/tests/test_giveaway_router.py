@@ -9,9 +9,8 @@ from __future__ import annotations
 
 import pathlib
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
@@ -38,13 +37,11 @@ async def admin_user(db: AsyncSession, seed_roles):
         username="admin",
         display_name="Admin User",
         role_id=2,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
     db.add(user)
     await db.commit()
-    result = await db.execute(
-        select(User).options(joinedload(User.role)).where(User.id == user.id)
-    )
+    result = await db.execute(select(User).options(joinedload(User.role)).where(User.id == user.id))
     return result.scalar_one()
 
 
@@ -99,9 +96,7 @@ async def test_reuploading_a_round_replaces_it(admin_client):
     await _upload(admin_client, "portimao.xml", 1)
     await _upload(admin_client, "portimao.xml", 1)
 
-    listed = await admin_client.get(
-        "/api/v1/race-result-imports", params={"championshipId": CHAMPIONSHIP_ID}
-    )
+    listed = await admin_client.get("/api/v1/race-result-imports", params={"championshipId": CHAMPIONSHIP_ID})
     # One round, counted once — not two copies inflating the round tally.
     assert len(listed.json()) == 1
 
@@ -120,9 +115,7 @@ async def test_eligibility_splits_the_classes(admin_client):
     await _upload(admin_client, "portimao.xml", 1)
     await _upload(admin_client, "laguna_seca.xml", 2)
 
-    resp = await admin_client.get(
-        ELIGIBILITY, params={"minDistancePct": 50, "minRounds": 2}
-    )
+    resp = await admin_client.get(ELIGIBILITY, params={"minDistancePct": 50, "minRounds": 2})
     body = resp.json()
 
     assert body["importedRounds"] == 2
@@ -133,7 +126,10 @@ async def test_eligibility_splits_the_classes(admin_client):
         by_class.setdefault(driver["carClass"], []).append(driver["displayName"])
 
     assert sorted(by_class["Hyper"]) == [
-        "Arsen Petrosian", "Max Tarasenko", "Sergiy Gaydabura", "Vladyslav Mykhailenko",
+        "Arsen Petrosian",
+        "Max Tarasenko",
+        "Sergiy Gaydabura",
+        "Vladyslav Mykhailenko",
     ]
     assert len(by_class["GT3"]) == 10
 
@@ -143,9 +139,7 @@ async def test_eligibility_exposes_the_per_round_arithmetic(admin_client):
     await _upload(admin_client, "portimao.xml", 1)
 
     resp = await admin_client.get(ELIGIBILITY, params={"minDistancePct": 50, "minRounds": 1})
-    driver = next(
-        d for d in resp.json()["drivers"] if d["displayName"] == "Dmitriy Bondariev"
-    )
+    driver = next(d for d in resp.json()["drivers"] if d["displayName"] == "Dmitriy Bondariev")
     round_row = driver["rounds"][0]
 
     assert round_row["laps"] == 22
@@ -203,8 +197,7 @@ async def test_merging_a_name_joins_the_rounds(admin_client):
 
     after = await admin_client.get(ELIGIBILITY, params=params)
     tarasenko = next(
-        d for d in after.json()["drivers"]
-        if d["displayName"] == "Max Tarasenko" and d["carClass"] == "Hyper"
+        d for d in after.json()["drivers"] if d["displayName"] == "Max Tarasenko" and d["carClass"] == "Hyper"
     )
     # Portimao (as Whitfield) + Laguna Seca (as himself) = 3 qualifying rounds,
     # because he also raced Portimao under his own name.
@@ -226,9 +219,7 @@ async def test_deleting_an_import_removes_its_rounds(admin_client):
     resp = await admin_client.delete(f"/api/v1/race-result-imports/{import_id}")
     assert resp.status_code == 204
 
-    listed = await admin_client.get(
-        "/api/v1/race-result-imports", params={"championshipId": CHAMPIONSHIP_ID}
-    )
+    listed = await admin_client.get("/api/v1/race-result-imports", params={"championshipId": CHAMPIONSHIP_ID})
     assert listed.json() == []
 
 
@@ -254,9 +245,7 @@ async def test_merging_backfills_the_driver_link_on_existing_rows(admin_client, 
     await _upload(admin_client, "laguna_seca.xml", 2)
 
     before = await db.execute(
-        select(RaceResultEntry.driver_id).where(
-            RaceResultEntry.normalized_name == "max tarasenko"
-        )
+        select(RaceResultEntry.driver_id).where(RaceResultEntry.normalized_name == "max tarasenko")
     )
     assert before.scalars().all() == [None]
 
@@ -268,9 +257,7 @@ async def test_merging_backfills_the_driver_link_on_existing_rows(admin_client, 
     assert resp.json()["driverId"] is not None
 
     after = await db.execute(
-        select(RaceResultEntry.driver_id).where(
-            RaceResultEntry.normalized_name == "max tarasenko"
-        )
+        select(RaceResultEntry.driver_id).where(RaceResultEntry.normalized_name == "max tarasenko")
     )
     assert all(v is not None for v in after.scalars().all())
 

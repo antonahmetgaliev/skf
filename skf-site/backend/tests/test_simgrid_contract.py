@@ -5,6 +5,7 @@ When SimGrid changes shape, re-record them and these tests show what broke.
 ``RUN_SIMGRID_LIVE=1`` additionally validates the models against the live API
 (needs ``SIMGRID_API_KEY`` in ``backend/.env``).
 """
+
 from __future__ import annotations
 
 import json
@@ -95,14 +96,19 @@ def test_recorded_standings_map_to_entries_and_races():
 
 
 def test_standings_total_pages():
-    page = lambda total: RawStandingsPage.model_validate(
-        {"data": [], "pagination": {"limit": 40, "offset": 0, "total_count": total}}
-    )
+    def page(total):
+        return RawStandingsPage.model_validate(
+            {"data": [], "pagination": {"limit": 40, "offset": 0, "total_count": total}}
+        )
+
     assert SimgridService._standings_total_pages(page(21)) == 1
     assert SimgridService._standings_total_pages(page(81)) == 3
-    assert SimgridService._standings_total_pages(
-        RawStandingsPage.model_validate({"data": [], "pagination": None})
-    ) == 1
+    assert (
+        SimgridService._standings_total_pages(
+            RawStandingsPage.model_validate({"data": [], "pagination": None})
+        )
+        == 1
+    )
 
 
 # ── Shape changes must fail loudly ─────────────────────────────────────────
@@ -195,8 +201,12 @@ def test_live_api_matches_models():
             client.get(f"/championships/{cid}/standings").raise_for_status().json()
         )
         for session in ("race_1", "qualifying"):
-            page = RawSessionResultsPage.model_validate(client.get(
-                f"/races/{LIVE_RACE_ID}/session_results",
-                params={"session_type": session, "result_type": "results"},
-            ).raise_for_status().json())
+            page = RawSessionResultsPage.model_validate(
+                client.get(
+                    f"/races/{LIVE_RACE_ID}/session_results",
+                    params={"session_type": session, "result_type": "results"},
+                )
+                .raise_for_status()
+                .json()
+            )
             assert page.data

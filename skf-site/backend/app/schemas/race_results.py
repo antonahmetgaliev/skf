@@ -79,4 +79,3 @@ class ImportResultOut(CamelModel):
     incidents_created: int
     incidents_kept: int
     entries: list[ImportEntryOut]
-

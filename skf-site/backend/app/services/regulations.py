@@ -76,13 +76,15 @@ async def list_public(db: AsyncSession, lang: str) -> list[RegulationPageListIte
     items = []
     for page in result.scalars().all():
         content = _pick_content(page, lang)
-        items.append(RegulationPageListItem(
-            id=page.id,
-            slug=page.slug,
-            sort_order=page.sort_order,
-            is_visible=page.is_visible,
-            title=content.title if content else page.slug,
-        ))
+        items.append(
+            RegulationPageListItem(
+                id=page.id,
+                slug=page.slug,
+                sort_order=page.sort_order,
+                is_visible=page.is_visible,
+                title=content.title if content else page.slug,
+            )
+        )
     _cache[key] = (time.time(), items)
     return items
 
@@ -93,9 +95,7 @@ async def get_public(db: AsyncSession, slug: str, lang: str) -> RegulationConten
     if cached is not None:
         return cached  # type: ignore[return-value]
 
-    page = (
-        await db.execute(select(RegulationPage).where(RegulationPage.slug == slug))
-    ).scalar_one_or_none()
+    page = (await db.execute(select(RegulationPage).where(RegulationPage.slug == slug))).scalar_one_or_none()
     if page is None or not page.is_visible:
         raise NotFound(PAGE_NOT_FOUND)
     content = _pick_content(page, lang)
@@ -110,9 +110,7 @@ async def get_public(db: AsyncSession, slug: str, lang: str) -> RegulationConten
 
 
 async def list_all(db: AsyncSession) -> list[RegulationPageOut]:
-    result = await db.execute(
-        select(RegulationPage).order_by(RegulationPage.sort_order, RegulationPage.slug)
-    )
+    result = await db.execute(select(RegulationPage).order_by(RegulationPage.sort_order, RegulationPage.slug))
     return [page_out(p) for p in result.scalars().all()]
 
 
@@ -140,9 +138,7 @@ async def create(db: AsyncSession, body: RegulationPageCreate) -> RegulationPage
     return page_out(page)
 
 
-async def update(
-    db: AsyncSession, page_id: uuid.UUID, body: RegulationPageUpdate
-) -> RegulationPageOut:
+async def update(db: AsyncSession, page_id: uuid.UUID, body: RegulationPageUpdate) -> RegulationPageOut:
     page = await get_or_404(db, RegulationPage, page_id, detail=PAGE_NOT_FOUND)
 
     if body.slug is not None and body.slug != page.slug:
@@ -158,7 +154,9 @@ async def update(
             content = existing.get(lang)
             if content is None:
                 page.contents.append(
-                    RegulationContent(lang=lang, title=data.title, subtitle=data.subtitle, content=data.content)
+                    RegulationContent(
+                        lang=lang, title=data.title, subtitle=data.subtitle, content=data.content
+                    )
                 )
             else:
                 content.title = data.title

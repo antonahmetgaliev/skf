@@ -19,7 +19,7 @@ class Role(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
 
-    users: Mapped[list["User"]] = relationship(back_populates="role", lazy="raise")
+    users: Mapped[list[User]] = relationship(back_populates="role", lazy="raise")
 
     def __repr__(self) -> str:
         return f"Role(id={self.id}, name={self.name!r})"
@@ -37,30 +37,20 @@ ROLE_COMMUNITY_MANAGER = "community_manager"
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
-    discord_id: Mapped[str] = mapped_column(
-        String(64), unique=True, nullable=False, index=True
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    discord_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
     username: Mapped[str] = mapped_column(String(200), nullable=False)
     display_name: Mapped[str] = mapped_column(String(200), nullable=False, default="")
     guild_nickname: Mapped[str | None] = mapped_column(String(200), nullable=True)
     avatar_hash: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    role_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("roles.id"), nullable=False
-    )
+    role_id: Mapped[int] = mapped_column(Integer, ForeignKey("roles.id"), nullable=False)
     blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
-    last_login_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    role: Mapped["Role"] = relationship(back_populates="users", lazy="joined")
+    role: Mapped[Role] = relationship(back_populates="users", lazy="joined")
 
-    sessions: Mapped[list["Session"]] = relationship(
+    sessions: Mapped[list[Session]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="raise"
     )
 
@@ -74,20 +64,14 @@ class User(Base):
 class Session(Base):
     __tablename__ = "sessions"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
-    expires_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    user: Mapped["User"] = relationship(back_populates="sessions")
+    user: Mapped[User] = relationship(back_populates="sessions")

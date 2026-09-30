@@ -19,8 +19,10 @@ from app.services.race_files.iracing import (
     DEFAULT_RULES,
     FilterRules,
     apply_filters,
-    parse_race_file as parse_bin,
     race_clock,
+)
+from app.services.race_files.iracing import (
+    parse_race_file as parse_bin,
 )
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
@@ -152,9 +154,7 @@ def test_grouping_off_files_are_regrouped():
 
     assert parsed.auto_grouped is True
     # Only the Alpha/Bravo group is multi-car; the rest are filtered out.
-    assert [(c.drivers, c.time, c.lap) for c in parsed.contacts] == [
-        (["Alpha", "Bravo"], "00:01:00", "3")
-    ]
+    assert [(c.drivers, c.time, c.lap) for c in parsed.contacts] == [(["Alpha", "Bravo"], "00:01:00", "3")]
     assert parsed.track_event == "Test Track - GP"
     assert parsed.external_session_id == 123
 

@@ -58,28 +58,32 @@ def map_session(results: list[RawSessionResult], session: str = "race") -> list[
         rf = r.external_data.rfactor if r.external_data else None
         entrant = r.sessionable
         cc = entrant.championship_car_class if entrant else None
-        entries.append(RaceResultEntry(
-            user_id=entrant.user_id if entrant else None,
-            display_name=r.sessionable_name or r.imported_name or "",
-            car=r.car_name or "",
-            car_number=r.car_number,
-            car_class=(cc.display_name if cc else None) or "",
-            position=_int(rf.finished) if rf else None,
-            class_position=r.position_cache,
-            start_position=_int(rf.class_st) if rf else None,
-            laps=r.lap_count,
-            best_lap_ms=r.best_lap or None,
-            total_time_ms=r.total_time or None,
-            penalty_s=r.total_time_penalty or 0,
-            points=r.points_total,
-            status=_status(r),
-            rating_change=r.grid_rating_change,
-        ))
+        entries.append(
+            RaceResultEntry(
+                user_id=entrant.user_id if entrant else None,
+                display_name=r.sessionable_name or r.imported_name or "",
+                car=r.car_name or "",
+                car_number=r.car_number,
+                car_class=(cc.display_name if cc else None) or "",
+                position=_int(rf.finished) if rf else None,
+                class_position=r.position_cache,
+                start_position=_int(rf.class_st) if rf else None,
+                laps=r.lap_count,
+                best_lap_ms=r.best_lap or None,
+                total_time_ms=r.total_time or None,
+                penalty_s=r.total_time_penalty or 0,
+                points=r.points_total,
+                status=_status(r),
+                rating_change=r.grid_rating_change,
+            )
+        )
 
-    entries.sort(key=lambda e: (
-        e.car_class,
-        e.class_position if e.class_position is not None else float("inf"),
-    ))
+    entries.sort(
+        key=lambda e: (
+            e.car_class,
+            e.class_position if e.class_position is not None else float("inf"),
+        )
+    )
 
     by_class: dict[str, list[RaceResultEntry]] = {}
     for e in entries:
@@ -118,7 +122,9 @@ async def race_session(championship_id: int, race_id: int, session: str) -> Race
         raise NotFound("Race not found in this championship.")
     try:
         raw = await simgrid_service.get_session_results(
-            championship_id, race_id, SIMGRID_SESSIONS[session],
+            championship_id,
+            race_id,
+            SIMGRID_SESSIONS[session],
         )
     except Exception as exc:
         logger.warning("Failed to fetch %s results for race %s", session, race_id, exc_info=True)
@@ -127,7 +133,8 @@ async def race_session(championship_id: int, race_id: int, session: str) -> Race
 
 
 async def with_round_results(
-    championship_id: int, data: ChampionshipStandingsData,
+    championship_id: int,
+    data: ChampionshipStandingsData,
 ) -> ChampionshipStandingsData:
     """Fill each standings entry's per-round results (race session only).
 
@@ -140,20 +147,22 @@ async def with_round_results(
     )
 
     by_user: dict[int, list[DriverRaceResult]] = {}
-    for (index, race), raw in zip(rounds, fetched):
+    for (index, race), raw in zip(rounds, fetched, strict=True):
         if isinstance(raw, BaseException):
             logger.warning("Failed to fetch results for race %s", race.id, exc_info=raw)
             continue
         for e in map_session(raw):
             if e.user_id is None:
                 continue
-            by_user.setdefault(e.user_id, []).append(DriverRaceResult(
-                race_id=race.id,
-                race_index=index,
-                points=e.points,
-                position=e.class_position,
-                status=e.status,
-            ))
+            by_user.setdefault(e.user_id, []).append(
+                DriverRaceResult(
+                    race_id=race.id,
+                    race_index=index,
+                    points=e.points,
+                    position=e.class_position,
+                    status=e.status,
+                )
+            )
 
     entries = [
         e.model_copy(update={"race_results": by_user.get(e.id, [])}) if e.id is not None else e

@@ -39,7 +39,8 @@ async def sync_drivers_from_standings(
             except Exception:
                 logger.exception(
                     "Driver sync failed for entry %r (simgrid id %r)",
-                    entry.display_name, entry.id,
+                    entry.display_name,
+                    entry.id,
                 )
         try:
             await db.commit()
@@ -71,9 +72,7 @@ async def _upsert_entry(entry: StandingEntry, db) -> None:  # type: ignore[type-
     lowered = display_name.lower()
 
     # 1. Match by SimGrid driver ID (most reliable)
-    result = await db.execute(
-        select(Driver).where(Driver.simgrid_driver_id == entry.id)
-    )
+    result = await db.execute(select(Driver).where(Driver.simgrid_driver_id == entry.id))
     driver = result.scalars().first()
     if driver:
         driver.simgrid_display_name = display_name
@@ -139,9 +138,7 @@ async def link_driver_for_user(user_id, discord_id: str) -> None:
 
     try:
         async with async_session() as db:
-            existing = await db.execute(
-                select(Driver.id).where(Driver.user_id == user_id)
-            )
+            existing = await db.execute(select(Driver.id).where(Driver.user_id == user_id))
             if existing.scalars().first() is not None:
                 return
 
@@ -162,7 +159,8 @@ async def link_driver_for_user(user_id, discord_id: str) -> None:
             await db.commit()
             logger.info(
                 "Auto-linked driver %s to user %s via discord_uid at login",
-                driver.id, user_id,
+                driver.id,
+                user_id,
             )
     except Exception:
         logger.exception("Login auto-link failed for user %s", user_id)
@@ -173,9 +171,7 @@ async def _auto_link_by_discord_uid(championship_id: int, db) -> None:  # type: 
     from app.services.simgrid import simgrid_service
 
     participants = await simgrid_service.get_participating_users(championship_id)
-    discord_by_simgrid_id = {
-        p.user_id: p.discord_uid for p in participants if p.discord_uid
-    }
+    discord_by_simgrid_id = {p.user_id: p.discord_uid for p in participants if p.discord_uid}
     if not discord_by_simgrid_id:
         return
 
@@ -189,25 +185,17 @@ async def _auto_link_by_discord_uid(championship_id: int, db) -> None:  # type: 
     if not unlinked_drivers:
         return
 
-    uids = {
-        discord_by_simgrid_id[d.simgrid_driver_id] for d in unlinked_drivers
-    }
-    users_result = await db.execute(
-        select(User).where(User.discord_id.in_(uids))
-    )
+    uids = {discord_by_simgrid_id[d.simgrid_driver_id] for d in unlinked_drivers}
+    users_result = await db.execute(select(User).where(User.discord_id.in_(uids)))
     users_by_discord_id = {u.discord_id: u for u in users_result.scalars().all()}
 
     linked = 0
     for driver in unlinked_drivers:
-        user = users_by_discord_id.get(
-            discord_by_simgrid_id[driver.simgrid_driver_id]
-        )
+        user = users_by_discord_id.get(discord_by_simgrid_id[driver.simgrid_driver_id])
         if user is None:
             continue
         # One driver per user — skip users who already claimed a driver.
-        existing = await db.execute(
-            select(Driver.id).where(Driver.user_id == user.id)
-        )
+        existing = await db.execute(select(Driver.id).where(Driver.user_id == user.id))
         if existing.scalars().first() is not None:
             continue
         try:
@@ -217,11 +205,13 @@ async def _auto_link_by_discord_uid(championship_id: int, db) -> None:  # type: 
         except IntegrityError:
             logger.warning(
                 "Auto-link race for driver %s / user %s; skipped",
-                driver.id, user.id,
+                driver.id,
+                user.id,
             )
     await db.commit()
     if linked:
         logger.info(
             "Auto-linked %d driver(s) via discord_uid for championship %s",
-            linked, championship_id,
+            linked,
+            championship_id,
         )

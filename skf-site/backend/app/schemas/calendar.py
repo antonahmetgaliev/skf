@@ -10,8 +10,8 @@ from pydantic import ConfigDict, Field
 
 from app.schemas.base import CamelModel
 
-
 # ── Enums ────────────────────────────────────────────────────────────────────
+
 
 class CalendarEventType(str, Enum):
     PAST = "past"
@@ -21,6 +21,7 @@ class CalendarEventType(str, Enum):
 
 
 # ── Community CRUD schemas ───────────────────────────────────────────────────
+
 
 class CommunityCreate(CamelModel):
     name: str = Field(min_length=1, max_length=200)
@@ -49,6 +50,7 @@ class CommunityOut(CamelModel):
 
 # ── Community join request ───────────────────────────────────────────────────
 
+
 class CommunityRequestCreate(CamelModel):
     """A visitor's request to have their community added to the calendar."""
 
@@ -58,6 +60,7 @@ class CommunityRequestCreate(CamelModel):
 
 
 # ── Custom race CRUD schemas ────────────────────────────────────────────────
+
 
 class CustomRaceCreate(CamelModel):
     date: datetime | None = None
@@ -74,6 +77,7 @@ class CustomRaceUpdate(CamelModel):
 
 class CustomRaceSync(CamelModel):
     """Used for batch race sync — id present means update, absent means create."""
+
     id: uuid.UUID | None = None
     date: datetime | None = None
     end_date: datetime | None = None
@@ -92,6 +96,7 @@ class CustomRaceOut(CamelModel):
 
 
 # ── Custom championship CRUD schemas ────────────────────────────────────────
+
 
 class CustomChampionshipCreate(CamelModel):
     name: str = Field(min_length=1, max_length=200)
@@ -131,6 +136,7 @@ class CustomChampionshipOut(CamelModel):
 
 
 # ── Unified calendar event schemas (merge endpoint) ─────────────────────────
+
 
 class CalendarRace(CamelModel):
     date: str | None = None

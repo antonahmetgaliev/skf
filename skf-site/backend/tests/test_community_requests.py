@@ -1,4 +1,5 @@
 """Tests for the calendar's community join-request endpoint."""
+
 from __future__ import annotations
 
 import uuid
@@ -27,6 +28,7 @@ def clear_rate_limit():
 
 # ── Router ───────────────────────────────────────────────────────────────────
 
+
 async def test_requires_login(client):
     resp = await client.post("/api/v1/community-requests", json=PAYLOAD)
     assert resp.status_code == 401
@@ -36,9 +38,7 @@ async def test_sends_request_and_returns_204(auth_client, monkeypatch, test_user
     sent = {}
 
     async def _fake_send(*, name, description, discord_url, user):
-        sent.update(
-            name=name, description=description, discord_url=discord_url, user=user
-        )
+        sent.update(name=name, description=description, discord_url=discord_url, user=user)
 
     monkeypatch.setattr("app.services.communities.send_community_request", _fake_send)
 
@@ -113,24 +113,20 @@ async def test_a_failed_send_does_not_consume_the_cooldown(auth_client, monkeypa
         raise DiscordSendFailed
 
     monkeypatch.setattr("app.services.communities.send_community_request", _failing)
-    assert (
-        await auth_client.post("/api/v1/community-requests", json=PAYLOAD)
-    ).status_code == 502
+    assert (await auth_client.post("/api/v1/community-requests", json=PAYLOAD)).status_code == 502
 
     async def _ok(**_kwargs):
         return None
 
     monkeypatch.setattr("app.services.communities.send_community_request", _ok)
-    assert (
-        await auth_client.post("/api/v1/community-requests", json=PAYLOAD)
-    ).status_code == 204
+    assert (await auth_client.post("/api/v1/community-requests", json=PAYLOAD)).status_code == 204
 
 
 @pytest.mark.parametrize(
     "bad",
     [
-        {"name": "x"},                     # too short
-        {"description": "too short"},      # under 10 chars
+        {"name": "x"},  # too short
+        {"description": "too short"},  # under 10 chars
         {"name": ""},
     ],
 )
@@ -140,14 +136,13 @@ async def test_validation_rejects_bad_input(auth_client, monkeypatch, bad):
 
     monkeypatch.setattr("app.services.communities.send_community_request", _fake_send)
 
-    resp = await auth_client.post(
-        "/api/v1/community-requests", json={**PAYLOAD, **bad}
-    )
+    resp = await auth_client.post("/api/v1/community-requests", json={**PAYLOAD, **bad})
 
     assert resp.status_code == 422
 
 
 # ── Service ──────────────────────────────────────────────────────────────────
+
 
 class _FakeResponse:
     def __init__(self, status_code: int):
@@ -191,9 +186,7 @@ async def test_service_suppresses_mentions_and_posts_embed(monkeypatch):
 
     captured: dict = {}
     monkeypatch.setattr(settings, "discord_community_request_webhook_url", WEBHOOK)
-    monkeypatch.setattr(
-        discord_service.httpx, "AsyncClient", _fake_client_factory(captured)
-    )
+    monkeypatch.setattr(discord_service.httpx, "AsyncClient", _fake_client_factory(captured))
 
     await discord_service.send_community_request(
         name="@everyone Racers",

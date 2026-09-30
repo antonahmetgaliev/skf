@@ -37,7 +37,10 @@ router = APIRouter(tags=["Incidents"])
 
 # ── Incidents ────────────────────────────────────────────────────────────────
 
-@router.post("/incidents/{incident_id}/copies", response_model=IncidentOut, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/incidents/{incident_id}/copies", response_model=IncidentOut, status_code=status.HTTP_201_CREATED
+)
 async def copy_incident(
     incident_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -74,6 +77,7 @@ async def resolve_incident(
 
 # ── Incident drivers ─────────────────────────────────────────────────────────
 
+
 @router.delete("/incident-drivers/{incident_driver_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_incident_driver(
     incident_driver_id: uuid.UUID,
@@ -105,6 +109,7 @@ async def resolve_incident_driver(
 
 
 # ── BWP audit / backfill ─────────────────────────────────────────────────────
+
 
 @router.get("/bwp-audit-entries", response_model=list[BwpAuditEntry])
 async def list_bwp_audit_entries(

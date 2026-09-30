@@ -3,20 +3,20 @@
 Covers all four match paths and edge cases (empty name, duplicate key,
 batch processing).
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.schemas.championship import StandingEntry
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _entry(**kwargs) -> StandingEntry:
     defaults = {"id": 1, "position": 1, "display_name": "Driver One", "country_code": "GB"}
@@ -34,12 +34,13 @@ async def _patch_and_sync(engine, entries, monkeypatch):
 
 
 def _now():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 async def test_empty_display_name_is_skipped(engine, db, monkeypatch):
     """Entries whose display_name is blank/whitespace are silently ignored."""
@@ -59,9 +60,7 @@ async def test_path1_updates_simgrid_display_name_and_country(engine, db, monkey
     db.add(driver)
     await db.commit()
 
-    await _patch_and_sync(
-        engine, [_entry(id=42, display_name="New Name", country_code="DE")], monkeypatch
-    )
+    await _patch_and_sync(engine, [_entry(id=42, display_name="New Name", country_code="DE")], monkeypatch)
 
     await db.refresh(driver)
     assert driver.simgrid_display_name == "New Name"
@@ -92,9 +91,7 @@ async def test_path1_empty_country_preserves_existing(engine, db, monkeypatch):
     db.add(driver)
     await db.commit()
 
-    await _patch_and_sync(
-        engine, [_entry(id=11, display_name="Driver FR", country_code="")], monkeypatch
-    )
+    await _patch_and_sync(engine, [_entry(id=11, display_name="Driver FR", country_code="")], monkeypatch)
 
     await db.refresh(driver)
     assert driver.country_code == "FR"
@@ -108,9 +105,7 @@ async def test_path2_links_unlinked_driver_by_name(engine, db, monkeypatch):
     db.add(driver)
     await db.commit()
 
-    await _patch_and_sync(
-        engine, [_entry(id=99, display_name="john smith", country_code="US")], monkeypatch
-    )
+    await _patch_and_sync(engine, [_entry(id=99, display_name="john smith", country_code="US")], monkeypatch)
 
     await db.refresh(driver)
     assert driver.simgrid_driver_id == 99
@@ -131,9 +126,7 @@ async def test_path2_skips_already_simgrid_linked_driver(engine, db, monkeypatch
     db.add(existing)
     await db.commit()
 
-    await _patch_and_sync(
-        engine, [_entry(id=88, display_name="Alice Brown", country_code="AU")], monkeypatch
-    )
+    await _patch_and_sync(engine, [_entry(id=88, display_name="Alice Brown", country_code="AU")], monkeypatch)
 
     result = await db.execute(select(Driver))
     drivers = result.scalars().all()
@@ -156,9 +149,7 @@ async def test_path3_links_via_simgrid_display_name(engine, db, monkeypatch):
     db.add(driver)
     await db.commit()
 
-    await _patch_and_sync(
-        engine, [_entry(id=77, display_name="John Smith", country_code="CA")], monkeypatch
-    )
+    await _patch_and_sync(engine, [_entry(id=77, display_name="John Smith", country_code="CA")], monkeypatch)
 
     await db.refresh(driver)
     assert driver.simgrid_driver_id == 77
@@ -194,7 +185,7 @@ async def test_path4_duplicate_name_skipped_gracefully(engine, db, monkeypatch):
 
     entries = [
         _entry(id=100, display_name="Existing Driver", country_code="GB"),  # duplicate → skip
-        _entry(id=101, display_name="Fresh Entry", country_code="NL"),       # new → insert
+        _entry(id=101, display_name="Fresh Entry", country_code="NL"),  # new → insert
     ]
     await _patch_and_sync(engine, entries, monkeypatch)
 
@@ -242,9 +233,7 @@ async def test_path3_does_not_steal_assigned_simgrid_id(engine, db, monkeypatch)
     db.add(existing)
     await db.commit()
 
-    await _patch_and_sync(
-        engine, [_entry(id=77, display_name="John Smith", country_code="CA")], monkeypatch
-    )
+    await _patch_and_sync(engine, [_entry(id=77, display_name="John Smith", country_code="CA")], monkeypatch)
 
     await db.refresh(existing)
     assert existing.simgrid_driver_id == 5  # identity NOT stolen
@@ -280,10 +269,12 @@ async def test_duplicate_simgrid_ids_do_not_abort_batch(engine, db, monkeypatch)
     MultipleResultsFound and kill the whole sync."""
     from app.models.bwp import Driver
 
-    db.add_all([
-        Driver(name="Dup A", simgrid_driver_id=9, created_at=_now()),
-        Driver(name="Dup B", simgrid_driver_id=9, created_at=_now()),
-    ])
+    db.add_all(
+        [
+            Driver(name="Dup A", simgrid_driver_id=9, created_at=_now()),
+            Driver(name="Dup B", simgrid_driver_id=9, created_at=_now()),
+        ]
+    )
     await db.commit()
 
     entries = [
@@ -308,9 +299,7 @@ async def _patch_and_link(engine, monkeypatch, user_id, discord_id, simgrid_user
     async def _fake_lookup(self, uid):
         return simgrid_user_id if uid == discord_id else None
 
-    monkeypatch.setattr(
-        type(simgrid_module.simgrid_service), "get_user_by_discord_id", _fake_lookup
-    )
+    monkeypatch.setattr(type(simgrid_module.simgrid_service), "get_user_by_discord_id", _fake_lookup)
     await link_driver_for_user(user_id, discord_id)
 
 
@@ -328,9 +317,7 @@ async def test_login_auto_link_claims_unclaimed_driver(engine, db, monkeypatch, 
     assert driver.user_id == test_user.id
 
 
-async def test_login_auto_link_noop_when_user_already_linked(
-    engine, db, monkeypatch, test_user
-):
+async def test_login_auto_link_noop_when_user_already_linked(engine, db, monkeypatch, test_user):
     from app.models.bwp import Driver
 
     mine = Driver(name="Already Mine", user_id=test_user.id, created_at=_now())
@@ -344,9 +331,7 @@ async def test_login_auto_link_noop_when_user_already_linked(
     assert other.user_id is None
 
 
-async def test_login_auto_link_noop_when_simgrid_unknown(
-    engine, db, monkeypatch, test_user
-):
+async def test_login_auto_link_noop_when_simgrid_unknown(engine, db, monkeypatch, test_user):
     from app.models.bwp import Driver
 
     driver = Driver(name="Unclaimed", simgrid_driver_id=321, created_at=_now())
