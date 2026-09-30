@@ -40,6 +40,8 @@ CI (`.github/workflows/ci.yml`) runs all of the above. It also runs `alembic upg
 - One folder per component (`.ts/.html/.scss`), `app-` prefix, signal `input()`/`output()`, `@if`/`@for` control flow.
 - API calls go through `src/app/services/*-api.service.ts`; base path is `API` from `src/app/api.ts`.
 - API types are generated, never hand-written: `export type Foo = Schemas['FooOut']` (`Schemas` from `src/app/api.ts`). If a type is wrong, fix the Pydantic schema, not the alias.
+- New or reworked components use `ChangeDetectionStrategy.OnPush`, and subscriptions end with `takeUntilDestroyed()`. Don't mass-migrate old components; convert them when you touch them anyway.
+- Pure logic (date maths, grouping, summaries) goes into a plain `.ts` module next to the page, with a `.spec.ts` (see `pages/calendar/calendar-events.ts`). Components keep state and wiring.
 - UI strings go through Transloco. Keys live in `skf-site/backend/seed/translations_{en,ua}.json`.
 
 ## Things that are not obvious from the code
