@@ -40,32 +40,25 @@ import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { LocaleService } from '../../services/locale.service';
 import { CalendarSidebarComponent } from './calendar-sidebar/calendar-sidebar.component';
-import { toLocalDateStr, toLocalDatetimeLocal, withLocalTzOffset } from '../../utils/date';
-
-interface CalendarDay {
-  dayNumber: number;
-  isCurrentMonth: boolean;
-  isToday: boolean;
-  isPast: boolean;
-  events: CalendarEvent[];
-}
-
-interface EventGroup {
-  color: string;
-  events: CalendarEvent[];
-}
-
-interface YearCommunityColumn {
-  id: string;
-  name: string;
-  color: string;
-  discordUrl: string | null;
-  events: CalendarEvent[];
-}
+import { toLocalDatetimeLocal, withLocalTzOffset } from '../../utils/date';
+import {
+  buildMonthGrid,
+  buildYearColumns,
+  CalendarDay,
+  DEFAULT_COLOR,
+  eventFallsOnDay,
+  eventOverlapsMonth,
+  formatRaceDate,
+  groupEventsByColor,
+  isScheduled,
+  racesOnDay,
+  simulatorColor,
+  sortRacesByDate,
+  YearCommunityColumn,
+} from './calendar-events';
 
 type ViewMode = 'month' | 'year';
 
-const DEFAULT_COLOR = '#ffd600'; // gold fallback
 const WEEK_DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const VIEW_TABS: { key: string; label: string }[] = [
   { key: 'month', label: 'calendar.month' },
@@ -124,7 +117,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly events = computed(() => {
     const year = this.currentYear();
     const month = this.currentMonth();
-    return this.yearEvents().filter((e) => this.eventOverlapsMonth(e, year, month));
+    return this.yearEvents().filter((e) => eventOverlapsMonth(e, year, month));
   });
 
   // Filters
@@ -161,16 +154,12 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly yearLoading = this.loading;
   readonly yearError = this.errorMessage;
 
-  readonly scheduledEvents = computed(() =>
-    this.filteredEvents().filter((e) => e.startDate || e.endDate || e.races.some((r) => r.date)),
-  );
+  readonly scheduledEvents = computed(() => this.filteredEvents().filter(isScheduled));
 
-  readonly unscheduledEvents = computed(() =>
-    this.filteredEvents().filter((e) => !e.startDate && !e.endDate && !e.races.some((r) => r.date)),
-  );
+  readonly unscheduledEvents = computed(() => this.filteredEvents().filter((e) => !isScheduled(e)));
 
   readonly calendarGrid = computed<CalendarDay[][]>(() => {
-    return this.buildGrid(this.currentYear(), this.currentMonth(), this.scheduledEvents());
+    return buildMonthGrid(this.currentYear(), this.currentMonth(), this.scheduledEvents());
   });
 
   readonly selectedDayEvents = computed<CalendarEvent[]>(() => {
@@ -178,7 +167,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     if (day === null) return [];
     const year = this.currentYear();
     const month = this.currentMonth();
-    return this.filteredEvents().filter((e) => this.eventFallsOnDay(e, year, month, day));
+    return this.filteredEvents().filter((e) => eventFallsOnDay(e, year, month, day));
   });
 
   readonly selectedDayLabel = computed(() => {
@@ -200,58 +189,15 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     this.viewMode() === 'month' ? this.monthLabel() : this.yearLabel(),
   );
 
-  readonly yearCommunityColumns = computed<YearCommunityColumn[]>(() => {
-    const events = this.filteredYearEvents();
-    const communities = this.communities();
-    const managedCommunities = this.managedCommunities();
-
-    // Communities are returned from API with SKF first (sorted by is_skf desc, name)
-    const columns: YearCommunityColumn[] = [];
-    const addedIds = new Set<string>();
-
-    for (const c of communities) {
-      const communityEvents = events.filter((e) => e.communityId === c.id);
-      if (communityEvents.length === 0) continue;
-
-      // Sort by earliest race date or start date
-      const sorted = [...communityEvents].sort((a, b) => {
-        const dateA = this.getEarliestDate(a);
-        const dateB = this.getEarliestDate(b);
-        if (!dateA && !dateB) return 0;
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-        return dateA.getTime() - dateB.getTime();
-      });
-
-      columns.push({
-        id: c.id,
-        name: c.name,
-        color: c.color ?? DEFAULT_COLOR,
-        discordUrl: c.discordUrl,
-        events: sorted,
-      });
-      addedIds.add(c.id);
-    }
-
-    // Add empty columns for managed communities with no events.
-    // Skipped for plain admins, who manage every community — otherwise the
-    // year view would show an empty column for each community with no events.
-    if (!this.auth.isAdmin()) {
-      for (const mc of managedCommunities) {
-        if (!addedIds.has(mc.id)) {
-          columns.push({
-            id: mc.id,
-            name: mc.name,
-            color: mc.color ?? DEFAULT_COLOR,
-            discordUrl: mc.discordUrl,
-            events: [],
-          });
-        }
-      }
-    }
-
-    return columns;
-  });
+  readonly yearCommunityColumns = computed<YearCommunityColumn[]>(() =>
+    buildYearColumns(
+      this.filteredYearEvents(),
+      this.communities(),
+      // Empty columns for the communities a manager runs. Skipped for plain
+      // admins, who manage every community: each would get an empty column.
+      this.auth.isAdmin() ? [] : this.managedCommunities(),
+    ),
+  );
 
   readonly availableSimulators = computed(() => {
     const sims = new Set(
@@ -371,58 +317,18 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  sortedRaces(races: CalendarEvent['races']): CalendarEvent['races'] {
-    return [...races].sort((a, b) => {
-      if (!a.date && !b.date) return 0;
-      if (!a.date) return 1;
-      if (!b.date) return -1;
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
-    });
-  }
+  readonly sortedRaces = sortRacesByDate;
+  readonly groupEventsByColor = groupEventsByColor;
+  readonly getSimulatorColor = simulatorColor;
 
   formatRaceDate(isoDate: string, isoEndDate?: string | null): string {
-    const d = new Date(isoDate);
-    if (isNaN(d.getTime())) return isoDate.slice(0, 10);
-    const date = d.toLocaleDateString(this.locale.locale, {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-    const hasTime = /T\d{2}:\d{2}/.test(isoDate) && !isoDate.includes('T00:00:00');
-    const startStr = hasTime
-      ? `${date} ${d.toLocaleTimeString(this.locale.locale, { hour: '2-digit', minute: '2-digit' })}`
-      : date;
-
-    if (isoEndDate) {
-      const ed = new Date(isoEndDate);
-      if (!isNaN(ed.getTime())) {
-        const endDate = ed.toLocaleDateString(this.locale.locale, {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        });
-        const endHasTime = /T\d{2}:\d{2}/.test(isoEndDate) && !isoEndDate.includes('T00:00:00');
-        const endStr = endHasTime
-          ? `${endDate} ${ed.toLocaleTimeString(this.locale.locale, { hour: '2-digit', minute: '2-digit' })}`
-          : endDate;
-        return `${startStr} — ${endStr}`;
-      }
-    }
-
-    return startStr;
+    return formatRaceDate(isoDate, isoEndDate, this.locale.locale);
   }
 
   getRacesForSelectedDay(event: CalendarEvent): CalendarEvent['races'] {
     const day = this.selectedDay();
     if (day === null) return event.races;
-    const dayStr = `${this.currentYear()}-${String(this.currentMonth()).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const filtered = event.races.filter((r) => {
-      if (r.date && r.endDate) {
-        return dayStr >= toLocalDateStr(r.date) && dayStr <= toLocalDateStr(r.endDate);
-      }
-      return r.date && toLocalDateStr(r.date) === dayStr;
-    });
-    return filtered.length > 0 ? filtered : event.races;
+    return racesOnDay(event, this.currentYear(), this.currentMonth(), day);
   }
 
   // ── Filter methods ──
@@ -457,20 +363,6 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 
   getCommunityColor(event: CalendarEvent): string {
     return event.communityColor ?? DEFAULT_COLOR;
-  }
-
-  groupEventsByColor(events: CalendarEvent[]): EventGroup[] {
-    const map = new Map<string, CalendarEvent[]>();
-    for (const e of events) {
-      const color = e.communityColor || DEFAULT_COLOR;
-      const list = map.get(color);
-      if (list) {
-        list.push(e);
-      } else {
-        map.set(color, [e]);
-      }
-    }
-    return [...map.entries()].map(([color, evts]) => ({ color, events: evts }));
   }
 
   getCommunityDiscordUrl(event: CalendarEvent): string | null {
@@ -723,16 +615,6 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loadYearEvents();
   }
 
-  private getEarliestDate(event: CalendarEvent): Date | null {
-    const dates: Date[] = [];
-    for (const race of event.races) {
-      if (race.date) dates.push(new Date(race.date));
-    }
-    if (event.startDate) dates.push(new Date(event.startDate));
-    if (dates.length === 0) return null;
-    return dates.reduce((min, d) => (d < min ? d : min));
-  }
-
   // ── Private ──
 
   private async loadCommunities(): Promise<void> {
@@ -766,23 +648,6 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private static readonly SIM_COLORS: Record<string, string> = {
-    iracing: '#0153db',
-    'assetto corsa competizione': '#d4132a',
-    'assetto corsa': '#d4132a',
-    'le mans ultimate': '#004d99',
-    'rfactor 2': '#e87722',
-    'automobilista 2': '#2dbe60',
-    rennsport: '#8b5cf6',
-    'forza motorsport': '#107c10',
-    'gran turismo': '#003791',
-    'ea sports wrc': '#00a2e8',
-  };
-
-  getSimulatorColor(game: string): string {
-    return CalendarComponent.SIM_COLORS[game.toLowerCase()] ?? '#6b7280';
-  }
-
   private applyFilters(events: CalendarEvent[]): CalendarEvent[] {
     const communityIds = this.selectedCommunityIds();
     const simulator = this.selectedSimulator();
@@ -798,129 +663,5 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 
       return true;
     });
-  }
-
-  private buildGrid(year: number, month: number, events: CalendarEvent[]): CalendarDay[][] {
-    const firstDay = new Date(year, month - 1, 1);
-    // Monday = 0, Sunday = 6
-    let startWeekday = firstDay.getDay() - 1;
-    if (startWeekday < 0) startWeekday = 6;
-
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const prevMonthDays = new Date(year, month - 1, 0).getDate();
-
-    const today = new Date();
-    const isCurrentMonthToday = today.getFullYear() === year && today.getMonth() + 1 === month;
-
-    const cells: CalendarDay[] = [];
-
-    const todayDate = today.getDate();
-
-    // Previous month trailing days
-    for (let i = startWeekday - 1; i >= 0; i--) {
-      cells.push({
-        dayNumber: prevMonthDays - i,
-        isCurrentMonth: false,
-        isToday: false,
-        isPast: true,
-        events: [],
-      });
-    }
-
-    // Current month days
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dayEvents = events.filter((e) => this.eventFallsOnDay(e, year, month, d));
-      const isPast = isCurrentMonthToday
-        ? d < todayDate
-        : year < today.getFullYear() ||
-          (year === today.getFullYear() && month < today.getMonth() + 1);
-      cells.push({
-        dayNumber: d,
-        isCurrentMonth: true,
-        isToday: isCurrentMonthToday && todayDate === d,
-        isPast,
-        events: dayEvents,
-      });
-    }
-
-    // Next month leading days to fill the grid
-    const remaining = 7 - (cells.length % 7);
-    if (remaining < 7) {
-      for (let d = 1; d <= remaining; d++) {
-        cells.push({
-          dayNumber: d,
-          isCurrentMonth: false,
-          isToday: false,
-          isPast: false,
-          events: [],
-        });
-      }
-    }
-
-    // Split into weeks
-    const weeks: CalendarDay[][] = [];
-    for (let i = 0; i < cells.length; i += 7) {
-      weeks.push(cells.slice(i, i + 7));
-    }
-    return weeks;
-  }
-
-  private eventOverlapsMonth(event: CalendarEvent, year: number, month: number): boolean {
-    const monthStart = new Date(year, month - 1, 1);
-    const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
-
-    for (const race of event.races) {
-      if (race.date && race.endDate) {
-        // Multi-day race: check range overlap with month
-        const start = new Date(race.date);
-        const end = new Date(race.endDate);
-        if (start <= monthEnd && end >= monthStart) return true;
-      } else if (race.date) {
-        const d = new Date(race.date);
-        if (d >= monthStart && d <= monthEnd) return true;
-      }
-    }
-
-    if (event.startDate) {
-      const d = new Date(event.startDate);
-      if (d >= monthStart && d <= monthEnd) return true;
-    }
-    if (event.endDate) {
-      const d = new Date(event.endDate);
-      if (d >= monthStart && d <= monthEnd) return true;
-    }
-
-    // Event spans the entire month
-    if (event.startDate && event.endDate) {
-      const start = new Date(event.startDate);
-      const end = new Date(event.endDate);
-      if (start <= monthStart && end >= monthEnd) return true;
-    }
-
-    return false;
-  }
-
-  private eventFallsOnDay(event: CalendarEvent, year: number, month: number, day: number): boolean {
-    const dayStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
-    // Check individual races (including multi-day ranges)
-    for (const race of event.races) {
-      if (race.date && race.endDate) {
-        // Multi-day race: check if day falls within range
-        if (dayStr >= toLocalDateStr(race.date) && dayStr <= toLocalDateStr(race.endDate)) {
-          return true;
-        }
-      } else if (race.date && toLocalDateStr(race.date) === dayStr) {
-        return true;
-      }
-    }
-
-    // For SimGrid championships without race-level dates, check start/end range
-    if (event.races.length === 0 || event.races.every((r) => !r.date)) {
-      if (event.startDate && toLocalDateStr(event.startDate) === dayStr) return true;
-      if (event.endDate && toLocalDateStr(event.endDate) === dayStr) return true;
-    }
-
-    return false;
   }
 }
