@@ -15,8 +15,9 @@ import { PageLayoutComponent } from '../../components/page-layout/page-layout.co
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { BtnComponent } from '../../components/btn/btn.component';
 import { ModalComponent } from '../../components/modal/modal.component';
-import { TabsComponent } from '../../components/tabs/tabs.component';
 import { IncidentCardComponent } from './incident-card/incident-card.component';
+import { IncidentRulesStore } from './incident-rules.store';
+import { IncidentSettingsModalComponent } from './incident-settings-modal/incident-settings-modal.component';
 import { IncidentWindowGroupsComponent } from './incident-window-groups/incident-window-groups.component';
 import { closesIn, groupKeyFor, groupWindows } from './incident-window-groups/window-groups';
 import { firstValueFrom } from 'rxjs';
@@ -33,11 +34,7 @@ import {
   IncidentWindowListItem,
   IncidentWindowOut,
   IncidentsApiService,
-  VerdictRule,
-  DescriptionPreset,
   BulkResolveIncident,
-  BwpAuditEntry,
-  BwpBackfillResult,
 } from '../../services/incidents-api.service';
 
 /** A penalty about to be written to a licence by publishing. */
@@ -68,10 +65,11 @@ export interface PendingPenalty {
     SpinnerComponent,
     BtnComponent,
     ModalComponent,
-    TabsComponent,
     IncidentCardComponent,
+    IncidentSettingsModalComponent,
     IncidentWindowGroupsComponent,
   ],
+  providers: [IncidentRulesStore],
   templateUrl: './incidents.component.html',
   styleUrl: './incidents.component.scss',
 })
@@ -85,21 +83,7 @@ export class IncidentsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  readonly verdictRules = signal<VerdictRule[]>([]);
-  readonly verdictPresets = computed(() => this.verdictRules().map((r) => r.verdict));
-
-  /** The verdict pre-selected for every unresolved driver. */
-  readonly defaultRule = computed(() => this.verdictRules().find((r) => r.isDefault) ?? null);
-
-  /** Verdict chips, default pinned first so muscle memory has a stable target. */
-  readonly orderedRules = computed(() =>
-    [...this.verdictRules()].sort(
-      (a, b) => Number(b.isDefault) - Number(a.isDefault) || a.sortOrder - b.sortOrder,
-    ),
-  );
-
-  readonly descriptionPresets = signal<DescriptionPreset[]>([]);
-  readonly descriptionPresetTexts = computed(() => this.descriptionPresets().map((p) => p.text));
+  readonly rules = inject(IncidentRulesStore);
 
   // ── Data ──────────────────────────────────────────────────────────
   readonly windows = signal<IncidentWindowListItem[]>([]);
@@ -110,14 +94,6 @@ export class IncidentsComponent implements OnInit {
   readonly championships = signal<ChampionshipListItem[]>([]);
   readonly availableRaces = signal<StandingRace[]>([]);
   readonly loadingRaces = signal(false);
-
-  // ── BWP audit ─────────────────────────────────────────────────────
-  readonly bwpAuditEntries = signal<BwpAuditEntry[] | null>(null);
-  readonly backfillRunning = signal(false);
-  readonly backfillResult = signal<BwpBackfillResult | null>(null);
-  readonly hasMatchableAuditEntries = computed(() =>
-    (this.bwpAuditEntries() ?? []).some((e) => e.matchedDriverId !== null),
-  );
 
   // ── Window groups (championship → rounds) ─────────────────────────
   readonly windowGroups = computed(() => groupWindows(this.windows()));
@@ -218,7 +194,7 @@ export class IncidentsComponent implements OnInit {
       if (canJudge && !this.judgeDataLoaded) {
         this.judgeDataLoaded = true;
         // Presets are an authoring aid; only a judge ever types a decision.
-        void this.loadDescriptionPresets();
+        void this.rules.loadDescriptionPresets();
       }
 
       if (canAdmin && !this.adminDataLoaded) {
@@ -249,7 +225,7 @@ export class IncidentsComponent implements OnInit {
     });
     // Every viewer needs the default verdict to tell a penalty from "no action"
     // on an incident tile, so the rules are not judge-only data.
-    void this.loadVerdictRules();
+    void this.rules.loadVerdictRules();
   }
 
   // ── Windows ───────────────────────────────────────────────────────
@@ -657,150 +633,5 @@ export class IncidentsComponent implements OnInit {
     setTimeout(() => (this.copiedDecisions = false), 2000);
   }
 
-  // ── Verdict rules CRUD ─────────────────────────────────────────────
-
-  newRuleVerdict = '';
-  newRuleDefaultBwp = 0;
-
-  // Config is read-only until Edit is pressed: a stray click must not be able
-  // to rewrite the rules the whole league is judged against. Inside the mode
-  // every change saves immediately, so Done only locks it back.
-  readonly rulesEditMode = signal(false);
-  readonly presetsEditMode = signal(false);
-
   readonly showSettingsModal = signal(false);
-  readonly settingsTab = signal('verdicts');
-  // Judges share this modal with admins, but the BWP audit is admin-only work.
-  // Offering them the tab would just open an empty panel.
-  readonly settingsTabs = computed(() => [
-    { key: 'verdicts', label: 'incidents.tabVerdicts' },
-    { key: 'descriptions', label: 'incidents.tabDescriptions' },
-    ...(this.auth.isAdmin() ? [{ key: 'unlinked', label: 'incidents.unlinkedPenalties' }] : []),
-  ]);
-
-  async loadVerdictRules(): Promise<void> {
-    try {
-      const rules = await firstValueFrom(this.incidentsApi.getVerdictRules());
-      this.verdictRules.set(rules);
-    } catch {
-      /* silent — rules are optional for page load */
-    }
-  }
-
-  async addVerdictRule(): Promise<void> {
-    if (!this.newRuleVerdict.trim()) return;
-    await firstValueFrom(
-      this.incidentsApi.createVerdictRule({
-        verdict: this.newRuleVerdict.trim(),
-        defaultBwp: this.newRuleDefaultBwp,
-      }),
-    );
-    this.newRuleVerdict = '';
-    this.newRuleDefaultBwp = 0;
-    await this.loadVerdictRules();
-  }
-
-  async saveRuleVerdict(rule: VerdictRule, verdict: string): Promise<void> {
-    const trimmed = verdict.trim();
-    if (!trimmed || trimmed === rule.verdict) return;
-    await firstValueFrom(this.incidentsApi.updateVerdictRule(rule.id, { verdict: trimmed }));
-    await this.loadVerdictRules();
-  }
-
-  async saveRuleBwp(rule: VerdictRule, value: string): Promise<void> {
-    const parsed = Number(value);
-    if (!Number.isInteger(parsed) || parsed < 0 || parsed === rule.defaultBwp) return;
-    await firstValueFrom(this.incidentsApi.updateVerdictRule(rule.id, { defaultBwp: parsed }));
-    await this.loadVerdictRules();
-  }
-
-  async setDefaultRule(rule: VerdictRule): Promise<void> {
-    if (rule.isDefault) return;
-    await firstValueFrom(this.incidentsApi.updateVerdictRule(rule.id, { isDefault: true }));
-    await this.loadVerdictRules();
-  }
-
-  /** Move a rule one slot; sort_order has existed all along with no way to set it. */
-  async moveRule(index: number, delta: number): Promise<void> {
-    const ids = this.verdictRules().map((r) => r.id);
-    const target = index + delta;
-    if (target < 0 || target >= ids.length) return;
-    [ids[index], ids[target]] = [ids[target], ids[index]];
-    await firstValueFrom(this.incidentsApi.reorderVerdictRules(ids));
-    await this.loadVerdictRules();
-  }
-
-  async savePresetText(preset: DescriptionPreset, text: string): Promise<void> {
-    const trimmed = text.trim();
-    if (!trimmed || trimmed === preset.text) return;
-    await firstValueFrom(this.incidentsApi.updateDescriptionPreset(preset.id, { text: trimmed }));
-    await this.loadDescriptionPresets();
-  }
-
-  async deleteVerdictRule(id: string): Promise<void> {
-    const ok = await this.confirmSvc.confirm({
-      title: this.transloco.translate('common.confirm.deleteTitle'),
-      message: this.transloco.translate('incidents.deleteVerdictRuleConfirm'),
-      confirmLabel: this.transloco.translate('common.confirm.delete'),
-      danger: true,
-    });
-    if (!ok) return;
-    await firstValueFrom(this.incidentsApi.deleteVerdictRule(id));
-    await this.loadVerdictRules();
-  }
-
-  // ── Description presets CRUD ───────────────────────────────────────
-
-  newPresetText = '';
-
-  async loadDescriptionPresets(): Promise<void> {
-    try {
-      const presets = await firstValueFrom(this.incidentsApi.getDescriptionPresets());
-      this.descriptionPresets.set(presets);
-    } catch {
-      /* silent */
-    }
-  }
-
-  async addDescriptionPreset(): Promise<void> {
-    if (!this.newPresetText.trim()) return;
-    await firstValueFrom(
-      this.incidentsApi.createDescriptionPreset({ text: this.newPresetText.trim() }),
-    );
-    this.newPresetText = '';
-    await this.loadDescriptionPresets();
-  }
-
-  async deleteDescriptionPreset(id: string): Promise<void> {
-    const ok = await this.confirmSvc.confirm({
-      title: this.transloco.translate('common.confirm.deleteTitle'),
-      message: this.transloco.translate('incidents.deleteDescriptionPresetConfirm'),
-      confirmLabel: this.transloco.translate('common.confirm.delete'),
-      danger: true,
-    });
-    if (!ok) return;
-    await firstValueFrom(this.incidentsApi.deleteDescriptionPreset(id));
-    await this.loadDescriptionPresets();
-  }
-
-  // ── BWP audit ────────────────────────────────────────────────────────
-
-  async loadBwpAudit(): Promise<void> {
-    const entries = await firstValueFrom(this.incidentsApi.getBwpAudit());
-    this.bwpAuditEntries.set(entries);
-    this.backfillResult.set(null);
-  }
-
-  async runBwpBackfill(): Promise<void> {
-    this.backfillRunning.set(true);
-    try {
-      const result = await firstValueFrom(this.incidentsApi.runBwpBackfill());
-      this.backfillResult.set(result);
-      // Refresh audit list to reflect fixes
-      const entries = await firstValueFrom(this.incidentsApi.getBwpAudit());
-      this.bwpAuditEntries.set(entries);
-    } finally {
-      this.backfillRunning.set(false);
-    }
-  }
 }

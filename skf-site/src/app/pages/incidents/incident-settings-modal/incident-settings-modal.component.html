@@ -1,0 +1,288 @@
+<app-modal [title]="'incidents.settings' | transloco" width="lg" [(open)]="open">
+  <app-tabs [tabs]="tabs()" [activeTab]="tab()" (tabChange)="tab.set($event)" />
+
+  @if (tab() === 'verdicts') {
+    <div class="settings-panel">
+      <!-- Read-only until Edit is pressed, so no stray click can rewrite the
+           configuration the whole league is judged against. -->
+      <div class="panel-bar">
+        <p class="panel-hint">
+          {{ (rulesEditMode() ? 'incidents.editingHint' : 'incidents.viewingHint') | transloco }}
+        </p>
+        <app-btn
+          [variant]="rulesEditMode() ? 'accent' : 'outline'"
+          size="sm"
+          (click)="rulesEditMode.set(!rulesEditMode())"
+        >
+          {{ (rulesEditMode() ? 'incidents.doneEditing' : 'incidents.editRules') | transloco }}
+        </app-btn>
+      </div>
+
+      <table class="settings-table" [class.settings-table--edit]="rulesEditMode()">
+        <thead>
+          <tr>
+            @if (rulesEditMode()) {
+              <th class="col-handle"></th>
+            }
+            <th class="col-name">{{ 'incidents.verdict' | transloco }}</th>
+            @if (rulesEditMode()) {
+              <th class="col-default" [title]="'incidents.setAsDefault' | transloco">
+                {{ 'incidents.default' | transloco }}
+              </th>
+            }
+            <th class="col-bwp">BWP</th>
+            @if (rulesEditMode()) {
+              <th class="col-actions"></th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (rule of rules.verdictRules(); track rule.id; let idx = $index) {
+            <tr>
+              @if (rulesEditMode()) {
+                <td class="col-handle">
+                  <button
+                    class="icon-btn"
+                    type="button"
+                    [disabled]="idx === 0"
+                    [title]="'incidents.moveUp' | transloco"
+                    (click)="rules.moveRule(idx, -1)"
+                  >
+                    &#9650;
+                  </button>
+                  <button
+                    class="icon-btn"
+                    type="button"
+                    [disabled]="idx === rules.verdictRules().length - 1"
+                    [title]="'incidents.moveDown' | transloco"
+                    (click)="rules.moveRule(idx, 1)"
+                  >
+                    &#9660;
+                  </button>
+                </td>
+                <td class="col-name">
+                  <input
+                    type="text"
+                    appInput
+                    size="sm"
+                    [ngModel]="rule.verdict"
+                    (blur)="rules.saveRuleVerdict(rule, $any($event.target).value)"
+                  />
+                </td>
+                <td class="col-default">
+                  <input
+                    class="rule-radio"
+                    type="radio"
+                    name="defaultRule"
+                    [checked]="rule.isDefault"
+                    [attr.aria-label]="'incidents.setAsDefault' | transloco"
+                    (change)="rules.setDefaultRule(rule)"
+                  />
+                </td>
+                <td class="col-bwp">
+                  <input
+                    type="text"
+                    inputmode="numeric"
+                    appInput
+                    size="sm"
+                    [ngModel]="rule.defaultBwp"
+                    (blur)="rules.saveRuleBwp(rule, $any($event.target).value)"
+                  />
+                </td>
+                <td class="col-actions">
+                  <button
+                    class="icon-btn icon-btn--danger"
+                    type="button"
+                    [disabled]="rule.isDefault"
+                    [title]="
+                      (rule.isDefault ? 'incidents.cannotDeleteDefaultVerdict' : 'incidents.delete')
+                        | transloco
+                    "
+                    (click)="rules.deleteVerdictRule(rule.id)"
+                  >
+                    &times;
+                  </button>
+                </td>
+              } @else {
+                <td class="col-name">
+                  {{ rule.verdict }}
+                  @if (rule.isDefault) {
+                    <app-badge variant="pending">{{ 'incidents.default' | transloco }}</app-badge>
+                  }
+                </td>
+                <td class="col-bwp rule-bwp">{{ rule.defaultBwp }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      @if (rulesEditMode()) {
+        <div class="panel-add">
+          <input
+            type="text"
+            appInput
+            size="sm"
+            class="add-name"
+            [(ngModel)]="newRuleVerdict"
+            [placeholder]="'incidents.verdictNamePlaceholder' | transloco"
+          />
+          <input
+            type="number"
+            min="0"
+            appInput
+            size="sm"
+            class="add-bwp"
+            [(ngModel)]="newRuleDefaultBwp"
+            placeholder="BWP"
+          />
+          <app-btn
+            variant="accent"
+            size="sm"
+            (click)="addVerdictRule()"
+            [disabled]="!newRuleVerdict.trim()"
+          >
+            {{ 'incidents.add' | transloco }}
+          </app-btn>
+        </div>
+      }
+    </div>
+  }
+
+  @if (tab() === 'descriptions') {
+    <div class="settings-panel">
+      <div class="panel-bar">
+        <p class="panel-hint">
+          {{ (presetsEditMode() ? 'incidents.editingHint' : 'incidents.viewingHint') | transloco }}
+        </p>
+        <app-btn
+          [variant]="presetsEditMode() ? 'accent' : 'outline'"
+          size="sm"
+          (click)="presetsEditMode.set(!presetsEditMode())"
+        >
+          {{ (presetsEditMode() ? 'incidents.doneEditing' : 'incidents.editRules') | transloco }}
+        </app-btn>
+      </div>
+
+      <table class="settings-table" [class.settings-table--edit]="presetsEditMode()">
+        <tbody>
+          @for (preset of rules.descriptionPresets(); track preset.id) {
+            <tr>
+              <td class="col-name">
+                @if (presetsEditMode()) {
+                  <input
+                    type="text"
+                    appInput
+                    size="sm"
+                    [ngModel]="preset.text"
+                    (blur)="rules.savePresetText(preset, $any($event.target).value)"
+                  />
+                } @else {
+                  {{ preset.text }}
+                }
+              </td>
+              @if (presetsEditMode()) {
+                <td class="col-actions">
+                  <button
+                    class="icon-btn icon-btn--danger"
+                    type="button"
+                    [title]="'incidents.delete' | transloco"
+                    (click)="rules.deleteDescriptionPreset(preset.id)"
+                  >
+                    &times;
+                  </button>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      @if (presetsEditMode()) {
+        <div class="panel-add">
+          <input
+            type="text"
+            appInput
+            size="sm"
+            class="add-name"
+            [(ngModel)]="newPresetText"
+            [placeholder]="'incidents.descriptionTextPlaceholder' | transloco"
+          />
+          <app-btn
+            variant="accent"
+            size="sm"
+            (click)="addDescriptionPreset()"
+            [disabled]="!newPresetText.trim()"
+          >
+            {{ 'incidents.add' | transloco }}
+          </app-btn>
+        </div>
+      }
+    </div>
+  }
+
+  @if (tab() === 'unlinked' && auth.isAdmin()) {
+    <div class="settings-panel">
+      <p class="panel-hint">{{ 'incidents.unlinkedPenaltiesDescription' | transloco }}</p>
+
+      @if (bwpAuditEntries() === null) {
+        <app-btn variant="outline" size="sm" (click)="loadBwpAudit()">
+          {{ 'incidents.checkForGaps' | transloco }}
+        </app-btn>
+      } @else if (bwpAuditEntries()!.length === 0) {
+        <app-empty>{{ 'incidents.noGapsFound' | transloco }}</app-empty>
+      } @else {
+        <table class="settings-table">
+          <thead>
+            <tr>
+              <th class="col-name">{{ 'incidents.driverInIncident' | transloco }}</th>
+              <th class="col-bwp">BWP</th>
+              <th>{{ 'incidents.matchedDriver' | transloco }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of bwpAuditEntries()!; track entry.incidentDriverId) {
+              <tr>
+                <td class="col-name">{{ entry.driverName }}</td>
+                <td class="col-bwp rule-bwp">{{ entry.bwpPoints }}</td>
+                <td>
+                  @if (entry.matchedDriverName) {
+                    <span class="audit-match">{{ entry.matchedDriverName }}</span>
+                  } @else {
+                    <span class="audit-no-match">{{ 'incidents.noMatch' | transloco }}</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        @if (hasMatchableAuditEntries()) {
+          <div class="panel-add">
+            <app-btn
+              variant="accent"
+              size="sm"
+              (click)="runBwpBackfill()"
+              [disabled]="backfillRunning()"
+            >
+              {{
+                backfillRunning()
+                  ? ('incidents.fixing' | transloco)
+                  : ('incidents.fixAllMatched' | transloco)
+              }}
+            </app-btn>
+            @if (backfillResult()) {
+              <span class="audit-result">
+                {{ 'incidents.fixed' | transloco }} {{ backfillResult()!.fixed }}
+                @if (backfillResult()!.unmatched.length > 0) {
+                  · {{ 'incidents.unmatched' | transloco }}:
+                  {{ backfillResult()!.unmatched.join(', ') }}
+                }
+              </span>
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+</app-modal>
