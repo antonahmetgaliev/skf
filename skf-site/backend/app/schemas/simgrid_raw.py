@@ -4,7 +4,7 @@ SimGrid's OpenAPI spec (``simgrid/openapi.yml``) types every body as a bare
 ``object``, so these models are hand-written from live responses. They list
 only the fields we read and ignore the rest; a missing or mistyped field
 raises instead of degrading into an empty page (see the 2026-09-28 switch to
-wrapped collections in ``SIMGRID_API.md``).
+wrapped collections in ``docs/simgrid.md``).
 """
 
 from __future__ import annotations

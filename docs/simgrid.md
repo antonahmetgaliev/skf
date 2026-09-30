@@ -1,5 +1,7 @@
 # SimGrid API v1 Reference
 
+Code paths below are relative to `skf-site/backend/`.
+
 **Base URL:** `https://www.thesimgrid.com/api/v1`
 **Auth:** `Authorization: Bearer {token}` (`SIMGRID_API_KEY`)
 **Official docs:** <https://gridos.thesimgrid.com/docs/> (Scalar); the raw spec
@@ -40,7 +42,7 @@ Each result carries `position_cache` (**position within the car class**),
 The old scraper (`simgrid_scraper.py`, removed in `6079edc`) is not needed any
 more; the SimGrid results pages are still Cloudflare-protected. The giveaway
 still sources laps from the game server's result files
-(`app/services/race_results_xml.py`).
+(`app/services/race_import.py`, parsers in `app/services/race_files/`).
 
 ### Rate limiting is real and low
 
