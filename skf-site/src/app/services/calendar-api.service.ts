@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { forkJoin, map, Observable, shareReplay } from 'rxjs';
+import { forkJoin, map, Observable, shareReplay, tap } from 'rxjs';
 import { API, Schemas } from '../api';
 
 export type CalendarEventType = Schemas['CalendarEventType'];
@@ -36,6 +36,7 @@ export class CalendarApiService {
   private readonly http = inject(HttpClient);
   private readonly base = API;
   private currentEvents$?: Observable<CalendarEvent[]>;
+  private communities$?: Observable<Community[]>;
 
   // ── Events ──
 
@@ -77,8 +78,15 @@ export class CalendarApiService {
 
   // ── Communities ──
 
+  /**
+   * Visible communities, the same for every visitor. Fetched once and shared by
+   * the header, home page, calendar and admin; community edits drop the cache.
+   */
   getCommunities(): Observable<Community[]> {
-    return this.http.get<Community[]>(`${this.base}/communities`);
+    this.communities$ ??= this.http
+      .get<Community[]>(`${this.base}/communities`)
+      .pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    return this.communities$;
   }
 
   /** Communities the caller manages, hidden ones included (all of them for admins). */
@@ -89,15 +97,21 @@ export class CalendarApiService {
   }
 
   createCommunity(payload: CommunityCreate): Observable<Community> {
-    return this.http.post<Community>(`${this.base}/communities`, payload);
+    return this.http
+      .post<Community>(`${this.base}/communities`, payload)
+      .pipe(tap(() => (this.communities$ = undefined)));
   }
 
   updateCommunity(id: string, payload: CommunityUpdate): Observable<Community> {
-    return this.http.patch<Community>(`${this.base}/communities/${id}`, payload);
+    return this.http
+      .patch<Community>(`${this.base}/communities/${id}`, payload)
+      .pipe(tap(() => (this.communities$ = undefined)));
   }
 
   deleteCommunity(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.base}/communities/${id}`);
+    return this.http
+      .delete<void>(`${this.base}/communities/${id}`)
+      .pipe(tap(() => (this.communities$ = undefined)));
   }
 
   /** Forward a community's request to join the calendar to the SKF Discord. */
