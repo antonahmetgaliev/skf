@@ -25,8 +25,8 @@ class Settings(BaseSettings):
     port: int = 8000
 
     # YouTube Data API
-    youtube_api_key: str
-    youtube_channel_id: str
+    youtube_api_key: str = ""
+    youtube_channel_id: str = ""
 
     # Discord OAuth2
     discord_client_id: str = ""
@@ -56,7 +56,6 @@ class Settings(BaseSettings):
     s3_addressing_style: str = "virtual"
 
     # Session
-    session_secret: str = "change-me-in-production"
     session_max_age_hours: int = 24 * 7  # 1 week
 
     # Bootstrap super-admin on first login by Discord user ID
