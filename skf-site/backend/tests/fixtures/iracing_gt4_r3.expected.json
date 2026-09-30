@@ -12,7 +12,7 @@
    "id": 18,
    "sessionNum": 2,
    "sessionName": "RACE",
-   "time": "00:00:19",
+   "time": "00:03:38",
    "drivers": [
     "Serhii Kachan",
     "Vitaliy Chizhuk",
@@ -24,7 +24,7 @@
    "id": 35,
    "sessionNum": 2,
    "sessionName": "RACE",
-   "time": "00:01:59",
+   "time": "00:05:18",
    "drivers": [
     "Arsen Petrosian",
     "Nikita Zakharov"
@@ -34,7 +34,7 @@
    "id": 150,
    "sessionNum": 2,
    "sessionName": "RACE",
-   "time": "00:26:18",
+   "time": "00:29:37",
    "drivers": [
     "Alex Alyokhin",
     "Oleksii Lissov"
@@ -44,7 +44,7 @@
    "id": 161,
    "sessionNum": 2,
    "sessionName": "RACE",
-   "time": "00:31:02",
+   "time": "00:34:21",
    "drivers": [
     "Maksym Tarasenko",
     "Vincenzo Stagnitto"

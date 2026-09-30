@@ -9,6 +9,7 @@ The rest use small hand-built MessagePack files.
 from __future__ import annotations
 
 import json
+import math
 import pathlib
 
 import msgpack
@@ -83,15 +84,31 @@ def test_round_summary_for_giveaway_and_stewards():
     assert parsed.entries[0].laps > 0
 
 
+def test_incident_time_is_the_session_time():
+    race_file = parse_bin(_fixture())
+    incident = next(i for i in race_file.incidents if i.id == 18)
+
+    # Replay clock, not the iRaceControl PDF's 00:00:19 from the green flag.
+    assert incident.time == "00:03:38"
+    assert math.floor(incident.race_time) == 19
+    assert incident.pre_green is False
+
+
+def test_green_flag_comes_from_the_race_file():
+    sessions = {s.name: s for s in parse_bin(_fixture()).sessions}
+    assert sessions["RACE"].green_flag == "00:03:18"
+    assert sessions["PRACTICE"].green_flag is None
+
+
 def test_race_time_uses_float32_subtraction():
-    # iRaceControl subtracts in float32: 1730.99988 s, printed as 00:28:50.
-    # Double precision gives exactly 1731.0 and prints 00:28:51.
-    _, pre_green, time = race_clock(2425.994, 694.994)
+    # iRaceControl subtracts in float32: 1730.99988 s (00:28:50).
+    # Double precision gives exactly 1731.0 (00:28:51).
+    race_time, pre_green = race_clock(2425.994, 694.994)
     assert pre_green is False
-    assert time == "00:28:50"
-    _, pre_green, time = race_clock(10.0, 141.5)
+    assert math.floor(race_time) == 1730
+    race_time, pre_green = race_clock(10.0, 141.5)
     assert pre_green is True
-    assert time == "-00:02:12"
+    assert race_time < 0
 
 
 def _driver(car, name, lap=3, x=4, dist=3.5, session=2, t=100.0):
@@ -154,7 +171,7 @@ def test_grouping_off_files_are_regrouped():
 
     assert parsed.auto_grouped is True
     # Only the Alpha/Bravo group is multi-car; the rest are filtered out.
-    assert [(c.drivers, c.time, c.lap) for c in parsed.contacts] == [(["Alpha", "Bravo"], "00:01:00", "3")]
+    assert [(c.drivers, c.time, c.lap) for c in parsed.contacts] == [(["Alpha", "Bravo"], "00:01:40", "3")]
     assert parsed.track_event == "Test Track - GP"
     assert parsed.external_session_id == 123
 

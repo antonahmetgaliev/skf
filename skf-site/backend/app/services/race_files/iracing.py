@@ -112,6 +112,8 @@ class Session:
     num: int
     name: str
     type: str
+    # Session time of the green flag (HH:MM:SS), None when there is none.
+    green_flag: str | None
     standings_source: str
     standings: list[Standing]
 
@@ -149,14 +151,14 @@ def _by_numeric_key(mapping) -> list[tuple[int, object]]:
     return sorted(((int(k), v) for k, v in mapping.items()), key=lambda kv: kv[0])
 
 
-def race_clock(session_time: float, race_start_delay: float | None) -> tuple[float, bool, str]:
-    """Time relative to the green flag, exactly as iRaceControl prints it.
+def race_clock(session_time: float, race_start_delay: float | None) -> tuple[float, bool]:
+    """Time relative to the green flag, as iRaceControl computes it.
 
     The app subtracts in float32 (race_start_delay is stored as float32);
     double precision gives off-by-one-second results on some files.
     """
     race_time = _f32(_f32(session_time) - _f32(race_start_delay or 0))
-    return race_time, race_time < 0, format_clock(math.floor(race_time))
+    return race_time, race_time < 0
 
 
 # ── Incidents ────────────────────────────────────────────────────────────────
@@ -196,17 +198,19 @@ def _parse_incidents(raw: dict) -> list[Incident]:
             continue  # lap times, flags, NIW etc.
 
         session = _get(raw.get("sessionData"), entry.get("session_num")) or {}
-        race_time, pre_green, time = race_clock(entry.get("time") or 0, session.get("race_start_delay"))
+        session_time = entry.get("time") or 0
+        race_time, pre_green = race_clock(session_time, session.get("race_start_delay"))
         incidents.append(
             Incident(
                 id=key,
                 session_num=entry.get("session_num"),
                 session_name=entry.get("session_name") or "",
                 session_type=entry.get("session_type") or "",
-                session_time=entry.get("time") or 0,
+                session_time=session_time,
                 race_time=race_time,
                 pre_green=pre_green,
-                time=time,
+                # Session time, as on the replay clock.
+                time=format_clock(math.floor(session_time)),
                 grouped=kind == LOG_KIND_GROUP,
                 drivers=[_to_driver(row) for row in rows],
             )
@@ -370,11 +374,14 @@ def _parse_sessions(raw: dict) -> list[Session]:
     for num, s in _by_numeric_key(raw.get("sessionData")):
         results = official.get(num)
         use_official = bool(results)
+        # Matches the log's GREEN FLAG event.
+        delay = s.get("race_start_delay") or 0
         sessions.append(
             Session(
                 num=num,
                 name=s.get("session_name") or "",
                 type=s.get("session_type") or "",
+                green_flag=format_clock(math.floor(delay)) if delay > 0 else None,
                 standings_source="iracing" if use_official else "iracecontrol",
                 standings=(
                     _standings_from_official(raw, results)
