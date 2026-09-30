@@ -224,13 +224,13 @@
   <p class="publish-summary">
     {{
       'incidents.publishPreviewSummary'
-        | transloco: { verdicts: publishVerdictCount(), points: publishBwpTotal() }
+        | transloco: { verdicts: preview().verdictCount, points: preview().bwpTotal }
     }}
   </p>
 
-  @if (publishPenalties().length > 0) {
+  @if (preview().penalties.length > 0) {
     <div class="publish-list">
-      @for (row of publishPenalties(); track row.incidentDriverId) {
+      @for (row of preview().penalties; track row.incidentDriverId) {
         <div class="publish-row" [class.publish-row--warn]="!row.linked">
           <span class="publish-who">{{ row.driverName }}</span>
           <span class="publish-session">{{ row.session }}</span>
@@ -260,9 +260,9 @@
     </div>
   }
 
-  @if (publishNoPenaltyCount() > 0) {
+  @if (preview().noPenaltyCount > 0) {
     <p class="publish-rest">
-      {{ 'incidents.publishPreviewRestCount' | transloco: { count: publishNoPenaltyCount() } }}
+      {{ 'incidents.publishPreviewRestCount' | transloco: { count: preview().noPenaltyCount } }}
     </p>
   }
   <p class="publish-warn">{{ 'incidents.publishPreviewWarning' | transloco }}</p>

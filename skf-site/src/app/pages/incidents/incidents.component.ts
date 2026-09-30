@@ -20,6 +20,14 @@ import { IncidentRulesStore } from './incident-rules.store';
 import { IncidentSettingsModalComponent } from './incident-settings-modal/incident-settings-modal.component';
 import { IncidentWindowGroupsComponent } from './incident-window-groups/incident-window-groups.component';
 import { closesIn, groupKeyFor, groupWindows } from './incident-window-groups/window-groups';
+import {
+  discordDecisionsText,
+  groupBySession,
+  PendingPenalty,
+  PublishPreview,
+  publishPreview,
+  unresolvedCount,
+} from './incident-summary';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { BwpApiService, Driver } from '../../services/bwp-api.service';
@@ -36,16 +44,6 @@ import {
   IncidentsApiService,
   BulkResolveIncident,
 } from '../../services/incidents-api.service';
-
-/** A penalty about to be written to a licence by publishing. */
-export interface PendingPenalty {
-  driverName: string;
-  session: string;
-  verdict: string;
-  bwpPoints: number;
-  linked: boolean;
-  incidentDriverId: string;
-}
 
 @Component({
   selector: 'app-incidents',
@@ -101,58 +99,20 @@ export class IncidentsComponent implements OnInit {
   readonly expandedGroups = signal<ReadonlySet<string>>(new Set());
 
   // ── Grouped incidents (Heat sessions first, then Feature) ──────────────────
-  // Within each session: auto incidents sorted by time, then filed sorted by lap → corner.
-  readonly groupedIncidents = computed(() => {
-    const incidents = this.windowDetail()?.incidents ?? [];
-
-    const groups = new Map<string, Incident[]>();
-    for (const inc of incidents) {
-      const key = inc.sessionName ?? '';
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(inc);
-    }
-
-    const sortByTime = (a: Incident, b: Incident) => {
-      if (!a.time && !b.time) return 0;
-      if (!a.time) return 1;
-      if (!b.time) return -1;
-      return a.time.localeCompare(b.time);
-    };
-
-    const sortByLapCorner = (a: Incident, b: Incident) => {
-      const lapA = parseInt(a.lap ?? '', 10);
-      const lapB = parseInt(b.lap ?? '', 10);
-      if (!isNaN(lapA) && !isNaN(lapB) && lapA !== lapB) return lapA - lapB;
-      return (a.corner ?? '').localeCompare(b.corner ?? '');
-    };
-
-    const sessionOrder = (name: string): number => {
-      const upper = name.toUpperCase();
-      const heatMatch = upper.match(/^HEAT\s*(\d+)$/);
-      if (heatMatch) return parseInt(heatMatch[1], 10);
-      if (upper.startsWith('FEATURE')) return 1000;
-      return 2000;
-    };
-
-    return [...groups.entries()]
-      .sort(([a], [b]) => sessionOrder(a) - sessionOrder(b))
-      .map(([session, items]) => ({
-        session,
-        autoItems: items.filter((i) => i.source !== 'filed').sort(sortByTime),
-        filedItems: items.filter((i) => i.source === 'filed').sort(sortByLapCorner),
-      }));
-  });
+  readonly groupedIncidents = computed(() => groupBySession(this.windowDetail()?.incidents ?? []));
 
   readonly resolvingRemaining = signal(false);
 
   // ── Publish preview ───────────────────────────────────────────────
   readonly showPublishPreview = signal(false);
   readonly publishing = signal(false);
-  readonly publishPenalties = signal<PendingPenalty[]>([]);
-  readonly publishBwpTotal = signal(0);
-  readonly publishVerdictCount = signal(0);
-  readonly publishNoPenaltyCount = signal(0);
-  readonly hasUnlinkedPenalty = computed(() => this.publishPenalties().some((p) => !p.linked));
+  readonly preview = signal<PublishPreview>({
+    penalties: [],
+    bwpTotal: 0,
+    verdictCount: 0,
+    noPenaltyCount: 0,
+  });
+  readonly hasUnlinkedPenalty = computed(() => this.preview().penalties.some((p) => !p.linked));
 
   // ── Modal visibility ──────────────────────────────────────────────
   readonly showNewWindowModal = signal(false);
@@ -460,59 +420,14 @@ export class IncidentsComponent implements OnInit {
     return w.incidents.some((inc) => !inc.isPublished);
   }
 
-  unresolvedCount(w: IncidentWindowOut): number {
-    return w.incidents.filter((inc) => inc.status !== 'resolved').length;
-  }
+  readonly unresolvedCount = unresolvedCount;
 
   resolvedCount(w: IncidentWindowOut): number {
-    return w.incidents.length - this.unresolvedCount(w);
-  }
-
-  /** Every penalty that publishing would irreversibly write to a licence. */
-  pendingPenalties(w: IncidentWindowOut): PendingPenalty[] {
-    const rows: PendingPenalty[] = [];
-    for (const inc of w.incidents) {
-      for (const drv of inc.drivers) {
-        const res = drv.resolution;
-        if (!res || !res.bwpPoints || res.bwpApplied) continue;
-        rows.push({
-          driverName: drv.driverName,
-          session: inc.sessionName ?? '',
-          verdict: res.verdict,
-          bwpPoints: res.bwpPoints,
-          linked: drv.driverId !== null,
-          incidentDriverId: drv.id,
-        });
-      }
-    }
-    return rows;
-  }
-
-  /** Verdicts going public that carry no penalty — named, not listed. */
-  pendingWithoutPenalty(w: IncidentWindowOut): number {
-    let count = 0;
-    for (const inc of w.incidents) {
-      for (const drv of inc.drivers) {
-        const res = drv.resolution;
-        if (res && !res.bwpPoints) count++;
-      }
-    }
-    return count;
-  }
-
-  totalPendingBwp(w: IncidentWindowOut): number {
-    return this.pendingPenalties(w)
-      .filter((p) => p.linked)
-      .reduce((sum, p) => sum + p.bwpPoints, 0);
+    return w.incidents.length - unresolvedCount(w);
   }
 
   openPublishPreview(w: IncidentWindowOut): void {
-    this.publishPenalties.set(this.pendingPenalties(w));
-    this.publishBwpTotal.set(this.totalPendingBwp(w));
-    this.publishVerdictCount.set(
-      w.incidents.reduce((n, i) => n + i.drivers.filter((d) => d.resolution).length, 0),
-    );
-    this.publishNoPenaltyCount.set(this.pendingWithoutPenalty(w));
+    this.preview.set(publishPreview(w));
     this.showPublishPreview.set(true);
   }
 
@@ -604,25 +519,7 @@ export class IncidentsComponent implements OnInit {
   copiedDecisions = false;
 
   openDiscordPreview(window: IncidentWindowOut): void {
-    const lines: string[] = [window.raceName];
-    for (const inc of window.incidents) {
-      for (const drv of inc.drivers) {
-        if (!drv.resolution) continue;
-        const parts: string[] = [];
-        if (inc.sessionName) parts.push(inc.sessionName);
-        if (inc.time) parts.push(inc.time);
-        if (inc.lap) parts.push(`Lap ${inc.lap}`);
-        if (inc.corner) parts.push(inc.corner);
-        parts.push(drv.driverName);
-        const desc = drv.resolution.description ?? '';
-        if (desc) parts.push(desc);
-        parts.push(drv.resolution.verdict);
-        const bwp = drv.resolution.bwpPoints ? `${drv.resolution.bwpPoints} BWP` : '-';
-        parts.push(bwp);
-        lines.push(parts.join(' | '));
-      }
-    }
-    this.discordPreviewText = lines.join('\n\n');
+    this.discordPreviewText = discordDecisionsText(window);
     this.copiedDecisions = false;
     this.showDiscordPreview.set(true);
   }
