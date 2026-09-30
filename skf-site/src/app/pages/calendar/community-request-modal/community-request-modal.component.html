@@ -1,0 +1,71 @@
+<app-modal [title]="'calendar.requestCommunityTitle' | transloco" width="md" [(open)]="open">
+  @if (sent()) {
+    <p class="request-sent">{{ 'calendar.requestCommunitySent' | transloco }}</p>
+  } @else {
+    <div class="request-form">
+      <app-form-field [label]="'calendar.requestCommunityName' | transloco" fieldId="reqName">
+        <input
+          appInput
+          id="reqName"
+          type="text"
+          maxlength="200"
+          [ngModel]="name()"
+          (ngModelChange)="name.set($event)"
+          autocomplete="off"
+        />
+      </app-form-field>
+
+      <app-form-field
+        [label]="'calendar.requestCommunityDiscord' | transloco"
+        fieldId="reqDiscordUrl"
+      >
+        <input
+          appInput
+          id="reqDiscordUrl"
+          type="url"
+          maxlength="500"
+          placeholder="https://discord.gg/..."
+          [ngModel]="discordUrl()"
+          (ngModelChange)="discordUrl.set($event)"
+          autocomplete="off"
+        />
+      </app-form-field>
+
+      <app-form-field
+        [label]="'calendar.requestCommunityDescription' | transloco"
+        fieldId="reqDescription"
+        [error]="error() ?? undefined"
+      >
+        <textarea
+          appTextarea
+          id="reqDescription"
+          rows="4"
+          maxlength="2000"
+          [ngModel]="description()"
+          (ngModelChange)="description.set($event)"
+        ></textarea>
+      </app-form-field>
+    </div>
+  }
+
+  <div modal-footer>
+    @if (sent()) {
+      <app-btn variant="primary" size="sm" (click)="open.set(false)">
+        {{ 'calendar.close' | transloco }}
+      </app-btn>
+    } @else {
+      <app-btn variant="ghost" size="sm" (click)="open.set(false)">
+        {{ 'calendar.cancel' | transloco }}
+      </app-btn>
+      <app-btn
+        variant="primary"
+        size="sm"
+        [disabled]="!canSubmit()"
+        [loading]="submitting()"
+        (click)="submit()"
+      >
+        {{ 'calendar.requestCommunitySubmit' | transloco }}
+      </app-btn>
+    }
+  </div>
+</app-modal>
