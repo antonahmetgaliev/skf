@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_admin
+from app.core.openapi import problem_responses
 from app.core.pagination import PageParams, page_params, paginate
 from app.database import get_db
 from app.models.race_result import GiveawayNameAlias
@@ -16,7 +17,7 @@ from app.repository import get_or_404
 from app.schemas.giveaway import AliasCreate, AliasOut
 from app.services import giveaway as service
 
-router = APIRouter(prefix="/driver-aliases", tags=["Giveaway"])
+router = APIRouter(prefix="/driver-aliases", tags=["Driver aliases"])
 
 _NOT_FOUND = "Alias not found"
 
@@ -45,7 +46,10 @@ async def get_driver_alias(
     "",
     response_model=AliasOut,
     status_code=status.HTTP_201_CREATED,
-    responses={200: {"model": AliasOut, "description": "An existing alias was updated"}},
+    responses={
+        200: {"model": AliasOut, "description": "An existing alias was updated"},
+        **problem_responses(400),
+    },
 )
 async def upsert_driver_alias(
     payload: AliasCreate,

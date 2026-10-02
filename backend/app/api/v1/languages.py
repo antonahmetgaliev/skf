@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_user_optional, is_admin, require_admin
+from app.core.openapi import problem_responses
 from app.database import get_db
 from app.models.user import User
 from app.schemas.translations import LanguageCreate, LanguageOut
@@ -31,8 +32,9 @@ async def list_languages(
     response_model=LanguageOut,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_admin)],
+    responses=problem_responses(409),
 )
-async def add_language(body: LanguageCreate, response: Response, db: AsyncSession = Depends(get_db)):
+async def create_language(body: LanguageCreate, response: Response, db: AsyncSession = Depends(get_db)):
     language = await service.add_language(db, body)
     response.headers["Location"] = f"/api/v1/languages/{language.code}"
     return language
@@ -66,6 +68,7 @@ async def get_translations(
     "/{code}/translations",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_admin)],
+    responses=problem_responses(413),
 )
 async def merge_translations(
     code: str,

@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_user_optional, require_admin, require_judge
+from app.core.openapi import problem_responses
 from app.core.pagination import PageParams, page_params, paginate
 from app.core.rate_limit import RateLimiter, client_ip
 from app.database import get_db
@@ -37,7 +38,7 @@ def _window_path(window_id: uuid.UUID) -> str:
 
 
 @router.get("", response_model=list[IncidentWindowListItem])
-async def list_windows(
+async def list_incident_windows(
     request: Request,
     response: Response,
     championship_id: int | None = Query(None, alias="championshipId"),
@@ -47,8 +48,13 @@ async def list_windows(
     return await paginate(db, svc.list_windows_query(championship_id), page, request, response)
 
 
-@router.post("", response_model=IncidentWindowOut, status_code=status.HTTP_201_CREATED)
-async def create_window(
+@router.post(
+    "",
+    response_model=IncidentWindowOut,
+    status_code=status.HTTP_201_CREATED,
+    responses=problem_responses(409),
+)
+async def create_incident_window(
     payload: IncidentWindowCreate,
     response: Response,
     db: AsyncSession = Depends(get_db),
@@ -60,7 +66,7 @@ async def create_window(
 
 
 @router.get("/{window_id}", response_model=IncidentWindowOut)
-async def get_window(
+async def get_incident_window(
     window_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_current_user_optional),
@@ -76,7 +82,7 @@ async def get_window(
 
 
 @router.patch("/{window_id}", response_model=IncidentWindowOut)
-async def update_window(
+async def update_incident_window(
     window_id: uuid.UUID,
     payload: IncidentWindowUpdate,
     db: AsyncSession = Depends(get_db),
@@ -86,7 +92,7 @@ async def update_window(
 
 
 @router.delete("/{window_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_window(
+async def delete_incident_window(
     window_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
@@ -94,7 +100,12 @@ async def delete_window(
     await svc.delete_window(db, window_id)
 
 
-@router.post("/{window_id}/incidents", response_model=IncidentOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{window_id}/incidents",
+    response_model=IncidentOut,
+    status_code=status.HTTP_201_CREATED,
+    responses=problem_responses(409, 429),
+)
 async def file_incident(
     window_id: uuid.UUID,
     payload: IncidentFileCreate,
@@ -108,7 +119,11 @@ async def file_incident(
     return await svc.file_incident(db, window_id, payload, current_user)
 
 
-@router.patch("/{window_id}/incidents", response_model=PublishWindowOut)
+@router.patch(
+    "/{window_id}/incidents",
+    response_model=PublishWindowOut,
+    responses=problem_responses(409),
+)
 async def publish_window_incidents(
     window_id: uuid.UUID,
     _payload: WindowIncidentsUpdate,
@@ -123,7 +138,11 @@ async def publish_window_incidents(
     )
 
 
-@router.post("/{window_id}/default-resolutions", response_model=ResolveRemainingOut)
+@router.post(
+    "/{window_id}/default-resolutions",
+    response_model=ResolveRemainingOut,
+    responses=problem_responses(409),
+)
 async def create_default_resolutions(
     window_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),

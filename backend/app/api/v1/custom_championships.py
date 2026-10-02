@@ -93,7 +93,7 @@ async def delete_custom_championship(
 
 
 @router.post("/{champ_id}/races", response_model=CustomRaceOut, status_code=status.HTTP_201_CREATED)
-async def add_race(
+async def create_custom_race(
     body: CustomRaceCreate,
     response: Response,
     champ: CustomChampionship = Depends(get_accessible_custom_championship),
@@ -105,7 +105,7 @@ async def add_race(
 
 
 @router.put("/{champ_id}/races", response_model=list[CustomRaceOut])
-async def replace_races(
+async def replace_custom_races(
     body: list[CustomRaceSync],
     champ: CustomChampionship = Depends(get_accessible_custom_championship),
     db: AsyncSession = Depends(get_db),
@@ -115,7 +115,7 @@ async def replace_races(
 
 
 @router.patch("/{champ_id}/races/{race_id}", response_model=CustomRaceOut)
-async def update_race(
+async def update_custom_race(
     race_id: uuid.UUID,
     body: CustomRaceUpdate,
     champ: CustomChampionship = Depends(get_accessible_custom_championship),
@@ -125,7 +125,7 @@ async def update_race(
 
 
 @router.delete("/{champ_id}/races/{race_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_race(
+async def delete_custom_race(
     race_id: uuid.UUID,
     champ: CustomChampionship = Depends(get_accessible_custom_championship),
     db: AsyncSession = Depends(get_db),

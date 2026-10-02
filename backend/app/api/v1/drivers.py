@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import JUDGE_ROLES, get_current_user, get_current_user_optional, require_admin, require_judge
 from app.core.errors import Forbidden, Unauthorized
+from app.core.openapi import problem_responses
 from app.core.pagination import PageParams, page_params, paginate
 from app.database import get_db
 from app.models.bwp import Driver
@@ -64,7 +65,11 @@ def _project(
 # ---------------------------------------------------------------------------
 
 
-@router.get("/drivers", response_model=list[DriverPublicOut | DriverOut])
+@router.get(
+    "/drivers",
+    response_model=list[DriverPublicOut | DriverOut],
+    responses=problem_responses(401, 403),
+)
 async def list_drivers(
     request: Request,
     response: Response,
@@ -81,7 +86,11 @@ async def list_drivers(
     return _project(drivers, include, user)
 
 
-@router.get("/drivers/{driver_id}", response_model=DriverPublicOut | DriverOut)
+@router.get(
+    "/drivers/{driver_id}",
+    response_model=DriverPublicOut | DriverOut,
+    responses=problem_responses(401, 403),
+)
 async def get_driver(
     driver_id: uuid.UUID,
     include: Include | None = include_query,
@@ -94,7 +103,12 @@ async def get_driver(
     return _project([driver], include, user)[0]
 
 
-@router.post("/drivers", response_model=DriverOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/drivers",
+    response_model=DriverOut,
+    status_code=status.HTTP_201_CREATED,
+    responses=problem_responses(409),
+)
 async def create_driver(
     body: DriverCreate,
     response: Response,
@@ -106,7 +120,7 @@ async def create_driver(
     return driver
 
 
-@router.patch("/drivers/{driver_id}", response_model=DriverOut)
+@router.patch("/drivers/{driver_id}", response_model=DriverOut, responses=problem_responses(409))
 async def update_driver(
     driver_id: uuid.UUID,
     body: DriverUpdate,
@@ -135,7 +149,7 @@ async def delete_driver(
     response_model=BwpPointOut,
     status_code=status.HTTP_201_CREATED,
 )
-async def add_bwp_point(
+async def create_bwp_point(
     driver_id: uuid.UUID,
     body: BwpPointCreate,
     response: Response,
@@ -192,7 +206,7 @@ async def create_bwp_reset(
     response_model=PenaltyClearanceOut,
     responses={201: {"description": "Clearance created", "model": PenaltyClearanceOut}},
 )
-async def put_clearance(
+async def set_clearance(
     driver_id: uuid.UUID,
     rule_id: uuid.UUID,
     response: Response,
@@ -225,7 +239,7 @@ async def delete_clearance(
 # ---------------------------------------------------------------------------
 
 
-@router.get("/me/driver", response_model=DriverOut)
+@router.get("/me/driver", response_model=DriverOut, tags=["Me"])
 async def get_my_driver(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -234,7 +248,7 @@ async def get_my_driver(
     return await service.get_driver_for_user(db, user.id)
 
 
-@router.patch("/me/driver", response_model=DriverOut)
+@router.patch("/me/driver", response_model=DriverOut, tags=["Me"])
 async def update_my_driver(
     body: MyDriverPhotoUpdate,
     user: User = Depends(get_current_user),

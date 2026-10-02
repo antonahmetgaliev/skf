@@ -32,6 +32,7 @@ CI (`.github/workflows/ci.yml`) runs all of the above. It also runs `alembic upg
 ## Backend conventions
 - Routers in `app/api/v1/` are auto-discovered and stay thin: parse input, call a service, return a schema. Business logic and commits live in `app/services/`.
 - Errors: raise `AppError` subclasses from `app/core/errors.py` (rendered as `application/problem+json`), never `HTTPException`. `repository.get_or_404` for lookups.
+- OpenAPI: `app/core/openapi.py` derives what it can from the routes (401/403 from the auth dependency, 404 from path params, 422, paging and `Location` headers). A route declares only its own extra errors: `responses=problem_responses(409)`. The handler's name becomes its `operationId`, so it must be unique API-wide and say what it does (`list_incident_windows`, not `list_windows`). `tests/test_openapi_contract.py` enforces the rules.
 - Schemas extend the camelCase base in `app/schemas/base.py`; the API speaks camelCase, Python stays snake_case.
 - Auth: `session_id` cookie from Discord login, sessions in the DB. Use `get_current_user` / `require_role(...)` from `app/auth.py`. Roles: `driver`, `moderator`, `racing_judge`, `community_manager`, `admin`, `super_admin` (`app/models/user.py`).
 - Schema changes need a new Alembic revision in `alembic/versions/`; never edit an applied one. CI fails if models and migrations drift.

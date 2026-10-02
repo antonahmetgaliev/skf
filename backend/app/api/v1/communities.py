@@ -15,6 +15,7 @@ from app.auth import (
     require_admin_or_community_manager,
 )
 from app.core.errors import Unauthorized
+from app.core.openapi import problem_responses
 from app.database import get_db
 from app.models.user import User
 from app.schemas.calendar import (
@@ -28,7 +29,7 @@ from app.services import communities as service
 router = APIRouter(tags=["Communities"])
 
 
-@router.get("/communities", response_model=list[CommunityOut])
+@router.get("/communities", response_model=list[CommunityOut], responses=problem_responses(401, 403))
 async def list_communities(
     scope: Literal["managed"] | None = Query(None),
     user: User | None = Depends(get_current_user_optional),
@@ -68,7 +69,11 @@ async def update_community(
     return await service.update(db, user, community_id, body)
 
 
-@router.delete("/communities/{community_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/communities/{community_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=problem_responses(400),
+)
 async def delete_community(
     community_id: uuid.UUID,
     _: User = Depends(require_admin),
@@ -77,7 +82,11 @@ async def delete_community(
     await service.delete(db, community_id)
 
 
-@router.post("/community-requests", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(
+    "/community-requests",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=problem_responses(429, 502, 503),
+)
 async def create_community_request(
     body: CommunityRequestCreate,
     user: User = Depends(get_current_user),

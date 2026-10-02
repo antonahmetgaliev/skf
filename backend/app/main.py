@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import seed
 from app.api import v1
 from app.config import settings
+from app.core import openapi
 from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
 from app.middleware import RequestIdMiddleware, StaleHeaderMiddleware
@@ -33,7 +34,13 @@ async def lifespan(_: FastAPI):
     await youtube_service.aclose()
 
 
-app = FastAPI(title="SKF Racing Hub API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(
+    title="SKF Racing Hub API",
+    version="1.0.0",
+    lifespan=lifespan,
+    generate_unique_id_function=openapi.operation_id,
+)
+openapi.install(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -51,6 +58,6 @@ app.include_router(v1.router)
 app.include_router(v1.legacy_router)
 
 
-@app.get("/healthz")
+@app.get("/healthz", include_in_schema=False)
 async def healthz():
     return {"status": "ok"}

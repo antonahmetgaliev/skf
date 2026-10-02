@@ -40,18 +40,18 @@ async def update_user(
 
 
 @router.delete("/{user_id}/sessions", status_code=status.HTTP_204_NO_CONTENT)
-async def revoke_sessions(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def revoke_user_sessions(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Delete all sessions of a user (force logout)."""
     await users_service.revoke_sessions(db, user_id)
 
 
 @router.get("/{user_id}/managed-communities", response_model=list[uuid.UUID])
-async def get_managed_communities(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def get_user_managed_communities(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     return await users_service.get_managed_communities(db, user_id)
 
 
 @router.put("/{user_id}/managed-communities", response_model=list[uuid.UUID])
-async def set_managed_communities(
+async def set_user_managed_communities(
     user_id: uuid.UUID,
     body: ManagedCommunitiesUpdate,
     db: AsyncSession = Depends(get_db),

@@ -12,10 +12,10 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * List Active Championships
+     * List active championships
      * @description SimGrid ids of the active championships.
      */
-    get: operations['list_active_championships_api_v1_active_championships_get'];
+    get: operations['listActiveChampionships'];
     put?: never;
     post?: never;
     delete?: never;
@@ -33,13 +33,18 @@ export interface paths {
     };
     get?: never;
     /**
-     * Activate Championship
+     * Activate championship
      * @description Idempotent: 201 when the championship became active, 200 if it already was.
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    put: operations['activate_championship_api_v1_active_championships__simgrid_id__put'];
+    put: operations['activateChampionship'];
     post?: never;
-    /** Deactivate Championship */
-    delete: operations['deactivate_championship_api_v1_active_championships__simgrid_id__delete'];
+    /**
+     * Deactivate championship
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    delete: operations['deactivateChampionship'];
     options?: never;
     head?: never;
     patch?: never;
@@ -53,10 +58,10 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Discord Authorization Url
+     * Discord authorization url
      * @description Return the Discord OAuth2 authorization URL (with CSRF state).
      */
-    get: operations['discord_authorization_url_api_v1_auth_discord_authorization_url_get'];
+    get: operations['discordAuthorizationUrl'];
     put?: never;
     post?: never;
     delete?: never;
@@ -79,7 +84,7 @@ export interface paths {
      * Logout
      * @description End the current session and clear the cookie.
      */
-    delete: operations['logout_api_v1_auth_session_delete'];
+    delete: operations['logout'];
     options?: never;
     head?: never;
     patch?: never;
@@ -95,8 +100,11 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    /** Clear All Caches */
-    delete: operations['clear_all_caches_api_v1_caches_delete'];
+    /**
+     * Clear all caches
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    delete: operations['clearAllCaches'];
     options?: never;
     head?: never;
     patch?: never;
@@ -112,8 +120,11 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    /** Clear Cache */
-    delete: operations['clear_cache_api_v1_caches__domain__delete'];
+    /**
+     * Clear cache
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    delete: operations['clearCache'];
     options?: never;
     head?: never;
     patch?: never;
@@ -127,10 +138,10 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * List Calendar Events
+     * List calendar events
      * @description SimGrid + custom championship events for a month, or the whole year.
      */
-    get: operations['list_calendar_events_api_v1_calendar_events_get'];
+    get: operations['listCalendarEvents'];
     put?: never;
     post?: never;
     delete?: never;
@@ -147,10 +158,10 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * List Championships
+     * List championships
      * @description Active championships; admins see all, inactive ones marked completed.
      */
-    get: operations['list_championships_api_v1_championships_get'];
+    get: operations['listChampionships'];
     put?: never;
     post?: never;
     delete?: never;
@@ -166,8 +177,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Get Championship */
-    get: operations['get_championship_api_v1_championships__championship_id__get'];
+    /** Get championship */
+    get: operations['getChampionship'];
     put?: never;
     post?: never;
     delete?: never;
@@ -183,8 +194,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Get Standings */
-    get: operations['get_standings_api_v1_championships__championship_id__standings_get'];
+    /** Get championship standings */
+    get: operations['getChampionshipStandings'];
     put?: never;
     post?: never;
     delete?: never;
@@ -201,10 +212,10 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Get Races
+     * List championship races
      * @description All races of the championship, including future ones.
      */
-    get: operations['get_races_api_v1_championships__championship_id__races_get'];
+    get: operations['listChampionshipRaces'];
     put?: never;
     post?: never;
     delete?: never;
@@ -221,10 +232,10 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Get Race Results
+     * Get race results
      * @description One race's classification (race or qualifying), ordered by class.
      */
-    get: operations['get_race_results_api_v1_championships__championship_id__races__race_id__results_get'];
+    get: operations['getRaceResults'];
     put?: never;
     post?: never;
     delete?: never;
@@ -241,10 +252,10 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Get Incident Windows
+     * List championship incident windows
      * @description The championship's incident windows, one per round, keyed by race.
      */
-    get: operations['get_incident_windows_api_v1_championships__championship_id__incident_windows_get'];
+    get: operations['listChampionshipIncidentWindows'];
     put?: never;
     post?: never;
     delete?: never;
@@ -261,10 +272,12 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Get Rounds
+     * Get championship rounds
      * @description The championship's rounds with their result upload and incident window.
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    get: operations['get_rounds_api_v1_championships__championship_id__rounds_get'];
+    get: operations['getChampionshipRounds'];
     put?: never;
     post?: never;
     delete?: never;
@@ -281,10 +294,12 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Get Giveaway Eligibility
+     * Get giveaway eligibility
      * @description Drivers who cleared the distance bar in enough rounds, grouped by class.
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    get: operations['get_giveaway_eligibility_api_v1_championships__championship_id__giveaway_eligibility_get'];
+    get: operations['getGiveawayEligibility'];
     put?: never;
     post?: never;
     delete?: never;
@@ -301,10 +316,12 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Get Unmatched Driver Names
+     * Get unmatched driver names
      * @description Imported names with no driver record, plus ranked spelling hints.
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    get: operations['get_unmatched_driver_names_api_v1_championships__championship_id__unmatched_driver_names_get'];
+    get: operations['getUnmatchedDriverNames'];
     put?: never;
     post?: never;
     delete?: never;
@@ -321,16 +338,19 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * List Communities
+     * List communities
      * @description Visible communities (SKF first).
      *
      *     ``?scope=managed`` lists the communities the caller manages, hidden ones
      *     included: all of them for admins, assigned ones for community managers.
      */
-    get: operations['list_communities_api_v1_communities_get'];
+    get: operations['listCommunities'];
     put?: never;
-    /** Create Community */
-    post: operations['create_community_api_v1_communities_post'];
+    /**
+     * Create community
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    post: operations['createCommunity'];
     delete?: never;
     options?: never;
     head?: never;
@@ -347,12 +367,18 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    /** Delete Community */
-    delete: operations['delete_community_api_v1_communities__community_id__delete'];
+    /**
+     * Delete community
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    delete: operations['deleteCommunity'];
     options?: never;
     head?: never;
-    /** Update Community */
-    patch: operations['update_community_api_v1_communities__community_id__patch'];
+    /**
+     * Update community
+     * @description Requires role: `admin`, `super_admin`, `community_manager`.
+     */
+    patch: operations['updateCommunity'];
     trace?: never;
   };
   '/api/v1/community-requests': {
@@ -365,10 +391,10 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Create Community Request
+     * Create community request
      * @description Forward a logged-in user's community request to the SKF Discord.
      */
-    post: operations['create_community_request_api_v1_community_requests_post'];
+    post: operations['createCommunityRequest'];
     delete?: never;
     options?: never;
     head?: never;
@@ -382,11 +408,17 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List Custom Championships */
-    get: operations['list_custom_championships_api_v1_custom_championships_get'];
+    /**
+     * List custom championships
+     * @description Requires role: `admin`, `super_admin`, `community_manager`.
+     */
+    get: operations['listCustomChampionships'];
     put?: never;
-    /** Create Custom Championship */
-    post: operations['create_custom_championship_api_v1_custom_championships_post'];
+    /**
+     * Create custom championship
+     * @description Requires role: `admin`, `super_admin`, `community_manager`.
+     */
+    post: operations['createCustomChampionship'];
     delete?: never;
     options?: never;
     head?: never;
@@ -400,16 +432,25 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Get Custom Championship */
-    get: operations['get_custom_championship_api_v1_custom_championships__champ_id__get'];
+    /**
+     * Get custom championship
+     * @description Requires role: `admin`, `super_admin`, `community_manager`.
+     */
+    get: operations['getCustomChampionship'];
     put?: never;
     post?: never;
-    /** Delete Custom Championship */
-    delete: operations['delete_custom_championship_api_v1_custom_championships__champ_id__delete'];
+    /**
+     * Delete custom championship
+     * @description Requires role: `admin`, `super_admin`, `community_manager`.
+     */
+    delete: operations['deleteCustomChampionship'];
     options?: never;
     head?: never;
-    /** Update Custom Championship */
-    patch: operations['update_custom_championship_api_v1_custom_championships__champ_id__patch'];
+    /**
+     * Update custom championship
+     * @description Requires role: `admin`, `super_admin`, `community_manager`.
+     */
+    patch: operations['updateCustomChampionship'];
     trace?: never;
   };
   '/api/v1/custom-championships/{champ_id}/races': {
@@ -421,12 +462,17 @@ export interface paths {
     };
     get?: never;
     /**
-     * Replace Races
+     * Replace custom races
      * @description Replace the full race list in one request.
+     *
+     *     Requires role: `admin`, `super_admin`, `community_manager`.
      */
-    put: operations['replace_races_api_v1_custom_championships__champ_id__races_put'];
-    /** Add Race */
-    post: operations['add_race_api_v1_custom_championships__champ_id__races_post'];
+    put: operations['replaceCustomRaces'];
+    /**
+     * Create custom race
+     * @description Requires role: `admin`, `super_admin`, `community_manager`.
+     */
+    post: operations['createCustomRace'];
     delete?: never;
     options?: never;
     head?: never;
@@ -443,12 +489,18 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    /** Delete Race */
-    delete: operations['delete_race_api_v1_custom_championships__champ_id__races__race_id__delete'];
+    /**
+     * Delete custom race
+     * @description Requires role: `admin`, `super_admin`, `community_manager`.
+     */
+    delete: operations['deleteCustomRace'];
     options?: never;
     head?: never;
-    /** Update Race */
-    patch: operations['update_race_api_v1_custom_championships__champ_id__races__race_id__patch'];
+    /**
+     * Update custom race
+     * @description Requires role: `admin`, `super_admin`, `community_manager`.
+     */
+    patch: operations['updateCustomRace'];
     trace?: never;
   };
   '/api/v1/driver-aliases': {
@@ -458,14 +510,19 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List Driver Aliases */
-    get: operations['list_driver_aliases_api_v1_driver_aliases_get'];
+    /**
+     * List driver aliases
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    get: operations['listDriverAliases'];
     put?: never;
     /**
-     * Upsert Driver Alias
+     * Upsert driver alias
      * @description Upsert keyed by the normalized alias: 201 when created, 200 when updated.
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    post: operations['upsert_driver_alias_api_v1_driver_aliases_post'];
+    post: operations['upsertDriverAlias'];
     delete?: never;
     options?: never;
     head?: never;
@@ -479,12 +536,18 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Get Driver Alias */
-    get: operations['get_driver_alias_api_v1_driver_aliases__alias_id__get'];
+    /**
+     * Get driver alias
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    get: operations['getDriverAlias'];
     put?: never;
     post?: never;
-    /** Delete Driver Alias */
-    delete: operations['delete_driver_alias_api_v1_driver_aliases__alias_id__delete'];
+    /**
+     * Delete driver alias
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    delete: operations['deleteDriverAlias'];
     options?: never;
     head?: never;
     patch?: never;
@@ -498,13 +561,16 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * List Drivers
+     * List drivers
      * @description Driver directory, ordered by name. ``?simgridId=`` finds a SimGrid driver.
      */
-    get: operations['list_drivers_api_v1_drivers_get'];
+    get: operations['listDrivers'];
     put?: never;
-    /** Create Driver */
-    post: operations['create_driver_api_v1_drivers_post'];
+    /**
+     * Create driver
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    post: operations['createDriver'];
     delete?: never;
     options?: never;
     head?: never;
@@ -518,16 +584,22 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Get Driver */
-    get: operations['get_driver_api_v1_drivers__driver_id__get'];
+    /** Get driver */
+    get: operations['getDriver'];
     put?: never;
     post?: never;
-    /** Delete Driver */
-    delete: operations['delete_driver_api_v1_drivers__driver_id__delete'];
+    /**
+     * Delete driver
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    delete: operations['deleteDriver'];
     options?: never;
     head?: never;
-    /** Update Driver */
-    patch: operations['update_driver_api_v1_drivers__driver_id__patch'];
+    /**
+     * Update driver
+     * @description Requires role: `racing_judge`, `admin`, `super_admin`.
+     */
+    patch: operations['updateDriver'];
     trace?: never;
   };
   '/api/v1/drivers/{driver_id}/bwp-points': {
@@ -539,8 +611,11 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Add Bwp Point */
-    post: operations['add_bwp_point_api_v1_drivers__driver_id__bwp_points_post'];
+    /**
+     * Create bwp point
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    post: operations['createBwpPoint'];
     delete?: never;
     options?: never;
     head?: never;
@@ -557,15 +632,20 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    /** Delete Bwp Point */
-    delete: operations['delete_bwp_point_api_v1_bwp_points__point_id__delete'];
+    /**
+     * Delete bwp point
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    delete: operations['deleteBwpPoint'];
     options?: never;
     head?: never;
     /**
-     * Update Bwp Point
+     * Update bwp point
      * @description Expire a point today (``{"expired": true}``); already expired points are unchanged.
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    patch: operations['update_bwp_point_api_v1_bwp_points__point_id__patch'];
+    patch: operations['updateBwpPoint'];
     trace?: never;
   };
   '/api/v1/drivers/{driver_id}/bwp-resets': {
@@ -578,10 +658,12 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Create Bwp Reset
+     * Create bwp reset
      * @description Expire every active point of the driver and remove their clearances.
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    post: operations['create_bwp_reset_api_v1_drivers__driver_id__bwp_resets_post'];
+    post: operations['createBwpReset'];
     delete?: never;
     options?: never;
     head?: never;
@@ -597,13 +679,18 @@ export interface paths {
     };
     get?: never;
     /**
-     * Put Clearance
+     * Set clearance
      * @description Mark a penalty rule as cleared: 201 when created, 200 when it already was.
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    put: operations['put_clearance_api_v1_drivers__driver_id__clearances__rule_id__put'];
+    put: operations['setClearance'];
     post?: never;
-    /** Delete Clearance */
-    delete: operations['delete_clearance_api_v1_drivers__driver_id__clearances__rule_id__delete'];
+    /**
+     * Delete clearance
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    delete: operations['deleteClearance'];
     options?: never;
     head?: never;
     patch?: never;
@@ -617,20 +704,20 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Get My Driver
+     * Get my driver
      * @description The driver linked to the signed-in user (404 when none is linked).
      */
-    get: operations['get_my_driver_api_v1_me_driver_get'];
+    get: operations['getMyDriver'];
     put?: never;
     post?: never;
     delete?: never;
     options?: never;
     head?: never;
     /**
-     * Update My Driver
+     * Update my driver
      * @description Set (``https://`` only) or clear (``null``) the profile photo.
      */
-    patch: operations['update_my_driver_api_v1_me_driver_patch'];
+    patch: operations['updateMyDriver'];
     trace?: never;
   };
   '/api/v1/incident-windows': {
@@ -640,11 +727,14 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List Windows */
-    get: operations['list_windows_api_v1_incident_windows_get'];
+    /** List incident windows */
+    get: operations['listIncidentWindows'];
     put?: never;
-    /** Create Window */
-    post: operations['create_window_api_v1_incident_windows_post'];
+    /**
+     * Create incident window
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    post: operations['createIncidentWindow'];
     delete?: never;
     options?: never;
     head?: never;
@@ -658,16 +748,22 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Get Window */
-    get: operations['get_window_api_v1_incident_windows__window_id__get'];
+    /** Get incident window */
+    get: operations['getIncidentWindow'];
     put?: never;
     post?: never;
-    /** Delete Window */
-    delete: operations['delete_window_api_v1_incident_windows__window_id__delete'];
+    /**
+     * Delete incident window
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    delete: operations['deleteIncidentWindow'];
     options?: never;
     head?: never;
-    /** Update Window */
-    patch: operations['update_window_api_v1_incident_windows__window_id__patch'];
+    /**
+     * Update incident window
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    patch: operations['updateIncidentWindow'];
     trace?: never;
   };
   '/api/v1/incident-windows/{window_id}/incidents': {
@@ -680,18 +776,20 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * File Incident
+     * File incident
      * @description File an incident. Open to anonymous reporters, within limits.
      */
-    post: operations['file_incident_api_v1_incident_windows__window_id__incidents_post'];
+    post: operations['fileIncident'];
     delete?: never;
     options?: never;
     head?: never;
     /**
-     * Publish Window Incidents
+     * Publish window incidents
      * @description Publish every incident in the window (``{"isPublished": true}``).
+     *
+     *     Requires role: `racing_judge`, `admin`, `super_admin`.
      */
-    patch: operations['publish_window_incidents_api_v1_incident_windows__window_id__incidents_patch'];
+    patch: operations['publishWindowIncidents'];
     trace?: never;
   };
   '/api/v1/incident-windows/{window_id}/default-resolutions': {
@@ -704,10 +802,12 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Create Default Resolutions
+     * Create default resolutions
      * @description Apply the default verdict to every driver in the window still awaiting one.
+     *
+     *     Requires role: `racing_judge`, `admin`, `super_admin`.
      */
-    post: operations['create_default_resolutions_api_v1_incident_windows__window_id__default_resolutions_post'];
+    post: operations['createDefaultResolutions'];
     delete?: never;
     options?: never;
     head?: never;
@@ -724,10 +824,12 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Copy Incident
+     * Copy incident
      * @description Copy an incident with its drivers; the copy is unresolved and unpublished.
+     *
+     *     Requires role: `racing_judge`, `admin`, `super_admin`.
      */
-    post: operations['copy_incident_api_v1_incidents__incident_id__copies_post'];
+    post: operations['copyIncident'];
     delete?: never;
     options?: never;
     head?: never;
@@ -743,8 +845,11 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Add Incident Driver */
-    post: operations['add_incident_driver_api_v1_incidents__incident_id__drivers_post'];
+    /**
+     * Add incident driver
+     * @description Requires role: `racing_judge`, `admin`, `super_admin`.
+     */
+    post: operations['addIncidentDriver'];
     delete?: never;
     options?: never;
     head?: never;
@@ -760,10 +865,12 @@ export interface paths {
     };
     get?: never;
     /**
-     * Resolve Incident
+     * Resolve incident
      * @description Set verdicts for several drivers of the incident; omitted verdicts get the default.
+     *
+     *     Requires role: `racing_judge`, `admin`, `super_admin`.
      */
-    put: operations['resolve_incident_api_v1_incidents__incident_id__resolution_put'];
+    put: operations['resolveIncident'];
     post?: never;
     delete?: never;
     options?: never;
@@ -781,15 +888,20 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    /** Remove Incident Driver */
-    delete: operations['remove_incident_driver_api_v1_incident_drivers__incident_driver_id__delete'];
+    /**
+     * Remove incident driver
+     * @description Requires role: `racing_judge`, `admin`, `super_admin`.
+     */
+    delete: operations['removeIncidentDriver'];
     options?: never;
     head?: never;
     /**
-     * Update Incident Driver
+     * Update incident driver
      * @description Link the free-text incident driver to a driver record.
+     *
+     *     Requires role: `racing_judge`, `admin`, `super_admin`.
      */
-    patch: operations['update_incident_driver_api_v1_incident_drivers__incident_driver_id__patch'];
+    patch: operations['updateIncidentDriver'];
     trace?: never;
   };
   '/api/v1/incident-drivers/{incident_driver_id}/resolution': {
@@ -800,8 +912,11 @@ export interface paths {
       cookie?: never;
     };
     get?: never;
-    /** Resolve Incident Driver */
-    put: operations['resolve_incident_driver_api_v1_incident_drivers__incident_driver_id__resolution_put'];
+    /**
+     * Resolve incident driver
+     * @description Requires role: `racing_judge`, `admin`, `super_admin`.
+     */
+    put: operations['resolveIncidentDriver'];
     post?: never;
     delete?: never;
     options?: never;
@@ -817,10 +932,12 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * List Bwp Audit Entries
+     * List bwp audit entries
      * @description Penalties marked applied whose driver was never linked, so no point exists.
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    get: operations['list_bwp_audit_entries_api_v1_bwp_audit_entries_get'];
+    get: operations['listBwpAuditEntries'];
     put?: never;
     post?: never;
     delete?: never;
@@ -839,10 +956,12 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Create Bwp Backfill
+     * Create bwp backfill
      * @description Link audit entries whose name now matches a driver and issue their points.
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    post: operations['create_bwp_backfill_api_v1_bwp_backfills_post'];
+    post: operations['createBwpBackfill'];
     delete?: never;
     options?: never;
     head?: never;
@@ -857,13 +976,16 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * List Languages
+     * List languages
      * @description Active languages; admins also see inactive ones.
      */
-    get: operations['list_languages_api_v1_languages_get'];
+    get: operations['listLanguages'];
     put?: never;
-    /** Add Language */
-    post: operations['add_language_api_v1_languages_post'];
+    /**
+     * Create language
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    post: operations['createLanguage'];
     delete?: never;
     options?: never;
     head?: never;
@@ -881,10 +1003,12 @@ export interface paths {
     put?: never;
     post?: never;
     /**
-     * Delete Language
+     * Delete language
      * @description Delete a language together with its translations and regulation texts.
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    delete: operations['delete_language_api_v1_languages__code__delete'];
+    delete: operations['deleteLanguage'];
     options?: never;
     head?: never;
     patch?: never;
@@ -898,20 +1022,22 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Get Translations
+     * Get translations
      * @description The flat bundle Transloco loads; ``?download=true`` serves it as a file.
      */
-    get: operations['get_translations_api_v1_languages__code__translations_get'];
+    get: operations['getTranslations'];
     put?: never;
     post?: never;
     delete?: never;
     options?: never;
     head?: never;
     /**
-     * Merge Translations
+     * Merge translations
      * @description Merge a flat ``{key: value}`` map into the language (upsert).
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    patch: operations['merge_translations_api_v1_languages__code__translations_patch'];
+    patch: operations['mergeTranslations'];
     trace?: never;
   };
   '/api/v1/languages/{code}/translations/{key}': {
@@ -924,8 +1050,11 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    /** Delete Translation */
-    delete: operations['delete_translation_api_v1_languages__code__translations__key__delete'];
+    /**
+     * Delete translation
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    delete: operations['deleteTranslation'];
     options?: never;
     head?: never;
     patch?: never;
@@ -939,10 +1068,10 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Get Me
+     * Get me
      * @description The currently authenticated user; 401 when not logged in.
      */
-    get: operations['get_me_api_v1_me_get'];
+    get: operations['getMe'];
     put?: never;
     post?: never;
     delete?: never;
@@ -961,12 +1090,12 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Sync Discord Nickname
+     * Sync discord nickname
      * @description Re-fetch the user's Discord server nickname with the bot token.
      *
      *     Called silently by the profile page; a failed fetch keeps the stored value.
      */
-    post: operations['sync_discord_nickname_api_v1_me_discord_syncs_post'];
+    post: operations['syncDiscordNickname'];
     delete?: never;
     options?: never;
     head?: never;
@@ -980,11 +1109,14 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List Penalty Rules */
-    get: operations['list_penalty_rules_api_v1_penalty_rules_get'];
+    /** List penalty rules */
+    get: operations['listPenaltyRules'];
     put?: never;
-    /** Create Penalty Rule */
-    post: operations['create_penalty_rule_api_v1_penalty_rules_post'];
+    /**
+     * Create penalty rule
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    post: operations['createPenaltyRule'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1001,12 +1133,18 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    /** Delete Penalty Rule */
-    delete: operations['delete_penalty_rule_api_v1_penalty_rules__rule_id__delete'];
+    /**
+     * Delete penalty rule
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    delete: operations['deletePenaltyRule'];
     options?: never;
     head?: never;
-    /** Update Penalty Rule */
-    patch: operations['update_penalty_rule_api_v1_penalty_rules__rule_id__patch'];
+    /**
+     * Update penalty rule
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    patch: operations['updatePenaltyRule'];
     trace?: never;
   };
   '/api/v1/race-result-imports': {
@@ -1016,14 +1154,19 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List Imports */
-    get: operations['list_imports_api_v1_race_result_imports_get'];
+    /**
+     * List race result imports
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    get: operations['listRaceResultImports'];
     put?: never;
     /**
-     * Create Import
+     * Create race result import
      * @description Import one round's result file, replacing any earlier upload of it.
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    post: operations['create_import_api_v1_race_result_imports_post'];
+    post: operations['createRaceResultImport'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1037,15 +1180,20 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Get Import */
-    get: operations['get_import_api_v1_race_result_imports__import_id__get'];
+    /**
+     * Get race result import
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    get: operations['getRaceResultImport'];
     put?: never;
     post?: never;
     /**
-     * Delete Import
+     * Delete race result import
      * @description Remove the round's results. Its incidents stay with the window.
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    delete: operations['delete_import_api_v1_race_result_imports__import_id__delete'];
+    delete: operations['deleteRaceResultImport'];
     options?: never;
     head?: never;
     patch?: never;
@@ -1058,8 +1206,11 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Download Import File */
-    get: operations['download_import_file_api_v1_race_result_imports__import_id__file_get'];
+    /**
+     * Download race result import file
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    get: operations['downloadRaceResultImportFile'];
     put?: never;
     post?: never;
     delete?: never;
@@ -1078,13 +1229,15 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Create Parse Run
+     * Create parse run
      * @description Re-run the parser on the stored original, e.g. after a parser fix.
      *
      *     A parse run replaces the import with a new one (new id), so this answers
      *     201 with the replacement's ``Location``.
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    post: operations['create_parse_run_api_v1_race_result_imports__import_id__parse_runs_post'];
+    post: operations['createParseRun'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1099,10 +1252,10 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * List Regulations
+     * List regulations
      * @description Visible pages with their title in *lang* (falling back to any language).
      */
-    get: operations['list_regulations_api_v1_regulations_get'];
+    get: operations['listRegulations'];
     put?: never;
     post?: never;
     delete?: never;
@@ -1118,8 +1271,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Get Regulation */
-    get: operations['get_regulation_api_v1_regulations__slug__get'];
+    /** Get regulation */
+    get: operations['getRegulation'];
     put?: never;
     post?: never;
     delete?: never;
@@ -1135,11 +1288,17 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List Regulation Pages */
-    get: operations['list_regulation_pages_api_v1_regulation_pages_get'];
+    /**
+     * List regulation pages
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    get: operations['listRegulationPages'];
     put?: never;
-    /** Create Regulation Page */
-    post: operations['create_regulation_page_api_v1_regulation_pages_post'];
+    /**
+     * Create regulation page
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    post: operations['createRegulationPage'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1153,16 +1312,25 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Get Regulation Page */
-    get: operations['get_regulation_page_api_v1_regulation_pages__page_id__get'];
+    /**
+     * Get regulation page
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    get: operations['getRegulationPage'];
     put?: never;
     post?: never;
-    /** Delete Regulation Page */
-    delete: operations['delete_regulation_page_api_v1_regulation_pages__page_id__delete'];
+    /**
+     * Delete regulation page
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    delete: operations['deleteRegulationPage'];
     options?: never;
     head?: never;
-    /** Update Regulation Page */
-    patch: operations['update_regulation_page_api_v1_regulation_pages__page_id__patch'];
+    /**
+     * Update regulation page
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    patch: operations['updateRegulationPage'];
     trace?: never;
   };
   '/api/v1/simulators': {
@@ -1172,8 +1340,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List Simulators */
-    get: operations['list_simulators_api_v1_simulators_get'];
+    /** List simulators */
+    get: operations['listSimulators'];
     put?: never;
     post?: never;
     delete?: never;
@@ -1189,8 +1357,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List Car Classes */
-    get: operations['list_car_classes_api_v1_car_classes_get'];
+    /** List car classes */
+    get: operations['listCarClasses'];
     put?: never;
     post?: never;
     delete?: never;
@@ -1206,8 +1374,11 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List Users */
-    get: operations['list_users_api_v1_users_get'];
+    /**
+     * List users
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    get: operations['listUsers'];
     put?: never;
     post?: never;
     delete?: never;
@@ -1229,8 +1400,11 @@ export interface paths {
     delete?: never;
     options?: never;
     head?: never;
-    /** Update User */
-    patch: operations['update_user_api_v1_users__user_id__patch'];
+    /**
+     * Update user
+     * @description Requires role: `admin`, `super_admin`.
+     */
+    patch: operations['updateUser'];
     trace?: never;
   };
   '/api/v1/users/{user_id}/sessions': {
@@ -1244,10 +1418,12 @@ export interface paths {
     put?: never;
     post?: never;
     /**
-     * Revoke Sessions
+     * Revoke user sessions
      * @description Delete all sessions of a user (force logout).
+     *
+     *     Requires role: `admin`, `super_admin`.
      */
-    delete: operations['revoke_sessions_api_v1_users__user_id__sessions_delete'];
+    delete: operations['revokeUserSessions'];
     options?: never;
     head?: never;
     patch?: never;
@@ -1260,13 +1436,18 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Get Managed Communities */
-    get: operations['get_managed_communities_api_v1_users__user_id__managed_communities_get'];
     /**
-     * Set Managed Communities
-     * @description Replace the full set of communities the user manages.
+     * Get user managed communities
+     * @description Requires role: `admin`, `super_admin`.
      */
-    put: operations['set_managed_communities_api_v1_users__user_id__managed_communities_put'];
+    get: operations['getUserManagedCommunities'];
+    /**
+     * Set user managed communities
+     * @description Replace the full set of communities the user manages.
+     *
+     *     Requires role: `admin`, `super_admin`.
+     */
+    put: operations['setUserManagedCommunities'];
     post?: never;
     delete?: never;
     options?: never;
@@ -1281,11 +1462,14 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List Verdict Rules */
-    get: operations['list_verdict_rules_api_v1_verdict_rules_get'];
+    /** List verdict rules */
+    get: operations['listVerdictRules'];
     put?: never;
-    /** Create Verdict Rule */
-    post: operations['create_verdict_rule_api_v1_verdict_rules_post'];
+    /**
+     * Create verdict rule
+     * @description Requires role: `racing_judge`, `admin`, `super_admin`.
+     */
+    post: operations['createVerdictRule'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1300,8 +1484,11 @@ export interface paths {
       cookie?: never;
     };
     get?: never;
-    /** Reorder Verdict Rules */
-    put: operations['reorder_verdict_rules_api_v1_verdict_rules_order_put'];
+    /**
+     * Reorder verdict rules
+     * @description Requires role: `racing_judge`, `admin`, `super_admin`.
+     */
+    put: operations['reorderVerdictRules'];
     post?: never;
     delete?: never;
     options?: never;
@@ -1319,12 +1506,18 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    /** Delete Verdict Rule */
-    delete: operations['delete_verdict_rule_api_v1_verdict_rules__rule_id__delete'];
+    /**
+     * Delete verdict rule
+     * @description Requires role: `racing_judge`, `admin`, `super_admin`.
+     */
+    delete: operations['deleteVerdictRule'];
     options?: never;
     head?: never;
-    /** Update Verdict Rule */
-    patch: operations['update_verdict_rule_api_v1_verdict_rules__rule_id__patch'];
+    /**
+     * Update verdict rule
+     * @description Requires role: `racing_judge`, `admin`, `super_admin`.
+     */
+    patch: operations['updateVerdictRule'];
     trace?: never;
   };
   '/api/v1/description-presets': {
@@ -1334,11 +1527,14 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** List Description Presets */
-    get: operations['list_description_presets_api_v1_description_presets_get'];
+    /** List description presets */
+    get: operations['listDescriptionPresets'];
     put?: never;
-    /** Create Description Preset */
-    post: operations['create_description_preset_api_v1_description_presets_post'];
+    /**
+     * Create description preset
+     * @description Requires role: `racing_judge`, `admin`, `super_admin`.
+     */
+    post: operations['createDescriptionPreset'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1355,12 +1551,18 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    /** Delete Description Preset */
-    delete: operations['delete_description_preset_api_v1_description_presets__preset_id__delete'];
+    /**
+     * Delete description preset
+     * @description Requires role: `racing_judge`, `admin`, `super_admin`.
+     */
+    delete: operations['deleteDescriptionPreset'];
     options?: never;
     head?: never;
-    /** Update Description Preset */
-    patch: operations['update_description_preset_api_v1_description_presets__preset_id__patch'];
+    /**
+     * Update description preset
+     * @description Requires role: `racing_judge`, `admin`, `super_admin`.
+     */
+    patch: operations['updateDescriptionPreset'];
     trace?: never;
   };
   '/api/v1/youtube-streams': {
@@ -1371,10 +1573,10 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * List Youtube Streams
+     * List youtube streams
      * @description Completed streams (newest first) or scheduled/live ones (soonest first).
      */
-    get: operations['list_youtube_streams_api_v1_youtube_streams_get'];
+    get: operations['listYoutubeStreams'];
     put?: never;
     post?: never;
     delete?: never;
@@ -1391,10 +1593,10 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Discord Callback
+     * Discord callback
      * @description Handle the OAuth2 callback from Discord, then redirect to the frontend.
      */
-    get: operations['discord_callback_api_auth_discord_callback_get'];
+    get: operations['discordCallback'];
     put?: never;
     post?: never;
     delete?: never;
@@ -1413,31 +1615,14 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Ingest Incidents
+     * Ingest incidents
      * @deprecated
      * @description Deprecated: kept at its old path for the external desktop parsers.
      *
      *     Admins now upload the round's result file and the backend parses the
      *     contacts itself (``services/race_import.py``).
      */
-    post: operations['ingest_incidents_api_incidents_ingest_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/healthz': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Healthz */
-    get: operations['healthz_healthz_get'];
-    put?: never;
-    post?: never;
+    post: operations['ingestIncidents'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1448,1689 +1633,952 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
-    /** ActiveChampionshipOut */
     ActiveChampionshipOut: {
-      /** Simgridid */
       simgridId: number;
-      /** Createdat */
       createdAt: string | null;
     };
-    /** AliasCreate */
     AliasCreate: {
-      /** Normalizedalias */
       normalizedAlias: string;
-      /** Canonicaldisplayname */
       canonicalDisplayName: string;
-      /** Driverid */
       driverId?: string | null;
     };
-    /** AliasOut */
     AliasOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Normalizedalias */
       normalizedAlias: string;
-      /** Canonicalnormalizedname */
       canonicalNormalizedName: string;
-      /** Canonicaldisplayname */
       canonicalDisplayName: string;
-      /** Driverid */
       driverId: string | null;
-      /**
-       * Createdat
-       * Format: date-time
-       */
+      /** Format: date-time */
       createdAt: string;
     };
-    /** AuthUrlOut */
     AuthUrlOut: {
-      /** Url */
       url: string;
     };
-    /** Body_create_import_api_v1_race_result_imports_post */
-    Body_create_import_api_v1_race_result_imports_post: {
-      /**
-       * File
-       * Format: binary
-       */
-      file: string;
-      /** Championship Id */
-      championship_id: number;
-      /** Race Id */
-      race_id: number;
-      /**
-       * Create Incidents
-       * @default true
-       */
-      create_incidents?: boolean;
-      /**
-       * Window Hours
-       * @default 24
-       */
-      window_hours?: number;
-    };
-    /** BulkResolveIncident */
     BulkResolveIncident: {
-      /** Description */
       description?: string | null;
-      /** Drivers */
       drivers: components['schemas']['ResolveDriverItem'][];
     };
-    /** BwpAuditEntry */
     BwpAuditEntry: {
-      /**
-       * Incidentdriverid
-       * Format: uuid
-       */
+      /** Format: uuid */
       incidentDriverId: string;
-      /** Drivername */
       driverName: string;
-      /** Bwppoints */
       bwpPoints: number;
-      /** Matcheddriverid */
       matchedDriverId: string | null;
-      /** Matcheddrivername */
       matchedDriverName: string | null;
     };
-    /** BwpBackfillOut */
     BwpBackfillOut: {
-      /** Fixed */
       fixed: number;
-      /** Unmatched */
       unmatched: string[];
     };
-    /** BwpPointCreate */
     BwpPointCreate: {
-      /** Points */
       points: number;
-      /**
-       * Issuedon
-       * Format: date
-       */
+      /** Format: date */
       issuedOn: string;
-      /**
-       * Expireson
-       * Format: date
-       */
+      /** Format: date */
       expiresOn: string;
     };
-    /** BwpPointOut */
     BwpPointOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Points */
       points: number;
-      /**
-       * Issuedon
-       * Format: date
-       */
+      /** Format: date */
       issuedOn: string;
-      /**
-       * Expireson
-       * Format: date
-       */
+      /** Format: date */
       expiresOn: string;
-      /** Note */
       note: string | null;
-      /**
-       * Expired
-       * @default false
-       */
+      /** @default false */
       expired: boolean;
     };
     /**
-     * BwpPointUpdate
      * @description ``PATCH /bwp-points/{id}``: expire a point today (history is kept).
      *
      *     Only ``expired: true`` is accepted — un-expiring would need the original
      *     expiry date, which is overwritten.
      */
     BwpPointUpdate: {
-      /**
-       * Expired
-       * @constant
-       */
+      /** @constant */
       expired: true;
-      /**
-       * Note
-       * @default
-       */
+      /** @default  */
       note?: string;
     };
-    /**
-     * BwpResetCreate
-     * @description ``POST /drivers/{id}/bwp-resets``: expire every active point.
-     */
+    /** @description ``POST /drivers/{id}/bwp-resets``: expire every active point. */
     BwpResetCreate: {
-      /**
-       * Note
-       * @default
-       */
+      /** @default  */
       note?: string;
     };
-    /**
-     * CalendarEvent
-     * @description Unified calendar event returned by the merge endpoint.
-     */
+    /** @description Unified calendar event returned by the merge endpoint. */
     CalendarEvent: {
-      /** Id */
       id: string;
-      /** Name */
       name: string;
-      /**
-       * Game
-       * @default
-       */
+      /** @default  */
       game: string;
-      /** Carclass */
       carClass: string | null;
-      /** Description */
       description: string | null;
-      /** Startdate */
       startDate: string | null;
-      /** Enddate */
       endDate: string | null;
       eventType: components['schemas']['CalendarEventType'];
-      /** Source */
       source: string;
-      /** Image */
       image: string | null;
-      /** Simgridchampionshipid */
       simgridChampionshipId: number | null;
-      /** Customchampionshipid */
       customChampionshipId: string | null;
-      /** Communityid */
       communityId: string | null;
-      /** Communityname */
       communityName: string | null;
-      /** Communitycolor */
       communityColor: string | null;
-      /** Communitydiscordurl */
       communityDiscordUrl: string | null;
-      /**
-       * Communityisskf
-       * @default false
-       */
+      /** @default false */
       communityIsSkf: boolean;
-      /**
-       * Acceptingregistrations
-       * @default false
-       */
+      /** @default false */
       acceptingRegistrations: boolean;
-      /** Capacity */
       capacity: number | null;
-      /** Spotstaken */
       spotsTaken: number | null;
-      /** Registrationurl */
       registrationUrl: string | null;
-      /**
-       * Races
-       * @default []
-       */
+      /** @default [] */
       races: components['schemas']['CalendarRace'][];
     };
-    /**
-     * CalendarEventType
-     * @enum {string}
-     */
+    /** @enum {string} */
     CalendarEventType: 'past' | 'ongoing' | 'upcoming' | 'future';
-    /** CalendarRace */
     CalendarRace: {
-      /** Date */
       date: string | null;
-      /** Enddate */
       endDate: string | null;
-      /** Track */
       track: string | null;
-      /** Name */
       name: string | null;
     };
-    /** ChampionshipDetails */
     ChampionshipDetails: {
-      /** Id */
       id: number;
-      /** Name */
       name: string;
-      /** Description */
       description: string | null;
-      /** Image */
       image: string | null;
-      /** Startdate */
       startDate: string | null;
-      /** Enddate */
       endDate: string | null;
-      /** Capacity */
       capacity: number | null;
-      /** Spotstaken */
       spotsTaken: number | null;
-      /**
-       * Acceptingregistrations
-       * @default false
-       */
+      /** @default false */
       acceptingRegistrations: boolean;
-      /**
-       * Hostname
-       * @default
-       */
+      /** @default  */
       hostName: string;
-      /**
-       * Gamename
-       * @default
-       */
+      /** @default  */
       gameName: string;
-      /**
-       * Url
-       * @default
-       */
+      /** @default  */
       url: string;
-      /**
-       * Resultsurl
-       * @default
-       */
+      /** @default  */
       resultsUrl: string;
-      /**
-       * Discordurl
-       * @default
-       */
+      /** @default  */
       discordUrl: string;
-      /** Roundnumber */
       roundNumber: number | null;
-      /** Allroundsnumber */
       allRoundsNumber: number | null;
     };
-    /** ChampionshipIncidentWindowOut */
     ChampionshipIncidentWindowOut: {
-      /** Raceid */
       raceId: number;
-      /**
-       * Windowid
-       * Format: uuid
-       */
+      /** Format: uuid */
       windowId: string;
-      /** Isopen */
       isOpen: boolean;
-      /** Incidentscount */
       incidentsCount: number;
     };
-    /** ChampionshipListItem */
     ChampionshipListItem: {
-      /** Id */
       id: number;
-      /** Name */
       name: string;
-      /** Startdate */
       startDate: string | null;
-      /** Enddate */
       endDate: string | null;
-      /**
-       * Acceptingregistrations
-       * @default false
-       */
+      /** @default false */
       acceptingRegistrations: boolean;
-      /**
-       * Eventcompleted
-       * @default false
-       */
+      /** @default false */
       eventCompleted: boolean;
     };
-    /** ChampionshipRace */
     ChampionshipRace: {
-      /**
-       * Id
-       * @default 0
-       */
+      /** @default 0 */
       id: number;
-      /**
-       * Displayname
-       * @default
-       */
+      /** @default  */
       displayName: string;
-      /** Startsat */
       startsAt: string | null;
-      /** Track */
       track: string | null;
-      /**
-       * Resultsavailable
-       * @default false
-       */
+      /** @default false */
       resultsAvailable: boolean;
-      /**
-       * Ended
-       * @default false
-       */
+      /** @default false */
       ended: boolean;
     };
-    /** ChampionshipStandingsData */
     ChampionshipStandingsData: {
-      /**
-       * Entries
-       * @default []
-       */
+      /** @default [] */
       entries: components['schemas']['StandingEntry'][];
-      /**
-       * Races
-       * @default []
-       */
+      /** @default [] */
       races: components['schemas']['StandingRace'][];
     };
-    /** CommunityCreate */
     CommunityCreate: {
-      /** Name */
       name: string;
-      /** Color */
       color?: string | null;
-      /** Discordurl */
       discordUrl?: string | null;
     };
-    /** CommunityOut */
     CommunityOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Name */
       name: string;
-      /** Color */
       color: string | null;
-      /** Discordurl */
       discordUrl: string | null;
-      /** Isvisible */
       isVisible: boolean;
-      /** Isskf */
       isSkf: boolean;
-      /**
-       * Createdat
-       * Format: date-time
-       */
+      /** Format: date-time */
       createdAt: string;
     };
-    /**
-     * CommunityRequestCreate
-     * @description A visitor's request to have their community added to the calendar.
-     */
+    /** @description A visitor's request to have their community added to the calendar. */
     CommunityRequestCreate: {
-      /** Name */
       name: string;
-      /** Discordurl */
       discordUrl?: string | null;
-      /** Description */
       description: string;
     };
-    /** CommunityUpdate */
     CommunityUpdate: {
-      /** Name */
       name?: string | null;
-      /** Color */
       color?: string | null;
-      /** Discordurl */
       discordUrl?: string | null;
-      /** Isvisible */
       isVisible?: boolean | null;
     };
-    /** CustomChampionshipCreate */
     CustomChampionshipCreate: {
-      /** Name */
       name: string;
-      /** Game */
       game: string;
-      /** Carclass */
       carClass?: string | null;
-      /** Description */
       description?: string | null;
-      /** Communityid */
       communityId?: string | null;
-      /** Gameid */
       gameId?: string | null;
-      /**
-       * Races
-       * @default []
-       */
+      /** @default [] */
       races?: components['schemas']['CustomRaceCreate'][];
     };
-    /** CustomChampionshipOut */
     CustomChampionshipOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Name */
       name: string;
-      /** Game */
       game: string;
-      /** Carclass */
       carClass: string | null;
-      /** Description */
       description: string | null;
-      /** Isvisible */
       isVisible: boolean;
-      /** Races */
       races: components['schemas']['CustomRaceOut'][];
-      /** Createdbyuserid */
       createdByUserId: string | null;
-      /** Communityid */
       communityId: string | null;
-      /** Gameid */
       gameId: string | null;
-      /** Gamename */
       gameName: string | null;
-      /**
-       * Createdat
-       * Format: date-time
-       */
+      /** Format: date-time */
       createdAt: string;
     };
-    /** CustomChampionshipUpdate */
     CustomChampionshipUpdate: {
-      /** Name */
       name?: string | null;
-      /** Game */
       game?: string | null;
-      /** Carclass */
       carClass?: string | null;
-      /** Description */
       description?: string | null;
-      /** Isvisible */
       isVisible?: boolean | null;
-      /** Communityid */
       communityId?: string | null;
-      /** Gameid */
       gameId?: string | null;
     };
-    /** CustomRaceCreate */
     CustomRaceCreate: {
-      /** Date */
       date?: string | null;
-      /** Enddate */
       endDate?: string | null;
-      /** Track */
       track?: string | null;
     };
-    /** CustomRaceOut */
     CustomRaceOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Date */
       date: string | null;
-      /** Enddate */
       endDate: string | null;
-      /** Track */
       track: string | null;
-      /** Sortorder */
       sortOrder: number;
-      /**
-       * Createdat
-       * Format: date-time
-       */
+      /** Format: date-time */
       createdAt: string;
     };
-    /**
-     * CustomRaceSync
-     * @description Used for batch race sync — id present means update, absent means create.
-     */
+    /** @description Used for batch race sync — id present means update, absent means create. */
     CustomRaceSync: {
-      /** Id */
       id?: string | null;
-      /** Date */
       date?: string | null;
-      /** Enddate */
       endDate?: string | null;
-      /** Track */
       track?: string | null;
     };
-    /** CustomRaceUpdate */
     CustomRaceUpdate: {
-      /** Date */
       date?: string | null;
-      /** Enddate */
       endDate?: string | null;
-      /** Track */
       track?: string | null;
-      /** Sortorder */
       sortOrder?: number | null;
     };
-    /** DescriptionPresetCreate */
     DescriptionPresetCreate: {
-      /** Text */
       text: string;
     };
-    /** DescriptionPresetOut */
     DescriptionPresetOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Text */
       text: string;
-      /** Sortorder */
       sortOrder: number;
     };
-    /** DescriptionPresetUpdate */
     DescriptionPresetUpdate: {
-      /** Text */
       text?: string | null;
     };
-    /** DriverCreate */
     DriverCreate: {
-      /** Name */
       name: string;
     };
     /**
-     * DriverOut
      * @description Judge view: the public projection plus the linked site account.
      *
      *     ``user_id`` has no default on purpose: it keeps the public and judge
      *     projections distinguishable when ``GET /drivers`` answers with either.
      */
     DriverOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Name */
       name: string;
-      /** Simgriddriverid */
       simgridDriverId: number | null;
-      /** Simgriddisplayname */
       simgridDisplayName: string | null;
-      /** Countrycode */
       countryCode: string | null;
-      /** Photourl */
       photoUrl: string | null;
-      /**
-       * Createdat
-       * Format: date-time
-       */
+      /** Format: date-time */
       createdAt: string;
-      /**
-       * Activebwp
-       * @default 0
-       */
+      /** @default 0 */
       activeBwp: number;
-      /**
-       * Points
-       * @default []
-       */
+      /** @default [] */
       points: components['schemas']['BwpPointOut'][];
-      /**
-       * Clearances
-       * @default []
-       */
+      /** @default [] */
       clearances: components['schemas']['PenaltyClearanceOut'][];
-      /** Userid */
       userId: string | null;
     };
-    /** DriverPublicOut */
     DriverPublicOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Name */
       name: string;
-      /** Simgriddriverid */
       simgridDriverId: number | null;
-      /** Simgriddisplayname */
       simgridDisplayName: string | null;
-      /** Countrycode */
       countryCode: string | null;
-      /** Photourl */
       photoUrl: string | null;
-      /**
-       * Createdat
-       * Format: date-time
-       */
+      /** Format: date-time */
       createdAt: string;
-      /**
-       * Activebwp
-       * @default 0
-       */
+      /** @default 0 */
       activeBwp: number;
-      /**
-       * Points
-       * @default []
-       */
+      /** @default [] */
       points: components['schemas']['BwpPointOut'][];
-      /**
-       * Clearances
-       * @default []
-       */
+      /** @default [] */
       clearances: components['schemas']['PenaltyClearanceOut'][];
     };
-    /**
-     * DriverRaceResult
-     * @description One round of a driver's standings row (class position).
-     */
+    /** @description One round of a driver's standings row (class position). */
     DriverRaceResult: {
-      /** Raceid */
       raceId: number;
-      /** Raceindex */
       raceIndex: number;
-      /** Points */
       points: number | null;
-      /** Position */
       position: number | null;
       /**
-       * Status
        * @default classified
        * @enum {string}
        */
       status: 'classified' | 'dnf' | 'dq' | 'dns';
     };
-    /** DriverUpdate */
     DriverUpdate: {
-      /** Name */
       name: string;
-      /** Simgriddriverid */
       simgridDriverId?: number | null;
     };
-    /** EligibilityOut */
     EligibilityOut: {
-      /** Championshipsimgridid */
       championshipSimgridId: number;
-      /** Mindistancepct */
       minDistancePct: number;
-      /** Minrounds */
       minRounds: number;
-      /** Importedrounds */
       importedRounds: number;
-      /** Carclasses */
       carClasses: string[];
-      /** Drivers */
       drivers: components['schemas']['EligibleDriverOut'][];
     };
-    /** EligibleDriverOut */
     EligibleDriverOut: {
-      /** Identity */
       identity: string;
-      /** Displayname */
       displayName: string;
-      /** Carclass */
       carClass: string;
-      /** Qualifyingrounds */
       qualifyingRounds: number;
-      /** Rounds */
       rounds: components['schemas']['RoundBreakdownOut'][];
     };
-    /** HTTPValidationError */
-    HTTPValidationError: {
-      /** Detail */
-      detail?: components['schemas']['ValidationError'][];
+    FieldError: {
+      field: string;
+      message: string;
     };
-    /** ImportEntryOut */
     ImportEntryOut: {
-      /** Rawname */
       rawName: string;
-      /** Carclass */
       carClass: string;
-      /** Laps */
       laps: number;
-      /** Position */
       position: number | null;
-      /** Finishstatus */
       finishStatus: string | null;
-      /** Matched */
       matched: boolean;
     };
-    /**
-     * ImportOut
-     * @description One uploaded round file, as listed per championship.
-     */
+    /** @description One uploaded round file, as listed per championship. */
     ImportOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Championshipsimgridid */
       championshipSimgridId: number;
-      /** Racesimgridid */
       raceSimgridId: number | null;
-      /** Trackevent */
       trackEvent: string | null;
-      /** Sessionstartedat */
       sessionStartedAt: string | null;
-      /** Sourcefilename */
       sourceFilename: string | null;
       /**
-       * Sim
        * @default lmu
        * @enum {string}
        */
       sim: 'lmu' | 'iracing';
-      /**
-       * Createdat
-       * Format: date-time
-       */
+      /** Format: date-time */
       createdAt: string;
-      /** Entrycount */
       entryCount: number;
-      /** Unmatchedcount */
       unmatchedCount: number;
     };
-    /** ImportResultOut */
     ImportResultOut: {
       raceImport: components['schemas']['RaceImportOut'];
-      /** Windowid */
       windowId: string | null;
-      /** Incidentscreated */
       incidentsCreated: number;
-      /** Incidentskept */
       incidentsKept: number;
-      /** Entries */
       entries: components['schemas']['ImportEntryOut'][];
     };
-    /** IncidentBatchCreate */
     IncidentBatchCreate: {
-      /** Raceid */
       raceId: number;
-      /** Championshipid */
       championshipId: number;
-      /** Incidents */
       incidents: components['schemas']['IncidentBatchItem'][];
     };
-    /** IncidentBatchItem */
     IncidentBatchItem: {
-      /** Sessionname */
       sessionName?: string | null;
-      /** Time */
       time?: string | null;
-      /** Drivers */
       drivers: string[];
     };
-    /** IncidentDriverAdd */
     IncidentDriverAdd: {
-      /** Drivername */
       driverName: string;
     };
-    /** IncidentDriverOut */
     IncidentDriverOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Drivername */
       driverName: string;
-      /** Driverid */
       driverId: string | null;
-      /** Sortorder */
       sortOrder: number;
       resolution: components['schemas']['IncidentResolutionOut'] | null;
     };
-    /** IncidentDriverUpdate */
     IncidentDriverUpdate: {
-      /**
-       * Driverid
-       * Format: uuid
-       */
+      /** Format: uuid */
       driverId: string;
     };
-    /** IncidentFileCreate */
     IncidentFileCreate: {
-      /** Sessionname */
       sessionName?: string | null;
-      /** Lap */
       lap?: string | null;
-      /** Corner */
       corner?: string | null;
-      /** Description */
       description?: string | null;
-      /** Drivers */
       drivers: string[];
     };
-    /** IncidentOut */
     IncidentOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /**
-       * Windowid
-       * Format: uuid
-       */
+      /** Format: uuid */
       windowId: string;
-      /** Reporteruserid */
       reporterUserId: string | null;
-      /** Sessionname */
       sessionName: string | null;
-      /** Time */
       time: string | null;
-      /** Lap */
       lap: string | null;
-      /** Corner */
       corner: string | null;
-      /** Description */
       description: string | null;
-      /** Source */
       source: string;
-      /** Status */
       status: string;
-      /** Ispublished */
       isPublished: boolean;
-      /**
-       * Createdat
-       * Format: date-time
-       */
+      /** Format: date-time */
       createdAt: string;
-      /**
-       * Drivers
-       * @default []
-       */
+      /** @default [] */
       drivers: components['schemas']['IncidentDriverOut'][];
     };
-    /** IncidentResolutionOut */
     IncidentResolutionOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /**
-       * Incidentdriverid
-       * Format: uuid
-       */
+      /** Format: uuid */
       incidentDriverId: string;
-      /** Judgeuserid */
       judgeUserId: string | null;
-      /** Verdict */
       verdict: string;
-      /** Bwppoints */
       bwpPoints: number | null;
-      /** Description */
       description: string | null;
-      /** Bwpapplied */
       bwpApplied: boolean;
-      /**
-       * Resolvedat
-       * Format: date-time
-       */
+      /** Format: date-time */
       resolvedAt: string;
     };
-    /** IncidentWindowCreate */
     IncidentWindowCreate: {
-      /** Championshipid */
       championshipId?: number | null;
-      /** Championshipname */
       championshipName?: string | null;
-      /** Raceid */
       raceId?: number | null;
-      /** Racename */
       raceName: string;
-      /** Date */
       date?: string | null;
-      /**
-       * Intervalhours
-       * @default 24
-       */
+      /** @default 24 */
       intervalHours?: number;
     };
-    /** IncidentWindowListItem */
     IncidentWindowListItem: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Championshipid */
       championshipId: number | null;
-      /** Championshipname */
       championshipName: string | null;
-      /** Raceid */
       raceId: number | null;
-      /** Racename */
       raceName: string;
-      /** Date */
       date: string | null;
-      /** Intervalhours */
       intervalHours: number;
-      /**
-       * Openedat
-       * Format: date-time
-       */
+      /** Format: date-time */
       openedAt: string;
-      /**
-       * Closesat
-       * Format: date-time
-       */
+      /** Format: date-time */
       closesAt: string;
-      /** Openedbyuserid */
       openedByUserId: string | null;
-      /** Ismanuallyclosed */
       isManuallyClosed: boolean;
-      /** Isopen */
       isOpen: boolean;
     };
-    /** IncidentWindowOut */
     IncidentWindowOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Championshipid */
       championshipId: number | null;
-      /** Championshipname */
       championshipName: string | null;
-      /** Raceid */
       raceId: number | null;
-      /** Racename */
       raceName: string;
-      /** Date */
       date: string | null;
-      /** Intervalhours */
       intervalHours: number;
-      /**
-       * Openedat
-       * Format: date-time
-       */
+      /** Format: date-time */
       openedAt: string;
-      /**
-       * Closesat
-       * Format: date-time
-       */
+      /** Format: date-time */
       closesAt: string;
-      /** Openedbyuserid */
       openedByUserId: string | null;
-      /** Ismanuallyclosed */
       isManuallyClosed: boolean;
-      /** Isopen */
       isOpen: boolean;
-      /**
-       * Incidents
-       * @default []
-       */
+      /** @default [] */
       incidents: components['schemas']['IncidentOut'][];
     };
-    /** IncidentWindowUpdate */
     IncidentWindowUpdate: {
-      /** Ismanuallyclosed */
       isManuallyClosed?: boolean | null;
-      /** Intervalhours */
       intervalHours?: number | null;
     };
-    /** LanguageCreate */
     LanguageCreate: {
-      /** Code */
       code: string;
-      /** Name */
       name: string;
     };
-    /** LanguageOut */
     LanguageOut: {
-      /** Code */
       code: string;
-      /** Name */
       name: string;
-      /** Isactive */
       isActive: boolean;
     };
-    /** ManagedCommunitiesUpdate */
     ManagedCommunitiesUpdate: {
-      /** Communityids */
       communityIds: string[];
     };
-    /**
-     * MyDriverPhotoUpdate
-     * @description ``PATCH /me/driver``: set (https only) or clear the profile photo.
-     */
+    /** @description ``PATCH /me/driver``: set (https only) or clear the profile photo. */
     MyDriverPhotoUpdate: {
-      /** Photourl */
       photoUrl?: string | null;
     };
-    /** PenaltyClearanceOut */
     PenaltyClearanceOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /**
-       * Driverid
-       * Format: uuid
-       */
+      /** Format: uuid */
       driverId: string;
-      /**
-       * Penaltyruleid
-       * Format: uuid
-       */
+      /** Format: uuid */
       penaltyRuleId: string;
-      /**
-       * Clearedat
-       * Format: date-time
-       */
+      /** Format: date-time */
       clearedAt: string;
     };
-    /** PenaltyRuleCreate */
     PenaltyRuleCreate: {
-      /** Threshold */
       threshold: number;
-      /**
-       * Label
-       * @default
-       */
+      /** @default  */
       label?: string;
     };
-    /** PenaltyRuleOut */
     PenaltyRuleOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Threshold */
       threshold: number;
-      /** Label */
       label: string;
-      /** Sortorder */
       sortOrder: number;
     };
-    /** PenaltyRuleUpdate */
     PenaltyRuleUpdate: {
-      /** Threshold */
       threshold?: number | null;
-      /** Label */
       label?: string | null;
     };
-    /** PublishWindowOut */
+    /** @description An RFC 7807 problem document. Every error response has this shape. */
+    Problem: {
+      /** @default about:blank */
+      type: string;
+      title: string;
+      status: number;
+      detail: string;
+      code: string;
+    };
     PublishWindowOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Championshipid */
       championshipId: number | null;
-      /** Championshipname */
       championshipName: string | null;
-      /** Raceid */
       raceId: number | null;
-      /** Racename */
       raceName: string;
-      /** Date */
       date: string | null;
-      /** Intervalhours */
       intervalHours: number;
-      /**
-       * Openedat
-       * Format: date-time
-       */
+      /** Format: date-time */
       openedAt: string;
-      /**
-       * Closesat
-       * Format: date-time
-       */
+      /** Format: date-time */
       closesAt: string;
-      /** Openedbyuserid */
       openedByUserId: string | null;
-      /** Ismanuallyclosed */
       isManuallyClosed: boolean;
-      /** Isopen */
       isOpen: boolean;
-      /**
-       * Incidents
-       * @default []
-       */
+      /** @default [] */
       incidents: components['schemas']['IncidentOut'][];
-      /**
-       * Unlinkedcount
-       * @default 0
-       */
+      /** @default 0 */
       unlinkedCount: number;
     };
-    /** RaceImportOut */
     RaceImportOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /**
-       * Sim
-       * @enum {string}
-       */
+      /** @enum {string} */
       sim: 'lmu' | 'iracing';
-      /** Trackevent */
       trackEvent: string | null;
-      /** Sessionstartedat */
       sessionStartedAt: string | null;
-      /** Sourcefilename */
       sourceFilename: string | null;
-      /** Filesize */
       fileSize: number | null;
-      /** Hasfile */
       hasFile: boolean;
-      /** Entrycount */
       entryCount: number;
-      /** Unmatchedcount */
       unmatchedCount: number;
-      /** Contactscount */
       contactsCount: number;
-      /** Autogrouped */
       autoGrouped: boolean;
-      /**
-       * Createdat
-       * Format: date-time
-       */
+      /** Format: date-time */
       createdAt: string;
     };
-    /** RaceResultEntry */
     RaceResultEntry: {
-      /** Userid */
       userId: number | null;
-      /** Displayname */
       displayName: string;
-      /**
-       * Car
-       * @default
-       */
+      /** @default  */
       car: string;
-      /** Carnumber */
       carNumber: number | null;
-      /**
-       * Carclass
-       * @default
-       */
+      /** @default  */
       carClass: string;
-      /** Position */
       position: number | null;
-      /** Classposition */
       classPosition: number | null;
-      /** Startposition */
       startPosition: number | null;
-      /** Laps */
       laps: number | null;
-      /** Bestlapms */
       bestLapMs: number | null;
-      /**
-       * Isclassbestlap
-       * @default false
-       */
+      /** @default false */
       isClassBestLap: boolean;
-      /** Totaltimems */
       totalTimeMs: number | null;
-      /** Gapms */
       gapMs: number | null;
-      /**
-       * Lapsdown
-       * @default 0
-       */
+      /** @default 0 */
       lapsDown: number;
-      /**
-       * Penaltys
-       * @default 0
-       */
+      /** @default 0 */
       penaltyS: number;
-      /** Points */
       points: number | null;
       /**
-       * Status
        * @default classified
        * @enum {string}
        */
       status: 'classified' | 'dnf' | 'dq' | 'dns';
-      /** Ratingchange */
       ratingChange: number | null;
     };
-    /** RaceSessionOut */
-    RaceSessionOut: {
-      /** Raceid */
+    /** @description ``POST /race-result-imports``: the multipart form of one round's upload. */
+    RaceResultImportCreate: {
+      /** Format: binary */
+      file: string;
+      championshipId: number;
       raceId: number;
-      /**
-       * Session
-       * @enum {string}
-       */
+      /** @default true */
+      createIncidents?: boolean;
+      /** @default 24 */
+      windowHours?: number;
+    };
+    RaceSessionOut: {
+      raceId: number;
+      /** @enum {string} */
       session: 'race' | 'qualifying';
-      /**
-       * Entries
-       * @default []
-       */
+      /** @default [] */
       entries: components['schemas']['RaceResultEntry'][];
     };
-    /** RegulationContentOut */
     RegulationContentOut: {
-      /** Lang */
       lang: string;
-      /** Title */
       title: string;
-      /** Subtitle */
       subtitle: string;
-      /** Content */
       content: string;
     };
-    /** RegulationContentUpdate */
     RegulationContentUpdate: {
-      /** Title */
       title: string;
-      /**
-       * Subtitle
-       * @default
-       */
+      /** @default  */
       subtitle?: string;
-      /**
-       * Content
-       * @default
-       */
+      /** @default  */
       content?: string;
     };
-    /** RegulationPageCreate */
     RegulationPageCreate: {
-      /** Slug */
       slug: string;
-      /**
-       * Sortorder
-       * @default 0
-       */
+      /** @default 0 */
       sortOrder?: number;
-      /**
-       * Isvisible
-       * @default true
-       */
+      /** @default true */
       isVisible?: boolean;
-      /**
-       * Contents
-       * @default {}
-       */
+      /** @default {} */
       contents?: {
         [key: string]: components['schemas']['RegulationContentUpdate'];
       };
     };
-    /** RegulationPageListItem */
     RegulationPageListItem: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Slug */
       slug: string;
-      /** Sortorder */
       sortOrder: number;
-      /** Isvisible */
       isVisible: boolean;
-      /** Title */
       title: string;
     };
-    /** RegulationPageOut */
     RegulationPageOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Slug */
       slug: string;
-      /** Sortorder */
       sortOrder: number;
-      /** Isvisible */
       isVisible: boolean;
-      /** Contents */
       contents: {
         [key: string]: components['schemas']['RegulationContentOut'];
       };
     };
-    /** RegulationPageUpdate */
     RegulationPageUpdate: {
-      /** Slug */
       slug?: string | null;
-      /** Sortorder */
       sortOrder?: number | null;
-      /** Isvisible */
       isVisible?: boolean | null;
-      /** Contents */
       contents?: {
         [key: string]: components['schemas']['RegulationContentUpdate'];
       } | null;
     };
-    /** ResolveDriverIncident */
     ResolveDriverIncident: {
-      /** Verdict */
       verdict: string;
-      /** Bwppoints */
       bwpPoints?: number | null;
     };
-    /** ResolveDriverItem */
     ResolveDriverItem: {
-      /**
-       * Incidentdriverid
-       * Format: uuid
-       */
+      /** Format: uuid */
       incidentDriverId: string;
-      /** Verdict */
       verdict?: string | null;
-      /** Bwppoints */
       bwpPoints?: number | null;
     };
-    /** ResolveRemainingOut */
     ResolveRemainingOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Championshipid */
       championshipId: number | null;
-      /** Championshipname */
       championshipName: string | null;
-      /** Raceid */
       raceId: number | null;
-      /** Racename */
       raceName: string;
-      /** Date */
       date: string | null;
-      /** Intervalhours */
       intervalHours: number;
-      /**
-       * Openedat
-       * Format: date-time
-       */
+      /** Format: date-time */
       openedAt: string;
-      /**
-       * Closesat
-       * Format: date-time
-       */
+      /** Format: date-time */
       closesAt: string;
-      /** Openedbyuserid */
       openedByUserId: string | null;
-      /** Ismanuallyclosed */
       isManuallyClosed: boolean;
-      /** Isopen */
       isOpen: boolean;
-      /**
-       * Incidents
-       * @default []
-       */
+      /** @default [] */
       incidents: components['schemas']['IncidentOut'][];
-      /**
-       * Resolvedcount
-       * @default 0
-       */
+      /** @default 0 */
       resolvedCount: number;
     };
-    /** RoundBreakdownOut */
     RoundBreakdownOut: {
-      /** Roundkey */
       roundKey: string;
-      /** Roundlabel */
       roundLabel: string;
-      /** Carclass */
       carClass: string;
-      /** Laps */
       laps: number;
-      /** Classleaderlaps */
       classLeaderLaps: number;
-      /** Distancepct */
       distancePct: number;
-      /** Qualifies */
       qualifies: boolean;
     };
-    /** RoundOut */
     RoundOut: {
-      /** Raceid */
       raceId: number;
-      /** Name */
       name: string;
-      /** Startsat */
       startsAt: string | null;
-      /**
-       * Ended
-       * @default false
-       */
+      /** @default false */
       ended: boolean;
       raceImport: components['schemas']['RaceImportOut'] | null;
       window: components['schemas']['RoundWindowOut'] | null;
     };
-    /** RoundWindowOut */
     RoundWindowOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Isopen */
       isOpen: boolean;
-      /**
-       * Closesat
-       * Format: date-time
-       */
+      /** Format: date-time */
       closesAt: string;
-      /** Incidentscount */
       incidentsCount: number;
     };
-    /** RoundsOut */
     RoundsOut: {
-      /** Championshipid */
       championshipId: number;
-      /** Championshipname */
       championshipName: string;
-      /** Gamename */
       gameName: string;
-      /** Sim */
       sim: ('lmu' | 'iracing') | null;
-      /** Storageenabled */
       storageEnabled: boolean;
-      /** Rounds */
       rounds: components['schemas']['RoundOut'][];
     };
-    /** StandingEntry */
     StandingEntry: {
-      /** Id */
       id: number | null;
-      /** Position */
       position: number | null;
-      /** Displayname */
       displayName: string;
-      /**
-       * Countrycode
-       * @default
-       */
+      /** @default  */
       countryCode: string;
-      /**
-       * Car
-       * @default
-       */
+      /** @default  */
       car: string;
-      /**
-       * Carclass
-       * @default
-       */
+      /** @default  */
       carClass: string;
-      /**
-       * Points
-       * @default 0
-       */
+      /** @default 0 */
       points: number;
-      /**
-       * Penalties
-       * @default 0
-       */
+      /** @default 0 */
       penalties: number;
-      /**
-       * Score
-       * @default 0
-       */
+      /** @default 0 */
       score: number;
-      /**
-       * Raceresults
-       * @default []
-       */
+      /** @default [] */
       raceResults: components['schemas']['DriverRaceResult'][];
     };
-    /** StandingRace */
     StandingRace: {
-      /** Id */
       id: number;
-      /** Displayname */
       displayName: string;
-      /** Startsat */
       startsAt: string | null;
-      /**
-       * Resultsavailable
-       * @default false
-       */
+      /** @default false */
       resultsAvailable: boolean;
-      /**
-       * Ended
-       * @default false
-       */
+      /** @default false */
       ended: boolean;
     };
-    /**
-     * StreamStatus
-     * @enum {string}
-     */
+    /** @enum {string} */
     StreamStatus: 'past' | 'upcoming';
-    /** UnmatchedNameOut */
     UnmatchedNameOut: {
-      /** Rawname */
       rawName: string;
-      /** Normalizedname */
       normalizedName: string;
-      /** Rounds */
       rounds: number;
-      /** Suggestions */
       suggestions: string[];
     };
-    /** UserOut */
     UserOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Discordid */
       discordId: string;
-      /** Username */
       username: string;
-      /** Displayname */
       displayName: string;
-      /** Discordnickname */
       discordNickname: string | null;
-      /** Avatarurl */
       avatarUrl: string | null;
-      /** Role */
       role: string;
-      /** Blocked */
       blocked: boolean;
-      /**
-       * Createdat
-       * Format: date-time
-       */
+      /** Format: date-time */
       createdAt: string;
-      /** Lastloginat */
       lastLoginAt: string | null;
-      /** Driverid */
       driverId: string | null;
-      /**
-       * Managedcommunityids
-       * @default []
-       */
+      /** @default [] */
       managedCommunityIds: string[];
     };
-    /** UserUpdate */
     UserUpdate: {
-      /** Role */
       role?: string | null;
-      /** Blocked */
       blocked?: boolean | null;
     };
-    /** ValidationError */
-    ValidationError: {
-      /** Location */
-      loc: (string | number)[];
-      /** Message */
-      msg: string;
-      /** Error Type */
+    /** @description A 422: the request did not pass validation. */
+    ValidationProblem: {
+      /** @default about:blank */
       type: string;
+      title: string;
+      status: number;
+      detail: string;
+      code: string;
+      errors: components['schemas']['FieldError'][];
     };
-    /** VerdictRuleCreate */
     VerdictRuleCreate: {
-      /** Verdict */
       verdict: string;
-      /**
-       * Defaultbwp
-       * @default 0
-       */
+      /** @default 0 */
       defaultBwp?: number;
-      /**
-       * Isdefault
-       * @default false
-       */
+      /** @default false */
       isDefault?: boolean;
     };
-    /** VerdictRuleOut */
     VerdictRuleOut: {
-      /**
-       * Id
-       * Format: uuid
-       */
+      /** Format: uuid */
       id: string;
-      /** Verdict */
       verdict: string;
-      /** Defaultbwp */
       defaultBwp: number;
-      /** Sortorder */
       sortOrder: number;
-      /** Isdefault */
       isDefault: boolean;
     };
-    /** VerdictRuleReorder */
     VerdictRuleReorder: {
-      /** Ids */
       ids: string[];
     };
-    /** VerdictRuleUpdate */
     VerdictRuleUpdate: {
-      /** Verdict */
       verdict?: string | null;
-      /** Defaultbwp */
       defaultBwp?: number | null;
-      /** Isdefault */
       isDefault?: boolean | null;
     };
-    /** WindowIncidentsUpdate */
     WindowIncidentsUpdate: {
-      /**
-       * Ispublished
-       * @constant
-       */
+      /** @constant */
       isPublished: true;
     };
-    /** YouTubeVideo */
     YouTubeVideo: {
-      /** Videoid */
       videoId: string;
-      /** Title */
       title: string;
-      /**
-       * Description
-       * @default
-       */
+      /** @default  */
       description: string;
-      /** Publishedat */
       publishedAt: string;
-      /**
-       * Thumbnailurl
-       * @default
-       */
+      /** @default  */
       thumbnailUrl: string;
     };
   };
-  responses: never;
+  responses: {
+    /** @description Bad Gateway */
+    BadGateway: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/problem+json': components['schemas']['Problem'];
+      };
+    };
+    /** @description Bad Request */
+    BadRequest: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/problem+json': components['schemas']['Problem'];
+      };
+    };
+    /** @description Conflict */
+    Conflict: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/problem+json': components['schemas']['Problem'];
+      };
+    };
+    /** @description Content Too Large */
+    ContentTooLarge: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/problem+json': components['schemas']['Problem'];
+      };
+    };
+    /** @description Forbidden */
+    Forbidden: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/problem+json': components['schemas']['Problem'];
+      };
+    };
+    /** @description Not Found */
+    NotFound: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/problem+json': components['schemas']['Problem'];
+      };
+    };
+    /** @description Service Unavailable */
+    ServiceUnavailable: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/problem+json': components['schemas']['Problem'];
+      };
+    };
+    /** @description Too Many Requests */
+    TooManyRequests: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/problem+json': components['schemas']['Problem'];
+      };
+    };
+    /** @description Unauthorized */
+    Unauthorized: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/problem+json': components['schemas']['Problem'];
+      };
+    };
+    /** @description Unprocessable Content */
+    UnprocessableContent: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/problem+json': components['schemas']['ValidationProblem'];
+      };
+    };
+  };
   parameters: never;
   requestBodies: never;
   headers: never;
@@ -3138,7 +2586,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  list_active_championships_api_v1_active_championships_get: {
+  listActiveChampionships: {
     parameters: {
       query?: never;
       header?: never;
@@ -3158,7 +2606,7 @@ export interface operations {
       };
     };
   };
-  activate_championship_api_v1_active_championships__simgrid_id__put: {
+  activateChampionship: {
     parameters: {
       query?: never;
       header?: never;
@@ -3181,24 +2629,21 @@ export interface operations {
       /** @description Created */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['ActiveChampionshipOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  deactivate_championship_api_v1_active_championships__simgrid_id__delete: {
+  deactivateChampionship: {
     parameters: {
       query?: never;
       header?: never;
@@ -3216,18 +2661,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  discord_authorization_url_api_v1_auth_discord_authorization_url_get: {
+  discordAuthorizationUrl: {
     parameters: {
       query?: never;
       header?: never;
@@ -3247,7 +2687,7 @@ export interface operations {
       };
     };
   };
-  logout_api_v1_auth_session_delete: {
+  logout: {
     parameters: {
       query?: never;
       header?: never;
@@ -3265,7 +2705,7 @@ export interface operations {
       };
     };
   };
-  clear_all_caches_api_v1_caches_delete: {
+  clearAllCaches: {
     parameters: {
       query?: never;
       header?: never;
@@ -3281,9 +2721,11 @@ export interface operations {
         };
         content?: never;
       };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
     };
   };
-  clear_cache_api_v1_caches__domain__delete: {
+  clearCache: {
     parameters: {
       query?: never;
       header?: never;
@@ -3301,18 +2743,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  list_calendar_events_api_v1_calendar_events_get: {
+  listCalendarEvents: {
     parameters: {
       query: {
         year: number;
@@ -3327,24 +2764,18 @@ export interface operations {
       /** @description Successful Response */
       200: {
         headers: {
+          /** @description `true` when SimGrid was unreachable and cached data was served. */
+          'X-Data-Stale'?: 'true';
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['CalendarEvent'][];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  list_championships_api_v1_championships_get: {
+  listChampionships: {
     parameters: {
       query?: never;
       header?: never;
@@ -3356,15 +2787,18 @@ export interface operations {
       /** @description Successful Response */
       200: {
         headers: {
+          /** @description `true` when SimGrid was unreachable and cached data was served. */
+          'X-Data-Stale'?: 'true';
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['ChampionshipListItem'][];
         };
       };
+      502: components['responses']['BadGateway'];
     };
   };
-  get_championship_api_v1_championships__championship_id__get: {
+  getChampionship: {
     parameters: {
       query?: never;
       header?: never;
@@ -3378,24 +2812,19 @@ export interface operations {
       /** @description Successful Response */
       200: {
         headers: {
+          /** @description `true` when SimGrid was unreachable and cached data was served. */
+          'X-Data-Stale'?: 'true';
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['ChampionshipDetails'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      422: components['responses']['UnprocessableContent'];
+      502: components['responses']['BadGateway'];
     };
   };
-  get_standings_api_v1_championships__championship_id__standings_get: {
+  getChampionshipStandings: {
     parameters: {
       query?: never;
       header?: never;
@@ -3409,24 +2838,19 @@ export interface operations {
       /** @description Successful Response */
       200: {
         headers: {
+          /** @description `true` when SimGrid was unreachable and cached data was served. */
+          'X-Data-Stale'?: 'true';
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['ChampionshipStandingsData'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      422: components['responses']['UnprocessableContent'];
+      502: components['responses']['BadGateway'];
     };
   };
-  get_races_api_v1_championships__championship_id__races_get: {
+  listChampionshipRaces: {
     parameters: {
       query?: never;
       header?: never;
@@ -3440,24 +2864,19 @@ export interface operations {
       /** @description Successful Response */
       200: {
         headers: {
+          /** @description `true` when SimGrid was unreachable and cached data was served. */
+          'X-Data-Stale'?: 'true';
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['ChampionshipRace'][];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      422: components['responses']['UnprocessableContent'];
+      502: components['responses']['BadGateway'];
     };
   };
-  get_race_results_api_v1_championships__championship_id__races__race_id__results_get: {
+  getRaceResults: {
     parameters: {
       query?: {
         session?: 'race' | 'qualifying';
@@ -3474,24 +2893,19 @@ export interface operations {
       /** @description Successful Response */
       200: {
         headers: {
+          /** @description `true` when SimGrid was unreachable and cached data was served. */
+          'X-Data-Stale'?: 'true';
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['RaceSessionOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      422: components['responses']['UnprocessableContent'];
+      502: components['responses']['BadGateway'];
     };
   };
-  get_incident_windows_api_v1_championships__championship_id__incident_windows_get: {
+  listChampionshipIncidentWindows: {
     parameters: {
       query?: never;
       header?: never;
@@ -3511,18 +2925,10 @@ export interface operations {
           'application/json': components['schemas']['ChampionshipIncidentWindowOut'][];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  get_rounds_api_v1_championships__championship_id__rounds_get: {
+  getChampionshipRounds: {
     parameters: {
       query?: never;
       header?: never;
@@ -3536,24 +2942,21 @@ export interface operations {
       /** @description Successful Response */
       200: {
         headers: {
+          /** @description `true` when SimGrid was unreachable and cached data was served. */
+          'X-Data-Stale'?: 'true';
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['RoundsOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
+      502: components['responses']['BadGateway'];
     };
   };
-  get_giveaway_eligibility_api_v1_championships__championship_id__giveaway_eligibility_get: {
+  getGiveawayEligibility: {
     parameters: {
       query?: {
         minDistancePct?: number;
@@ -3576,18 +2979,12 @@ export interface operations {
           'application/json': components['schemas']['EligibilityOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  get_unmatched_driver_names_api_v1_championships__championship_id__unmatched_driver_names_get: {
+  getUnmatchedDriverNames: {
     parameters: {
       query?: never;
       header?: never;
@@ -3607,18 +3004,12 @@ export interface operations {
           'application/json': components['schemas']['UnmatchedNameOut'][];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  list_communities_api_v1_communities_get: {
+  listCommunities: {
     parameters: {
       query?: {
         scope?: 'managed' | null;
@@ -3638,18 +3029,12 @@ export interface operations {
           'application/json': components['schemas']['CommunityOut'][];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  create_community_api_v1_communities_post: {
+  createCommunity: {
     parameters: {
       query?: never;
       header?: never;
@@ -3665,24 +3050,20 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['CommunityOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  delete_community_api_v1_communities__community_id__delete: {
+  deleteCommunity: {
     parameters: {
       query?: never;
       header?: never;
@@ -3700,18 +3081,14 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      400: components['responses']['BadRequest'];
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  update_community_api_v1_communities__community_id__patch: {
+  updateCommunity: {
     parameters: {
       query?: never;
       header?: never;
@@ -3735,18 +3112,13 @@ export interface operations {
           'application/json': components['schemas']['CommunityOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  create_community_request_api_v1_community_requests_post: {
+  createCommunityRequest: {
     parameters: {
       query?: never;
       header?: never;
@@ -3766,18 +3138,14 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      422: components['responses']['UnprocessableContent'];
+      429: components['responses']['TooManyRequests'];
+      502: components['responses']['BadGateway'];
+      503: components['responses']['ServiceUnavailable'];
     };
   };
-  list_custom_championships_api_v1_custom_championships_get: {
+  listCustomChampionships: {
     parameters: {
       query?: {
         communityId?: string | null;
@@ -3793,24 +3161,22 @@ export interface operations {
       /** @description Successful Response */
       200: {
         headers: {
+          /** @description Size of the whole collection, across all pages. */
+          'X-Total-Count'?: number;
+          /** @description RFC 8288 links to the `next` and `prev` pages, when they exist. */
+          Link?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['CustomChampionshipOut'][];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  create_custom_championship_api_v1_custom_championships_post: {
+  createCustomChampionship: {
     parameters: {
       query?: never;
       header?: never;
@@ -3826,24 +3192,20 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['CustomChampionshipOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  get_custom_championship_api_v1_custom_championships__champ_id__get: {
+  getCustomChampionship: {
     parameters: {
       query?: never;
       header?: never;
@@ -3863,18 +3225,13 @@ export interface operations {
           'application/json': components['schemas']['CustomChampionshipOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  delete_custom_championship_api_v1_custom_championships__champ_id__delete: {
+  deleteCustomChampionship: {
     parameters: {
       query?: never;
       header?: never;
@@ -3892,18 +3249,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  update_custom_championship_api_v1_custom_championships__champ_id__patch: {
+  updateCustomChampionship: {
     parameters: {
       query?: never;
       header?: never;
@@ -3927,18 +3279,13 @@ export interface operations {
           'application/json': components['schemas']['CustomChampionshipOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  replace_races_api_v1_custom_championships__champ_id__races_put: {
+  replaceCustomRaces: {
     parameters: {
       query?: never;
       header?: never;
@@ -3962,18 +3309,13 @@ export interface operations {
           'application/json': components['schemas']['CustomRaceOut'][];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  add_race_api_v1_custom_championships__champ_id__races_post: {
+  createCustomRace: {
     parameters: {
       query?: never;
       header?: never;
@@ -3991,24 +3333,21 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['CustomRaceOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  delete_race_api_v1_custom_championships__champ_id__races__race_id__delete: {
+  deleteCustomRace: {
     parameters: {
       query?: never;
       header?: never;
@@ -4027,18 +3366,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  update_race_api_v1_custom_championships__champ_id__races__race_id__patch: {
+  updateCustomRace: {
     parameters: {
       query?: never;
       header?: never;
@@ -4063,18 +3397,13 @@ export interface operations {
           'application/json': components['schemas']['CustomRaceOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  list_driver_aliases_api_v1_driver_aliases_get: {
+  listDriverAliases: {
     parameters: {
       query?: {
         limit?: number;
@@ -4089,24 +3418,22 @@ export interface operations {
       /** @description Successful Response */
       200: {
         headers: {
+          /** @description Size of the whole collection, across all pages. */
+          'X-Total-Count'?: number;
+          /** @description RFC 8288 links to the `next` and `prev` pages, when they exist. */
+          Link?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['AliasOut'][];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  upsert_driver_alias_api_v1_driver_aliases_post: {
+  upsertDriverAlias: {
     parameters: {
       query?: never;
       header?: never;
@@ -4131,24 +3458,21 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['AliasOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      400: components['responses']['BadRequest'];
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  get_driver_alias_api_v1_driver_aliases__alias_id__get: {
+  getDriverAlias: {
     parameters: {
       query?: never;
       header?: never;
@@ -4168,18 +3492,13 @@ export interface operations {
           'application/json': components['schemas']['AliasOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  delete_driver_alias_api_v1_driver_aliases__alias_id__delete: {
+  deleteDriverAlias: {
     parameters: {
       query?: never;
       header?: never;
@@ -4197,18 +3516,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  list_drivers_api_v1_drivers_get: {
+  listDrivers: {
     parameters: {
       query?: {
         simgridId?: number | null;
@@ -4226,6 +3540,10 @@ export interface operations {
       /** @description Successful Response */
       200: {
         headers: {
+          /** @description Size of the whole collection, across all pages. */
+          'X-Total-Count'?: number;
+          /** @description RFC 8288 links to the `next` and `prev` pages, when they exist. */
+          Link?: string;
           [name: string]: unknown;
         };
         content: {
@@ -4234,18 +3552,12 @@ export interface operations {
           )[];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  create_driver_api_v1_drivers_post: {
+  createDriver: {
     parameters: {
       query?: never;
       header?: never;
@@ -4261,24 +3573,21 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['DriverOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  get_driver_api_v1_drivers__driver_id__get: {
+  getDriver: {
     parameters: {
       query?: {
         /** @description `account` adds the linked site account (`userId`); judges only. */
@@ -4302,18 +3611,13 @@ export interface operations {
             components['schemas']['DriverPublicOut'] | components['schemas']['DriverOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  delete_driver_api_v1_drivers__driver_id__delete: {
+  deleteDriver: {
     parameters: {
       query?: never;
       header?: never;
@@ -4331,18 +3635,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  update_driver_api_v1_drivers__driver_id__patch: {
+  updateDriver: {
     parameters: {
       query?: never;
       header?: never;
@@ -4366,18 +3665,14 @@ export interface operations {
           'application/json': components['schemas']['DriverOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  add_bwp_point_api_v1_drivers__driver_id__bwp_points_post: {
+  createBwpPoint: {
     parameters: {
       query?: never;
       header?: never;
@@ -4395,24 +3690,21 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['BwpPointOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  delete_bwp_point_api_v1_bwp_points__point_id__delete: {
+  deleteBwpPoint: {
     parameters: {
       query?: never;
       header?: never;
@@ -4430,18 +3722,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  update_bwp_point_api_v1_bwp_points__point_id__patch: {
+  updateBwpPoint: {
     parameters: {
       query?: never;
       header?: never;
@@ -4465,18 +3752,13 @@ export interface operations {
           'application/json': components['schemas']['BwpPointOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  create_bwp_reset_api_v1_drivers__driver_id__bwp_resets_post: {
+  createBwpReset: {
     parameters: {
       query?: never;
       header?: never;
@@ -4494,24 +3776,21 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['DriverOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  put_clearance_api_v1_drivers__driver_id__clearances__rule_id__put: {
+  setClearance: {
     parameters: {
       query?: never;
       header?: never;
@@ -4535,24 +3814,21 @@ export interface operations {
       /** @description Clearance created */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['PenaltyClearanceOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  delete_clearance_api_v1_drivers__driver_id__clearances__rule_id__delete: {
+  deleteClearance: {
     parameters: {
       query?: never;
       header?: never;
@@ -4571,18 +3847,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  get_my_driver_api_v1_me_driver_get: {
+  getMyDriver: {
     parameters: {
       query?: never;
       header?: never;
@@ -4600,9 +3871,10 @@ export interface operations {
           'application/json': components['schemas']['DriverOut'];
         };
       };
+      401: components['responses']['Unauthorized'];
     };
   };
-  update_my_driver_api_v1_me_driver_patch: {
+  updateMyDriver: {
     parameters: {
       query?: never;
       header?: never;
@@ -4624,18 +3896,11 @@ export interface operations {
           'application/json': components['schemas']['DriverOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  list_windows_api_v1_incident_windows_get: {
+  listIncidentWindows: {
     parameters: {
       query?: {
         championshipId?: number | null;
@@ -4651,24 +3916,20 @@ export interface operations {
       /** @description Successful Response */
       200: {
         headers: {
+          /** @description Size of the whole collection, across all pages. */
+          'X-Total-Count'?: number;
+          /** @description RFC 8288 links to the `next` and `prev` pages, when they exist. */
+          Link?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['IncidentWindowListItem'][];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  create_window_api_v1_incident_windows_post: {
+  createIncidentWindow: {
     parameters: {
       query?: never;
       header?: never;
@@ -4684,24 +3945,21 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['IncidentWindowOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  get_window_api_v1_incident_windows__window_id__get: {
+  getIncidentWindow: {
     parameters: {
       query?: never;
       header?: never;
@@ -4721,18 +3979,11 @@ export interface operations {
           'application/json': components['schemas']['IncidentWindowOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  delete_window_api_v1_incident_windows__window_id__delete: {
+  deleteIncidentWindow: {
     parameters: {
       query?: never;
       header?: never;
@@ -4750,18 +4001,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  update_window_api_v1_incident_windows__window_id__patch: {
+  updateIncidentWindow: {
     parameters: {
       query?: never;
       header?: never;
@@ -4785,18 +4031,13 @@ export interface operations {
           'application/json': components['schemas']['IncidentWindowOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  file_incident_api_v1_incident_windows__window_id__incidents_post: {
+  fileIncident: {
     parameters: {
       query?: never;
       header?: never;
@@ -4814,24 +4055,21 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['IncidentOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      404: components['responses']['NotFound'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
+      429: components['responses']['TooManyRequests'];
     };
   };
-  publish_window_incidents_api_v1_incident_windows__window_id__incidents_patch: {
+  publishWindowIncidents: {
     parameters: {
       query?: never;
       header?: never;
@@ -4855,18 +4093,14 @@ export interface operations {
           'application/json': components['schemas']['PublishWindowOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  create_default_resolutions_api_v1_incident_windows__window_id__default_resolutions_post: {
+  createDefaultResolutions: {
     parameters: {
       query?: never;
       header?: never;
@@ -4886,18 +4120,14 @@ export interface operations {
           'application/json': components['schemas']['ResolveRemainingOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  copy_incident_api_v1_incidents__incident_id__copies_post: {
+  copyIncident: {
     parameters: {
       query?: never;
       header?: never;
@@ -4911,24 +4141,21 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['IncidentOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  add_incident_driver_api_v1_incidents__incident_id__drivers_post: {
+  addIncidentDriver: {
     parameters: {
       query?: never;
       header?: never;
@@ -4946,24 +4173,21 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['IncidentDriverOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  resolve_incident_api_v1_incidents__incident_id__resolution_put: {
+  resolveIncident: {
     parameters: {
       query?: never;
       header?: never;
@@ -4987,18 +4211,15 @@ export interface operations {
           'application/json': components['schemas']['IncidentOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      400: components['responses']['BadRequest'];
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  remove_incident_driver_api_v1_incident_drivers__incident_driver_id__delete: {
+  removeIncidentDriver: {
     parameters: {
       query?: never;
       header?: never;
@@ -5016,18 +4237,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  update_incident_driver_api_v1_incident_drivers__incident_driver_id__patch: {
+  updateIncidentDriver: {
     parameters: {
       query?: never;
       header?: never;
@@ -5051,18 +4267,13 @@ export interface operations {
           'application/json': components['schemas']['IncidentDriverOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  resolve_incident_driver_api_v1_incident_drivers__incident_driver_id__resolution_put: {
+  resolveIncidentDriver: {
     parameters: {
       query?: never;
       header?: never;
@@ -5086,18 +4297,13 @@ export interface operations {
           'application/json': components['schemas']['IncidentDriverOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  list_bwp_audit_entries_api_v1_bwp_audit_entries_get: {
+  listBwpAuditEntries: {
     parameters: {
       query?: never;
       header?: never;
@@ -5115,9 +4321,11 @@ export interface operations {
           'application/json': components['schemas']['BwpAuditEntry'][];
         };
       };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
     };
   };
-  create_bwp_backfill_api_v1_bwp_backfills_post: {
+  createBwpBackfill: {
     parameters: {
       query?: never;
       header?: never;
@@ -5135,9 +4343,11 @@ export interface operations {
           'application/json': components['schemas']['BwpBackfillOut'];
         };
       };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
     };
   };
-  list_languages_api_v1_languages_get: {
+  listLanguages: {
     parameters: {
       query?: never;
       header?: never;
@@ -5157,7 +4367,7 @@ export interface operations {
       };
     };
   };
-  add_language_api_v1_languages_post: {
+  createLanguage: {
     parameters: {
       query?: never;
       header?: never;
@@ -5173,24 +4383,21 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['LanguageOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  delete_language_api_v1_languages__code__delete: {
+  deleteLanguage: {
     parameters: {
       query?: never;
       header?: never;
@@ -5208,18 +4415,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  get_translations_api_v1_languages__code__translations_get: {
+  getTranslations: {
     parameters: {
       query?: {
         prefix?: string | null;
@@ -5244,18 +4446,11 @@ export interface operations {
           };
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  merge_translations_api_v1_languages__code__translations_patch: {
+  mergeTranslations: {
     parameters: {
       query?: never;
       header?: never;
@@ -5279,18 +4474,14 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      413: components['responses']['ContentTooLarge'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  delete_translation_api_v1_languages__code__translations__key__delete: {
+  deleteTranslation: {
     parameters: {
       query?: never;
       header?: never;
@@ -5309,18 +4500,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  get_me_api_v1_me_get: {
+  getMe: {
     parameters: {
       query?: never;
       header?: never;
@@ -5338,16 +4524,10 @@ export interface operations {
           'application/json': components['schemas']['UserOut'];
         };
       };
-      /** @description Not authenticated */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
+      401: components['responses']['Unauthorized'];
     };
   };
-  sync_discord_nickname_api_v1_me_discord_syncs_post: {
+  syncDiscordNickname: {
     parameters: {
       query?: never;
       header?: never;
@@ -5365,9 +4545,11 @@ export interface operations {
           'application/json': components['schemas']['UserOut'];
         };
       };
+      401: components['responses']['Unauthorized'];
+      503: components['responses']['ServiceUnavailable'];
     };
   };
-  list_penalty_rules_api_v1_penalty_rules_get: {
+  listPenaltyRules: {
     parameters: {
       query?: never;
       header?: never;
@@ -5387,7 +4569,7 @@ export interface operations {
       };
     };
   };
-  create_penalty_rule_api_v1_penalty_rules_post: {
+  createPenaltyRule: {
     parameters: {
       query?: never;
       header?: never;
@@ -5403,24 +4585,20 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['PenaltyRuleOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  delete_penalty_rule_api_v1_penalty_rules__rule_id__delete: {
+  deletePenaltyRule: {
     parameters: {
       query?: never;
       header?: never;
@@ -5438,18 +4616,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  update_penalty_rule_api_v1_penalty_rules__rule_id__patch: {
+  updatePenaltyRule: {
     parameters: {
       query?: never;
       header?: never;
@@ -5473,18 +4646,13 @@ export interface operations {
           'application/json': components['schemas']['PenaltyRuleOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  list_imports_api_v1_race_result_imports_get: {
+  listRaceResultImports: {
     parameters: {
       query?: {
         championshipId?: number | null;
@@ -5500,24 +4668,22 @@ export interface operations {
       /** @description Successful Response */
       200: {
         headers: {
+          /** @description Size of the whole collection, across all pages. */
+          'X-Total-Count'?: number;
+          /** @description RFC 8288 links to the `next` and `prev` pages, when they exist. */
+          Link?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['ImportOut'][];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  create_import_api_v1_race_result_imports_post: {
+  createRaceResultImport: {
     parameters: {
       query?: never;
       header?: never;
@@ -5526,31 +4692,30 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'multipart/form-data': components['schemas']['Body_create_import_api_v1_race_result_imports_post'];
+        'multipart/form-data': components['schemas']['RaceResultImportCreate'];
       };
     };
     responses: {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['ImportResultOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      400: components['responses']['BadRequest'];
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      413: components['responses']['ContentTooLarge'];
+      422: components['responses']['UnprocessableContent'];
+      502: components['responses']['BadGateway'];
     };
   };
-  get_import_api_v1_race_result_imports__import_id__get: {
+  getRaceResultImport: {
     parameters: {
       query?: never;
       header?: never;
@@ -5570,18 +4735,13 @@ export interface operations {
           'application/json': components['schemas']['ImportOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  delete_import_api_v1_race_result_imports__import_id__delete: {
+  deleteRaceResultImport: {
     parameters: {
       query?: never;
       header?: never;
@@ -5599,18 +4759,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  download_import_file_api_v1_race_result_imports__import_id__file_get: {
+  downloadRaceResultImportFile: {
     parameters: {
       query?: never;
       header?: never;
@@ -5621,25 +4776,26 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      /** @description Successful Response */
+      /** @description The file as it was uploaded. */
       200: {
         headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
+          /** @description `attachment` with the original file name. */
+          'Content-Disposition'?: string;
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['HTTPValidationError'];
+          'application/octet-stream': string;
         };
       };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
+      502: components['responses']['BadGateway'];
+      503: components['responses']['ServiceUnavailable'];
     };
   };
-  create_parse_run_api_v1_race_result_imports__import_id__parse_runs_post: {
+  createParseRun: {
     parameters: {
       query?: never;
       header?: never;
@@ -5653,24 +4809,25 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['ImportResultOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      400: components['responses']['BadRequest'];
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
+      502: components['responses']['BadGateway'];
+      503: components['responses']['ServiceUnavailable'];
     };
   };
-  list_regulations_api_v1_regulations_get: {
+  listRegulations: {
     parameters: {
       query?: {
         lang?: string;
@@ -5690,18 +4847,10 @@ export interface operations {
           'application/json': components['schemas']['RegulationPageListItem'][];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  get_regulation_api_v1_regulations__slug__get: {
+  getRegulation: {
     parameters: {
       query?: {
         lang?: string;
@@ -5723,18 +4872,11 @@ export interface operations {
           'application/json': components['schemas']['RegulationContentOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  list_regulation_pages_api_v1_regulation_pages_get: {
+  listRegulationPages: {
     parameters: {
       query?: never;
       header?: never;
@@ -5752,9 +4894,11 @@ export interface operations {
           'application/json': components['schemas']['RegulationPageOut'][];
         };
       };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
     };
   };
-  create_regulation_page_api_v1_regulation_pages_post: {
+  createRegulationPage: {
     parameters: {
       query?: never;
       header?: never;
@@ -5770,24 +4914,21 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['RegulationPageOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  get_regulation_page_api_v1_regulation_pages__page_id__get: {
+  getRegulationPage: {
     parameters: {
       query?: never;
       header?: never;
@@ -5807,18 +4948,13 @@ export interface operations {
           'application/json': components['schemas']['RegulationPageOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  delete_regulation_page_api_v1_regulation_pages__page_id__delete: {
+  deleteRegulationPage: {
     parameters: {
       query?: never;
       header?: never;
@@ -5836,18 +4972,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  update_regulation_page_api_v1_regulation_pages__page_id__patch: {
+  updateRegulationPage: {
     parameters: {
       query?: never;
       header?: never;
@@ -5871,18 +5002,14 @@ export interface operations {
           'application/json': components['schemas']['RegulationPageOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  list_simulators_api_v1_simulators_get: {
+  listSimulators: {
     parameters: {
       query?: never;
       header?: never;
@@ -5894,6 +5021,8 @@ export interface operations {
       /** @description Successful Response */
       200: {
         headers: {
+          /** @description `true` when SimGrid was unreachable and cached data was served. */
+          'X-Data-Stale'?: 'true';
           [name: string]: unknown;
         };
         content: {
@@ -5902,7 +5031,7 @@ export interface operations {
       };
     };
   };
-  list_car_classes_api_v1_car_classes_get: {
+  listCarClasses: {
     parameters: {
       query?: {
         gameId?: number | null;
@@ -5916,24 +5045,18 @@ export interface operations {
       /** @description Successful Response */
       200: {
         headers: {
+          /** @description `true` when SimGrid was unreachable and cached data was served. */
+          'X-Data-Stale'?: 'true';
           [name: string]: unknown;
         };
         content: {
           'application/json': string[];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  list_users_api_v1_users_get: {
+  listUsers: {
     parameters: {
       query?: {
         limit?: number;
@@ -5948,24 +5071,22 @@ export interface operations {
       /** @description Successful Response */
       200: {
         headers: {
+          /** @description Size of the whole collection, across all pages. */
+          'X-Total-Count'?: number;
+          /** @description RFC 8288 links to the `next` and `prev` pages, when they exist. */
+          Link?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['UserOut'][];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  update_user_api_v1_users__user_id__patch: {
+  updateUser: {
     parameters: {
       query?: never;
       header?: never;
@@ -5989,18 +5110,13 @@ export interface operations {
           'application/json': components['schemas']['UserOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  revoke_sessions_api_v1_users__user_id__sessions_delete: {
+  revokeUserSessions: {
     parameters: {
       query?: never;
       header?: never;
@@ -6018,18 +5134,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  get_managed_communities_api_v1_users__user_id__managed_communities_get: {
+  getUserManagedCommunities: {
     parameters: {
       query?: never;
       header?: never;
@@ -6049,18 +5160,13 @@ export interface operations {
           'application/json': string[];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  set_managed_communities_api_v1_users__user_id__managed_communities_put: {
+  setUserManagedCommunities: {
     parameters: {
       query?: never;
       header?: never;
@@ -6084,18 +5190,13 @@ export interface operations {
           'application/json': string[];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  list_verdict_rules_api_v1_verdict_rules_get: {
+  listVerdictRules: {
     parameters: {
       query?: never;
       header?: never;
@@ -6115,7 +5216,7 @@ export interface operations {
       };
     };
   };
-  create_verdict_rule_api_v1_verdict_rules_post: {
+  createVerdictRule: {
     parameters: {
       query?: never;
       header?: never;
@@ -6131,24 +5232,20 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['VerdictRuleOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  reorder_verdict_rules_api_v1_verdict_rules_order_put: {
+  reorderVerdictRules: {
     parameters: {
       query?: never;
       header?: never;
@@ -6170,18 +5267,12 @@ export interface operations {
           'application/json': components['schemas']['VerdictRuleOut'][];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  delete_verdict_rule_api_v1_verdict_rules__rule_id__delete: {
+  deleteVerdictRule: {
     parameters: {
       query?: never;
       header?: never;
@@ -6199,18 +5290,14 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  update_verdict_rule_api_v1_verdict_rules__rule_id__patch: {
+  updateVerdictRule: {
     parameters: {
       query?: never;
       header?: never;
@@ -6234,18 +5321,14 @@ export interface operations {
           'application/json': components['schemas']['VerdictRuleOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      400: components['responses']['BadRequest'];
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  list_description_presets_api_v1_description_presets_get: {
+  listDescriptionPresets: {
     parameters: {
       query?: never;
       header?: never;
@@ -6263,9 +5346,10 @@ export interface operations {
           'application/json': components['schemas']['DescriptionPresetOut'][];
         };
       };
+      401: components['responses']['Unauthorized'];
     };
   };
-  create_description_preset_api_v1_description_presets_post: {
+  createDescriptionPreset: {
     parameters: {
       query?: never;
       header?: never;
@@ -6281,24 +5365,20 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['DescriptionPresetOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  delete_description_preset_api_v1_description_presets__preset_id__delete: {
+  deleteDescriptionPreset: {
     parameters: {
       query?: never;
       header?: never;
@@ -6316,18 +5396,13 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  update_description_preset_api_v1_description_presets__preset_id__patch: {
+  updateDescriptionPreset: {
     parameters: {
       query?: never;
       header?: never;
@@ -6351,18 +5426,13 @@ export interface operations {
           'application/json': components['schemas']['DescriptionPresetOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  list_youtube_streams_api_v1_youtube_streams_get: {
+  listYoutubeStreams: {
     parameters: {
       query: {
         status: components['schemas']['StreamStatus'];
@@ -6383,18 +5453,10 @@ export interface operations {
           'application/json': components['schemas']['YouTubeVideo'][];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      422: components['responses']['UnprocessableContent'];
     };
   };
-  discord_callback_api_auth_discord_callback_get: {
+  discordCallback: {
     parameters: {
       query: {
         code: string;
@@ -6406,27 +5468,22 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      /** @description Successful Response */
+      /** @description Signed in: redirects to the frontend with the session cookie set. */
       302: {
         headers: {
+          /** @description The frontend URL. */
+          Location?: string;
           [name: string]: unknown;
         };
-        content: {
-          'application/json': unknown;
-        };
+        content?: never;
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
+      400: components['responses']['BadRequest'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
+      502: components['responses']['BadGateway'];
     };
   };
-  ingest_incidents_api_incidents_ingest_post: {
+  ingestIncidents: {
     parameters: {
       query?: never;
       header?: never;
@@ -6442,41 +5499,19 @@ export interface operations {
       /** @description Successful Response */
       201: {
         headers: {
+          /** @description Path of the created resource. */
+          Location?: string;
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['IncidentWindowOut'];
         };
       };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
-  healthz_healthz_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': unknown;
-        };
-      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
+      503: components['responses']['ServiceUnavailable'];
     };
   };
 }

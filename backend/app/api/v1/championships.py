@@ -8,6 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_user_optional, is_admin, require_admin
+from app.core.openapi import NO_404, SIMGRID_RESPONSES
 from app.database import get_db
 from app.models.user import User
 from app.schemas.championship import (
@@ -27,7 +28,7 @@ from app.services.drivers import sync_drivers_from_standings
 router = APIRouter(prefix="/championships", tags=["Championships"])
 
 
-@router.get("", response_model=list[ChampionshipListItem])
+@router.get("", response_model=list[ChampionshipListItem], responses=SIMGRID_RESPONSES)
 async def list_championships(
     db: AsyncSession = Depends(get_db),
     user: User | None = Depends(get_current_user_optional),
@@ -36,13 +37,23 @@ async def list_championships(
     return await service.list_championships(db, include_inactive=is_admin(user))
 
 
-@router.get("/{championship_id}", response_model=ChampionshipDetails)
+@router.get(
+    "/{championship_id}",
+    response_model=ChampionshipDetails,
+    responses=SIMGRID_RESPONSES,
+    openapi_extra=NO_404,
+)
 async def get_championship(championship_id: int):
     return await service.get_championship(championship_id)
 
 
-@router.get("/{championship_id}/standings", response_model=ChampionshipStandingsData)
-async def get_standings(championship_id: int, background_tasks: BackgroundTasks):
+@router.get(
+    "/{championship_id}/standings",
+    response_model=ChampionshipStandingsData,
+    responses=SIMGRID_RESPONSES,
+    openapi_extra=NO_404,
+)
+async def get_championship_standings(championship_id: int, background_tasks: BackgroundTasks):
     data, fetched_live = await service.get_standings(championship_id)
     # Only sync when SimGrid was actually hit — cache hits and stale
     # fallbacks cannot contain anything new.
@@ -51,13 +62,23 @@ async def get_standings(championship_id: int, background_tasks: BackgroundTasks)
     return await championship_results.with_round_results(championship_id, data)
 
 
-@router.get("/{championship_id}/races", response_model=list[ChampionshipRace])
-async def get_races(championship_id: int):
+@router.get(
+    "/{championship_id}/races",
+    response_model=list[ChampionshipRace],
+    responses=SIMGRID_RESPONSES,
+    openapi_extra=NO_404,
+)
+async def list_championship_races(championship_id: int):
     """All races of the championship, including future ones."""
     return await service.get_races(championship_id)
 
 
-@router.get("/{championship_id}/races/{race_id}/results", response_model=RaceSessionOut)
+@router.get(
+    "/{championship_id}/races/{race_id}/results",
+    response_model=RaceSessionOut,
+    responses=SIMGRID_RESPONSES,
+    openapi_extra=NO_404,
+)
 async def get_race_results(
     championship_id: int,
     race_id: int,
@@ -70,14 +91,20 @@ async def get_race_results(
 @router.get(
     "/{championship_id}/incident-windows",
     response_model=list[ChampionshipIncidentWindowOut],
+    openapi_extra=NO_404,
 )
-async def get_incident_windows(championship_id: int, db: AsyncSession = Depends(get_db)):
+async def list_championship_incident_windows(championship_id: int, db: AsyncSession = Depends(get_db)):
     """The championship's incident windows, one per round, keyed by race."""
     return await service.incident_windows(db, championship_id)
 
 
-@router.get("/{championship_id}/rounds", response_model=RoundsOut)
-async def get_rounds(
+@router.get(
+    "/{championship_id}/rounds",
+    response_model=RoundsOut,
+    responses=SIMGRID_RESPONSES,
+    openapi_extra=NO_404,
+)
+async def get_championship_rounds(
     championship_id: int,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
@@ -86,7 +113,12 @@ async def get_rounds(
     return await race_import.build_rounds(db, championship_id)
 
 
-@router.get("/{championship_id}/giveaway-eligibility", response_model=EligibilityOut)
+@router.get(
+    "/{championship_id}/giveaway-eligibility",
+    response_model=EligibilityOut,
+    tags=["Giveaway"],
+    openapi_extra=NO_404,
+)
 async def get_giveaway_eligibility(
     championship_id: int,
     min_distance_pct: float = Query(50.0, alias="minDistancePct", ge=0, le=100),
@@ -98,7 +130,12 @@ async def get_giveaway_eligibility(
     return await giveaway.eligibility(db, championship_id, min_distance_pct, min_rounds)
 
 
-@router.get("/{championship_id}/unmatched-driver-names", response_model=list[UnmatchedNameOut])
+@router.get(
+    "/{championship_id}/unmatched-driver-names",
+    response_model=list[UnmatchedNameOut],
+    tags=["Giveaway"],
+    openapi_extra=NO_404,
+)
 async def get_unmatched_driver_names(
     championship_id: int,
     db: AsyncSession = Depends(get_db),

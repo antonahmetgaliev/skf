@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import SESSION_COOKIE
 from app.config import settings
+from app.core.openapi import problem_responses
 from app.database import get_db
 from app.schemas.auth import AuthUrlOut
 from app.services import auth as auth_service
@@ -40,7 +41,18 @@ async def discord_authorization_url(response: Response):
     return AuthUrlOut(url=auth_service.authorization_url(state))
 
 
-@legacy_router.get("/callback", status_code=status.HTTP_302_FOUND)
+@legacy_router.get(
+    "/callback",
+    status_code=status.HTTP_302_FOUND,
+    response_class=RedirectResponse,
+    responses={
+        302: {
+            "description": "Signed in: redirects to the frontend with the session cookie set.",
+            "headers": {"Location": {"description": "The frontend URL.", "schema": {"type": "string"}}},
+        },
+        **problem_responses(400, 403, 502),
+    },
+)
 async def discord_callback(
     code: str,
     request: Request,

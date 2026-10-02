@@ -8,6 +8,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 
 from fastapi import Depends, Request
+from fastapi.security import APIKeyCookie, HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -26,6 +27,20 @@ from app.models.user import (
 )
 
 SESSION_COOKIE = "session_id"
+
+# Declared only so OpenAPI lists the schemes and marks the operations that
+# need them; the values are still read and checked by the functions below.
+_session_cookie = APIKeyCookie(
+    name=SESSION_COOKIE,
+    scheme_name="sessionCookie",
+    description="Session id, set as a cookie by the Discord login.",
+    auto_error=False,
+)
+_ingest_bearer = HTTPBearer(
+    scheme_name="ingestToken",
+    description="Shared token of the external incident parsers.",
+    auto_error=False,
+)
 
 
 async def get_current_user_optional(
@@ -64,6 +79,7 @@ async def get_current_user_optional(
 
 async def get_current_user(
     user: User | None = Depends(get_current_user_optional),
+    _: str | None = Depends(_session_cookie),
 ) -> User:
     """Return the authenticated user or raise 401."""
     if user is None:
@@ -86,6 +102,8 @@ def require_role(*roles: str) -> Callable:
             raise Forbidden("Insufficient permissions.")
         return user
 
+    # Read by app.core.openapi to document who may call the operation.
+    _check.required_roles = roles  # type: ignore[attr-defined]
     return _check
 
 
@@ -126,7 +144,10 @@ async def get_managed_community_ids(user: User, db: AsyncSession) -> list[uuid.U
     return list(result.scalars().all())
 
 
-async def require_api_token(request: Request) -> None:
+async def require_api_token(
+    request: Request,
+    _: HTTPAuthorizationCredentials | None = Depends(_ingest_bearer),
+) -> None:
     """Validate ``Authorization: Bearer <token>`` against the configured incident API token."""
     token = settings.incident_api_token
     if not token:

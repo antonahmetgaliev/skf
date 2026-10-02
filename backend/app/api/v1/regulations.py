@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_admin
+from app.core.openapi import problem_responses
 from app.database import get_db
 from app.schemas.regulations import (
     RegulationContentOut,
@@ -45,7 +46,12 @@ async def list_regulation_pages(db: AsyncSession = Depends(get_db)):
     return await service.list_all(db)
 
 
-@admin.post("", response_model=RegulationPageOut, status_code=status.HTTP_201_CREATED)
+@admin.post(
+    "",
+    response_model=RegulationPageOut,
+    status_code=status.HTTP_201_CREATED,
+    responses=problem_responses(409),
+)
 async def create_regulation_page(
     body: RegulationPageCreate, response: Response, db: AsyncSession = Depends(get_db)
 ):
@@ -59,7 +65,7 @@ async def get_regulation_page(page_id: uuid.UUID, db: AsyncSession = Depends(get
     return await service.get(db, page_id)
 
 
-@admin.patch("/{page_id}", response_model=RegulationPageOut)
+@admin.patch("/{page_id}", response_model=RegulationPageOut, responses=problem_responses(409))
 async def update_regulation_page(
     page_id: uuid.UUID, body: RegulationPageUpdate, db: AsyncSession = Depends(get_db)
 ):

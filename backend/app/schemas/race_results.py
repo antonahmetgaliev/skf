@@ -5,8 +5,21 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
+from fastapi import UploadFile
+from pydantic import Field
+
 from app.schemas.base import CamelModel
 from app.services.race_files.types import Sim
+
+
+class RaceResultImportCreate(CamelModel):
+    """``POST /race-result-imports``: the multipart form of one round's upload."""
+
+    file: UploadFile
+    championship_id: int
+    race_id: int
+    create_incidents: bool = True
+    window_hours: int = Field(default=24, ge=1, le=168)
 
 
 class ImportEntryOut(CamelModel):

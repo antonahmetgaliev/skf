@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_admin, require_api_token, require_judge
+from app.core.openapi import problem_responses
 from app.database import get_db
 from app.models.user import User
 from app.schemas.incidents import (
@@ -65,7 +66,11 @@ async def add_incident_driver(
     return await svc.add_driver(db, incident_id, payload.driver_name)
 
 
-@router.put("/incidents/{incident_id}/resolution", response_model=IncidentOut)
+@router.put(
+    "/incidents/{incident_id}/resolution",
+    response_model=IncidentOut,
+    responses=problem_responses(400, 409),
+)
 async def resolve_incident(
     incident_id: uuid.UUID,
     payload: BulkResolveIncident,
@@ -143,6 +148,7 @@ SUCCESSOR_LINK = '</api/v1/incident-windows>; rel="successor-version"'
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_api_token)],
     deprecated=True,
+    responses=problem_responses(403, 409, 503),
 )
 async def ingest_incidents(
     payload: IncidentBatchCreate,

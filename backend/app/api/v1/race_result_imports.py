@@ -8,17 +8,19 @@ file type, follows from the championship's SimGrid game.
 from __future__ import annotations
 
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, Query, Request, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Query, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_admin
+from app.core.openapi import problem_responses
 from app.core.pagination import PageParams, page_params, paginate
 from app.database import get_db
 from app.models.race_result import RaceResultImport
 from app.models.user import User
 from app.repository import get_or_404
-from app.schemas.race_results import ImportOut, ImportResultOut
+from app.schemas.race_results import ImportOut, ImportResultOut, RaceResultImportCreate
 from app.services import race_import as service
 
 router = APIRouter(prefix="/race-result-imports", tags=["Race results"])
@@ -35,7 +37,7 @@ async def _get(db: AsyncSession, import_id: uuid.UUID) -> RaceResultImport:
 
 
 @router.get("", response_model=list[ImportOut])
-async def list_imports(
+async def list_race_result_imports(
     request: Request,
     response: Response,
     championship_id: int | None = Query(None, alias="championshipId"),
@@ -47,35 +49,36 @@ async def list_imports(
     return await service.list_out(db, records)
 
 
-@router.post("", response_model=ImportResultOut, status_code=status.HTTP_201_CREATED)
-async def create_import(
+@router.post(
+    "",
+    response_model=ImportResultOut,
+    status_code=status.HTTP_201_CREATED,
+    responses=problem_responses(400, 413, 502),
+)
+async def create_race_result_import(
     response: Response,
-    file: UploadFile = File(...),
-    championship_id: int = Form(..., alias="championshipId"),
-    race_id: int = Form(..., alias="raceId"),
-    create_incidents: bool = Form(True, alias="createIncidents"),
-    window_hours: int = Form(24, alias="windowHours", ge=1, le=168),
+    form: Annotated[RaceResultImportCreate, File()],
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_admin),
 ):
     """Import one round's result file, replacing any earlier upload of it."""
-    payload = await service.read_upload(file)
+    payload = await service.read_upload(form.file)
     result = await service.upload(
         db,
         payload=payload,
-        filename=file.filename,
-        championship_id=championship_id,
-        race_id=race_id,
+        filename=form.file.filename,
+        championship_id=form.championship_id,
+        race_id=form.race_id,
         user_id=user.id,
-        create_incidents=create_incidents,
-        window_hours=window_hours,
+        create_incidents=form.create_incidents,
+        window_hours=form.window_hours,
     )
     response.headers["Location"] = _location(result.record.id)
     return service.result_out(result)
 
 
 @router.get("/{import_id}", response_model=ImportOut)
-async def get_import(
+async def get_race_result_import(
     import_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
@@ -83,8 +86,24 @@ async def get_import(
     return (await service.list_out(db, [await _get(db, import_id)]))[0]
 
 
-@router.get("/{import_id}/file", response_class=Response)
-async def download_import_file(
+@router.get(
+    "/{import_id}/file",
+    response_class=Response,
+    responses={
+        200: {
+            "description": "The file as it was uploaded.",
+            "content": {"application/octet-stream": {"schema": {"type": "string", "format": "binary"}}},
+            "headers": {
+                "Content-Disposition": {
+                    "description": "`attachment` with the original file name.",
+                    "schema": {"type": "string"},
+                }
+            },
+        },
+        **problem_responses(502, 503),
+    },
+)
+async def download_race_result_import_file(
     import_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
@@ -101,6 +120,7 @@ async def download_import_file(
     "/{import_id}/parse-runs",
     response_model=ImportResultOut,
     status_code=status.HTTP_201_CREATED,
+    responses=problem_responses(400, 409, 502, 503),
 )
 async def create_parse_run(
     import_id: uuid.UUID,
@@ -119,7 +139,7 @@ async def create_parse_run(
 
 
 @router.delete("/{import_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_import(
+async def delete_race_result_import(
     import_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),

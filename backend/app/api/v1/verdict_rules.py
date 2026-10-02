@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_user, get_current_user_optional, require_judge
+from app.core.openapi import problem_responses
 from app.database import get_db
 from app.models.user import User
 from app.schemas.incidents import (
@@ -21,7 +22,7 @@ from app.schemas.incidents import (
 )
 from app.services import incident_rules as svc
 
-router = APIRouter(tags=["Incidents"])
+router = APIRouter(tags=["Incident rules"])
 
 
 # ── Verdict rules ────────────────────────────────────────────────────────────
@@ -55,7 +56,11 @@ async def reorder_verdict_rules(
     return await svc.reorder_verdict_rules(db, payload.ids)
 
 
-@router.patch("/verdict-rules/{rule_id}", response_model=VerdictRuleOut)
+@router.patch(
+    "/verdict-rules/{rule_id}",
+    response_model=VerdictRuleOut,
+    responses=problem_responses(400),
+)
 async def update_verdict_rule(
     rule_id: uuid.UUID,
     payload: VerdictRuleUpdate,
@@ -65,7 +70,11 @@ async def update_verdict_rule(
     return await svc.update_verdict_rule(db, rule_id, payload)
 
 
-@router.delete("/verdict-rules/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/verdict-rules/{rule_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=problem_responses(409),
+)
 async def delete_verdict_rule(
     rule_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
