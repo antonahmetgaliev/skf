@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from typing import Annotated, Literal
+from typing import Annotated
 
 from pydantic import ConfigDict, Field, StringConstraints
 
@@ -63,11 +63,6 @@ class IncidentDriverAdd(CamelModel):
 
 class IncidentDriverUpdate(CamelModel):
     driver_id: uuid.UUID
-
-
-class WindowIncidentsUpdate(CamelModel):
-    # Publishing is one-way: verdicts that went public cannot be hidden again.
-    is_published: Literal[True]
 
 
 # ── Per-driver resolve ──────────────────────────────────────────────────────
@@ -203,18 +198,29 @@ class IncidentWindowListItem(CamelModel):
     is_open: bool
 
 
+class IncidentWindowSummaryOut(CamelModel):
+    """A round's window at a glance, for lists of rounds."""
+
+    id: uuid.UUID
+    race_id: int | None
+    is_open: bool
+    closes_at: datetime
+    incidents_count: int
+
+
 class IncidentWindowOut(IncidentWindowListItem):
     incidents: list[IncidentOut] = []
 
 
-class ResolveRemainingOut(IncidentWindowOut):
-    resolved_count: int = Field(default=0, description="Drivers the default verdict was just applied to.")
+class DefaultResolutionsOut(CamelModel):
+    window: IncidentWindowOut
+    resolved_count: int = Field(description="Drivers the default verdict was just applied to.")
 
 
-class PublishWindowOut(IncidentWindowOut):
+class WindowPublicationOut(CamelModel):
+    window: IncidentWindowOut
     unlinked_count: int = Field(
-        default=0,
-        description="Penalties that reached no licence because the driver name matches no driver record.",
+        description="Penalties that reached no licence because the driver name matches no driver record."
     )
 
 

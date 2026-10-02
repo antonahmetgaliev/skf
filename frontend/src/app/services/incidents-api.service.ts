@@ -13,13 +13,13 @@ export type Incident = Schemas['IncidentOut'];
 
 export type IncidentWindowListItem = Schemas['IncidentWindowListItem'];
 
-export type ChampionshipIncidentWindow = Schemas['ChampionshipIncidentWindowOut'];
+export type ChampionshipIncidentWindow = Schemas['IncidentWindowSummaryOut'];
 
 export type IncidentWindowOut = Schemas['IncidentWindowOut'];
 
-export type ResolveRemainingResult = Schemas['ResolveRemainingOut'];
+export type ResolveRemainingResult = Schemas['DefaultResolutionsOut'];
 
-export type PublishWindowResult = Schemas['PublishWindowOut'];
+export type PublishWindowResult = Schemas['WindowPublicationOut'];
 
 // ── Input types ────────────────────────────────────────────────────────────
 
@@ -103,9 +103,7 @@ export class IncidentsApiService {
 
   /** Reveals every verdict in the window and issues the BWP they carry. */
   publishAllIncidents(windowId: string): Observable<PublishWindowResult> {
-    return this.http.patch<PublishWindowResult>(`${this.windows}/${windowId}/incidents`, {
-      isPublished: true,
-    });
+    return this.http.put<PublishWindowResult>(`${this.windows}/${windowId}/publication`, null);
   }
 
   /** A fresh, unresolved and unpublished copy of the incident. */

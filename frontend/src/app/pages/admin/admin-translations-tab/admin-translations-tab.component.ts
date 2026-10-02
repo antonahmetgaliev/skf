@@ -75,7 +75,7 @@ export class AdminTranslationsTabComponent implements OnInit {
   }
 
   private loadLanguages(): void {
-    this.api.getLanguages().subscribe({
+    this.api.getAllLanguages().subscribe({
       next: (langs) => {
         this.languages.set(langs);
         this.loadAllTranslations();

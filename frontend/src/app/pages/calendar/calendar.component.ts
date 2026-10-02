@@ -343,13 +343,13 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getCommunityColor(event: CalendarEvent): string {
-    return event.communityColor ?? DEFAULT_COLOR;
+    return event.community?.color ?? DEFAULT_COLOR;
   }
 
   getCommunityDiscordUrl(event: CalendarEvent): string | null {
-    if (!event.communityId) return null;
-    const community = this.communities().find((c) => c.id === event.communityId);
-    return community?.discordUrl ?? null;
+    const id = event.community?.id;
+    if (!id) return null;
+    return this.communities().find((c) => c.id === id)?.discordUrl ?? null;
   }
 
   // ── Community management (year view) ──
@@ -478,7 +478,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     return events.filter((e) => {
       // Community filter
       if (communityIds.size > 0) {
-        if (!e.communityId || !communityIds.has(e.communityId)) return false;
+        if (!e.community || !communityIds.has(e.community.id)) return false;
       }
 
       // Simulator filter

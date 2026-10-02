@@ -114,6 +114,15 @@ async def replace_custom_races(
     return await service.replace_races(db, champ, body)
 
 
+@router.get("/{champ_id}/races/{race_id}", response_model=CustomRaceOut)
+async def get_custom_race(
+    race_id: uuid.UUID,
+    champ: CustomChampionship = Depends(get_accessible_custom_championship),
+    db: AsyncSession = Depends(get_db),
+):
+    return await service.get_race(db, champ, race_id)
+
+
 @router.patch("/{champ_id}/races/{race_id}", response_model=CustomRaceOut)
 async def update_custom_race(
     race_id: uuid.UUID,

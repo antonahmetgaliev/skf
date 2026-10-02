@@ -14,6 +14,7 @@ from app.core.errors import (
     BadGateway,
     BadRequest,
     Forbidden,
+    NotFound,
     ServiceUnavailable,
     TooManyRequests,
 )
@@ -75,6 +76,17 @@ async def list_visible(db: AsyncSession) -> list[Community]:
         .order_by(Community.is_skf.desc(), Community.name)
     )
     return list(result.scalars().all())
+
+
+_NOT_FOUND = "Community not found."
+
+
+async def get_visible(db: AsyncSession, user: User | None, community_id: uuid.UUID) -> Community:
+    """The community at *community_id*; a hidden one exists only for those who manage it."""
+    community = await get_or_404(db, Community, community_id, detail=_NOT_FOUND)
+    if not community.is_visible and (user is None or not await can_access_community(db, user, community_id)):
+        raise NotFound(_NOT_FOUND)
+    return community
 
 
 async def list_managed(db: AsyncSession, user: User) -> list[Community]:

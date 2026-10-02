@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import uuid
-from datetime import datetime
 from typing import Annotated, Any
 
 from pydantic import Field, model_validator
@@ -17,6 +15,7 @@ class ChampionshipListItem(CamelModel):
     end_date: IsoDateTime | None = None
     accepting_registrations: bool = False
     event_completed: bool = Field(default=False, description="SimGrid marks the championship as finished.")
+    is_active: bool = Field(default=False, description="Shown on the site; inactive ones are admin-only.")
 
     @model_validator(mode="before")
     @classmethod
@@ -40,6 +39,10 @@ class ChampionshipListItem(CamelModel):
                     data["event_completed"] = True
                     break
         return data
+
+
+class ChampionshipUpdate(CamelModel):
+    is_active: bool
 
 
 class ChampionshipDetails(CamelModel):
@@ -162,15 +165,3 @@ class ParticipatingUser(CamelModel):
     username: str
     steam64_id: str | None = None
     discord_uid: str | None = None
-
-
-class ChampionshipIncidentWindowOut(CamelModel):
-    race_id: int
-    window_id: uuid.UUID
-    is_open: bool
-    incidents_count: int
-
-
-class ActiveChampionshipOut(CamelModel):
-    simgrid_id: int
-    created_at: datetime | None = None

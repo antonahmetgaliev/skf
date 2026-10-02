@@ -45,8 +45,17 @@ async def test_public_language_list_hides_inactive(client, seeded):
     assert resp.json() == [{"code": "en", "name": "English", "isActive": True}]
 
 
-async def test_admin_sees_inactive_languages(client, admin):
-    assert [lang["code"] for lang in (await client.get(LANGS)).json()] == ["en", "xx"]
+async def test_admins_get_the_same_list_as_everyone(client, admin):
+    assert [lang["code"] for lang in (await client.get(LANGS)).json()] == ["en"]
+
+
+async def test_include_inactive_lists_every_language(client, admin):
+    resp = await client.get(LANGS, params={"include": "inactive"})
+    assert [lang["code"] for lang in resp.json()] == ["en", "xx"]
+
+
+async def test_include_inactive_needs_an_admin(client, seeded):
+    assert (await client.get(LANGS, params={"include": "inactive"})).status_code == 401
 
 
 async def test_public_translation_map(client, seeded):

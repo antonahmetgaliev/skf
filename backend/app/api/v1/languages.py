@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import re
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Body, Depends, Path, Query, Response, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import get_current_user_optional, is_admin, require_admin
+from app.auth import ensure_admin, get_current_user_optional, is_admin, require_admin
 from app.core.openapi import problem_responses
 from app.database import get_db
 from app.models.user import User
@@ -26,13 +26,18 @@ router = APIRouter(prefix="/languages", tags=["Languages"])
 LanguageCode = Annotated[str, Path(max_length=LANGUAGE_CODE_MAX_LENGTH, pattern=LANGUAGE_CODE_PATTERN)]
 
 
-@router.get("", response_model=list[LanguageOut])
+@router.get("", response_model=list[LanguageOut], responses=problem_responses(401, 403))
 async def list_languages(
+    include: Literal["inactive"] | None = Query(
+        None, description="`inactive` adds the languages not offered on the site; admins only."
+    ),
     user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    """Active languages; admins also see inactive ones."""
-    return await service.list_languages(db, include_inactive=is_admin(user))
+    """The languages the site is offered in."""
+    if include is not None:
+        ensure_admin(user)
+    return await service.list_languages(db, include_inactive=include is not None)
 
 
 @router.post(
@@ -46,6 +51,16 @@ async def create_language(body: LanguageCreate, response: Response, db: AsyncSes
     language = await service.add_language(db, body)
     response.headers["Location"] = f"/api/v1/languages/{language.code}"
     return language
+
+
+@router.get("/{code}", response_model=LanguageOut)
+async def get_language(
+    code: LanguageCode,
+    user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """A language offered on the site; one that is not, only for admins."""
+    return await service.get_language(db, code, include_inactive=is_admin(user))
 
 
 @router.delete("/{code}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin)])

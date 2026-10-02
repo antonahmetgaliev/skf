@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_user, get_current_user_optional, require_judge
 from app.core.openapi import problem_responses
 from app.database import get_db
+from app.models.incidents import DescriptionPreset, VerdictRule
 from app.models.user import User
+from app.repository import get_or_404
 from app.schemas.incidents import (
     DescriptionPresetCreate,
     DescriptionPresetOut,
@@ -41,10 +43,18 @@ async def list_verdict_rules(
 @router.post("/verdict-rules", response_model=VerdictRuleOut, status_code=status.HTTP_201_CREATED)
 async def create_verdict_rule(
     payload: VerdictRuleCreate,
+    response: Response,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_judge),
 ):
-    return await svc.create_verdict_rule(db, payload)
+    rule = await svc.create_verdict_rule(db, payload)
+    response.headers["Location"] = f"/api/v1/verdict-rules/{rule.id}"
+    return rule
+
+
+@router.get("/verdict-rules/{rule_id}", response_model=VerdictRuleOut)
+async def get_verdict_rule(rule_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return await get_or_404(db, VerdictRule, rule_id, detail="Rule not found.")
 
 
 @router.put("/verdict-rules/order", response_model=list[VerdictRuleOut])
@@ -97,10 +107,22 @@ async def list_description_presets(
 @router.post("/description-presets", response_model=DescriptionPresetOut, status_code=status.HTTP_201_CREATED)
 async def create_description_preset(
     payload: DescriptionPresetCreate,
+    response: Response,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_judge),
 ):
-    return await svc.create_description_preset(db, payload)
+    preset = await svc.create_description_preset(db, payload)
+    response.headers["Location"] = f"/api/v1/description-presets/{preset.id}"
+    return preset
+
+
+@router.get("/description-presets/{preset_id}", response_model=DescriptionPresetOut)
+async def get_description_preset(
+    preset_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    return await get_or_404(db, DescriptionPreset, preset_id, detail="Preset not found.")
 
 
 @router.patch("/description-presets/{preset_id}", response_model=DescriptionPresetOut)

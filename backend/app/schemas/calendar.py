@@ -162,11 +162,7 @@ class CalendarEvent(CamelModel):
     image: str | None = None
     simgrid_championship_id: int | None = None
     custom_championship_id: uuid.UUID | None = None
-    community_id: uuid.UUID | None = None
-    community_name: str | None = None
-    community_color: str | None = None
-    community_discord_url: str | None = None
-    community_is_skf: bool = False
+    community: CommunityOut | None = None
     accepting_registrations: bool = False
     capacity: int | None = None
     spots_taken: int | None = None

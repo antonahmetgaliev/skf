@@ -223,7 +223,7 @@ export function earliestDate(event: CalendarEvent): Date | null {
 export function groupEventsByColor(events: CalendarEvent[]): EventGroup[] {
   const map = new Map<string, CalendarEvent[]>();
   for (const e of events) {
-    const color = e.communityColor || DEFAULT_COLOR;
+    const color = e.community?.color || DEFAULT_COLOR;
     const list = map.get(color);
     if (list) {
       list.push(e);
@@ -248,7 +248,7 @@ export function buildYearColumns(
   const addedIds = new Set<string>();
 
   for (const c of communities) {
-    const communityEvents = events.filter((e) => e.communityId === c.id);
+    const communityEvents = events.filter((e) => e.community?.id === c.id);
     if (communityEvents.length === 0) continue;
 
     const sorted = [...communityEvents].sort((a, b) => {

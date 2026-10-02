@@ -95,34 +95,46 @@ def simgrid_lists(monkeypatch, simgrid_stub):
     return state
 
 
-async def test_active_championships_put_is_idempotent(admin_client):
-    first = await admin_client.put("/api/v1/active-championships/1")
-    assert first.status_code == 201
-    assert first.headers["location"] == "/api/v1/active-championships/1"
-    assert first.json()["simgridId"] == 1
-
-    again = await admin_client.put("/api/v1/active-championships/1")
-    assert again.status_code == 200
-    assert again.json()["simgridId"] == 1
-
-    assert (await admin_client.get("/api/v1/active-championships")).json() == [1]
-
-    resp = await admin_client.delete("/api/v1/active-championships/1")
-    assert resp.status_code == 204
-    assert (await admin_client.get("/api/v1/active-championships")).json() == []
+async def _ids(client, **params):
+    return [c["id"] for c in (await client.get("/api/v1/championships", params=params)).json()]
 
 
-async def test_active_championships_are_admin_only_to_change(client):
-    assert (await client.get("/api/v1/active-championships")).status_code == 200
-    assert (await client.put("/api/v1/active-championships/1")).status_code in (401, 403)
-    assert (await client.delete("/api/v1/active-championships/1")).status_code in (401, 403)
+async def test_activating_a_championship_is_idempotent(admin_client, simgrid_lists):
+    for _ in range(2):
+        resp = await admin_client.patch("/api/v1/championships/1", json={"isActive": True})
+        assert resp.status_code == 204
+    assert await _ids(admin_client) == [1]
+
+    for _ in range(2):
+        resp = await admin_client.patch("/api/v1/championships/1", json={"isActive": False})
+        assert resp.status_code == 204
+    assert await _ids(admin_client) == []
 
 
-async def test_admins_see_every_championship_inactive_ones_completed(admin_client, simgrid_lists):
-    await admin_client.put("/api/v1/active-championships/1")
+async def test_only_admins_change_activity(client):
+    resp = await client.patch("/api/v1/championships/1", json={"isActive": True})
+    assert resp.status_code == 401
 
-    body = (await admin_client.get("/api/v1/championships")).json()
-    assert [(c["id"], c["eventCompleted"]) for c in body] == [(1, False), (2, True)]
+
+async def test_admins_get_the_same_list_as_everyone(admin_client, simgrid_lists):
+    await admin_client.patch("/api/v1/championships/1", json={"isActive": True})
+
+    assert await _ids(admin_client) == [1]
+
+
+async def test_include_inactive_lists_every_championship(admin_client, simgrid_lists):
+    await admin_client.patch("/api/v1/championships/1", json={"isActive": True})
+
+    body = (await admin_client.get("/api/v1/championships", params={"include": "inactive"})).json()
+    assert [(c["id"], c["isActive"], c["eventCompleted"]) for c in body] == [
+        (1, True, False),
+        (2, False, False),
+    ]
+
+
+async def test_include_inactive_needs_an_admin(client, simgrid_lists):
+    resp = await client.get("/api/v1/championships", params={"include": "inactive"})
+    assert resp.status_code == 401
 
 
 async def test_the_public_sees_only_active_championships(client, db, simgrid_lists):
@@ -132,7 +144,7 @@ async def test_the_public_sees_only_active_championships(client, db, simgrid_lis
     await db.commit()
 
     body = (await client.get("/api/v1/championships")).json()
-    assert [c["id"] for c in body] == [1]
+    assert [(c["id"], c["isActive"]) for c in body] == [(1, True)]
 
 
 async def test_simgrid_outage_is_a_502_problem(client, simgrid_lists):
@@ -183,4 +195,5 @@ async def test_rounds_are_admin_only(client):
 
 async def test_old_paths_are_gone(admin_client):
     assert (await admin_client.get("/api/championships/active")).status_code == 404
+    assert (await admin_client.get("/api/v1/active-championships")).status_code == 404
     assert (await admin_client.get("/api/giveaway/aliases")).status_code == 404

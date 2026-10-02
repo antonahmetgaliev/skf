@@ -8,6 +8,8 @@ export type ChampionshipListItem = Schemas['ChampionshipListItem'];
 
 export type ChampionshipDetails = Schemas['ChampionshipDetails'];
 
+export type ChampionshipUpdate = Schemas['ChampionshipUpdate'];
+
 /** `classified` also covers iRacing retirements: SimGrid gives no status there. */
 export type RaceStatus = Schemas['DriverRaceResult']['status'];
 
@@ -31,10 +33,12 @@ export type ChampionshipRace = Schemas['ChampionshipRace'];
 export class SimgridApiService {
   private readonly http = inject(HttpClient);
   private readonly base = `${API}/championships`;
-  private readonly activeBase = `${API}/active-championships`;
 
-  getChampionships(): Observable<ChampionshipListItem[]> {
-    return this.http.get<ChampionshipListItem[]>(this.base);
+  /** The championships shown on the site; `includeInactive` adds the hidden ones (admin only). */
+  getChampionships(options?: { includeInactive?: boolean }): Observable<ChampionshipListItem[]> {
+    return this.http.get<ChampionshipListItem[]>(this.base, {
+      params: options?.includeInactive ? { include: 'inactive' } : {},
+    });
   }
 
   getChampionshipById(championshipId: number): Observable<ChampionshipDetails> {
@@ -59,15 +63,8 @@ export class SimgridApiService {
     });
   }
 
-  getActiveChampionships(): Observable<number[]> {
-    return this.http.get<number[]>(this.activeBase);
-  }
-
-  addActiveChampionship(simgridId: number): Observable<unknown> {
-    return this.http.put(`${this.activeBase}/${simgridId}`, null);
-  }
-
-  removeActiveChampionship(simgridId: number): Observable<void> {
-    return this.http.delete<void>(`${this.activeBase}/${simgridId}`);
+  setChampionshipActive(championshipId: number, isActive: boolean): Observable<void> {
+    const body: ChampionshipUpdate = { isActive };
+    return this.http.patch<void>(`${this.base}/${championshipId}`, body);
   }
 }

@@ -12,7 +12,7 @@ import uuid
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import require_admin, require_api_token, require_judge
+from app.auth import get_current_user_optional, require_admin, require_api_token, require_judge
 from app.core.openapi import problem_responses
 from app.database import get_db
 from app.models.user import User
@@ -40,16 +40,30 @@ router = APIRouter(tags=["Incidents"])
 # ── Incidents ────────────────────────────────────────────────────────────────
 
 
+@router.get("/incidents/{incident_id}", response_model=IncidentOut)
+async def get_incident(
+    incident_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user_optional),
+):
+    out = IncidentOut.model_validate(await svc.load_incident(db, incident_id))
+    svc.hide_unpublished_verdicts([out], user)
+    return out
+
+
 @router.post(
     "/incidents/{incident_id}/copies", response_model=IncidentOut, status_code=status.HTTP_201_CREATED
 )
 async def copy_incident(
     incident_id: uuid.UUID,
+    response: Response,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_judge),
 ):
     """Copy an incident with its drivers; the copy is unresolved and unpublished."""
-    return await svc.copy_incident(db, incident_id, user)
+    copy = await svc.copy_incident(db, incident_id, user)
+    response.headers["Location"] = f"/api/v1/incidents/{copy.id}"
+    return copy
 
 
 @router.post(
@@ -60,10 +74,13 @@ async def copy_incident(
 async def add_incident_driver(
     incident_id: uuid.UUID,
     payload: IncidentDriverAdd,
+    response: Response,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_judge),
 ):
-    return await svc.add_driver(db, incident_id, payload.driver_name)
+    entry = await svc.add_driver(db, incident_id, payload.driver_name)
+    response.headers["Location"] = f"/api/v1/incident-drivers/{entry.id}"
+    return entry
 
 
 @router.put(
@@ -82,6 +99,15 @@ async def resolve_incident(
 
 
 # ── Incident drivers ─────────────────────────────────────────────────────────
+
+
+@router.get("/incident-drivers/{incident_driver_id}", response_model=IncidentDriverOut)
+async def get_incident_driver(
+    incident_driver_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User | None = Depends(get_current_user_optional),
+):
+    return await svc.incident_driver_out(db, incident_driver_id, user)
 
 
 @router.delete("/incident-drivers/{incident_driver_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -170,4 +196,5 @@ async def ingest_incidents(
     window = await find_or_create_window(db, race_id=payload.race_id, championship_id=payload.championship_id)
     await add_ingested_incidents(db, window, payload.incidents)
     await db.commit()
+    response.headers["Location"] = f"/api/v1/incident-windows/{window.id}"
     return await svc.load_window(db, window.id)

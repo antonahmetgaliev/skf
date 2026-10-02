@@ -94,6 +94,14 @@ def is_admin(user: User | None) -> bool:
     return user.role.name in (ROLE_ADMIN, ROLE_SUPER_ADMIN)
 
 
+def ensure_admin(user: User | None) -> None:
+    """Guard the admin-only variant of a route that is otherwise public (``?include=...``)."""
+    if user is None:
+        raise Unauthorized("Not authenticated.")
+    if not is_admin(user):
+        raise Forbidden("Insufficient permissions.")
+
+
 def require_role(*roles: str) -> Callable:
     """Return a FastAPI dependency that checks the user's role."""
 

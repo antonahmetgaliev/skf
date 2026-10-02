@@ -40,3 +40,7 @@ class AuthUrlOut(CamelModel):
 
 class ManagedCommunitiesUpdate(CamelModel):
     community_ids: list[uuid.UUID]
+
+
+class ManagedCommunitiesOut(CamelModel):
+    community_ids: list[uuid.UUID]

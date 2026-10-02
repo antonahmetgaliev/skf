@@ -102,7 +102,7 @@ async def delete(db: AsyncSession, champ: CustomChampionship) -> None:
 # ── Races ────────────────────────────────────────────────────────────────────
 
 
-async def _get_race(db: AsyncSession, champ: CustomChampionship, race_id: uuid.UUID) -> CustomRace:
+async def get_race(db: AsyncSession, champ: CustomChampionship, race_id: uuid.UUID) -> CustomRace:
     race = (
         await db.execute(
             select(CustomRace).where(CustomRace.id == race_id, CustomRace.championship_id == champ.id)
@@ -130,7 +130,7 @@ async def add_race(db: AsyncSession, champ: CustomChampionship, body: CustomRace
 async def update_race(
     db: AsyncSession, champ: CustomChampionship, race_id: uuid.UUID, body: CustomRaceUpdate
 ) -> CustomRace:
-    race = await _get_race(db, champ, race_id)
+    race = await get_race(db, champ, race_id)
     for field, value in body.model_dump(exclude_unset=True, by_alias=False).items():
         setattr(race, field, value.strip() if isinstance(value, str) else value)
     await db.commit()
@@ -139,7 +139,7 @@ async def update_race(
 
 
 async def delete_race(db: AsyncSession, champ: CustomChampionship, race_id: uuid.UUID) -> None:
-    race = await _get_race(db, champ, race_id)
+    race = await get_race(db, champ, race_id)
     await db.delete(race)
     await db.commit()
 

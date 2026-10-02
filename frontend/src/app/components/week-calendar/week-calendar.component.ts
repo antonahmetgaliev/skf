@@ -157,10 +157,10 @@ export class WeekCalendarComponent {
           date: new Date(race.date),
           simgridChampionshipId: ev.simgridChampionshipId,
           customChampionshipId: ev.customChampionshipId,
-          communityName: ev.communityName,
-          communityColor: ev.communityColor,
-          communityDiscordUrl: ev.communityDiscordUrl,
-          communityIsSkf: ev.communityIsSkf,
+          communityName: ev.community?.name ?? null,
+          communityColor: ev.community?.color ?? null,
+          communityDiscordUrl: ev.community?.discordUrl ?? null,
+          communityIsSkf: ev.community?.isSkf ?? false,
         });
       }
     }
@@ -173,7 +173,7 @@ export class WeekCalendarComponent {
   private buildCalendarOverview(events: CalendarEvent[]): void {
     const active = events.filter((ev) => ev.eventType !== 'past');
     this.activeChampionshipCount.set(active.length);
-    this.communityCount.set(new Set(active.map((ev) => ev.communityName).filter(Boolean)).size);
+    this.communityCount.set(new Set(active.map((ev) => ev.community?.name).filter(Boolean)).size);
   }
 
   /** Community requests need a Discord login, same as the button on /calendar. */

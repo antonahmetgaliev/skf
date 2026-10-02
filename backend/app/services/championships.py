@@ -16,11 +16,12 @@ from app.models.active_championship import ActiveChampionship
 from app.models.incidents import Incident, IncidentWindow
 from app.schemas.championship import (
     ChampionshipDetails,
-    ChampionshipIncidentWindowOut,
     ChampionshipListItem,
     ChampionshipRace,
     ChampionshipStandingsData,
 )
+from app.schemas.incidents import IncidentWindowSummaryOut
+from app.services.incidents import window_summary
 from app.services.simgrid import simgrid_service
 
 logger = logging.getLogger(__name__)
@@ -34,20 +35,12 @@ async def active_ids(db: AsyncSession) -> list[int]:
     return list(result.scalars().all())
 
 
-async def activate(db: AsyncSession, simgrid_id: int) -> tuple[ActiveChampionship, bool]:
-    """Mark a championship active. Returns the row and whether it was created."""
-    existing = await db.get(ActiveChampionship, simgrid_id)
-    if existing is not None:
-        return existing, False
-    record = ActiveChampionship(simgrid_id=simgrid_id)
-    db.add(record)
-    await db.commit()
-    await db.refresh(record)
-    return record, True
-
-
-async def deactivate(db: AsyncSession, simgrid_id: int) -> None:
-    await db.execute(delete(ActiveChampionship).where(ActiveChampionship.simgrid_id == simgrid_id))
+async def set_active(db: AsyncSession, simgrid_id: int, active: bool) -> None:
+    """Show or hide a championship. Idempotent; the id is not checked against SimGrid."""
+    if not active:
+        await db.execute(delete(ActiveChampionship).where(ActiveChampionship.simgrid_id == simgrid_id))
+    elif await db.get(ActiveChampionship, simgrid_id) is None:
+        db.add(ActiveChampionship(simgrid_id=simgrid_id))
     await db.commit()
 
 
@@ -55,7 +48,7 @@ async def deactivate(db: AsyncSession, simgrid_id: int) -> None:
 
 
 async def list_championships(db: AsyncSession, *, include_inactive: bool) -> list[ChampionshipListItem]:
-    """Active championships; with *include_inactive* all, inactive ones shown as completed."""
+    """Active championships with their details; with *include_inactive* also the rest, as SimGrid lists them."""
     try:
         items = await simgrid_service.get_championships()
     except Exception as exc:
@@ -64,14 +57,10 @@ async def list_championships(db: AsyncSession, *, include_inactive: bool) -> lis
 
     active = set(await active_ids(db))
     enriched = {
-        item.id: item for item in await simgrid_service.with_details([i for i in items if i.id in active])
+        item.id: item.model_copy(update={"is_active": True})
+        for item in await simgrid_service.with_details([i for i in items if i.id in active])
     }
-    if include_inactive:
-        return [
-            enriched[item.id] if item.id in active else item.model_copy(update={"event_completed": True})
-            for item in items
-        ]
-    return [enriched[item.id] for item in items if item.id in active]
+    return [enriched.get(item.id, item) for item in items if item.id in active or include_inactive]
 
 
 async def get_championship(championship_id: int) -> ChampionshipDetails:
@@ -106,7 +95,7 @@ async def get_standings(championship_id: int) -> tuple[ChampionshipStandingsData
 # ── Incident windows ────────────────────────────────────────────────────────
 
 
-async def incident_windows(db: AsyncSession, championship_id: int) -> list[ChampionshipIncidentWindowOut]:
+async def incident_windows(db: AsyncSession, championship_id: int) -> list[IncidentWindowSummaryOut]:
     """The championship's incident windows, one per round, keyed by race."""
     rows = await db.execute(
         select(IncidentWindow, func.count(Incident.id))
@@ -117,12 +106,4 @@ async def incident_windows(db: AsyncSession, championship_id: int) -> list[Champ
         )
         .group_by(IncidentWindow.id)
     )
-    return [
-        ChampionshipIncidentWindowOut(
-            race_id=window.race_id,
-            window_id=window.id,
-            is_open=window.is_open,
-            incidents_count=count,
-        )
-        for window, count in rows.all()
-    ]
+    return [window_summary(window, count) for window, count in rows.all()]

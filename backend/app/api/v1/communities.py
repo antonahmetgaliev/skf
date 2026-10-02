@@ -59,6 +59,16 @@ async def create_community(
     return community
 
 
+@router.get("/communities/{community_id}", response_model=CommunityOut)
+async def get_community(
+    community_id: uuid.UUID,
+    user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """A visible community; a hidden one only for those who manage it."""
+    return await service.get_visible(db, user, community_id)
+
+
 @router.patch("/communities/{community_id}", response_model=CommunityOut)
 async def update_community(
     community_id: uuid.UUID,

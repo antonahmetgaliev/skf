@@ -34,15 +34,14 @@ from app.models.race_result import (
 )
 from app.schemas.race_results import (
     ImportEntryOut,
-    ImportOut,
     ImportResultOut,
-    RaceImportOut,
+    RaceResultImportOut,
     RoundOut,
     RoundsOut,
-    RoundWindowOut,
 )
 from app.services import file_storage, race_incidents
 from app.services.driver_matching import match_driver_id_by_name
+from app.services.incidents import window_summary
 from app.services.race_files import (
     FILE_EXTENSIONS,
     MAX_UPLOAD_BYTES,
@@ -255,9 +254,11 @@ async def championship_info(championship_id: int) -> tuple[str, str, Sim | None]
     return details.name, details.game_name, sim_for_game(details.game_name)
 
 
-def import_out(record: RaceResultImport, entry_count: int, unmatched: int) -> RaceImportOut:
-    return RaceImportOut(
+def import_out(record: RaceResultImport, entry_count: int, unmatched: int) -> RaceResultImportOut:
+    return RaceResultImportOut(
         id=record.id,
+        championship_id=record.championship_simgrid_id,
+        race_id=record.race_simgrid_id,
         sim=record.sim,
         track_event=record.track_event,
         session_started_at=record.session_started_at,
@@ -301,23 +302,9 @@ def imports_query(championship_id: int | None = None):
     return stmt
 
 
-async def list_out(db: AsyncSession, records: list[RaceResultImport]) -> list[ImportOut]:
+async def list_out(db: AsyncSession, records: list[RaceResultImport]) -> list[RaceResultImportOut]:
     counts = await entry_counts(db, (r.id for r in records))
-    return [
-        ImportOut(
-            id=record.id,
-            championship_simgrid_id=record.championship_simgrid_id,
-            race_simgrid_id=record.race_simgrid_id,
-            track_event=record.track_event,
-            session_started_at=record.session_started_at,
-            source_filename=record.source_filename,
-            sim=record.sim,
-            created_at=record.created_at,
-            entry_count=counts.get(record.id, (0, 0))[0],
-            unmatched_count=counts.get(record.id, (0, 0))[1],
-        )
-        for record in records
-    ]
+    return [import_out(record, *counts.get(record.id, (0, 0))) for record in records]
 
 
 async def upload(
@@ -464,16 +451,7 @@ async def build_rounds(db: AsyncSession, championship_id: int) -> RoundsOut:
                 starts_at=race.get("starts_at"),
                 ended=race.get("ended", False),
                 race_import=(import_out(record, *entry_totals.get(record.id, (0, 0))) if record else None),
-                window=(
-                    RoundWindowOut(
-                        id=window.id,
-                        is_open=window.is_open,
-                        closes_at=window.closes_at,
-                        incidents_count=counts.get(window.id, 0),
-                    )
-                    if window
-                    else None
-                ),
+                window=window_summary(window, counts.get(window.id, 0)) if window else None,
             )
         )
 

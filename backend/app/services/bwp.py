@@ -217,6 +217,13 @@ async def _find_clearance(
     return result.scalars().first()
 
 
+async def get_clearance(db: AsyncSession, driver_id: uuid.UUID, rule_id: uuid.UUID) -> PenaltyClearance:
+    clearance = await _find_clearance(db, driver_id, rule_id)
+    if clearance is None:
+        raise NotFound("Clearance not found.")
+    return clearance
+
+
 async def put_clearance(
     db: AsyncSession, driver_id: uuid.UUID, rule_id: uuid.UUID
 ) -> tuple[PenaltyClearance, bool]:
@@ -234,8 +241,5 @@ async def put_clearance(
 
 
 async def delete_clearance(db: AsyncSession, driver_id: uuid.UUID, rule_id: uuid.UUID) -> None:
-    clearance = await _find_clearance(db, driver_id, rule_id)
-    if clearance is None:
-        raise NotFound("Clearance not found.")
-    await db.delete(clearance)
+    await db.delete(await get_clearance(db, driver_id, rule_id))
     await db.commit()

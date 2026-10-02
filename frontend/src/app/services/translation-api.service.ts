@@ -16,8 +16,9 @@ export class TranslationApiService {
   private readonly http = inject(HttpClient);
   private readonly base = `${API}/languages`;
 
-  getLanguages(): Observable<Language[]> {
-    return this.http.get<Language[]>(this.base);
+  /** Every language, including the ones not offered on the site (admin only). */
+  getAllLanguages(): Observable<Language[]> {
+    return this.http.get<Language[]>(this.base, { params: { include: 'inactive' } });
   }
 
   addLanguage(code: string, name: string): Observable<Language> {

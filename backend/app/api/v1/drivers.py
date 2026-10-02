@@ -23,8 +23,9 @@ from app.core.errors import Forbidden, Unauthorized
 from app.core.openapi import problem_responses
 from app.core.pagination import PageParams, page_params, paginate
 from app.database import get_db
-from app.models.bwp import Driver
+from app.models.bwp import BwpPoint, Driver
 from app.models.user import User
+from app.repository import get_or_404
 from app.schemas.bwp import (
     BwpPointCreate,
     BwpPointOut,
@@ -161,6 +162,11 @@ async def create_bwp_point(
     return point
 
 
+@router.get("/bwp-points/{point_id}", response_model=BwpPointOut)
+async def get_bwp_point(point_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return await get_or_404(db, BwpPoint, point_id, detail="Point not found.")
+
+
 @router.patch("/bwp-points/{point_id}", response_model=BwpPointOut)
 async def update_bwp_point(
     point_id: uuid.UUID,
@@ -181,11 +187,7 @@ async def delete_bwp_point(
     await service.delete_point(db, point_id)
 
 
-@router.post(
-    "/drivers/{driver_id}/bwp-resets",
-    response_model=DriverOut,
-    status_code=status.HTTP_201_CREATED,
-)
+@router.post("/drivers/{driver_id}/bwp-resets", response_model=DriverOut)
 async def create_bwp_reset(
     driver_id: uuid.UUID,
     body: BwpResetCreate,
@@ -199,6 +201,11 @@ async def create_bwp_reset(
 # ---------------------------------------------------------------------------
 # Penalty clearances
 # ---------------------------------------------------------------------------
+
+
+@router.get("/drivers/{driver_id}/clearances/{rule_id}", response_model=PenaltyClearanceOut)
+async def get_clearance(driver_id: uuid.UUID, rule_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return await service.get_clearance(db, driver_id, rule_id)
 
 
 @router.put(

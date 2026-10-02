@@ -1,5 +1,5 @@
 <ng-template #manageActions let-event>
-  @if (event.source === 'custom' && canManageCommunity(event.communityId)) {
+  @if (event.source === 'custom' && canManageCommunity(event.community?.id ?? null)) {
     <div class="event-manage-actions">
       <app-btn variant="ghost" size="sm" (click)="champEditor().edit(event)">{{
         'calendar.edit' | transloco
@@ -181,7 +181,7 @@
                           <button
                             type="button"
                             class="cell-event-label"
-                            [style.--band-color]="event.communityColor || '#555'"
+                            [style.--band-color]="event.community?.color || '#555'"
                             [appTooltip]="event.name"
                             tooltipWhenTruncated
                           >
@@ -309,9 +309,9 @@
             }
             <div class="event-card-inner">
               <div class="event-card-header">
-                @if (event.communityName) {
-                  <span class="community-badge" [style.background]="event.communityColor">{{
-                    event.communityName
+                @if (event.community; as community) {
+                  <span class="community-badge" [style.background]="community.color">{{
+                    community.name
                   }}</span>
                 }
                 @if (event.game) {
@@ -321,7 +321,7 @@
                     >{{ event.game }}</span
                   >
                 }
-                @if (event.communityName && getCommunityDiscordUrl(event); as discordUrl) {
+                @if (event.community && getCommunityDiscordUrl(event); as discordUrl) {
                   <a
                     class="discord-btn discord-btn--sm"
                     [href]="discordUrl"

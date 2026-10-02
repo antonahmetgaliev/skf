@@ -31,11 +31,7 @@ function event(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
     image: null,
     simgridChampionshipId: null,
     customChampionshipId: null,
-    communityId: null,
-    communityName: null,
-    communityColor: null,
-    communityDiscordUrl: null,
-    communityIsSkf: false,
+    community: null,
     acceptingRegistrations: false,
     capacity: null,
     spotsTaken: null,
@@ -164,9 +160,9 @@ describe('isScheduled', () => {
 describe('groupEventsByColor', () => {
   it('groups by community colour in first-seen order, gold when missing', () => {
     const groups = groupEventsByColor([
-      event({ id: 'a', communityColor: '#111' }),
-      event({ id: 'b', communityColor: null }),
-      event({ id: 'c', communityColor: '#111' }),
+      event({ id: 'a', community: community('x', '#111') }),
+      event({ id: 'b', community: community('y', null) }),
+      event({ id: 'c', community: community('x', '#111') }),
     ]);
     expect(groups.map((g) => [g.color, g.events.map((e) => e.id)])).toEqual([
       ['#111', ['a', 'c']],
@@ -177,9 +173,17 @@ describe('groupEventsByColor', () => {
 
 describe('buildYearColumns', () => {
   it('keeps community order, skips empty ones and sorts events by date', () => {
-    const late = event({ id: 'late', communityId: 'b', races: [race('2026-11-01T19:00:00')] });
-    const early = event({ id: 'early', communityId: 'b', races: [race('2026-02-01T19:00:00')] });
-    const undated = event({ id: 'undated', communityId: 'b' });
+    const late = event({
+      id: 'late',
+      community: community('b'),
+      races: [race('2026-11-01T19:00:00')],
+    });
+    const early = event({
+      id: 'early',
+      community: community('b'),
+      races: [race('2026-02-01T19:00:00')],
+    });
+    const undated = event({ id: 'undated', community: community('b') });
     const columns = buildYearColumns(
       [late, undated, early],
       [community('a'), community('b', null)],
@@ -190,7 +194,7 @@ describe('buildYearColumns', () => {
   });
 
   it('adds empty columns for the given communities', () => {
-    const e = event({ communityId: 'a', races: [race('2026-02-01T19:00:00')] });
+    const e = event({ community: community('a'), races: [race('2026-02-01T19:00:00')] });
     const columns = buildYearColumns([e], [community('a')], [community('a'), community('m')]);
     expect(columns.map((c) => [c.id, c.events.length])).toEqual([
       ['a', 1],

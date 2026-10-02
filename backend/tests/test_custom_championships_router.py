@@ -151,5 +151,5 @@ async def test_calendar_events_include_visible_custom_championships(client, setu
     # Championships without dated races are listed as unscheduled.
     assert set(events) == {"Mine Cup", "Foreign Cup", "Orphan Cup"}
     mine = events["Mine Cup"]
-    assert mine["source"] == "custom" and mine["communityName"] == "Mine"
+    assert mine["source"] == "custom" and mine["community"]["name"] == "Mine"
     assert mine["customChampionshipId"] == str(setup["champs"]["mine"].id)

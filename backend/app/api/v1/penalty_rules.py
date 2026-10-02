@@ -33,6 +33,11 @@ async def create_penalty_rule(
     return rule
 
 
+@router.get("/{rule_id}", response_model=PenaltyRuleOut)
+async def get_penalty_rule(rule_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return await service.get_penalty_rule(db, rule_id)
+
+
 @router.patch("/{rule_id}", response_model=PenaltyRuleOut)
 async def update_penalty_rule(
     rule_id: uuid.UUID,

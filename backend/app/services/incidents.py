@@ -26,8 +26,11 @@ from app.models.user import ROLE_JUDGE, User
 from app.repository import get_or_404
 from app.schemas.incidents import (
     BulkResolveIncident,
+    IncidentDriverOut,
     IncidentFileCreate,
+    IncidentOut,
     IncidentWindowCreate,
+    IncidentWindowSummaryOut,
     IncidentWindowUpdate,
     ResolveDriverIncident,
 )
@@ -39,6 +42,26 @@ from app.services.incident_bwp import apply_resolution_bwp
 def can_see_verdicts(user: User | None) -> bool:
     """Judges and admins see verdicts before they are published."""
     return is_admin(user) or (user is not None and user.role is not None and user.role.name == ROLE_JUDGE)
+
+
+def window_summary(window: IncidentWindow, incidents_count: int) -> IncidentWindowSummaryOut:
+    return IncidentWindowSummaryOut(
+        id=window.id,
+        race_id=window.race_id,
+        is_open=window.is_open,
+        closes_at=window.closes_at,
+        incidents_count=incidents_count,
+    )
+
+
+def hide_unpublished_verdicts(incidents: list[IncidentOut], user: User | None) -> None:
+    """Everyone sees every incident, but verdicts stay hidden until published."""
+    if can_see_verdicts(user):
+        return
+    for incident in incidents:
+        if not incident.is_published:
+            for drv in incident.drivers:
+                drv.resolution = None
 
 
 # ── Loading ──────────────────────────────────────────────────────────────────
@@ -93,6 +116,19 @@ async def load_incident_driver(db: AsyncSession, incident_driver_id: uuid.UUID) 
     if entry is None:
         raise NotFound("Incident driver not found.")
     return entry
+
+
+async def incident_driver_out(
+    db: AsyncSession, incident_driver_id: uuid.UUID, user: User | None
+) -> IncidentDriverOut:
+    """One driver of an incident, as *user* may see it (see :func:`hide_unpublished_verdicts`)."""
+    entry = await load_incident_driver(db, incident_driver_id)
+    out = IncidentDriverOut.model_validate(entry)
+    if not can_see_verdicts(user):
+        published = await db.scalar(select(Incident.is_published).where(Incident.id == entry.incident_id))
+        if not published:
+            out.resolution = None
+    return out
 
 
 async def update_incident_status(db: AsyncSession, incident_id: uuid.UUID) -> None:

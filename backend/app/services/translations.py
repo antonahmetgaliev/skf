@@ -41,6 +41,14 @@ async def list_languages(db: AsyncSession, *, include_inactive: bool) -> list[La
     return list((await db.execute(stmt)).scalars().all())
 
 
+async def get_language(db: AsyncSession, code: str, *, include_inactive: bool) -> Language:
+    """The language at *code*; an inactive one exists only for those who may list it."""
+    language = await _get_language(db, code)
+    if not language.is_active and not include_inactive:
+        raise NotFound("Language not found.")
+    return language
+
+
 async def _get_language(db: AsyncSession, code: str) -> Language:
     language = await db.get(Language, code)
     if language is None:

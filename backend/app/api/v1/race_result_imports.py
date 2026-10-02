@@ -20,7 +20,7 @@ from app.database import get_db
 from app.models.race_result import RaceResultImport
 from app.models.user import User
 from app.repository import get_or_404
-from app.schemas.race_results import ImportOut, ImportResultOut, RaceResultImportCreate
+from app.schemas.race_results import ImportResultOut, RaceResultImportCreate, RaceResultImportOut
 from app.services import race_import as service
 
 router = APIRouter(prefix="/race-result-imports", tags=["Race results"])
@@ -36,7 +36,7 @@ async def _get(db: AsyncSession, import_id: uuid.UUID) -> RaceResultImport:
     return await get_or_404(db, RaceResultImport, import_id, detail=_NOT_FOUND)
 
 
-@router.get("", response_model=list[ImportOut])
+@router.get("", response_model=list[RaceResultImportOut])
 async def list_race_result_imports(
     request: Request,
     response: Response,
@@ -77,7 +77,7 @@ async def create_race_result_import(
     return service.result_out(result)
 
 
-@router.get("/{import_id}", response_model=ImportOut)
+@router.get("/{import_id}", response_model=RaceResultImportOut)
 async def get_race_result_import(
     import_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),

@@ -4,52 +4,6 @@
  */
 
 export interface paths {
-  '/api/v1/active-championships': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * List active championships
-     * @description SimGrid ids of the active championships.
-     */
-    get: operations['listActiveChampionships'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/v1/active-championships/{simgrid_id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    /**
-     * Activate championship
-     * @description Idempotent: 201 when the championship became active, 200 if it already was.
-     *
-     *     Requires role: `admin`, `super_admin`.
-     */
-    put: operations['activateChampionship'];
-    post?: never;
-    /**
-     * Deactivate championship
-     * @description Requires role: `admin`, `super_admin`.
-     */
-    delete: operations['deactivateChampionship'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/api/v1/auth/discord/authorization-url': {
     parameters: {
       query?: never;
@@ -159,7 +113,7 @@ export interface paths {
     };
     /**
      * List championships
-     * @description Active championships; admins see all, inactive ones marked completed.
+     * @description The championships shown on the site, in SimGrid's order.
      */
     get: operations['listChampionships'];
     put?: never;
@@ -184,7 +138,13 @@ export interface paths {
     delete?: never;
     options?: never;
     head?: never;
-    patch?: never;
+    /**
+     * Update championship
+     * @description Show or hide the championship on the site. Everything else about it lives in SimGrid.
+     *
+     *     Requires role: `admin`, `super_admin`.
+     */
+    patch: operations['updateChampionship'];
     trace?: never;
   };
   '/api/v1/championships/{championship_id}/standings': {
@@ -364,7 +324,11 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /**
+     * Get community
+     * @description A visible community; a hidden one only for those who manage it.
+     */
+    get: operations['getCommunity'];
     put?: never;
     post?: never;
     /**
@@ -486,7 +450,11 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /**
+     * Get custom race
+     * @description Requires role: `admin`, `super_admin`, `community_manager`.
+     */
+    get: operations['getCustomRace'];
     put?: never;
     post?: never;
     /**
@@ -629,7 +597,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** Get bwp point */
+    get: operations['getBwpPoint'];
     put?: never;
     post?: never;
     /**
@@ -677,7 +646,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** Get clearance */
+    get: operations['getClearance'];
     /**
      * Set clearance
      * @description Mark a penalty rule as cleared: 201 when created, 200 when it already was.
@@ -783,13 +753,33 @@ export interface paths {
     delete?: never;
     options?: never;
     head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/incident-windows/{window_id}/publication': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
     /**
-     * Publish window incidents
-     * @description Publish every incident in the window (``{"isPublished": true}``).
+     * Publish incident window
+     * @description Make the round's verdicts public and issue the BWP they carry.
+     *
+     *     One action for the whole window, and one-way: there is no way to hide
+     *     verdicts again. Repeating it is safe — it publishes whatever was added
+     *     since and never issues a penalty twice.
      *
      *     Requires role: `racing_judge`, `admin`, `super_admin`.
      */
-    patch: operations['publishWindowIncidents'];
+    put: operations['publishIncidentWindow'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
     trace?: never;
   };
   '/api/v1/incident-windows/{window_id}/default-resolutions': {
@@ -808,6 +798,23 @@ export interface paths {
      *     Requires role: `racing_judge`, `admin`, `super_admin`.
      */
     post: operations['createDefaultResolutions'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/incidents/{incident_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get incident */
+    get: operations['getIncident'];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -885,7 +892,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** Get incident driver */
+    get: operations['getIncidentDriver'];
     put?: never;
     post?: never;
     /**
@@ -977,7 +985,7 @@ export interface paths {
     };
     /**
      * List languages
-     * @description Active languages; admins also see inactive ones.
+     * @description The languages the site is offered in.
      */
     get: operations['listLanguages'];
     put?: never;
@@ -999,7 +1007,11 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /**
+     * Get language
+     * @description A language offered on the site; one that is not, only for admins.
+     */
+    get: operations['getLanguage'];
     put?: never;
     post?: never;
     /**
@@ -1130,7 +1142,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** Get penalty rule */
+    get: operations['getPenaltyRule'];
     put?: never;
     post?: never;
     /**
@@ -1476,6 +1489,31 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/verdict-rules/{rule_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get verdict rule */
+    get: operations['getVerdictRule'];
+    put?: never;
+    post?: never;
+    /**
+     * Delete verdict rule
+     * @description Requires role: `racing_judge`, `admin`, `super_admin`.
+     */
+    delete: operations['deleteVerdictRule'];
+    options?: never;
+    head?: never;
+    /**
+     * Update verdict rule
+     * @description Requires role: `racing_judge`, `admin`, `super_admin`.
+     */
+    patch: operations['updateVerdictRule'];
+    trace?: never;
+  };
   '/api/v1/verdict-rules/order': {
     parameters: {
       query?: never;
@@ -1494,30 +1532,6 @@ export interface paths {
     options?: never;
     head?: never;
     patch?: never;
-    trace?: never;
-  };
-  '/api/v1/verdict-rules/{rule_id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post?: never;
-    /**
-     * Delete verdict rule
-     * @description Requires role: `racing_judge`, `admin`, `super_admin`.
-     */
-    delete: operations['deleteVerdictRule'];
-    options?: never;
-    head?: never;
-    /**
-     * Update verdict rule
-     * @description Requires role: `racing_judge`, `admin`, `super_admin`.
-     */
-    patch: operations['updateVerdictRule'];
     trace?: never;
   };
   '/api/v1/description-presets': {
@@ -1548,7 +1562,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** Get description preset */
+    get: operations['getDescriptionPreset'];
     put?: never;
     post?: never;
     /**
@@ -1633,10 +1648,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
-    ActiveChampionshipOut: {
-      simgridId: number;
-      createdAt: string | null;
-    };
     AliasCreate: {
       normalizedAlias: string;
       canonicalDisplayName: string;
@@ -1728,12 +1739,7 @@ export interface components {
       image: string | null;
       simgridChampionshipId: number | null;
       customChampionshipId: string | null;
-      communityId: string | null;
-      communityName: string | null;
-      communityColor: string | null;
-      communityDiscordUrl: string | null;
-      /** @default false */
-      communityIsSkf: boolean;
+      community: components['schemas']['CommunityOut'] | null;
       /** @default false */
       acceptingRegistrations: boolean;
       capacity: number | null;
@@ -1772,13 +1778,6 @@ export interface components {
       roundNumber: number | null;
       allRoundsNumber: number | null;
     };
-    ChampionshipIncidentWindowOut: {
-      raceId: number;
-      /** Format: uuid */
-      windowId: string;
-      isOpen: boolean;
-      incidentsCount: number;
-    };
     ChampionshipListItem: {
       id: number;
       name: string;
@@ -1791,6 +1790,11 @@ export interface components {
        * @default false
        */
       eventCompleted: boolean;
+      /**
+       * @description Shown on the site; inactive ones are admin-only.
+       * @default false
+       */
+      isActive: boolean;
     };
     ChampionshipRace: {
       id: number;
@@ -1808,6 +1812,9 @@ export interface components {
       entries: components['schemas']['StandingEntry'][];
       /** @default [] */
       races: components['schemas']['StandingRace'][];
+    };
+    ChampionshipUpdate: {
+      isActive: boolean;
     };
     CommunityCreate: {
       name: string;
@@ -1899,6 +1906,11 @@ export interface components {
       endDate?: string | null;
       track?: string | null;
       sortOrder?: number;
+    };
+    DefaultResolutionsOut: {
+      window: components['schemas']['IncidentWindowOut'];
+      /** @description Drivers the default verdict was just applied to. */
+      resolvedCount: number;
     };
     DescriptionPresetCreate: {
       text: string;
@@ -2005,24 +2017,8 @@ export interface components {
       /** @description The name resolves to a driver record. */
       matched: boolean;
     };
-    /** @description One uploaded round file, as listed per championship. */
-    ImportOut: {
-      /** Format: uuid */
-      id: string;
-      championshipSimgridId: number;
-      raceSimgridId: number | null;
-      trackEvent: string | null;
-      sessionStartedAt: string | null;
-      sourceFilename: string | null;
-      /** @default lmu */
-      sim: components['schemas']['Sim'];
-      /** Format: date-time */
-      createdAt: string;
-      entryCount: number;
-      unmatchedCount: number;
-    };
     ImportResultOut: {
-      raceImport: components['schemas']['RaceImportOut'];
+      raceImport: components['schemas']['RaceResultImportOut'];
       windowId: string | null;
       incidentsCreated: number;
       incidentsKept: number;
@@ -2153,6 +2149,16 @@ export interface components {
       /** @default [] */
       incidents: components['schemas']['IncidentOut'][];
     };
+    /** @description A round's window at a glance, for lists of rounds. */
+    IncidentWindowSummaryOut: {
+      /** Format: uuid */
+      id: string;
+      raceId: number | null;
+      isOpen: boolean;
+      /** Format: date-time */
+      closesAt: string;
+      incidentsCount: number;
+    };
     IncidentWindowUpdate: {
       isManuallyClosed?: boolean;
       intervalHours?: number;
@@ -2165,6 +2171,9 @@ export interface components {
       code: string;
       name: string;
       isActive: boolean;
+    };
+    ManagedCommunitiesOut: {
+      communityIds: string[];
     };
     ManagedCommunitiesUpdate: {
       communityIds: string[];
@@ -2218,48 +2227,6 @@ export interface components {
       detail: string;
       code: string;
     };
-    PublishWindowOut: {
-      /** Format: uuid */
-      id: string;
-      championshipId: number | null;
-      championshipName: string | null;
-      raceId: number | null;
-      raceName: string;
-      /** @description The race day as display text, normally `YYYY-MM-DD`. */
-      date: string | null;
-      /** @description How long the window accepts incidents after it opens. */
-      intervalHours: number;
-      /** Format: date-time */
-      openedAt: string;
-      /** Format: date-time */
-      closesAt: string;
-      openedByUserId: string | null;
-      isManuallyClosed: boolean;
-      isOpen: boolean;
-      /** @default [] */
-      incidents: components['schemas']['IncidentOut'][];
-      /**
-       * @description Penalties that reached no licence because the driver name matches no driver record.
-       * @default 0
-       */
-      unlinkedCount: number;
-    };
-    RaceImportOut: {
-      /** Format: uuid */
-      id: string;
-      sim: components['schemas']['Sim'];
-      trackEvent: string | null;
-      sessionStartedAt: string | null;
-      sourceFilename: string | null;
-      fileSize: number | null;
-      hasFile: boolean;
-      entryCount: number;
-      unmatchedCount: number;
-      contactsCount: number;
-      autoGrouped: boolean;
-      /** Format: date-time */
-      createdAt: string;
-    };
     RaceResultEntry: {
       userId: number | null;
       displayName: string;
@@ -2296,6 +2263,25 @@ export interface components {
       createIncidents?: boolean;
       /** @default 24 */
       windowHours?: number;
+    };
+    /** @description One uploaded round file. */
+    RaceResultImportOut: {
+      /** Format: uuid */
+      id: string;
+      championshipId: number;
+      raceId: number | null;
+      sim: components['schemas']['Sim'];
+      trackEvent: string | null;
+      sessionStartedAt: string | null;
+      sourceFilename: string | null;
+      fileSize: number | null;
+      hasFile: boolean;
+      entryCount: number;
+      unmatchedCount: number;
+      contactsCount: number;
+      autoGrouped: boolean;
+      /** Format: date-time */
+      createdAt: string;
     };
     /** @enum {string} */
     RaceSessionKind: 'race' | 'qualifying';
@@ -2372,32 +2358,6 @@ export interface components {
       verdict?: string | null;
       bwpPoints?: number | null;
     };
-    ResolveRemainingOut: {
-      /** Format: uuid */
-      id: string;
-      championshipId: number | null;
-      championshipName: string | null;
-      raceId: number | null;
-      raceName: string;
-      /** @description The race day as display text, normally `YYYY-MM-DD`. */
-      date: string | null;
-      /** @description How long the window accepts incidents after it opens. */
-      intervalHours: number;
-      /** Format: date-time */
-      openedAt: string;
-      /** Format: date-time */
-      closesAt: string;
-      openedByUserId: string | null;
-      isManuallyClosed: boolean;
-      isOpen: boolean;
-      /** @default [] */
-      incidents: components['schemas']['IncidentOut'][];
-      /**
-       * @description Drivers the default verdict was just applied to.
-       * @default 0
-       */
-      resolvedCount: number;
-    };
     RoundBreakdownOut: {
       roundKey: string;
       roundLabel: string;
@@ -2413,16 +2373,8 @@ export interface components {
       startsAt: string | null;
       /** @default false */
       ended: boolean;
-      raceImport: components['schemas']['RaceImportOut'] | null;
-      window: components['schemas']['RoundWindowOut'] | null;
-    };
-    RoundWindowOut: {
-      /** Format: uuid */
-      id: string;
-      isOpen: boolean;
-      /** Format: date-time */
-      closesAt: string;
-      incidentsCount: number;
+      raceImport: components['schemas']['RaceResultImportOut'] | null;
+      window: components['schemas']['IncidentWindowSummaryOut'] | null;
     };
     RoundsOut: {
       championshipId: number;
@@ -2548,9 +2500,10 @@ export interface components {
       defaultBwp?: number;
       isDefault?: boolean;
     };
-    WindowIncidentsUpdate: {
-      /** @constant */
-      isPublished: true;
+    WindowPublicationOut: {
+      window: components['schemas']['IncidentWindowOut'];
+      /** @description Penalties that reached no licence because the driver name matches no driver record. */
+      unlinkedCount: number;
     };
     YouTubeVideo: {
       videoId: string;
@@ -2661,87 +2614,6 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  listActiveChampionships: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': number[];
-        };
-      };
-    };
-  };
-  activateChampionship: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        simgrid_id: number;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ActiveChampionshipOut'];
-        };
-      };
-      /** @description Created */
-      201: {
-        headers: {
-          /** @description Path of the created resource. */
-          Location?: string;
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ActiveChampionshipOut'];
-        };
-      };
-      401: components['responses']['Unauthorized'];
-      403: components['responses']['Forbidden'];
-      404: components['responses']['NotFound'];
-      422: components['responses']['UnprocessableContent'];
-    };
-  };
-  deactivateChampionship: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        simgrid_id: number;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      401: components['responses']['Unauthorized'];
-      403: components['responses']['Forbidden'];
-      404: components['responses']['NotFound'];
-      422: components['responses']['UnprocessableContent'];
-    };
-  };
   discordAuthorizationUrl: {
     parameters: {
       query?: never;
@@ -2852,7 +2724,10 @@ export interface operations {
   };
   listChampionships: {
     parameters: {
-      query?: never;
+      query?: {
+        /** @description `inactive` adds the championships hidden from the site; admins only. */
+        include?: 'inactive' | null;
+      };
       header?: never;
       path?: never;
       cookie?: never;
@@ -2870,6 +2745,9 @@ export interface operations {
           'application/json': components['schemas']['ChampionshipListItem'][];
         };
       };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
       502: components['responses']['BadGateway'];
     };
   };
@@ -2897,6 +2775,33 @@ export interface operations {
       };
       422: components['responses']['UnprocessableContent'];
       502: components['responses']['BadGateway'];
+    };
+  };
+  updateChampionship: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        championship_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ChampionshipUpdate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
   getChampionshipStandings: {
@@ -2997,7 +2902,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ChampionshipIncidentWindowOut'][];
+          'application/json': components['schemas']['IncidentWindowSummaryOut'][];
         };
       };
       422: components['responses']['UnprocessableContent'];
@@ -3135,6 +3040,30 @@ export interface operations {
       };
       401: components['responses']['Unauthorized'];
       403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
+    };
+  };
+  getCommunity: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        community_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CommunityOut'];
+        };
+      };
+      404: components['responses']['NotFound'];
       422: components['responses']['UnprocessableContent'];
     };
   };
@@ -3410,6 +3339,33 @@ export interface operations {
         headers: {
           /** @description Path of the created resource. */
           Location?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomRaceOut'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
+    };
+  };
+  getCustomRace: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        race_id: string;
+        champ_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
           [name: string]: unknown;
         };
         content: {
@@ -3779,6 +3735,30 @@ export interface operations {
       422: components['responses']['UnprocessableContent'];
     };
   };
+  getBwpPoint: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        point_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BwpPointOut'];
+        };
+      };
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
+    };
+  };
   deleteBwpPoint: {
     parameters: {
       query?: never;
@@ -3849,10 +3829,8 @@ export interface operations {
     };
     responses: {
       /** @description Successful Response */
-      201: {
+      200: {
         headers: {
-          /** @description Path of the created resource. */
-          Location?: string;
           [name: string]: unknown;
         };
         content: {
@@ -3861,6 +3839,31 @@ export interface operations {
       };
       401: components['responses']['Unauthorized'];
       403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
+    };
+  };
+  getClearance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        driver_id: string;
+        rule_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PenaltyClearanceOut'];
+        };
+      };
       404: components['responses']['NotFound'];
       422: components['responses']['UnprocessableContent'];
     };
@@ -4144,7 +4147,7 @@ export interface operations {
       429: components['responses']['TooManyRequests'];
     };
   };
-  publishWindowIncidents: {
+  publishIncidentWindow: {
     parameters: {
       query?: never;
       header?: never;
@@ -4153,11 +4156,7 @@ export interface operations {
       };
       cookie?: never;
     };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['WindowIncidentsUpdate'];
-      };
-    };
+    requestBody?: never;
     responses: {
       /** @description Successful Response */
       200: {
@@ -4165,7 +4164,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['PublishWindowOut'];
+          'application/json': components['schemas']['WindowPublicationOut'];
         };
       };
       401: components['responses']['Unauthorized'];
@@ -4192,13 +4191,37 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ResolveRemainingOut'];
+          'application/json': components['schemas']['DefaultResolutionsOut'];
         };
       };
       401: components['responses']['Unauthorized'];
       403: components['responses']['Forbidden'];
       404: components['responses']['NotFound'];
       409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
+    };
+  };
+  getIncident: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        incident_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['IncidentOut'];
+        };
+      };
+      404: components['responses']['NotFound'];
       422: components['responses']['UnprocessableContent'];
     };
   };
@@ -4291,6 +4314,30 @@ export interface operations {
       403: components['responses']['Forbidden'];
       404: components['responses']['NotFound'];
       409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
+    };
+  };
+  getIncidentDriver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        incident_driver_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['IncidentDriverOut'];
+        };
+      };
+      404: components['responses']['NotFound'];
       422: components['responses']['UnprocessableContent'];
     };
   };
@@ -4424,7 +4471,10 @@ export interface operations {
   };
   listLanguages: {
     parameters: {
-      query?: never;
+      query?: {
+        /** @description `inactive` adds the languages not offered on the site; admins only. */
+        include?: 'inactive' | null;
+      };
       header?: never;
       path?: never;
       cookie?: never;
@@ -4440,6 +4490,9 @@ export interface operations {
           'application/json': components['schemas']['LanguageOut'][];
         };
       };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
     };
   };
   createLanguage: {
@@ -4469,6 +4522,30 @@ export interface operations {
       401: components['responses']['Unauthorized'];
       403: components['responses']['Forbidden'];
       409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
+    };
+  };
+  getLanguage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        code: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LanguageOut'];
+        };
+      };
+      404: components['responses']['NotFound'];
       422: components['responses']['UnprocessableContent'];
     };
   };
@@ -4673,6 +4750,30 @@ export interface operations {
       422: components['responses']['UnprocessableContent'];
     };
   };
+  getPenaltyRule: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        rule_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PenaltyRuleOut'];
+        };
+      };
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
+    };
+  };
   deletePenaltyRule: {
     parameters: {
       query?: never;
@@ -4750,7 +4851,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ImportOut'][];
+          'application/json': components['schemas']['RaceResultImportOut'][];
         };
       };
       401: components['responses']['Unauthorized'];
@@ -4807,7 +4908,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ImportOut'];
+          'application/json': components['schemas']['RaceResultImportOut'];
         };
       };
       401: components['responses']['Unauthorized'];
@@ -5232,7 +5333,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': string[];
+          'application/json': components['schemas']['ManagedCommunitiesOut'];
         };
       };
       401: components['responses']['Unauthorized'];
@@ -5262,7 +5363,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': string[];
+          'application/json': components['schemas']['ManagedCommunitiesOut'];
         };
       };
       401: components['responses']['Unauthorized'];
@@ -5320,18 +5421,16 @@ export interface operations {
       422: components['responses']['UnprocessableContent'];
     };
   };
-  reorderVerdictRules: {
+  getVerdictRule: {
     parameters: {
       query?: never;
       header?: never;
-      path?: never;
+      path: {
+        rule_id: string;
+      };
       cookie?: never;
     };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['VerdictRuleReorder'];
-      };
-    };
+    requestBody?: never;
     responses: {
       /** @description Successful Response */
       200: {
@@ -5339,11 +5438,10 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['VerdictRuleOut'][];
+          'application/json': components['schemas']['VerdictRuleOut'];
         };
       };
-      401: components['responses']['Unauthorized'];
-      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
       422: components['responses']['UnprocessableContent'];
     };
   };
@@ -5403,6 +5501,33 @@ export interface operations {
       422: components['responses']['UnprocessableContent'];
     };
   };
+  reorderVerdictRules: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['VerdictRuleReorder'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VerdictRuleOut'][];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
+    };
+  };
   listDescriptionPresets: {
     parameters: {
       query?: never;
@@ -5450,6 +5575,31 @@ export interface operations {
       };
       401: components['responses']['Unauthorized'];
       403: components['responses']['Forbidden'];
+      422: components['responses']['UnprocessableContent'];
+    };
+  };
+  getDescriptionPreset: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        preset_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DescriptionPresetOut'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      404: components['responses']['NotFound'];
       422: components['responses']['UnprocessableContent'];
     };
   };

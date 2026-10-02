@@ -14,15 +14,14 @@ from app.core.rate_limit import RateLimiter, client_ip
 from app.database import get_db
 from app.models.user import User
 from app.schemas.incidents import (
+    DefaultResolutionsOut,
     IncidentFileCreate,
     IncidentOut,
     IncidentWindowCreate,
     IncidentWindowListItem,
     IncidentWindowOut,
     IncidentWindowUpdate,
-    PublishWindowOut,
-    ResolveRemainingOut,
-    WindowIncidentsUpdate,
+    WindowPublicationOut,
 )
 from app.services import incidents as svc
 
@@ -72,12 +71,7 @@ async def get_incident_window(
     current_user: User | None = Depends(get_current_user_optional),
 ):
     out = IncidentWindowOut.model_validate(await svc.load_window(db, window_id))
-    # Everyone sees every incident, but verdicts stay hidden until published.
-    if not svc.can_see_verdicts(current_user):
-        for incident in out.incidents:
-            if not incident.is_published:
-                for drv in incident.drivers:
-                    drv.resolution = None
+    svc.hide_unpublished_verdicts(out.incidents, current_user)
     return out
 
 
@@ -110,37 +104,41 @@ async def file_incident(
     window_id: uuid.UUID,
     payload: IncidentFileCreate,
     request: Request,
+    response: Response,
     db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_current_user_optional),
 ):
     """File an incident. Open to anonymous reporters, within limits."""
     if current_user is None:
         filing_limiter.hit(client_ip(request))
-    return await svc.file_incident(db, window_id, payload, current_user)
+    incident = await svc.file_incident(db, window_id, payload, current_user)
+    response.headers["Location"] = f"/api/v1/incidents/{incident.id}"
+    return incident
 
 
-@router.patch(
-    "/{window_id}/incidents",
-    response_model=PublishWindowOut,
+@router.put(
+    "/{window_id}/publication",
+    response_model=WindowPublicationOut,
     responses=problem_responses(409),
 )
-async def publish_window_incidents(
+async def publish_incident_window(
     window_id: uuid.UUID,
-    _payload: WindowIncidentsUpdate,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_judge),
 ):
-    """Publish every incident in the window (``{"isPublished": true}``)."""
+    """Make the round's verdicts public and issue the BWP they carry.
+
+    One action for the whole window, and one-way: there is no way to hide
+    verdicts again. Repeating it is safe — it publishes whatever was added
+    since and never issues a penalty twice.
+    """
     window, unlinked = await svc.publish_window(db, window_id)
-    return PublishWindowOut(
-        **IncidentWindowOut.model_validate(window).model_dump(by_alias=False),
-        unlinked_count=unlinked,
-    )
+    return WindowPublicationOut(window=IncidentWindowOut.model_validate(window), unlinked_count=unlinked)
 
 
 @router.post(
     "/{window_id}/default-resolutions",
-    response_model=ResolveRemainingOut,
+    response_model=DefaultResolutionsOut,
     responses=problem_responses(409),
 )
 async def create_default_resolutions(
@@ -150,7 +148,4 @@ async def create_default_resolutions(
 ):
     """Apply the default verdict to every driver in the window still awaiting one."""
     window, resolved = await svc.resolve_remaining(db, window_id, user)
-    return ResolveRemainingOut(
-        **IncidentWindowOut.model_validate(window).model_dump(by_alias=False),
-        resolved_count=resolved,
-    )
+    return DefaultResolutionsOut(window=IncidentWindowOut.model_validate(window), resolved_count=resolved)

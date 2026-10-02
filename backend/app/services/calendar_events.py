@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.active_championship import ActiveChampionship
 from app.models.community import Community
 from app.models.custom_championship import CustomChampionship
-from app.schemas.calendar import CalendarEvent, CalendarEventType, CalendarRace
+from app.schemas.calendar import CalendarEvent, CalendarEventType, CalendarRace, CommunityOut
 from app.services.simgrid import simgrid_service
 
 logger = logging.getLogger(__name__)
@@ -235,11 +235,7 @@ async def _simgrid_events(
                 event_type=event_type,
                 source="simgrid",
                 simgrid_championship_id=champ.id,
-                community_id=skf.id if skf else None,
-                community_name=skf.name if skf else None,
-                community_color=skf.color if skf else None,
-                community_discord_url=skf.discord_url if skf else None,
-                community_is_skf=True,
+                community=CommunityOut.model_validate(skf) if skf else None,
                 accepting_registrations=(
                     champ.accepting_registrations or bool(detail.get("accepting_registrations"))
                 ),
@@ -290,11 +286,7 @@ async def _custom_events(db: AsyncSession, range_start: datetime, range_end: dat
                 event_type=CalendarEventType.FUTURE,
                 source="custom",
                 custom_championship_id=champ.id,
-                community_id=community.id if community else None,
-                community_name=community.name if community else None,
-                community_color=community.color if community else None,
-                community_discord_url=community.discord_url if community else None,
-                community_is_skf=community.is_skf if community else False,
+                community=CommunityOut.model_validate(community) if community else None,
                 races=races,
             )
         )

@@ -297,7 +297,9 @@ async def test_championship_links_to_its_incident_windows(admin_client):
     await _upload(admin_client, IR_FILE, 201, IRACING_CHAMPIONSHIP_ID)
 
     resp = await admin_client.get(f"/api/v1/championships/{LMU_CHAMPIONSHIP_ID}/incident-windows")
-    assert resp.json() == [{"raceId": 101, "windowId": lmu["windowId"], "isOpen": True, "incidentsCount": 55}]
+    (summary,) = resp.json()
+    assert summary.pop("closesAt")
+    assert summary == {"id": lmu["windowId"], "raceId": 101, "isOpen": True, "incidentsCount": 55}
 
     windows = await admin_client.get(
         "/api/v1/incident-windows", params={"championshipId": LMU_CHAMPIONSHIP_ID}
@@ -378,7 +380,7 @@ async def test_imports_are_listed_per_championship_with_paging(admin_client):
     )
     assert resp.status_code == 200
     assert resp.headers["x-total-count"] == "2"
-    assert [i["raceSimgridId"] for i in resp.json()] in ([101], [102])
+    assert [i["raceId"] for i in resp.json()] in ([101], [102])
 
 
 async def test_parse_run_of_an_unknown_import_is_404(admin_client):

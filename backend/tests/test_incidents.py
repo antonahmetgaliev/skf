@@ -556,7 +556,7 @@ class TestPublishAppliesBwp:
         )
 
         _set_auth_user(ac._judge_user)
-        resp = await ac.patch(f"/api/v1/incident-windows/{window_id}/incidents", json={"isPublished": True})
+        resp = await ac.put(f"/api/v1/incident-windows/{window_id}/publication")
         assert resp.status_code == 200
 
         points = (await db.execute(select(BwpPoint))).scalars().all()
@@ -564,7 +564,7 @@ class TestPublishAppliesBwp:
         for p in points:
             assert (p.expires_on - p.issued_on).days == 90
 
-        for inc in resp.json()["incidents"]:
+        for inc in resp.json()["window"]["incidents"]:
             assert inc["isPublished"] is True
 
     @pytest.mark.anyio
@@ -579,8 +579,8 @@ class TestPublishAppliesBwp:
         window_id = await _resolved_window(ac, "Twice", [("Twice Published", "TP +30s", 5)])
 
         _set_auth_user(ac._judge_user)
-        await ac.patch(f"/api/v1/incident-windows/{window_id}/incidents", json={"isPublished": True})
-        await ac.patch(f"/api/v1/incident-windows/{window_id}/incidents", json={"isPublished": True})
+        await ac.put(f"/api/v1/incident-windows/{window_id}/publication")
+        await ac.put(f"/api/v1/incident-windows/{window_id}/publication")
 
         points = (await db.execute(select(BwpPoint))).scalars().all()
         assert len(points) == 1
@@ -603,7 +603,7 @@ class TestPublishAppliesBwp:
         await db.commit()
 
         _set_auth_user(ac._judge_user)
-        await ac.patch(f"/api/v1/incident-windows/{window_id}/incidents", json={"isPublished": True})
+        await ac.put(f"/api/v1/incident-windows/{window_id}/publication")
 
         points = (await db.execute(select(BwpPoint))).scalars().all()
         assert len(points) == 1
@@ -622,7 +622,7 @@ class TestUnlinkedDriverBwp:
         window_id = await _resolved_window(ac, "Unlinked", [("Nobody Knows Me", "DT", 6)])
 
         _set_auth_user(ac._judge_user)
-        resp = await ac.patch(f"/api/v1/incident-windows/{window_id}/incidents", json={"isPublished": True})
+        resp = await ac.put(f"/api/v1/incident-windows/{window_id}/publication")
         assert resp.status_code == 200
 
         assert (await db.execute(select(BwpPoint))).scalars().all() == []
@@ -638,7 +638,7 @@ class TestUnlinkedDriverBwp:
         window_id = await _resolved_window(ac, "Report", [("Ghost Driver", "DT", 6)])
 
         _set_auth_user(ac._judge_user)
-        resp = await ac.patch(f"/api/v1/incident-windows/{window_id}/incidents", json={"isPublished": True})
+        resp = await ac.put(f"/api/v1/incident-windows/{window_id}/publication")
         assert resp.status_code == 200
         assert resp.json()["unlinkedCount"] == 1
 
@@ -651,7 +651,7 @@ class TestUnlinkedDriverBwp:
         window_id = await _resolved_window(ac, "Link Me", [("Mystery Name", "TP +30s", 5)])
 
         _set_auth_user(ac._judge_user)
-        await ac.patch(f"/api/v1/incident-windows/{window_id}/incidents", json={"isPublished": True})
+        await ac.put(f"/api/v1/incident-windows/{window_id}/publication")
         assert (await db.execute(select(BwpPoint))).scalars().all() == []
 
         driver_id = uuid.uuid4()
@@ -665,7 +665,7 @@ class TestUnlinkedDriverBwp:
         )
         assert link.status_code == 200
 
-        resp = await ac.patch(f"/api/v1/incident-windows/{window_id}/incidents", json={"isPublished": True})
+        resp = await ac.put(f"/api/v1/incident-windows/{window_id}/publication")
         assert resp.json()["unlinkedCount"] == 0
 
         points = (await db.execute(select(BwpPoint))).scalars().all()
@@ -1304,6 +1304,11 @@ class TestPublishWindow:
         assert pub.status_code == 200
         assert len(pub.json()["incidents"]) == 1
         assert all(d["resolution"] is None for d in pub.json()["incidents"][0]["drivers"])
+        incident = pub.json()["incidents"][0]
+        alone = await ac.get(f"/api/v1/incidents/{incident['id']}")
+        assert all(d["resolution"] is None for d in alone.json()["drivers"])
+        one = await ac.get(f"/api/v1/incident-drivers/{incident['drivers'][0]['id']}")
+        assert one.json()["resolution"] is None
 
         # A judge sees them.
         _set_auth_user(ac._judge_user)
@@ -1311,9 +1316,7 @@ class TestPublishWindow:
         assert all(d["resolution"] is not None for d in judge.json()["incidents"][0]["drivers"])
 
         # Publishing the window reveals them to everyone.
-        assert (
-            await ac.patch(f"{WINDOWS_URL}/{window_id}/incidents", json={"isPublished": True})
-        ).status_code == 200
+        assert (await ac.put(f"{WINDOWS_URL}/{window_id}/publication")).status_code == 200
         app.dependency_overrides[get_current_user] = lambda: None
         app.dependency_overrides[get_current_user_optional] = lambda: None
         after = await ac.get(f"{WINDOWS_URL}/{window_id}")
@@ -1337,7 +1340,7 @@ class TestPublishWindow:
 
     @pytest.mark.anyio
     async def test_publish_all_requires_judge(self, client: AsyncClient):
-        resp = await client.patch(f"{WINDOWS_URL}/{uuid.uuid4()}/incidents", json={"isPublished": True})
+        resp = await client.put(f"{WINDOWS_URL}/{uuid.uuid4()}/publication")
         assert resp.status_code in (401, 403)
 
     @pytest.mark.anyio
@@ -1347,7 +1350,7 @@ class TestPublishWindow:
         w_resp = await ac.post(WINDOWS_URL, json={"raceName": "Empty", "intervalHours": 48})
         window_id = w_resp.json()["id"]
         _set_auth_user(ac._judge_user)
-        resp = await ac.patch(f"{WINDOWS_URL}/{window_id}/incidents", json={"isPublished": True})
+        resp = await ac.put(f"{WINDOWS_URL}/{window_id}/publication")
         assert resp.status_code == 409
         _set_auth_user(ac._admin_user)
 
@@ -1534,9 +1537,9 @@ class TestCopyIncident:
             f"/api/v1/incidents/{inc['id']}/resolution",
             json={"drivers": [{"incidentDriverId": d["id"]} for d in inc["drivers"]]},
         )
-        publish = await ac.patch(f"{WINDOWS_URL}/{window_id}/incidents", json={"isPublished": True})
+        publish = await ac.put(f"{WINDOWS_URL}/{window_id}/publication")
         assert publish.status_code == 200
-        assert all(i["isPublished"] for i in publish.json()["incidents"])
+        assert all(i["isPublished"] for i in publish.json()["window"]["incidents"])
 
         copy = await ac.post(f"/api/v1/incidents/{inc['id']}/copies")
         assert copy.status_code == 201
@@ -1547,11 +1550,9 @@ class TestCopyIncident:
         _set_auth_user(ac._admin_user)
 
     @pytest.mark.anyio
-    async def test_unpublishing_is_rejected(self, judge_client: AsyncClient):
-        resp = await judge_client.patch(
-            f"{WINDOWS_URL}/{uuid.uuid4()}/incidents", json={"isPublished": False}
-        )
-        assert resp.status_code == 422
+    async def test_a_publication_cannot_be_withdrawn(self, judge_client: AsyncClient):
+        resp = await judge_client.delete(f"{WINDOWS_URL}/{uuid.uuid4()}/publication")
+        assert resp.status_code == 405
 
 
 class TestIncidentStatusFollowsDrivers:

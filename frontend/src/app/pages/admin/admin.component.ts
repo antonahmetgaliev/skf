@@ -10,7 +10,7 @@ import { TabsComponent } from '../../components/tabs/tabs.component';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InputDirective } from '../../directives/input.directive';
-import { API } from '../../api';
+import { API, Schemas } from '../../api';
 import { AuthService, AuthUser, ROLES, Role } from '../../services/auth.service';
 import { CalendarApiService, Community } from '../../services/calendar-api.service';
 import { AdminCalendarTabComponent } from './admin-calendar-tab/admin-calendar-tab.component';
@@ -161,11 +161,13 @@ export class AdminComponent implements OnInit {
   assignCommunity(user: AuthUser, communityId: string): void {
     const ids = communityId ? [communityId] : [];
     this.http
-      .put<string[]>(`${API}/users/${user.id}/managed-communities`, { communityIds: ids })
+      .put<Schemas['ManagedCommunitiesOut']>(`${API}/users/${user.id}/managed-communities`, {
+        communityIds: ids,
+      })
       .subscribe({
-        next: (result) => {
+        next: ({ communityIds }) => {
           this.users.update((list) =>
-            list.map((u) => (u.id === user.id ? { ...u, managedCommunityIds: result } : u)),
+            list.map((u) => (u.id === user.id ? { ...u, managedCommunityIds: communityIds } : u)),
           );
           this.exitEdit(user.id);
         },

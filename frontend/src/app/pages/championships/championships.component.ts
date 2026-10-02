@@ -447,7 +447,10 @@ export class ChampionshipsComponent {
         this.incidentsApi.getChampionshipWindows(championshipId),
       );
       if (this.getSelectedSimgridId() === championshipId) {
-        this.incidentWindows.set(new Map(windows.map((w) => [w.raceId, w])));
+        // The endpoint only returns windows tied to a race; the type is shared with manual ones.
+        this.incidentWindows.set(
+          new Map(windows.flatMap((w) => (w.raceId === null ? [] : [[w.raceId, w]]))),
+        );
       }
     } catch {
       // Links to incidents are a convenience; the page works without them.

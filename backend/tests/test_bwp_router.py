@@ -361,7 +361,7 @@ class TestBwpPoints:
 
         resp = await shared_client.post(f"/api/v1/drivers/{driver.id}/bwp-resets", json={})
 
-        assert resp.status_code == 201
+        assert resp.status_code == 200
         body = resp.json()
         assert body["activeBwp"] == 0
         assert body["clearances"] == []

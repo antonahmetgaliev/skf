@@ -291,7 +291,7 @@
                           <a
                             class="race-incidents-link"
                             routerLink="/incidents"
-                            [queryParams]="{ window: w.windowId }"
+                            [queryParams]="{ window: w.id }"
                             (click)="$event.stopPropagation()"
                           >
                             {{ 'incidents.incidentCount' | transloco: { count: w.incidentsCount } }}

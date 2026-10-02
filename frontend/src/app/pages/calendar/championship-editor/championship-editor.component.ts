@@ -50,7 +50,7 @@ export class ChampionshipEditorComponent {
   edit(event: CalendarEvent): void {
     if (!event.customChampionshipId) return;
     this.editingId.set(event.customChampionshipId);
-    this.communityId.set(event.communityId);
+    this.communityId.set(event.community?.id ?? null);
     this.formData.set({
       name: event.name,
       game: event.game,

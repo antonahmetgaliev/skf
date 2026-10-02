@@ -2,23 +2,26 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Query
+from typing import Literal
+
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import get_current_user_optional, is_admin, require_admin
-from app.core.openapi import NO_404, SIMGRID_RESPONSES
+from app.auth import ensure_admin, get_current_user_optional, require_admin
+from app.core.openapi import NO_404, SIMGRID_RESPONSES, problem_responses
 from app.database import get_db
 from app.models.user import User
 from app.schemas.championship import (
     ChampionshipDetails,
-    ChampionshipIncidentWindowOut,
     ChampionshipListItem,
     ChampionshipRace,
     ChampionshipStandingsData,
+    ChampionshipUpdate,
     RaceSessionOut,
 )
 from app.schemas.enums import RaceSessionKind
 from app.schemas.giveaway import EligibilityOut, UnmatchedNameOut
+from app.schemas.incidents import IncidentWindowSummaryOut
 from app.schemas.race_results import RoundsOut
 from app.services import championship_results, giveaway, race_import
 from app.services import championships as service
@@ -27,13 +30,37 @@ from app.services.drivers import sync_drivers_from_standings
 router = APIRouter(prefix="/championships", tags=["Championships"])
 
 
-@router.get("", response_model=list[ChampionshipListItem], responses=SIMGRID_RESPONSES)
+@router.get(
+    "",
+    response_model=list[ChampionshipListItem],
+    responses={**SIMGRID_RESPONSES, **problem_responses(401, 403)},
+)
 async def list_championships(
+    include: Literal["inactive"] | None = Query(
+        None, description="`inactive` adds the championships hidden from the site; admins only."
+    ),
     db: AsyncSession = Depends(get_db),
     user: User | None = Depends(get_current_user_optional),
 ):
-    """Active championships; admins see all, inactive ones marked completed."""
-    return await service.list_championships(db, include_inactive=is_admin(user))
+    """The championships shown on the site, in SimGrid's order."""
+    if include is not None:
+        ensure_admin(user)
+    return await service.list_championships(db, include_inactive=include is not None)
+
+
+@router.patch(
+    "/{championship_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    openapi_extra=NO_404,
+)
+async def update_championship(
+    championship_id: int,
+    body: ChampionshipUpdate,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    """Show or hide the championship on the site. Everything else about it lives in SimGrid."""
+    await service.set_active(db, championship_id, body.is_active)
 
 
 @router.get(
@@ -89,7 +116,7 @@ async def get_race_results(
 
 @router.get(
     "/{championship_id}/incident-windows",
-    response_model=list[ChampionshipIncidentWindowOut],
+    response_model=list[IncidentWindowSummaryOut],
     openapi_extra=NO_404,
 )
 async def list_championship_incident_windows(championship_id: int, db: AsyncSession = Depends(get_db)):

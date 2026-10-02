@@ -6,147 +6,6 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/api/v1/active-championships": {
-      "get": {
-        "tags": [
-          "Championships"
-        ],
-        "summary": "List active championships",
-        "description": "SimGrid ids of the active championships.",
-        "operationId": "listActiveChampionships",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "type": "integer"
-                  },
-                  "type": "array"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/active-championships/{simgrid_id}": {
-      "put": {
-        "tags": [
-          "Championships"
-        ],
-        "summary": "Activate championship",
-        "description": "Idempotent: 201 when the championship became active, 200 if it already was.\n\nRequires role: `admin`, `super_admin`.",
-        "operationId": "activateChampionship",
-        "security": [
-          {
-            "sessionCookie": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "simgrid_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ActiveChampionshipOut"
-                }
-              }
-            }
-          },
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ActiveChampionshipOut"
-                }
-              }
-            },
-            "description": "Created",
-            "headers": {
-              "Location": {
-                "description": "Path of the created resource.",
-                "schema": {
-                  "type": "string",
-                  "format": "uri-reference"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "422": {
-            "$ref": "#/components/responses/UnprocessableContent"
-          }
-        },
-        "x-required-roles": [
-          "admin",
-          "super_admin"
-        ]
-      },
-      "delete": {
-        "tags": [
-          "Championships"
-        ],
-        "summary": "Deactivate championship",
-        "operationId": "deactivateChampionship",
-        "security": [
-          {
-            "sessionCookie": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "simgrid_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "422": {
-            "$ref": "#/components/responses/UnprocessableContent"
-          }
-        },
-        "x-required-roles": [
-          "admin",
-          "super_admin"
-        ],
-        "description": "Requires role: `admin`, `super_admin`."
-      }
-    },
     "/api/v1/auth/discord/authorization-url": {
       "get": {
         "tags": [
@@ -338,11 +197,41 @@
           "Championships"
         ],
         "summary": "List championships",
-        "description": "Active championships; admins see all, inactive ones marked completed.",
+        "description": "The championships shown on the site, in SimGrid's order.",
         "operationId": "listChampionships",
+        "parameters": [
+          {
+            "name": "include",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "const": "inactive",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`inactive` adds the championships hidden from the site; admins only."
+            },
+            "description": "`inactive` adds the championships hidden from the site; admins only."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChampionshipListItem"
+                  }
+                }
+              }
+            },
             "headers": {
               "X-Data-Stale": {
                 "description": "`true` when SimGrid was unreachable and cached data was served.",
@@ -353,17 +242,16 @@
                   ]
                 }
               }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/ChampionshipListItem"
-                  },
-                  "type": "array"
-                }
-              }
             }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
           },
           "502": {
             "$ref": "#/components/responses/BadGateway"
@@ -372,6 +260,57 @@
       }
     },
     "/api/v1/championships/{championship_id}": {
+      "patch": {
+        "tags": [
+          "Championships"
+        ],
+        "summary": "Update championship",
+        "description": "Show or hide the championship on the site. Everything else about it lives in SimGrid.\n\nRequires role: `admin`, `super_admin`.",
+        "operationId": "updateChampionship",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "championship_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChampionshipUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
+          }
+        },
+        "x-required-roles": [
+          "admin",
+          "super_admin"
+        ]
+      },
       "get": {
         "tags": [
           "Championships"
@@ -611,7 +550,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ChampionshipIncidentWindowOut"
+                    "$ref": "#/components/schemas/IncidentWindowSummaryOut"
                   }
                 }
               }
@@ -923,6 +862,43 @@
       }
     },
     "/api/v1/communities/{community_id}": {
+      "get": {
+        "tags": [
+          "Communities"
+        ],
+        "summary": "Get community",
+        "description": "A visible community; a hidden one only for those who manage it.",
+        "operationId": "getCommunity",
+        "parameters": [
+          {
+            "name": "community_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommunityOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
+          }
+        }
+      },
       "patch": {
         "tags": [
           "Communities"
@@ -1543,6 +1519,68 @@
       }
     },
     "/api/v1/custom-championships/{champ_id}/races/{race_id}": {
+      "get": {
+        "tags": [
+          "Custom championships"
+        ],
+        "summary": "Get custom race",
+        "operationId": "getCustomRace",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "race_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "champ_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomRaceOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
+          }
+        },
+        "x-required-roles": [
+          "admin",
+          "super_admin",
+          "community_manager"
+        ],
+        "description": "Requires role: `admin`, `super_admin`, `community_manager`."
+      },
       "patch": {
         "tags": [
           "Custom championships"
@@ -2345,6 +2383,42 @@
       }
     },
     "/api/v1/bwp-points/{point_id}": {
+      "get": {
+        "tags": [
+          "Drivers"
+        ],
+        "summary": "Get bwp point",
+        "operationId": "getBwpPoint",
+        "parameters": [
+          {
+            "name": "point_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BwpPointOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
+          }
+        }
+      },
       "patch": {
         "tags": [
           "Drivers"
@@ -2488,21 +2562,12 @@
           }
         },
         "responses": {
-          "201": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DriverOut"
-                }
-              }
-            },
-            "headers": {
-              "Location": {
-                "description": "Path of the created resource.",
-                "schema": {
-                  "type": "string",
-                  "format": "uri-reference"
                 }
               }
             }
@@ -2527,6 +2592,51 @@
       }
     },
     "/api/v1/drivers/{driver_id}/clearances/{rule_id}": {
+      "get": {
+        "tags": [
+          "Drivers"
+        ],
+        "summary": "Get clearance",
+        "operationId": "getClearance",
+        "parameters": [
+          {
+            "name": "driver_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PenaltyClearanceOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
+          }
+        }
+      },
       "put": {
         "tags": [
           "Drivers"
@@ -3081,14 +3191,16 @@
             "$ref": "#/components/responses/TooManyRequests"
           }
         }
-      },
-      "patch": {
+      }
+    },
+    "/api/v1/incident-windows/{window_id}/publication": {
+      "put": {
         "tags": [
           "Incidents"
         ],
-        "summary": "Publish window incidents",
-        "description": "Publish every incident in the window (``{\"isPublished\": true}``).\n\nRequires role: `racing_judge`, `admin`, `super_admin`.",
-        "operationId": "publishWindowIncidents",
+        "summary": "Publish incident window",
+        "description": "Make the round's verdicts public and issue the BWP they carry.\n\nOne action for the whole window, and one-way: there is no way to hide\nverdicts again. Repeating it is safe — it publishes whatever was added\nsince and never issues a penalty twice.\n\nRequires role: `racing_judge`, `admin`, `super_admin`.",
+        "operationId": "publishIncidentWindow",
         "security": [
           {
             "sessionCookie": []
@@ -3105,23 +3217,13 @@
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WindowIncidentsUpdate"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PublishWindowOut"
+                  "$ref": "#/components/schemas/WindowPublicationOut"
                 }
               }
             }
@@ -3179,7 +3281,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResolveRemainingOut"
+                  "$ref": "#/components/schemas/DefaultResolutionsOut"
                 }
               }
             }
@@ -3205,6 +3307,44 @@
           "admin",
           "super_admin"
         ]
+      }
+    },
+    "/api/v1/incidents/{incident_id}": {
+      "get": {
+        "tags": [
+          "Incidents"
+        ],
+        "summary": "Get incident",
+        "operationId": "getIncident",
+        "parameters": [
+          {
+            "name": "incident_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
+          }
+        }
       }
     },
     "/api/v1/incidents/{incident_id}/copies": {
@@ -3417,6 +3557,42 @@
       }
     },
     "/api/v1/incident-drivers/{incident_driver_id}": {
+      "get": {
+        "tags": [
+          "Incidents"
+        ],
+        "summary": "Get incident driver",
+        "operationId": "getIncidentDriver",
+        "parameters": [
+          {
+            "name": "incident_driver_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentDriverOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
+          }
+        }
+      },
       "delete": {
         "tags": [
           "Incidents"
@@ -3675,21 +3851,50 @@
           "Languages"
         ],
         "summary": "List languages",
-        "description": "Active languages; admins also see inactive ones.",
+        "description": "The languages the site is offered in.",
         "operationId": "listLanguages",
+        "parameters": [
+          {
+            "name": "include",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "const": "inactive",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`inactive` adds the languages not offered on the site; admins only."
+            },
+            "description": "`inactive` adds the languages not offered on the site; admins only."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/LanguageOut"
-                  },
-                  "type": "array"
+                  }
                 }
               }
             }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
           }
         }
       },
@@ -3699,15 +3904,20 @@
         ],
         "summary": "Create language",
         "operationId": "createLanguage",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/LanguageCreate"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -3742,11 +3952,6 @@
             "$ref": "#/components/responses/UnprocessableContent"
           }
         },
-        "security": [
-          {
-            "sessionCookie": []
-          }
-        ],
         "x-required-roles": [
           "admin",
           "super_admin"
@@ -3755,6 +3960,44 @@
       }
     },
     "/api/v1/languages/{code}": {
+      "get": {
+        "tags": [
+          "Languages"
+        ],
+        "summary": "Get language",
+        "description": "A language offered on the site; one that is not, only for admins.",
+        "operationId": "getLanguage",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 10,
+              "pattern": "^[A-Za-z0-9_-]+$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LanguageOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
+          }
+        }
+      },
       "delete": {
         "tags": [
           "Languages"
@@ -4133,6 +4376,42 @@
       }
     },
     "/api/v1/penalty-rules/{rule_id}": {
+      "get": {
+        "tags": [
+          "Penalty rules"
+        ],
+        "summary": "Get penalty rule",
+        "operationId": "getPenaltyRule",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PenaltyRuleOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
+          }
+        }
+      },
       "patch": {
         "tags": [
           "Penalty rules"
@@ -4299,7 +4578,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ImportOut"
+                    "$ref": "#/components/schemas/RaceResultImportOut"
                   }
                 }
               }
@@ -4431,7 +4710,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ImportOut"
+                  "$ref": "#/components/schemas/RaceResultImportOut"
                 }
               }
             }
@@ -5308,11 +5587,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
+                  "$ref": "#/components/schemas/ManagedCommunitiesOut"
                 }
               }
             }
@@ -5375,11 +5650,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
+                  "$ref": "#/components/schemas/ManagedCommunitiesOut"
                 }
               }
             }
@@ -5485,61 +5756,43 @@
         "description": "Requires role: `racing_judge`, `admin`, `super_admin`."
       }
     },
-    "/api/v1/verdict-rules/order": {
-      "put": {
+    "/api/v1/verdict-rules/{rule_id}": {
+      "get": {
         "tags": [
           "Incident rules"
         ],
-        "summary": "Reorder verdict rules",
-        "operationId": "reorderVerdictRules",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerdictRuleReorder"
-              }
+        "summary": "Get verdict rule",
+        "operationId": "getVerdictRule",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
             }
-          },
-          "required": true
-        },
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/VerdictRuleOut"
-                  },
-                  "type": "array"
+                  "$ref": "#/components/schemas/VerdictRuleOut"
                 }
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableContent"
           }
-        },
-        "security": [
-          {
-            "sessionCookie": []
-          }
-        ],
-        "x-required-roles": [
-          "racing_judge",
-          "admin",
-          "super_admin"
-        ],
-        "description": "Requires role: `racing_judge`, `admin`, `super_admin`."
-      }
-    },
-    "/api/v1/verdict-rules/{rule_id}": {
+        }
+      },
       "patch": {
         "tags": [
           "Incident rules"
@@ -5656,6 +5909,60 @@
         "description": "Requires role: `racing_judge`, `admin`, `super_admin`."
       }
     },
+    "/api/v1/verdict-rules/order": {
+      "put": {
+        "tags": [
+          "Incident rules"
+        ],
+        "summary": "Reorder verdict rules",
+        "operationId": "reorderVerdictRules",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerdictRuleReorder"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/VerdictRuleOut"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "x-required-roles": [
+          "racing_judge",
+          "admin",
+          "super_admin"
+        ],
+        "description": "Requires role: `racing_judge`, `admin`, `super_admin`."
+      }
+    },
     "/api/v1/description-presets": {
       "get": {
         "tags": [
@@ -5747,6 +6054,50 @@
       }
     },
     "/api/v1/description-presets/{preset_id}": {
+      "get": {
+        "tags": [
+          "Incident rules"
+        ],
+        "summary": "Get description preset",
+        "operationId": "getDescriptionPreset",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "preset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DescriptionPresetOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
+          }
+        }
+      },
       "patch": {
         "tags": [
           "Incident rules"
@@ -6025,29 +6376,6 @@
   },
   "components": {
     "schemas": {
-      "ActiveChampionshipOut": {
-        "properties": {
-          "simgridId": {
-            "type": "integer"
-          },
-          "createdAt": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "simgridId",
-          "createdAt"
-        ]
-      },
       "AliasCreate": {
         "properties": {
           "normalizedAlias": {
@@ -6403,50 +6731,15 @@
               }
             ]
           },
-          "communityId": {
+          "community": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "uuid"
+                "$ref": "#/components/schemas/CommunityOut"
               },
               {
                 "type": "null"
               }
             ]
-          },
-          "communityName": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "communityColor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "communityDiscordUrl": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "communityIsSkf": {
-            "type": "boolean",
-            "default": false
           },
           "acceptingRegistrations": {
             "type": "boolean",
@@ -6505,11 +6798,7 @@
           "image",
           "simgridChampionshipId",
           "customChampionshipId",
-          "communityId",
-          "communityName",
-          "communityColor",
-          "communityDiscordUrl",
-          "communityIsSkf",
+          "community",
           "acceptingRegistrations",
           "capacity",
           "spotsTaken",
@@ -6748,30 +7037,6 @@
           "allRoundsNumber"
         ]
       },
-      "ChampionshipIncidentWindowOut": {
-        "properties": {
-          "raceId": {
-            "type": "integer"
-          },
-          "windowId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "isOpen": {
-            "type": "boolean"
-          },
-          "incidentsCount": {
-            "type": "integer"
-          }
-        },
-        "type": "object",
-        "required": [
-          "raceId",
-          "windowId",
-          "isOpen",
-          "incidentsCount"
-        ]
-      },
       "ChampionshipListItem": {
         "properties": {
           "id": {
@@ -6810,6 +7075,11 @@
             "type": "boolean",
             "description": "SimGrid marks the championship as finished.",
             "default": false
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Shown on the site; inactive ones are admin-only.",
+            "default": false
           }
         },
         "type": "object",
@@ -6819,7 +7089,8 @@
           "startDate",
           "endDate",
           "acceptingRegistrations",
-          "eventCompleted"
+          "eventCompleted",
+          "isActive"
         ]
       },
       "ChampionshipRace": {
@@ -6892,6 +7163,17 @@
         "required": [
           "entries",
           "races"
+        ]
+      },
+      "ChampionshipUpdate": {
+        "properties": {
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "isActive"
         ]
       },
       "CommunityCreate": {
@@ -7468,6 +7750,22 @@
         },
         "type": "object"
       },
+      "DefaultResolutionsOut": {
+        "properties": {
+          "window": {
+            "$ref": "#/components/schemas/IncidentWindowOut"
+          },
+          "resolvedCount": {
+            "type": "integer",
+            "description": "Drivers the default verdict was just applied to."
+          }
+        },
+        "type": "object",
+        "required": [
+          "window",
+          "resolvedCount"
+        ]
+      },
       "DescriptionPresetCreate": {
         "properties": {
           "text": {
@@ -7906,90 +8204,10 @@
           "matched"
         ]
       },
-      "ImportOut": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "championshipSimgridId": {
-            "type": "integer"
-          },
-          "raceSimgridId": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "trackEvent": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "sessionStartedAt": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "sourceFilename": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "sim": {
-            "$ref": "#/components/schemas/Sim",
-            "default": "lmu"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "entryCount": {
-            "type": "integer"
-          },
-          "unmatchedCount": {
-            "type": "integer"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "championshipSimgridId",
-          "raceSimgridId",
-          "trackEvent",
-          "sessionStartedAt",
-          "sourceFilename",
-          "sim",
-          "createdAt",
-          "entryCount",
-          "unmatchedCount"
-        ],
-        "description": "One uploaded round file, as listed per championship."
-      },
       "ImportResultOut": {
         "properties": {
           "raceImport": {
-            "$ref": "#/components/schemas/RaceImportOut"
+            "$ref": "#/components/schemas/RaceResultImportOut"
           },
           "windowId": {
             "anyOf": [
@@ -8664,6 +8882,43 @@
           "incidents"
         ]
       },
+      "IncidentWindowSummaryOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "raceId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isOpen": {
+            "type": "boolean"
+          },
+          "closesAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "incidentsCount": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "raceId",
+          "isOpen",
+          "closesAt",
+          "incidentsCount"
+        ],
+        "description": "A round's window at a glance, for lists of rounds."
+      },
       "IncidentWindowUpdate": {
         "properties": {
           "isManuallyClosed": {
@@ -8714,6 +8969,21 @@
           "code",
           "name",
           "isActive"
+        ]
+      },
+      "ManagedCommunitiesOut": {
+        "properties": {
+          "communityIds": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object",
+        "required": [
+          "communityIds"
         ]
       },
       "ManagedCommunitiesUpdate": {
@@ -8865,202 +9135,6 @@
           "code"
         ],
         "type": "object"
-      },
-      "PublishWindowOut": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "championshipId": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "championshipName": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "raceId": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "raceName": {
-            "type": "string"
-          },
-          "date": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "The race day as display text, normally `YYYY-MM-DD`."
-          },
-          "intervalHours": {
-            "type": "integer",
-            "description": "How long the window accepts incidents after it opens."
-          },
-          "openedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "closesAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "openedByUserId": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "isManuallyClosed": {
-            "type": "boolean"
-          },
-          "isOpen": {
-            "type": "boolean"
-          },
-          "incidents": {
-            "items": {
-              "$ref": "#/components/schemas/IncidentOut"
-            },
-            "type": "array",
-            "default": []
-          },
-          "unlinkedCount": {
-            "type": "integer",
-            "description": "Penalties that reached no licence because the driver name matches no driver record.",
-            "default": 0
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "championshipId",
-          "championshipName",
-          "raceId",
-          "raceName",
-          "date",
-          "intervalHours",
-          "openedAt",
-          "closesAt",
-          "openedByUserId",
-          "isManuallyClosed",
-          "isOpen",
-          "incidents",
-          "unlinkedCount"
-        ]
-      },
-      "RaceImportOut": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sim": {
-            "$ref": "#/components/schemas/Sim"
-          },
-          "trackEvent": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "sessionStartedAt": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "sourceFilename": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "fileSize": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "hasFile": {
-            "type": "boolean"
-          },
-          "entryCount": {
-            "type": "integer"
-          },
-          "unmatchedCount": {
-            "type": "integer"
-          },
-          "contactsCount": {
-            "type": "integer"
-          },
-          "autoGrouped": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "sim",
-          "trackEvent",
-          "sessionStartedAt",
-          "sourceFilename",
-          "fileSize",
-          "hasFile",
-          "entryCount",
-          "unmatchedCount",
-          "contactsCount",
-          "autoGrouped",
-          "createdAt"
-        ]
       },
       "RaceResultEntry": {
         "properties": {
@@ -9254,6 +9328,108 @@
           "raceId"
         ],
         "description": "``POST /race-result-imports``: the multipart form of one round's upload."
+      },
+      "RaceResultImportOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "championshipId": {
+            "type": "integer"
+          },
+          "raceId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sim": {
+            "$ref": "#/components/schemas/Sim"
+          },
+          "trackEvent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sessionStartedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sourceFilename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fileSize": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hasFile": {
+            "type": "boolean"
+          },
+          "entryCount": {
+            "type": "integer"
+          },
+          "unmatchedCount": {
+            "type": "integer"
+          },
+          "contactsCount": {
+            "type": "integer"
+          },
+          "autoGrouped": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "championshipId",
+          "raceId",
+          "sim",
+          "trackEvent",
+          "sessionStartedAt",
+          "sourceFilename",
+          "fileSize",
+          "hasFile",
+          "entryCount",
+          "unmatchedCount",
+          "contactsCount",
+          "autoGrouped",
+          "createdAt"
+        ],
+        "description": "One uploaded round file."
       },
       "RaceSessionKind": {
         "type": "string",
@@ -9509,116 +9685,6 @@
           "incidentDriverId"
         ]
       },
-      "ResolveRemainingOut": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "championshipId": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "championshipName": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "raceId": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "raceName": {
-            "type": "string"
-          },
-          "date": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "The race day as display text, normally `YYYY-MM-DD`."
-          },
-          "intervalHours": {
-            "type": "integer",
-            "description": "How long the window accepts incidents after it opens."
-          },
-          "openedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "closesAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "openedByUserId": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "isManuallyClosed": {
-            "type": "boolean"
-          },
-          "isOpen": {
-            "type": "boolean"
-          },
-          "incidents": {
-            "items": {
-              "$ref": "#/components/schemas/IncidentOut"
-            },
-            "type": "array",
-            "default": []
-          },
-          "resolvedCount": {
-            "type": "integer",
-            "description": "Drivers the default verdict was just applied to.",
-            "default": 0
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "championshipId",
-          "championshipName",
-          "raceId",
-          "raceName",
-          "date",
-          "intervalHours",
-          "openedAt",
-          "closesAt",
-          "openedByUserId",
-          "isManuallyClosed",
-          "isOpen",
-          "incidents",
-          "resolvedCount"
-        ]
-      },
       "RoundBreakdownOut": {
         "properties": {
           "roundKey": {
@@ -9680,7 +9746,7 @@
           "raceImport": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/RaceImportOut"
+                "$ref": "#/components/schemas/RaceResultImportOut"
               },
               {
                 "type": "null"
@@ -9690,7 +9756,7 @@
           "window": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/RoundWindowOut"
+                "$ref": "#/components/schemas/IncidentWindowSummaryOut"
               },
               {
                 "type": "null"
@@ -9706,31 +9772,6 @@
           "ended",
           "raceImport",
           "window"
-        ]
-      },
-      "RoundWindowOut": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "isOpen": {
-            "type": "boolean"
-          },
-          "closesAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "incidentsCount": {
-            "type": "integer"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "isOpen",
-          "closesAt",
-          "incidentsCount"
         ]
       },
       "RoundsOut": {
@@ -10179,16 +10220,20 @@
         },
         "type": "object"
       },
-      "WindowIncidentsUpdate": {
+      "WindowPublicationOut": {
         "properties": {
-          "isPublished": {
-            "type": "boolean",
-            "const": true
+          "window": {
+            "$ref": "#/components/schemas/IncidentWindowOut"
+          },
+          "unlinkedCount": {
+            "type": "integer",
+            "description": "Penalties that reached no licence because the driver name matches no driver record."
           }
         },
         "type": "object",
         "required": [
-          "isPublished"
+          "window",
+          "unlinkedCount"
         ]
       },
       "YouTubeVideo": {

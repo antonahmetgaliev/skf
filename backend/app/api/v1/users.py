@@ -11,7 +11,7 @@ from app.auth import require_admin
 from app.core.pagination import PageParams, page_params, paginate
 from app.database import get_db
 from app.models.user import User
-from app.schemas.auth import ManagedCommunitiesUpdate, UserOut, UserUpdate
+from app.schemas.auth import ManagedCommunitiesOut, ManagedCommunitiesUpdate, UserOut, UserUpdate
 from app.services import users as users_service
 
 router = APIRouter(prefix="/users", tags=["Users"], dependencies=[Depends(require_admin)])
@@ -45,16 +45,18 @@ async def revoke_user_sessions(user_id: uuid.UUID, db: AsyncSession = Depends(ge
     await users_service.revoke_sessions(db, user_id)
 
 
-@router.get("/{user_id}/managed-communities", response_model=list[uuid.UUID])
+@router.get("/{user_id}/managed-communities", response_model=ManagedCommunitiesOut)
 async def get_user_managed_communities(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
-    return await users_service.get_managed_communities(db, user_id)
+    ids = await users_service.get_managed_communities(db, user_id)
+    return ManagedCommunitiesOut(community_ids=ids)
 
 
-@router.put("/{user_id}/managed-communities", response_model=list[uuid.UUID])
+@router.put("/{user_id}/managed-communities", response_model=ManagedCommunitiesOut)
 async def set_user_managed_communities(
     user_id: uuid.UUID,
     body: ManagedCommunitiesUpdate,
     db: AsyncSession = Depends(get_db),
 ):
     """Replace the full set of communities the user manages."""
-    return await users_service.set_managed_communities(db, user_id, body.community_ids)
+    ids = await users_service.set_managed_communities(db, user_id, body.community_ids)
+    return ManagedCommunitiesOut(community_ids=ids)

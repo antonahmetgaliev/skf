@@ -10,6 +10,7 @@ from pydantic import Field
 
 from app.schemas.base import CamelModel, IsoDateTime
 from app.schemas.enums import Sim
+from app.schemas.incidents import IncidentWindowSummaryOut
 
 
 class RaceResultImportCreate(CamelModel):
@@ -33,23 +34,12 @@ class ImportEntryOut(CamelModel):
     matched: bool = Field(description="The name resolves to a driver record.")
 
 
-class ImportOut(CamelModel):
-    """One uploaded round file, as listed per championship."""
+class RaceResultImportOut(CamelModel):
+    """One uploaded round file."""
 
     id: uuid.UUID
-    championship_simgrid_id: int
-    race_simgrid_id: int | None = None
-    track_event: str | None = None
-    session_started_at: datetime | None = None
-    source_filename: str | None = None
-    sim: Sim = Sim.LMU
-    created_at: datetime
-    entry_count: int
-    unmatched_count: int
-
-
-class RaceImportOut(CamelModel):
-    id: uuid.UUID
+    championship_id: int
+    race_id: int | None = None
     sim: Sim
     track_event: str | None = None
     session_started_at: datetime | None = None
@@ -63,20 +53,13 @@ class RaceImportOut(CamelModel):
     created_at: datetime
 
 
-class RoundWindowOut(CamelModel):
-    id: uuid.UUID
-    is_open: bool
-    closes_at: datetime
-    incidents_count: int
-
-
 class RoundOut(CamelModel):
     race_id: int
     name: str
     starts_at: IsoDateTime | None = None
     ended: bool = False
-    race_import: RaceImportOut | None = None
-    window: RoundWindowOut | None = None
+    race_import: RaceResultImportOut | None = None
+    window: IncidentWindowSummaryOut | None = None
 
 
 class RoundsOut(CamelModel):
@@ -91,7 +74,7 @@ class RoundsOut(CamelModel):
 
 
 class ImportResultOut(CamelModel):
-    race_import: RaceImportOut
+    race_import: RaceResultImportOut
     window_id: uuid.UUID | None = None
     incidents_created: int
     incidents_kept: int

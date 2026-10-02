@@ -147,13 +147,13 @@ async def test_managed_communities_roundtrip(admin_client: AsyncClient, db: Asyn
 
     resp = await admin_client.put(url, json={"communityIds": [str(community.id), str(community.id)]})
     assert resp.status_code == 200
-    assert resp.json() == [str(community.id)]
+    assert resp.json() == {"communityIds": [str(community.id)]}
 
     resp = await admin_client.get(url)
-    assert resp.json() == [str(community.id)]
+    assert resp.json() == {"communityIds": [str(community.id)]}
 
     resp = await admin_client.put(url, json={"communityIds": []})
-    assert resp.json() == []
+    assert resp.json() == {"communityIds": []}
 
 
 async def test_managed_communities_unknown_id_is_rejected(admin_client: AsyncClient, db: AsyncSession):
@@ -167,7 +167,7 @@ async def test_managed_communities_unknown_id_is_rejected(admin_client: AsyncCli
     assert resp.headers["content-type"].startswith("application/problem+json")
 
     resp = await admin_client.get(f"{USERS_URL}/{user.id}/managed-communities")
-    assert resp.json() == []
+    assert resp.json() == {"communityIds": []}
 
 
 async def test_managed_communities_invalid_uuid_is_422(admin_client: AsyncClient, db: AsyncSession):

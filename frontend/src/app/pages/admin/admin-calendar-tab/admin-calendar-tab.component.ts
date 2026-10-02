@@ -56,7 +56,6 @@ export class AdminCalendarTabComponent implements OnInit {
 
   // SimGrid championships (shown when SKF community is selected)
   readonly simgridChampionships = signal<ChampionshipListItem[]>([]);
-  readonly activeChampionshipIds = signal<Set<number>>(new Set());
   readonly simgridLoading = signal(false);
 
   readonly communityForm = signal<CommunityCreate>({
@@ -312,12 +311,9 @@ export class AdminCalendarTabComponent implements OnInit {
   async loadSimgridChampionships(): Promise<void> {
     this.simgridLoading.set(true);
     try {
-      const [champs, activeIds] = await Promise.all([
-        firstValueFrom(this.simgridApi.getChampionships()),
-        firstValueFrom(this.simgridApi.getActiveChampionships()),
-      ]);
-      this.simgridChampionships.set(champs);
-      this.activeChampionshipIds.set(new Set(activeIds));
+      this.simgridChampionships.set(
+        await firstValueFrom(this.simgridApi.getChampionships({ includeInactive: true })),
+      );
     } catch {
       // non-critical
     } finally {
@@ -325,28 +321,19 @@ export class AdminCalendarTabComponent implements OnInit {
     }
   }
 
-  isSimgridActive(id: number): boolean {
-    return this.activeChampionshipIds().has(id);
-  }
-
   get activeSimgridChampionships(): ChampionshipListItem[] {
-    return this.simgridChampionships().filter((c) => this.activeChampionshipIds().has(c.id));
+    return this.simgridChampionships().filter((c) => c.isActive);
   }
 
   get inactiveSimgridChampionships(): ChampionshipListItem[] {
-    return this.simgridChampionships().filter((c) => !this.activeChampionshipIds().has(c.id));
+    return this.simgridChampionships().filter((c) => !c.isActive);
   }
 
-  async toggleSimgridActive(id: number): Promise<void> {
-    const ids = this.activeChampionshipIds();
-    if (ids.has(id)) {
-      await firstValueFrom(this.simgridApi.removeActiveChampionship(id));
-      const next = new Set(ids);
-      next.delete(id);
-      this.activeChampionshipIds.set(next);
-    } else {
-      await firstValueFrom(this.simgridApi.addActiveChampionship(id));
-      this.activeChampionshipIds.set(new Set([...ids, id]));
-    }
+  async toggleSimgridActive(champ: ChampionshipListItem): Promise<void> {
+    const isActive = !champ.isActive;
+    await firstValueFrom(this.simgridApi.setChampionshipActive(champ.id, isActive));
+    this.simgridChampionships.update((list) =>
+      list.map((c) => (c.id === champ.id ? { ...c, isActive } : c)),
+    );
   }
 }

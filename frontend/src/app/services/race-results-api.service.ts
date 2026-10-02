@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { API, Schemas } from '../api';
 
 /** Simulators whose result file the backend can parse. */
-export type RaceSim = Schemas['RaceImportOut']['sim'];
+export type RaceSim = Schemas['RaceResultImportOut']['sim'];
 
 /** File each simulator's upload expects. */
 export const SIM_FILE_ACCEPT: Record<RaceSim, string> = {
@@ -18,9 +18,9 @@ export const SIM_LABELS: Record<RaceSim, string> = {
   iracing: 'iRacing',
 };
 
-export type RaceImport = Schemas['RaceImportOut'];
+export type RaceImport = Schemas['RaceResultImportOut'];
 
-export type RoundWindow = Schemas['RoundWindowOut'];
+export type RoundWindow = Schemas['IncidentWindowSummaryOut'];
 
 export type RaceRound = Schemas['RoundOut'];
 
