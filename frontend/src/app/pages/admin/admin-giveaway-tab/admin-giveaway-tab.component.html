@@ -29,7 +29,7 @@
           @let record = round.raceImport;
           <div class="round-row" [class.round-row--imported]="record">
             <div class="round-main">
-              <span class="round-name">{{ round.name }}</span>
+              <span class="round-name">{{ round.displayName }}</span>
               @if (round.startsAt) {
                 <span class="round-date">{{ round.startsAt | date: 'dd.MM.yyyy' }}</span>
               }

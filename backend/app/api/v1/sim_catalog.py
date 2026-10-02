@@ -16,5 +16,7 @@ async def list_simulators():
 
 
 @router.get("/car-classes", response_model=list[str], responses=STALE_RESPONSES)
-async def list_car_classes(game_id: int | None = Query(None, alias="gameId")):
+async def list_car_classes(
+    game_id: int | None = Query(None, alias="simgridGameId", description="SimGrid's numeric game id."),
+):
     return await service.list_car_classes(game_id)

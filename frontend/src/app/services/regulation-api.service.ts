@@ -5,7 +5,7 @@ import { API, Schemas } from '../api';
 
 export type RegulationContentOut = Schemas['RegulationContentOut'];
 
-export type RegulationPageListItem = Schemas['RegulationPageListItem'];
+export type RegulationPageListItem = Schemas['RegulationPageSummaryOut'];
 
 export type RegulationPageOut = Schemas['RegulationPageOut'];
 

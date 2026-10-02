@@ -19,12 +19,12 @@ from pydantic import ValidationError
 from app.config import settings
 from app.middleware import mark_stale
 from app.schemas.championship import (
-    ChampionshipDetails,
-    ChampionshipListItem,
-    ChampionshipStandingsData,
+    ChampionshipOut,
+    ChampionshipStandingsOut,
+    ChampionshipSummaryOut,
     ParticipatingUser,
-    StandingEntry,
-    StandingRace,
+    StandingEntryOut,
+    StandingRaceOut,
 )
 from app.schemas.simgrid_raw import (
     Envelope,
@@ -93,13 +93,13 @@ class SimgridService:
     async def get_championships(
         self,
         limit: int = 200,
-    ) -> list[ChampionshipListItem]:
+    ) -> list[ChampionshipSummaryOut]:
         key = f"championships_list_{limit}"
         cached = await read_cache(key, _TTL_STATIC)
         # An empty list is never a real answer for SKF; refetch instead of
         # serving it for a whole day.
         if cached:
-            return [ChampionshipListItem(**item) for item in cached]
+            return [ChampionshipSummaryOut(**item) for item in cached]
 
         try:
             items: list[dict] = []
@@ -123,7 +123,7 @@ class SimgridService:
                 offset += limit
             if items:
                 await write_cache(key, items)
-            return [ChampionshipListItem(**item) for item in items]
+            return [ChampionshipSummaryOut(**item) for item in items]
         except Exception:
             logger.warning(
                 "Championships fetch failed, attempting stale cache fallback",
@@ -132,20 +132,20 @@ class SimgridService:
             stale = await read_stale_cache(key)
             if stale is not None:
                 mark_stale()
-                return [ChampionshipListItem(**item) for item in stale]
+                return [ChampionshipSummaryOut(**item) for item in stale]
             raise
 
     async def with_details(
         self,
-        items: list[ChampionshipListItem],
-    ) -> list[ChampionshipListItem]:
+        items: list[ChampionshipSummaryOut],
+    ) -> list[ChampionshipSummaryOut]:
         """Fill dates and registration state from each championship's details.
 
         The list endpoint only returns ``id`` and ``name``, so call this on
         the (few) items actually shown rather than on the whole list.
         """
 
-        async def enrich(item: ChampionshipListItem) -> ChampionshipListItem:
+        async def enrich(item: ChampionshipSummaryOut) -> ChampionshipSummaryOut:
             try:
                 details = await self.get_championship(item.id)
             except Exception:
@@ -165,17 +165,17 @@ class SimgridService:
     async def get_championship(
         self,
         championship_id: int,
-    ) -> ChampionshipDetails:
+    ) -> ChampionshipOut:
         key = f"championship_{championship_id}"
         cached = await read_cache(key, _TTL_STATIC)
         if cached is not None:
-            return ChampionshipDetails(**cached)
+            return ChampionshipOut(**cached)
 
         data = await self._request(
             f"/api/v1/championships/{championship_id}",
             key,
         )
-        return ChampionshipDetails(**data)
+        return ChampionshipOut(**data)
 
     async def get_races(
         self,
@@ -215,7 +215,7 @@ class SimgridService:
     async def get_standings(
         self,
         championship_id: int,
-    ) -> tuple[ChampionshipStandingsData, bool]:
+    ) -> tuple[ChampionshipStandingsOut, bool]:
         """Return (standings, fetched_live).
 
         ``fetched_live`` is False for cache hits and stale fallbacks, so
@@ -225,7 +225,7 @@ class SimgridService:
         key = f"standings_{championship_id}"
         cached = await read_cache(key, _TTL_STANDINGS)
         if cached is not None:
-            return ChampionshipStandingsData(**cached), False
+            return ChampionshipStandingsOut(**cached), False
 
         try:
             class_ids = await self._championship_car_class_ids(championship_id)
@@ -249,18 +249,18 @@ class SimgridService:
             stale = await read_stale_cache(key)
             if stale is not None:
                 mark_stale()
-                return ChampionshipStandingsData(**stale), False
+                return ChampionshipStandingsOut(**stale), False
             raise
 
     async def _fetch_standings(
         self,
         base: str,
         param_sets: list[dict[str, Any]],
-    ) -> ChampionshipStandingsData:
+    ) -> ChampionshipStandingsOut:
         """Fetch every page of every param set and merge unique entries."""
-        merged: list[StandingEntry] = []
+        merged: list[StandingEntryOut] = []
         seen: set[object] = set()
-        races: list[StandingRace] = []
+        races: list[StandingRaceOut] = []
 
         for params in param_sets:
             page = 1
@@ -295,7 +295,7 @@ class SimgridService:
                 en.display_name,
             ),
         )
-        return ChampionshipStandingsData(entries=merged, races=races)
+        return ChampionshipStandingsOut(entries=merged, races=races)
 
     @staticmethod
     def _standings_total_pages(raw: RawStandingsPage) -> int:
@@ -323,17 +323,17 @@ class SimgridService:
             return []
 
     @staticmethod
-    def _parse_standings(raw: RawStandingsPage) -> ChampionshipStandingsData:
-        """Map a standings page into ``ChampionshipStandingsData``.
+    def _parse_standings(raw: RawStandingsPage) -> ChampionshipStandingsOut:
+        """Map a standings page into ``ChampionshipStandingsOut``.
 
         Per-race results (``partial_standings``) are not populated by the API,
-        so ``StandingEntry.race_results`` is always empty.
+        so ``StandingEntryOut.race_results`` is always empty.
         """
-        entries: list[StandingEntry] = []
+        entries: list[StandingEntryOut] = []
         for e in raw.data:
             cc = e.championship_car_class
             entries.append(
-                StandingEntry(
+                StandingEntryOut(
                     id=e.user_id or None,
                     position=e.position_cache,
                     display_name=e.display_name or "",
@@ -348,7 +348,7 @@ class SimgridService:
             )
 
         races = [
-            StandingRace(
+            StandingRaceOut(
                 id=r.id,
                 display_name=r.display_name or r.race_name or "",
                 starts_at=r.starts_at,
@@ -366,7 +366,7 @@ class SimgridService:
                 en.display_name,
             ),
         )
-        return ChampionshipStandingsData(entries=entries, races=races)
+        return ChampionshipStandingsOut(entries=entries, races=races)
 
     async def get_participating_users(
         self,

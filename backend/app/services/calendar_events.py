@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.active_championship import ActiveChampionship
 from app.models.community import Community
 from app.models.custom_championship import CustomChampionship
-from app.schemas.calendar import CalendarEvent, CalendarEventType, CalendarRace, CommunityOut
+from app.schemas.calendar import CalendarEventOut, CalendarEventType, CalendarRaceOut, CommunityOut
 from app.services.simgrid import simgrid_service
 
 logger = logging.getLogger(__name__)
@@ -91,7 +91,7 @@ def _classify_simgrid(
 def _overlaps_range(
     start: datetime | None,
     end: datetime | None,
-    races: list[CalendarRace],
+    races: list[CalendarRaceOut],
     range_start: datetime,
     range_end: datetime,
 ) -> bool:
@@ -148,8 +148,8 @@ async def _fetch_detail(cid: int) -> tuple[int, dict | None]:
         return cid, None
 
 
-def _simgrid_races(raw_races: list[dict]) -> list[CalendarRace]:
-    races: list[CalendarRace] = []
+def _simgrid_races(raw_races: list[dict]) -> list[CalendarRaceOut]:
+    races: list[CalendarRaceOut] = []
     for r in raw_races:
         race_date = r.get("starts_at") or r.get("startsAt") or r.get("start_date") or r.get("startDate")
         track = r.get("track")
@@ -159,7 +159,7 @@ def _simgrid_races(raw_races: list[dict]) -> list[CalendarRace]:
         elif isinstance(track, str):
             track_name = track
         races.append(
-            CalendarRace(
+            CalendarRaceOut(
                 date=race_date,
                 track=track_name,
                 name=r.get("display_name") or r.get("race_name") or r.get("displayName"),
@@ -170,7 +170,7 @@ def _simgrid_races(raw_races: list[dict]) -> list[CalendarRace]:
 
 async def _simgrid_events(
     db: AsyncSession, range_start: datetime, range_end: datetime
-) -> list[CalendarEvent]:
+) -> list[CalendarEventOut]:
     skf = (
         await db.execute(select(Community).where(Community.is_skf.is_(True)).limit(1))
     ).scalar_one_or_none()
@@ -191,7 +191,7 @@ async def _simgrid_events(
         if data is not None
     }
 
-    events: list[CalendarEvent] = []
+    events: list[CalendarEventOut] = []
     for champ in championships:
         raw_races = races_by_id.get(champ.id, [])
         races = _simgrid_races(raw_races)
@@ -224,7 +224,7 @@ async def _simgrid_events(
             continue
 
         events.append(
-            CalendarEvent(
+            CalendarEventOut(
                 id=str(champ.id),
                 name=champ.name,
                 game=detail.get("game_name") or "",
@@ -251,9 +251,11 @@ async def _simgrid_events(
 # ── Custom championships ─────────────────────────────────────────────────────
 
 
-async def _custom_events(db: AsyncSession, range_start: datetime, range_end: datetime) -> list[CalendarEvent]:
+async def _custom_events(
+    db: AsyncSession, range_start: datetime, range_end: datetime
+) -> list[CalendarEventOut]:
     result = await db.execute(select(CustomChampionship).where(CustomChampionship.is_visible.is_(True)))
-    events: list[CalendarEvent] = []
+    events: list[CalendarEventOut] = []
     for champ in result.scalars().all():
         race_dates = [r.date for r in champ.races if r.date is not None]
         all_dates = race_dates + [r.end_date for r in champ.races if r.end_date is not None]
@@ -261,7 +263,7 @@ async def _custom_events(db: AsyncSession, range_start: datetime, range_end: dat
         latest = max(all_dates) if all_dates else None
 
         races = [
-            CalendarRace(
+            CalendarRaceOut(
                 date=r.date.isoformat() if r.date else None,
                 end_date=r.end_date.isoformat() if r.end_date else None,
                 track=r.track,
@@ -275,7 +277,7 @@ async def _custom_events(db: AsyncSession, range_start: datetime, range_end: dat
 
         community = champ.community
         events.append(
-            CalendarEvent(
+            CalendarEventOut(
                 id=str(champ.id),
                 name=champ.name,
                 game=champ.game_rel.name if champ.game_rel is not None else champ.game,
@@ -293,7 +295,7 @@ async def _custom_events(db: AsyncSession, range_start: datetime, range_end: dat
     return events
 
 
-async def list_calendar_events(db: AsyncSession, year: int, month: int | None) -> list[CalendarEvent]:
+async def list_calendar_events(db: AsyncSession, year: int, month: int | None) -> list[CalendarEventOut]:
     """Merged SimGrid + custom championship events for a month (or a whole year).
 
     Always includes every visible community's championships alongside SKF

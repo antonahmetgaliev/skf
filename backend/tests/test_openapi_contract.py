@@ -113,3 +113,41 @@ def test_null_defaults_only_where_null_is_allowed(spec):
     assert list(offenders(spec["components"]["schemas"])) == []
     name = spec["components"]["schemas"]["CommunityUpdate"]["properties"]["name"]
     assert name == {"type": "string", "minLength": 1, "maxLength": 200}
+
+
+def _refs(schema: dict) -> list[str]:
+    """Names of the component schemas a body's top level points at."""
+    if "$ref" in schema:
+        return [schema["$ref"].rsplit("/", 1)[-1]]
+    nested = schema.get("anyOf", []) + ([schema["items"]] if "items" in schema else [])
+    return [name for part in nested for name in _refs(part)]
+
+
+def test_parameter_names_are_camel_case(spec, operations):
+    wrong = [
+        f"{name}: {p['name']}"
+        for name, op in operations
+        for p in op.get("parameters", [])
+        if not _CAMEL.fullmatch(p["name"])
+    ]
+    assert wrong == []
+    assert [path for path in spec["paths"] if "_" in path] == []
+
+
+def test_schema_names_say_which_way_they_travel(operations):
+    """Responses are ``...Out``; request bodies ``...Create``, ``...Update`` or ``...Upsert``."""
+    wrong = []
+    for name, op in operations:
+        for code, response in op["responses"].items():
+            if code[0] == "2":
+                for content in response.get("content", {}).values():
+                    wrong += [
+                        f"{name} -> {ref}" for ref in _refs(content["schema"]) if not ref.endswith("Out")
+                    ]
+        for content in op.get("requestBody", {}).get("content", {}).values():
+            wrong += [
+                f"{name} <- {ref}"
+                for ref in _refs(content["schema"])
+                if not ref.endswith(("Create", "Update", "Upsert"))
+            ]
+    assert wrong == []

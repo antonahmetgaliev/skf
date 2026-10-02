@@ -20,13 +20,13 @@ export const SIM_LABELS: Record<RaceSim, string> = {
 
 export type RaceImport = Schemas['RaceResultImportOut'];
 
-export type RoundWindow = Schemas['IncidentWindowSummaryOut'];
+export type RoundWindow = Schemas['IncidentWindowStatusOut'];
 
 export type RaceRound = Schemas['RoundOut'];
 
 export type RaceRounds = Schemas['RoundsOut'];
 
-export type ImportResult = Schemas['ImportResultOut'];
+export type ImportResult = Schemas['RaceResultImportResultOut'];
 
 @Injectable({ providedIn: 'root' })
 export class RaceResultsApiService {

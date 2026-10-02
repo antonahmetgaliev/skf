@@ -15,7 +15,7 @@ class RegulationContentOut(CamelModel):
     content: str
 
 
-class RegulationPageListItem(CamelModel):
+class RegulationPageSummaryOut(CamelModel):
     id: uuid.UUID
     slug: str
     sort_order: int

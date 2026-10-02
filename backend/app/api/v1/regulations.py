@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
-import uuid
-
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.params import PageId
 from app.auth import require_admin
 from app.core.openapi import problem_responses
 from app.database import get_db
 from app.schemas.regulations import (
     RegulationContentOut,
     RegulationPageCreate,
-    RegulationPageListItem,
     RegulationPageOut,
+    RegulationPageSummaryOut,
     RegulationPageUpdate,
 )
 from app.schemas.translations import LANGUAGE_CODE_MAX_LENGTH, LANGUAGE_CODE_PATTERN
@@ -28,7 +27,7 @@ _lang_query = Query("en", max_length=LANGUAGE_CODE_MAX_LENGTH, pattern=LANGUAGE_
 # ── Public ───────────────────────────────────────────────────────────────────
 
 
-@router.get("/regulations", response_model=list[RegulationPageListItem])
+@router.get("/regulations", response_model=list[RegulationPageSummaryOut])
 async def list_regulations(lang: str = _lang_query, db: AsyncSession = Depends(get_db)):
     """Visible pages with their title in *lang* (falling back to any language)."""
     return await service.list_public(db, lang)
@@ -63,20 +62,20 @@ async def create_regulation_page(
     return page
 
 
-@admin.get("/{page_id}", response_model=RegulationPageOut)
-async def get_regulation_page(page_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+@admin.get("/{pageId}", response_model=RegulationPageOut)
+async def get_regulation_page(page_id: PageId, db: AsyncSession = Depends(get_db)):
     return await service.get(db, page_id)
 
 
-@admin.patch("/{page_id}", response_model=RegulationPageOut, responses=problem_responses(409))
+@admin.patch("/{pageId}", response_model=RegulationPageOut, responses=problem_responses(409))
 async def update_regulation_page(
-    page_id: uuid.UUID, body: RegulationPageUpdate, db: AsyncSession = Depends(get_db)
+    page_id: PageId, body: RegulationPageUpdate, db: AsyncSession = Depends(get_db)
 ):
     return await service.update(db, page_id, body)
 
 
-@admin.delete("/{page_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_regulation_page(page_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+@admin.delete("/{pageId}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_regulation_page(page_id: PageId, db: AsyncSession = Depends(get_db)):
     await service.delete(db, page_id)
 
 

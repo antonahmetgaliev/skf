@@ -5,13 +5,13 @@ import { API, Schemas } from '../api';
 
 export type CalendarEventType = Schemas['CalendarEventType'];
 
-export type CalendarRace = Schemas['CalendarRace'];
+export type CalendarRace = Schemas['CalendarRaceOut'];
 
-export type CalendarEvent = Schemas['CalendarEvent'];
+export type CalendarEvent = Schemas['CalendarEventOut'];
 
 export type CustomRaceCreate = Schemas['CustomRaceCreate'];
 
-export type CustomRaceSync = Schemas['CustomRaceSync'];
+export type CustomRaceSync = Schemas['CustomRaceUpsert'];
 
 export type CustomRaceUpdate = Schemas['CustomRaceUpdate'];
 

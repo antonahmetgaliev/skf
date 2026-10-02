@@ -7,6 +7,7 @@ import uuid
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.params import WindowId
 from app.auth import get_current_user_optional, require_admin, require_judge
 from app.core.openapi import problem_responses
 from app.core.pagination import PageParams, page_params, paginate
@@ -15,11 +16,11 @@ from app.database import get_db
 from app.models.user import User
 from app.schemas.incidents import (
     DefaultResolutionsOut,
-    IncidentFileCreate,
+    IncidentCreate,
     IncidentOut,
     IncidentWindowCreate,
-    IncidentWindowListItem,
     IncidentWindowOut,
+    IncidentWindowSummaryOut,
     IncidentWindowUpdate,
     WindowPublicationOut,
 )
@@ -36,7 +37,7 @@ def _window_path(window_id: uuid.UUID) -> str:
     return f"/api/v1/incident-windows/{window_id}"
 
 
-@router.get("", response_model=list[IncidentWindowListItem])
+@router.get("", response_model=list[IncidentWindowSummaryOut])
 async def list_incident_windows(
     request: Request,
     response: Response,
@@ -64,9 +65,9 @@ async def create_incident_window(
     return window
 
 
-@router.get("/{window_id}", response_model=IncidentWindowOut)
+@router.get("/{windowId}", response_model=IncidentWindowOut)
 async def get_incident_window(
-    window_id: uuid.UUID,
+    window_id: WindowId,
     db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_current_user_optional),
 ):
@@ -75,9 +76,9 @@ async def get_incident_window(
     return out
 
 
-@router.patch("/{window_id}", response_model=IncidentWindowOut)
+@router.patch("/{windowId}", response_model=IncidentWindowOut)
 async def update_incident_window(
-    window_id: uuid.UUID,
+    window_id: WindowId,
     payload: IncidentWindowUpdate,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
@@ -85,9 +86,9 @@ async def update_incident_window(
     return await svc.update_window(db, window_id, payload)
 
 
-@router.delete("/{window_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{windowId}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_incident_window(
-    window_id: uuid.UUID,
+    window_id: WindowId,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ):
@@ -95,14 +96,14 @@ async def delete_incident_window(
 
 
 @router.post(
-    "/{window_id}/incidents",
+    "/{windowId}/incidents",
     response_model=IncidentOut,
     status_code=status.HTTP_201_CREATED,
     responses=problem_responses(409, 429),
 )
 async def file_incident(
-    window_id: uuid.UUID,
-    payload: IncidentFileCreate,
+    window_id: WindowId,
+    payload: IncidentCreate,
     request: Request,
     response: Response,
     db: AsyncSession = Depends(get_db),
@@ -117,12 +118,12 @@ async def file_incident(
 
 
 @router.put(
-    "/{window_id}/publication",
+    "/{windowId}/publication",
     response_model=WindowPublicationOut,
     responses=problem_responses(409),
 )
 async def publish_incident_window(
-    window_id: uuid.UUID,
+    window_id: WindowId,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_judge),
 ):
@@ -137,12 +138,12 @@ async def publish_incident_window(
 
 
 @router.post(
-    "/{window_id}/default-resolutions",
+    "/{windowId}/default-resolutions",
     response_model=DefaultResolutionsOut,
     responses=problem_responses(409),
 )
 async def create_default_resolutions(
-    window_id: uuid.UUID,
+    window_id: WindowId,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_judge),
 ):

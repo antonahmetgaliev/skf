@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import uuid
-
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.params import RuleId
 from app.auth import require_admin
 from app.database import get_db
 from app.models.user import User
@@ -33,14 +32,14 @@ async def create_penalty_rule(
     return rule
 
 
-@router.get("/{rule_id}", response_model=PenaltyRuleOut)
-async def get_penalty_rule(rule_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+@router.get("/{ruleId}", response_model=PenaltyRuleOut)
+async def get_penalty_rule(rule_id: RuleId, db: AsyncSession = Depends(get_db)):
     return await service.get_penalty_rule(db, rule_id)
 
 
-@router.patch("/{rule_id}", response_model=PenaltyRuleOut)
+@router.patch("/{ruleId}", response_model=PenaltyRuleOut)
 async def update_penalty_rule(
-    rule_id: uuid.UUID,
+    rule_id: RuleId,
     body: PenaltyRuleUpdate,
     _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
@@ -48,9 +47,9 @@ async def update_penalty_rule(
     return await service.update_penalty_rule(db, rule_id, body)
 
 
-@router.delete("/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{ruleId}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_penalty_rule(
-    rule_id: uuid.UUID,
+    rule_id: RuleId,
     _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):

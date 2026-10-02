@@ -16,7 +16,7 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from app.schemas.championship import ChampionshipDetails
+from app.schemas.championship import ChampionshipOut
 from app.schemas.simgrid_raw import (
     RawChampionshipCarClass,
     RawChampionshipRef,
@@ -82,7 +82,7 @@ def test_recorded_collections_match_models(name):
 
 
 def test_recorded_championship_details():
-    details = ChampionshipDetails(**_fixture("championship"))
+    details = ChampionshipOut(**_fixture("championship"))
     assert details.id and details.name and details.start_date
 
 
@@ -194,7 +194,7 @@ def test_live_api_matches_models():
     with httpx.Client(base_url="https://www.thesimgrid.com/api/v1", headers=headers, timeout=30) as client:
         for name, (path, params) in paths.items():
             collection(COLLECTIONS[name], client.get(path, params=params).raise_for_status().json())
-        ChampionshipDetails(**client.get(f"/championships/{cid}").raise_for_status().json())
+        ChampionshipOut(**client.get(f"/championships/{cid}").raise_for_status().json())
         RawStandingsPage.model_validate(
             client.get(f"/championships/{cid}/standings").raise_for_status().json()
         )

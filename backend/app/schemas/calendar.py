@@ -77,7 +77,7 @@ class CustomRaceUpdate(CamelModel):
     sort_order: Omittable[int] = None
 
 
-class CustomRaceSync(CamelModel):
+class CustomRaceUpsert(CamelModel):
     """Used for batch race sync — id present means update, absent means create."""
 
     id: uuid.UUID | None = None
@@ -140,14 +140,14 @@ class CustomChampionshipOut(CamelModel):
 # ── Unified calendar event schemas (merge endpoint) ─────────────────────────
 
 
-class CalendarRace(CamelModel):
+class CalendarRaceOut(CamelModel):
     date: IsoDateTime | None = None
     end_date: IsoDateTime | None = None
     track: str | None = None
     name: str | None = None
 
 
-class CalendarEvent(CamelModel):
+class CalendarEventOut(CamelModel):
     """Unified calendar event returned by the merge endpoint."""
 
     id: str
@@ -167,4 +167,4 @@ class CalendarEvent(CamelModel):
     capacity: int | None = None
     spots_taken: int | None = None
     registration_url: Url | None = None
-    races: list[CalendarRace] = []
+    races: list[CalendarRaceOut] = []

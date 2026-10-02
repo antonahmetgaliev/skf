@@ -21,8 +21,8 @@ from app.schemas.calendar import (
     CustomChampionshipOut,
     CustomChampionshipUpdate,
     CustomRaceCreate,
-    CustomRaceSync,
     CustomRaceUpdate,
+    CustomRaceUpsert,
 )
 from app.services.communities import ensure_community_access, managed_community_ids
 
@@ -145,7 +145,7 @@ async def delete_race(db: AsyncSession, champ: CustomChampionship, race_id: uuid
 
 
 async def replace_races(
-    db: AsyncSession, champ: CustomChampionship, items: list[CustomRaceSync]
+    db: AsyncSession, champ: CustomChampionship, items: list[CustomRaceUpsert]
 ) -> list[CustomRace]:
     """Replace the full race list: ids present are updated, absent ones created,
     existing races missing from *items* deleted."""

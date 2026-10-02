@@ -11,9 +11,9 @@ export type IncidentDriver = Schemas['IncidentDriverOut'];
 
 export type Incident = Schemas['IncidentOut'];
 
-export type IncidentWindowListItem = Schemas['IncidentWindowListItem'];
+export type IncidentWindowListItem = Schemas['IncidentWindowSummaryOut'];
 
-export type ChampionshipIncidentWindow = Schemas['IncidentWindowSummaryOut'];
+export type ChampionshipIncidentWindow = Schemas['IncidentWindowStatusOut'];
 
 export type IncidentWindowOut = Schemas['IncidentWindowOut'];
 
@@ -27,13 +27,13 @@ export type IncidentWindowCreate = Schemas['IncidentWindowCreate'];
 
 export type IncidentWindowUpdate = Schemas['IncidentWindowUpdate'];
 
-export type IncidentFileCreate = Schemas['IncidentFileCreate'];
+export type IncidentFileCreate = Schemas['IncidentCreate'];
 
-export type ResolveDriverIncident = Schemas['ResolveDriverIncident'];
+export type ResolveDriverIncident = Schemas['IncidentDriverResolutionUpdate'];
 
-export type BulkResolveDriverItem = Schemas['ResolveDriverItem'];
+export type BulkResolveDriverItem = Schemas['DriverResolutionItem'];
 
-export type BulkResolveIncident = Schemas['BulkResolveIncident'];
+export type BulkResolveIncident = Schemas['IncidentResolutionUpdate'];
 
 export type VerdictRule = Schemas['VerdictRuleOut'];
 
@@ -47,7 +47,7 @@ export type DescriptionPresetCreate = Schemas['DescriptionPresetCreate'];
 
 export type DescriptionPresetUpdate = Schemas['DescriptionPresetUpdate'];
 
-export type BwpAuditEntry = Schemas['BwpAuditEntry'];
+export type BwpAuditEntry = Schemas['BwpAuditEntryOut'];
 
 export type BwpBackfillResult = Schemas['BwpBackfillOut'];
 

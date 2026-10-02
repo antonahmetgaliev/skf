@@ -30,8 +30,8 @@ class EligibleDriverOut(CamelModel):
     rounds: list[RoundBreakdownOut]
 
 
-class EligibilityOut(CamelModel):
-    championship_simgrid_id: int
+class GiveawayEligibilityOut(CamelModel):
+    championship_id: int
     min_distance_pct: float
     min_rounds: int
     imported_rounds: int
@@ -39,7 +39,7 @@ class EligibilityOut(CamelModel):
     drivers: list[EligibleDriverOut]
 
 
-class UnmatchedNameOut(CamelModel):
+class UnmatchedDriverNameOut(CamelModel):
     raw_name: str
     normalized_name: str
     rounds: int
@@ -50,13 +50,13 @@ class UnmatchedNameOut(CamelModel):
     )
 
 
-class AliasCreate(CamelModel):
+class DriverAliasCreate(CamelModel):
     normalized_alias: str = Field(max_length=200)
     canonical_display_name: str = Field(max_length=200)
     driver_id: uuid.UUID | None = None
 
 
-class AliasOut(CamelModel):
+class DriverAliasOut(CamelModel):
     id: uuid.UUID
     normalized_alias: str
     canonical_normalized_name: str

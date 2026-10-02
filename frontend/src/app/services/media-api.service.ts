@@ -4,7 +4,7 @@ import { map, Observable, shareReplay } from 'rxjs';
 import { API, Schemas } from '../api';
 import { toLocalDateStr } from '../utils/date';
 
-export type YouTubeVideo = Schemas['YouTubeVideo'];
+export type YouTubeVideo = Schemas['YouTubeStreamOut'];
 
 @Injectable({ providedIn: 'root' })
 export class MediaApiService {

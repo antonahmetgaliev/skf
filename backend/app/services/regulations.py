@@ -14,8 +14,8 @@ from app.repository import get_or_404
 from app.schemas.regulations import (
     RegulationContentOut,
     RegulationPageCreate,
-    RegulationPageListItem,
     RegulationPageOut,
+    RegulationPageSummaryOut,
     RegulationPageUpdate,
 )
 
@@ -62,7 +62,7 @@ def _pick_content(page: RegulationPage, lang: str) -> RegulationContent | None:
 # ── Public ───────────────────────────────────────────────────────────────────
 
 
-async def list_public(db: AsyncSession, lang: str) -> list[RegulationPageListItem]:
+async def list_public(db: AsyncSession, lang: str) -> list[RegulationPageSummaryOut]:
     key = f"list:{lang}"
     cached = _cached(key)
     if cached is not None:
@@ -77,7 +77,7 @@ async def list_public(db: AsyncSession, lang: str) -> list[RegulationPageListIte
     for page in result.scalars().all():
         content = _pick_content(page, lang)
         items.append(
-            RegulationPageListItem(
+            RegulationPageSummaryOut(
                 id=page.id,
                 slug=page.slug,
                 sort_order=page.sort_order,

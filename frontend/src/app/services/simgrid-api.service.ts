@@ -4,30 +4,30 @@ import { Observable } from 'rxjs';
 
 import { API, Schemas } from '../api';
 
-export type ChampionshipListItem = Schemas['ChampionshipListItem'];
+export type ChampionshipListItem = Schemas['ChampionshipSummaryOut'];
 
-export type ChampionshipDetails = Schemas['ChampionshipDetails'];
+export type ChampionshipDetails = Schemas['ChampionshipOut'];
 
 export type ChampionshipUpdate = Schemas['ChampionshipUpdate'];
 
 /** `classified` also covers iRacing retirements: SimGrid gives no status there. */
-export type RaceStatus = Schemas['DriverRaceResult']['status'];
+export type RaceStatus = Schemas['DriverRaceResultOut']['status'];
 
-export type DriverRaceResult = Schemas['DriverRaceResult'];
+export type DriverRaceResult = Schemas['DriverRaceResultOut'];
 
 export type RaceSessionKind = Schemas['RaceSessionOut']['session'];
 
-export type RaceResultEntry = Schemas['RaceResultEntry'];
+export type RaceResultEntry = Schemas['RaceResultEntryOut'];
 
 export type RaceSession = Schemas['RaceSessionOut'];
 
-export type StandingEntry = Schemas['StandingEntry'];
+export type StandingEntry = Schemas['StandingEntryOut'];
 
-export type StandingRace = Schemas['StandingRace'];
+export type StandingRace = Schemas['StandingRaceOut'];
 
-export type ChampionshipStandingsData = Schemas['ChampionshipStandingsData'];
+export type ChampionshipStandingsData = Schemas['ChampionshipStandingsOut'];
 
-export type ChampionshipRace = Schemas['ChampionshipRace'];
+export type ChampionshipRace = Schemas['ChampionshipRaceOut'];
 
 @Injectable({ providedIn: 'root' })
 export class SimgridApiService {

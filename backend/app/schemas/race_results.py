@@ -10,7 +10,7 @@ from pydantic import Field
 
 from app.schemas.base import CamelModel, IsoDateTime
 from app.schemas.enums import Sim
-from app.schemas.incidents import IncidentWindowSummaryOut
+from app.schemas.incidents import IncidentWindowStatusOut
 
 
 class RaceResultImportCreate(CamelModel):
@@ -23,7 +23,7 @@ class RaceResultImportCreate(CamelModel):
     window_hours: int = Field(default=24, ge=1, le=168)
 
 
-class ImportEntryOut(CamelModel):
+class RaceResultImportEntryOut(CamelModel):
     raw_name: str
     car_class: str
     laps: int
@@ -55,11 +55,11 @@ class RaceResultImportOut(CamelModel):
 
 class RoundOut(CamelModel):
     race_id: int
-    name: str
+    display_name: str
     starts_at: IsoDateTime | None = None
     ended: bool = False
     race_import: RaceResultImportOut | None = None
-    window: IncidentWindowSummaryOut | None = None
+    window: IncidentWindowStatusOut | None = None
 
 
 class RoundsOut(CamelModel):
@@ -73,9 +73,9 @@ class RoundsOut(CamelModel):
     rounds: list[RoundOut]
 
 
-class ImportResultOut(CamelModel):
+class RaceResultImportResultOut(CamelModel):
     race_import: RaceResultImportOut
     window_id: uuid.UUID | None = None
     incidents_created: int
     incidents_kept: int
-    entries: list[ImportEntryOut]
+    entries: list[RaceResultImportEntryOut]

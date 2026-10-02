@@ -42,11 +42,11 @@ from app.models.race_result import (
     normalize_driver_name,
 )
 from app.schemas.giveaway import (
-    AliasCreate,
-    EligibilityOut,
+    DriverAliasCreate,
     EligibleDriverOut,
+    GiveawayEligibilityOut,
     RoundBreakdownOut,
-    UnmatchedNameOut,
+    UnmatchedDriverNameOut,
 )
 from app.services.driver_matching import match_driver_id_by_name
 from app.services.race_import import alias_map
@@ -167,7 +167,7 @@ def _round_key(record: RaceResultImport) -> str:
 
 async def eligibility(
     db: AsyncSession, championship_id: int, min_distance_pct: float, min_rounds: int
-) -> EligibilityOut:
+) -> GiveawayEligibilityOut:
     """Drivers who cleared the distance bar in enough rounds, grouped by class."""
     records = await _imports_with_entries(db, championship_id)
     aliases = await alias_map(db)
@@ -189,8 +189,8 @@ async def eligibility(
             )
 
     eligible = compute_eligibility(rows, min_distance_pct, min_rounds)
-    return EligibilityOut(
-        championship_simgrid_id=championship_id,
+    return GiveawayEligibilityOut(
+        championship_id=championship_id,
         min_distance_pct=min_distance_pct,
         min_rounds=min_rounds,
         imported_rounds=len(records),
@@ -219,7 +219,7 @@ async def eligibility(
     )
 
 
-async def unmatched_names(db: AsyncSession, championship_id: int) -> list[UnmatchedNameOut]:
+async def unmatched_names(db: AsyncSession, championship_id: int) -> list[UnmatchedDriverNameOut]:
     """Imported names with no driver record, plus ranked spelling hints.
 
     Suggestions exist so an admin can spot a merge quickly; they are never
@@ -244,7 +244,7 @@ async def unmatched_names(db: AsyncSession, championship_id: int) -> list[Unmatc
     pool = sorted({n for row in known.all() for n in row if n})
 
     return [
-        UnmatchedNameOut(
+        UnmatchedDriverNameOut(
             raw_name=data["raw_name"],
             normalized_name=normalized,
             rounds=data["rounds"],
@@ -261,7 +261,7 @@ def aliases_query():
     return select(GiveawayNameAlias).order_by(GiveawayNameAlias.normalized_alias)
 
 
-async def upsert_alias(db: AsyncSession, payload: AliasCreate) -> tuple[GiveawayNameAlias, bool]:
+async def upsert_alias(db: AsyncSession, payload: DriverAliasCreate) -> tuple[GiveawayNameAlias, bool]:
     """Merge one imported spelling into another driver's identity.
 
     Keyed by the normalized alias. Returns the alias and whether it was created.

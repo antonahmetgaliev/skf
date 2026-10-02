@@ -70,7 +70,7 @@ async def admin_client(engine, admin_user, simgrid_stub):
 @pytest.fixture
 def simgrid_lists(monkeypatch, simgrid_stub):
     """Stub the championship list and standings on top of ``simgrid_stub``."""
-    from app.schemas.championship import ChampionshipListItem, ChampionshipStandingsData
+    from app.schemas.championship import ChampionshipStandingsOut, ChampionshipSummaryOut
     from app.services import simgrid as sg_mod
 
     state = {"fail": False, "synced": []}
@@ -79,12 +79,12 @@ def simgrid_lists(monkeypatch, simgrid_stub):
         if state["fail"]:
             raise RuntimeError("SimGrid is down")
         return [
-            ChampionshipListItem(id=1, name="Active Cup"),
-            ChampionshipListItem(id=2, name="Old Cup"),
+            ChampionshipSummaryOut(id=1, name="Active Cup"),
+            ChampionshipSummaryOut(id=2, name="Old Cup"),
         ]
 
     async def get_standings(championship_id):
-        return ChampionshipStandingsData(entries=[], races=[]), True
+        return ChampionshipStandingsOut(entries=[], races=[]), True
 
     async def sync(entries, championship_id):
         state["synced"].append(championship_id)

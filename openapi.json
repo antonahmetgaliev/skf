@@ -168,7 +168,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/CalendarEvent"
+                    "$ref": "#/components/schemas/CalendarEventOut"
                   }
                 }
               }
@@ -227,7 +227,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ChampionshipListItem"
+                    "$ref": "#/components/schemas/ChampionshipSummaryOut"
                   }
                 }
               }
@@ -259,7 +259,7 @@
         }
       }
     },
-    "/api/v1/championships/{championship_id}": {
+    "/api/v1/championships/{championshipId}": {
       "patch": {
         "tags": [
           "Championships"
@@ -274,7 +274,7 @@
         ],
         "parameters": [
           {
-            "name": "championship_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -319,7 +319,7 @@
         "operationId": "getChampionship",
         "parameters": [
           {
-            "name": "championship_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -333,7 +333,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChampionshipDetails"
+                  "$ref": "#/components/schemas/ChampionshipOut"
                 }
               }
             },
@@ -358,7 +358,7 @@
         }
       }
     },
-    "/api/v1/championships/{championship_id}/standings": {
+    "/api/v1/championships/{championshipId}/standings": {
       "get": {
         "tags": [
           "Championships"
@@ -367,7 +367,7 @@
         "operationId": "getChampionshipStandings",
         "parameters": [
           {
-            "name": "championship_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -381,7 +381,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ChampionshipStandingsData"
+                  "$ref": "#/components/schemas/ChampionshipStandingsOut"
                 }
               }
             },
@@ -406,7 +406,7 @@
         }
       }
     },
-    "/api/v1/championships/{championship_id}/races": {
+    "/api/v1/championships/{championshipId}/races": {
       "get": {
         "tags": [
           "Championships"
@@ -416,7 +416,7 @@
         "operationId": "listChampionshipRaces",
         "parameters": [
           {
-            "name": "championship_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -432,7 +432,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ChampionshipRace"
+                    "$ref": "#/components/schemas/ChampionshipRaceOut"
                   }
                 }
               }
@@ -458,7 +458,7 @@
         }
       }
     },
-    "/api/v1/championships/{championship_id}/races/{race_id}/results": {
+    "/api/v1/championships/{championshipId}/races/{raceId}/results": {
       "get": {
         "tags": [
           "Championships"
@@ -468,7 +468,7 @@
         "operationId": "getRaceResults",
         "parameters": [
           {
-            "name": "championship_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -476,7 +476,7 @@
             }
           },
           {
-            "name": "race_id",
+            "name": "raceId",
             "in": "path",
             "required": true,
             "schema": {
@@ -524,7 +524,7 @@
         }
       }
     },
-    "/api/v1/championships/{championship_id}/incident-windows": {
+    "/api/v1/championships/{championshipId}/incident-windows": {
       "get": {
         "tags": [
           "Championships"
@@ -534,7 +534,7 @@
         "operationId": "listChampionshipIncidentWindows",
         "parameters": [
           {
-            "name": "championship_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -550,7 +550,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/IncidentWindowSummaryOut"
+                    "$ref": "#/components/schemas/IncidentWindowStatusOut"
                   }
                 }
               }
@@ -562,7 +562,7 @@
         }
       }
     },
-    "/api/v1/championships/{championship_id}/rounds": {
+    "/api/v1/championships/{championshipId}/rounds": {
       "get": {
         "tags": [
           "Championships"
@@ -577,7 +577,7 @@
         ],
         "parameters": [
           {
-            "name": "championship_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -626,7 +626,7 @@
         ]
       }
     },
-    "/api/v1/championships/{championship_id}/giveaway-eligibility": {
+    "/api/v1/championships/{championshipId}/giveaway-eligibility": {
       "get": {
         "tags": [
           "Championships",
@@ -642,7 +642,7 @@
         ],
         "parameters": [
           {
-            "name": "championship_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -677,7 +677,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EligibilityOut"
+                  "$ref": "#/components/schemas/GiveawayEligibilityOut"
                 }
               }
             }
@@ -698,7 +698,7 @@
         ]
       }
     },
-    "/api/v1/championships/{championship_id}/unmatched-driver-names": {
+    "/api/v1/championships/{championshipId}/unmatched-driver-names": {
       "get": {
         "tags": [
           "Championships",
@@ -714,7 +714,7 @@
         ],
         "parameters": [
           {
-            "name": "championship_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -730,7 +730,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/UnmatchedNameOut"
+                    "$ref": "#/components/schemas/UnmatchedDriverNameOut"
                   }
                 }
               }
@@ -861,7 +861,7 @@
         "description": "Requires role: `admin`, `super_admin`."
       }
     },
-    "/api/v1/communities/{community_id}": {
+    "/api/v1/communities/{communityId}": {
       "get": {
         "tags": [
           "Communities"
@@ -871,7 +871,7 @@
         "operationId": "getCommunity",
         "parameters": [
           {
-            "name": "community_id",
+            "name": "communityId",
             "in": "path",
             "required": true,
             "schema": {
@@ -912,7 +912,7 @@
         ],
         "parameters": [
           {
-            "name": "community_id",
+            "name": "communityId",
             "in": "path",
             "required": true,
             "schema": {
@@ -975,7 +975,7 @@
         ],
         "parameters": [
           {
-            "name": "community_id",
+            "name": "communityId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1211,7 +1211,7 @@
         "description": "Requires role: `admin`, `super_admin`, `community_manager`."
       }
     },
-    "/api/v1/custom-championships/{champ_id}": {
+    "/api/v1/custom-championships/{championshipId}": {
       "get": {
         "tags": [
           "Custom championships"
@@ -1225,7 +1225,7 @@
         ],
         "parameters": [
           {
-            "name": "champ_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1278,7 +1278,7 @@
         ],
         "parameters": [
           {
-            "name": "champ_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1341,7 +1341,7 @@
         ],
         "parameters": [
           {
-            "name": "champ_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1375,7 +1375,7 @@
         "description": "Requires role: `admin`, `super_admin`, `community_manager`."
       }
     },
-    "/api/v1/custom-championships/{champ_id}/races": {
+    "/api/v1/custom-championships/{championshipId}/races": {
       "post": {
         "tags": [
           "Custom championships"
@@ -1389,7 +1389,7 @@
         ],
         "parameters": [
           {
-            "name": "champ_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1462,7 +1462,7 @@
         ],
         "parameters": [
           {
-            "name": "champ_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1478,7 +1478,7 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/CustomRaceSync"
+                  "$ref": "#/components/schemas/CustomRaceUpsert"
                 }
               }
             }
@@ -1518,7 +1518,7 @@
         ]
       }
     },
-    "/api/v1/custom-championships/{champ_id}/races/{race_id}": {
+    "/api/v1/custom-championships/{championshipId}/races/{raceId}": {
       "get": {
         "tags": [
           "Custom championships"
@@ -1532,7 +1532,7 @@
         ],
         "parameters": [
           {
-            "name": "race_id",
+            "name": "raceId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1541,7 +1541,7 @@
             }
           },
           {
-            "name": "champ_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1594,7 +1594,7 @@
         ],
         "parameters": [
           {
-            "name": "race_id",
+            "name": "raceId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1603,7 +1603,7 @@
             }
           },
           {
-            "name": "champ_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1666,7 +1666,7 @@
         ],
         "parameters": [
           {
-            "name": "race_id",
+            "name": "raceId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1675,7 +1675,7 @@
             }
           },
           {
-            "name": "champ_id",
+            "name": "championshipId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1752,7 +1752,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AliasOut"
+                    "$ref": "#/components/schemas/DriverAliasOut"
                   }
                 }
               }
@@ -1805,7 +1805,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AliasCreate"
+                "$ref": "#/components/schemas/DriverAliasCreate"
               }
             }
           }
@@ -1816,7 +1816,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AliasOut"
+                  "$ref": "#/components/schemas/DriverAliasOut"
                 }
               }
             }
@@ -1826,7 +1826,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AliasOut"
+                  "$ref": "#/components/schemas/DriverAliasOut"
                 }
               }
             },
@@ -1859,7 +1859,7 @@
         ]
       }
     },
-    "/api/v1/driver-aliases/{alias_id}": {
+    "/api/v1/driver-aliases/{aliasId}": {
       "get": {
         "tags": [
           "Driver aliases"
@@ -1873,7 +1873,7 @@
         ],
         "parameters": [
           {
-            "name": "alias_id",
+            "name": "aliasId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1888,7 +1888,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AliasOut"
+                  "$ref": "#/components/schemas/DriverAliasOut"
                 }
               }
             }
@@ -1925,7 +1925,7 @@
         ],
         "parameters": [
           {
-            "name": "alias_id",
+            "name": "aliasId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2129,7 +2129,7 @@
         "description": "Requires role: `admin`, `super_admin`."
       }
     },
-    "/api/v1/drivers/{driver_id}": {
+    "/api/v1/drivers/{driverId}": {
       "get": {
         "tags": [
           "Drivers"
@@ -2138,7 +2138,7 @@
         "operationId": "getDriver",
         "parameters": [
           {
-            "name": "driver_id",
+            "name": "driverId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2210,7 +2210,7 @@
         ],
         "parameters": [
           {
-            "name": "driver_id",
+            "name": "driverId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2276,7 +2276,7 @@
         ],
         "parameters": [
           {
-            "name": "driver_id",
+            "name": "driverId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2309,7 +2309,7 @@
         "description": "Requires role: `admin`, `super_admin`."
       }
     },
-    "/api/v1/drivers/{driver_id}/bwp-points": {
+    "/api/v1/drivers/{driverId}/bwp-points": {
       "post": {
         "tags": [
           "Drivers"
@@ -2323,7 +2323,7 @@
         ],
         "parameters": [
           {
-            "name": "driver_id",
+            "name": "driverId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2382,7 +2382,7 @@
         "description": "Requires role: `admin`, `super_admin`."
       }
     },
-    "/api/v1/bwp-points/{point_id}": {
+    "/api/v1/bwp-points/{pointId}": {
       "get": {
         "tags": [
           "Drivers"
@@ -2391,7 +2391,7 @@
         "operationId": "getBwpPoint",
         "parameters": [
           {
-            "name": "point_id",
+            "name": "pointId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2433,7 +2433,7 @@
         ],
         "parameters": [
           {
-            "name": "point_id",
+            "name": "pointId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2494,7 +2494,7 @@
         ],
         "parameters": [
           {
-            "name": "point_id",
+            "name": "pointId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2527,7 +2527,7 @@
         "description": "Requires role: `admin`, `super_admin`."
       }
     },
-    "/api/v1/drivers/{driver_id}/bwp-resets": {
+    "/api/v1/drivers/{driverId}/bwp-resets": {
       "post": {
         "tags": [
           "Drivers"
@@ -2542,7 +2542,7 @@
         ],
         "parameters": [
           {
-            "name": "driver_id",
+            "name": "driverId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2591,7 +2591,7 @@
         ]
       }
     },
-    "/api/v1/drivers/{driver_id}/clearances/{rule_id}": {
+    "/api/v1/drivers/{driverId}/clearances/{ruleId}": {
       "get": {
         "tags": [
           "Drivers"
@@ -2600,7 +2600,7 @@
         "operationId": "getClearance",
         "parameters": [
           {
-            "name": "driver_id",
+            "name": "driverId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2609,7 +2609,7 @@
             }
           },
           {
-            "name": "rule_id",
+            "name": "ruleId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2651,7 +2651,7 @@
         ],
         "parameters": [
           {
-            "name": "driver_id",
+            "name": "driverId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2660,7 +2660,7 @@
             }
           },
           {
-            "name": "rule_id",
+            "name": "ruleId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2730,7 +2730,7 @@
         ],
         "parameters": [
           {
-            "name": "driver_id",
+            "name": "driverId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2739,7 +2739,7 @@
             }
           },
           {
-            "name": "rule_id",
+            "name": "ruleId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2814,7 +2814,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MyDriverPhotoUpdate"
+                "$ref": "#/components/schemas/MyDriverUpdate"
               }
             }
           },
@@ -2898,7 +2898,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/IncidentWindowListItem"
+                    "$ref": "#/components/schemas/IncidentWindowSummaryOut"
                   }
                 }
               }
@@ -2984,7 +2984,7 @@
         "description": "Requires role: `admin`, `super_admin`."
       }
     },
-    "/api/v1/incident-windows/{window_id}": {
+    "/api/v1/incident-windows/{windowId}": {
       "get": {
         "tags": [
           "Incidents"
@@ -2993,7 +2993,7 @@
         "operationId": "getIncidentWindow",
         "parameters": [
           {
-            "name": "window_id",
+            "name": "windowId",
             "in": "path",
             "required": true,
             "schema": {
@@ -3034,7 +3034,7 @@
         ],
         "parameters": [
           {
-            "name": "window_id",
+            "name": "windowId",
             "in": "path",
             "required": true,
             "schema": {
@@ -3096,7 +3096,7 @@
         ],
         "parameters": [
           {
-            "name": "window_id",
+            "name": "windowId",
             "in": "path",
             "required": true,
             "schema": {
@@ -3129,7 +3129,7 @@
         "description": "Requires role: `admin`, `super_admin`."
       }
     },
-    "/api/v1/incident-windows/{window_id}/incidents": {
+    "/api/v1/incident-windows/{windowId}/incidents": {
       "post": {
         "tags": [
           "Incidents"
@@ -3139,7 +3139,7 @@
         "operationId": "fileIncident",
         "parameters": [
           {
-            "name": "window_id",
+            "name": "windowId",
             "in": "path",
             "required": true,
             "schema": {
@@ -3153,7 +3153,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/IncidentFileCreate"
+                "$ref": "#/components/schemas/IncidentCreate"
               }
             }
           }
@@ -3193,7 +3193,7 @@
         }
       }
     },
-    "/api/v1/incident-windows/{window_id}/publication": {
+    "/api/v1/incident-windows/{windowId}/publication": {
       "put": {
         "tags": [
           "Incidents"
@@ -3208,7 +3208,7 @@
         ],
         "parameters": [
           {
-            "name": "window_id",
+            "name": "windowId",
             "in": "path",
             "required": true,
             "schema": {
@@ -3251,7 +3251,7 @@
         ]
       }
     },
-    "/api/v1/incident-windows/{window_id}/default-resolutions": {
+    "/api/v1/incident-windows/{windowId}/default-resolutions": {
       "post": {
         "tags": [
           "Incidents"
@@ -3266,7 +3266,7 @@
         ],
         "parameters": [
           {
-            "name": "window_id",
+            "name": "windowId",
             "in": "path",
             "required": true,
             "schema": {
@@ -3309,7 +3309,7 @@
         ]
       }
     },
-    "/api/v1/incidents/{incident_id}": {
+    "/api/v1/incidents/{incidentId}": {
       "get": {
         "tags": [
           "Incidents"
@@ -3318,7 +3318,7 @@
         "operationId": "getIncident",
         "parameters": [
           {
-            "name": "incident_id",
+            "name": "incidentId",
             "in": "path",
             "required": true,
             "schema": {
@@ -3347,7 +3347,7 @@
         }
       }
     },
-    "/api/v1/incidents/{incident_id}/copies": {
+    "/api/v1/incidents/{incidentId}/copies": {
       "post": {
         "tags": [
           "Incidents"
@@ -3362,7 +3362,7 @@
         ],
         "parameters": [
           {
-            "name": "incident_id",
+            "name": "incidentId",
             "in": "path",
             "required": true,
             "schema": {
@@ -3411,7 +3411,7 @@
         ]
       }
     },
-    "/api/v1/incidents/{incident_id}/drivers": {
+    "/api/v1/incidents/{incidentId}/drivers": {
       "post": {
         "tags": [
           "Incidents"
@@ -3425,7 +3425,7 @@
         ],
         "parameters": [
           {
-            "name": "incident_id",
+            "name": "incidentId",
             "in": "path",
             "required": true,
             "schema": {
@@ -3439,7 +3439,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/IncidentDriverAdd"
+                "$ref": "#/components/schemas/IncidentDriverCreate"
               }
             }
           }
@@ -3485,7 +3485,7 @@
         "description": "Requires role: `racing_judge`, `admin`, `super_admin`."
       }
     },
-    "/api/v1/incidents/{incident_id}/resolution": {
+    "/api/v1/incidents/{incidentId}/resolution": {
       "put": {
         "tags": [
           "Incidents"
@@ -3500,7 +3500,7 @@
         ],
         "parameters": [
           {
-            "name": "incident_id",
+            "name": "incidentId",
             "in": "path",
             "required": true,
             "schema": {
@@ -3514,7 +3514,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BulkResolveIncident"
+                "$ref": "#/components/schemas/IncidentResolutionUpdate"
               }
             }
           }
@@ -3556,7 +3556,7 @@
         ]
       }
     },
-    "/api/v1/incident-drivers/{incident_driver_id}": {
+    "/api/v1/incident-drivers/{incidentDriverId}": {
       "get": {
         "tags": [
           "Incidents"
@@ -3565,7 +3565,7 @@
         "operationId": "getIncidentDriver",
         "parameters": [
           {
-            "name": "incident_driver_id",
+            "name": "incidentDriverId",
             "in": "path",
             "required": true,
             "schema": {
@@ -3606,7 +3606,7 @@
         ],
         "parameters": [
           {
-            "name": "incident_driver_id",
+            "name": "incidentDriverId",
             "in": "path",
             "required": true,
             "schema": {
@@ -3653,7 +3653,7 @@
         ],
         "parameters": [
           {
-            "name": "incident_driver_id",
+            "name": "incidentDriverId",
             "in": "path",
             "required": true,
             "schema": {
@@ -3703,7 +3703,7 @@
         ]
       }
     },
-    "/api/v1/incident-drivers/{incident_driver_id}/resolution": {
+    "/api/v1/incident-drivers/{incidentDriverId}/resolution": {
       "put": {
         "tags": [
           "Incidents"
@@ -3717,7 +3717,7 @@
         ],
         "parameters": [
           {
-            "name": "incident_driver_id",
+            "name": "incidentDriverId",
             "in": "path",
             "required": true,
             "schema": {
@@ -3731,7 +3731,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ResolveDriverIncident"
+                "$ref": "#/components/schemas/IncidentDriverResolutionUpdate"
               }
             }
           }
@@ -3783,7 +3783,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/BwpAuditEntry"
+                    "$ref": "#/components/schemas/BwpAuditEntryOut"
                   },
                   "type": "array"
                 }
@@ -4375,7 +4375,7 @@
         "description": "Requires role: `admin`, `super_admin`."
       }
     },
-    "/api/v1/penalty-rules/{rule_id}": {
+    "/api/v1/penalty-rules/{ruleId}": {
       "get": {
         "tags": [
           "Penalty rules"
@@ -4384,7 +4384,7 @@
         "operationId": "getPenaltyRule",
         "parameters": [
           {
-            "name": "rule_id",
+            "name": "ruleId",
             "in": "path",
             "required": true,
             "schema": {
@@ -4425,7 +4425,7 @@
         ],
         "parameters": [
           {
-            "name": "rule_id",
+            "name": "ruleId",
             "in": "path",
             "required": true,
             "schema": {
@@ -4487,7 +4487,7 @@
         ],
         "parameters": [
           {
-            "name": "rule_id",
+            "name": "ruleId",
             "in": "path",
             "required": true,
             "schema": {
@@ -4642,7 +4642,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ImportResultOut"
+                  "$ref": "#/components/schemas/RaceResultImportResultOut"
                 }
               }
             },
@@ -4681,7 +4681,7 @@
         ]
       }
     },
-    "/api/v1/race-result-imports/{import_id}": {
+    "/api/v1/race-result-imports/{importId}": {
       "get": {
         "tags": [
           "Race results"
@@ -4695,7 +4695,7 @@
         ],
         "parameters": [
           {
-            "name": "import_id",
+            "name": "importId",
             "in": "path",
             "required": true,
             "schema": {
@@ -4748,7 +4748,7 @@
         ],
         "parameters": [
           {
-            "name": "import_id",
+            "name": "importId",
             "in": "path",
             "required": true,
             "schema": {
@@ -4780,7 +4780,7 @@
         ]
       }
     },
-    "/api/v1/race-result-imports/{import_id}/file": {
+    "/api/v1/race-result-imports/{importId}/file": {
       "get": {
         "tags": [
           "Race results"
@@ -4794,7 +4794,7 @@
         ],
         "parameters": [
           {
-            "name": "import_id",
+            "name": "importId",
             "in": "path",
             "required": true,
             "schema": {
@@ -4849,7 +4849,7 @@
         "description": "Requires role: `admin`, `super_admin`."
       }
     },
-    "/api/v1/race-result-imports/{import_id}/parse-runs": {
+    "/api/v1/race-result-imports/{importId}/parse-runs": {
       "post": {
         "tags": [
           "Race results"
@@ -4864,7 +4864,7 @@
         ],
         "parameters": [
           {
-            "name": "import_id",
+            "name": "importId",
             "in": "path",
             "required": true,
             "schema": {
@@ -4879,7 +4879,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ImportResultOut"
+                  "$ref": "#/components/schemas/RaceResultImportResultOut"
                 }
               }
             },
@@ -4953,7 +4953,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/RegulationPageListItem"
+                    "$ref": "#/components/schemas/RegulationPageSummaryOut"
                   }
                 }
               }
@@ -5113,7 +5113,7 @@
         "description": "Requires role: `admin`, `super_admin`."
       }
     },
-    "/api/v1/regulation-pages/{page_id}": {
+    "/api/v1/regulation-pages/{pageId}": {
       "get": {
         "tags": [
           "Regulations"
@@ -5127,7 +5127,7 @@
         ],
         "parameters": [
           {
-            "name": "page_id",
+            "name": "pageId",
             "in": "path",
             "required": true,
             "schema": {
@@ -5179,7 +5179,7 @@
         ],
         "parameters": [
           {
-            "name": "page_id",
+            "name": "pageId",
             "in": "path",
             "required": true,
             "schema": {
@@ -5244,7 +5244,7 @@
         ],
         "parameters": [
           {
-            "name": "page_id",
+            "name": "pageId",
             "in": "path",
             "required": true,
             "schema": {
@@ -5321,7 +5321,7 @@
         "operationId": "listCarClasses",
         "parameters": [
           {
-            "name": "gameId",
+            "name": "simgridGameId",
             "in": "query",
             "required": false,
             "schema": {
@@ -5332,8 +5332,10 @@
                 {
                   "type": "null"
                 }
-              ]
-            }
+              ],
+              "description": "SimGrid's numeric game id."
+            },
+            "description": "SimGrid's numeric game id."
           }
         ],
         "responses": {
@@ -5447,7 +5449,7 @@
         "description": "Requires role: `admin`, `super_admin`."
       }
     },
-    "/api/v1/users/{user_id}": {
+    "/api/v1/users/{userId}": {
       "patch": {
         "tags": [
           "Users"
@@ -5461,7 +5463,7 @@
         ],
         "parameters": [
           {
-            "name": "user_id",
+            "name": "userId",
             "in": "path",
             "required": true,
             "schema": {
@@ -5511,7 +5513,7 @@
         "description": "Requires role: `admin`, `super_admin`."
       }
     },
-    "/api/v1/users/{user_id}/sessions": {
+    "/api/v1/users/{userId}/sessions": {
       "delete": {
         "tags": [
           "Users"
@@ -5526,7 +5528,7 @@
         ],
         "parameters": [
           {
-            "name": "user_id",
+            "name": "userId",
             "in": "path",
             "required": true,
             "schema": {
@@ -5558,7 +5560,7 @@
         ]
       }
     },
-    "/api/v1/users/{user_id}/managed-communities": {
+    "/api/v1/users/{userId}/managed-communities": {
       "get": {
         "tags": [
           "Users"
@@ -5572,7 +5574,7 @@
         ],
         "parameters": [
           {
-            "name": "user_id",
+            "name": "userId",
             "in": "path",
             "required": true,
             "schema": {
@@ -5625,7 +5627,7 @@
         ],
         "parameters": [
           {
-            "name": "user_id",
+            "name": "userId",
             "in": "path",
             "required": true,
             "schema": {
@@ -5756,7 +5758,7 @@
         "description": "Requires role: `racing_judge`, `admin`, `super_admin`."
       }
     },
-    "/api/v1/verdict-rules/{rule_id}": {
+    "/api/v1/verdict-rules/{ruleId}": {
       "get": {
         "tags": [
           "Incident rules"
@@ -5765,7 +5767,7 @@
         "operationId": "getVerdictRule",
         "parameters": [
           {
-            "name": "rule_id",
+            "name": "ruleId",
             "in": "path",
             "required": true,
             "schema": {
@@ -5806,7 +5808,7 @@
         ],
         "parameters": [
           {
-            "name": "rule_id",
+            "name": "ruleId",
             "in": "path",
             "required": true,
             "schema": {
@@ -5872,7 +5874,7 @@
         ],
         "parameters": [
           {
-            "name": "rule_id",
+            "name": "ruleId",
             "in": "path",
             "required": true,
             "schema": {
@@ -5920,7 +5922,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VerdictRuleReorder"
+                "$ref": "#/components/schemas/VerdictRuleOrderUpdate"
               }
             }
           },
@@ -6053,7 +6055,7 @@
         "description": "Requires role: `racing_judge`, `admin`, `super_admin`."
       }
     },
-    "/api/v1/description-presets/{preset_id}": {
+    "/api/v1/description-presets/{presetId}": {
       "get": {
         "tags": [
           "Incident rules"
@@ -6067,7 +6069,7 @@
         ],
         "parameters": [
           {
-            "name": "preset_id",
+            "name": "presetId",
             "in": "path",
             "required": true,
             "schema": {
@@ -6111,7 +6113,7 @@
         ],
         "parameters": [
           {
-            "name": "preset_id",
+            "name": "presetId",
             "in": "path",
             "required": true,
             "schema": {
@@ -6174,7 +6176,7 @@
         ],
         "parameters": [
           {
-            "name": "preset_id",
+            "name": "presetId",
             "in": "path",
             "required": true,
             "schema": {
@@ -6245,7 +6247,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/YouTubeVideo"
+                    "$ref": "#/components/schemas/YouTubeStreamOut"
                   }
                 }
               }
@@ -6376,75 +6378,6 @@
   },
   "components": {
     "schemas": {
-      "AliasCreate": {
-        "properties": {
-          "normalizedAlias": {
-            "type": "string",
-            "maxLength": 200
-          },
-          "canonicalDisplayName": {
-            "type": "string",
-            "maxLength": 200
-          },
-          "driverId": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "normalizedAlias",
-          "canonicalDisplayName"
-        ]
-      },
-      "AliasOut": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "normalizedAlias": {
-            "type": "string"
-          },
-          "canonicalNormalizedName": {
-            "type": "string"
-          },
-          "canonicalDisplayName": {
-            "type": "string"
-          },
-          "driverId": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "normalizedAlias",
-          "canonicalNormalizedName",
-          "canonicalDisplayName",
-          "driverId",
-          "createdAt"
-        ]
-      },
       "AuthUrlOut": {
         "properties": {
           "url": {
@@ -6457,33 +6390,7 @@
           "url"
         ]
       },
-      "BulkResolveIncident": {
-        "properties": {
-          "description": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 2000
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "drivers": {
-            "items": {
-              "$ref": "#/components/schemas/ResolveDriverItem"
-            },
-            "type": "array",
-            "minItems": 1
-          }
-        },
-        "type": "object",
-        "required": [
-          "drivers"
-        ]
-      },
-      "BwpAuditEntry": {
+      "BwpAuditEntryOut": {
         "properties": {
           "incidentDriverId": {
             "type": "string",
@@ -6640,7 +6547,7 @@
         "type": "object",
         "description": "``POST /drivers/{id}/bwp-resets``: expire every active point."
       },
-      "CalendarEvent": {
+      "CalendarEventOut": {
         "properties": {
           "id": {
             "type": "string"
@@ -6778,7 +6685,7 @@
           },
           "races": {
             "items": {
-              "$ref": "#/components/schemas/CalendarRace"
+              "$ref": "#/components/schemas/CalendarRaceOut"
             },
             "type": "array",
             "default": []
@@ -6823,7 +6730,7 @@
           "future"
         ]
       },
-      "CalendarRace": {
+      "CalendarRaceOut": {
         "properties": {
           "date": {
             "anyOf": [
@@ -6876,7 +6783,7 @@
           "name"
         ]
       },
-      "ChampionshipDetails": {
+      "ChampionshipOut": {
         "properties": {
           "id": {
             "type": "integer"
@@ -7037,7 +6944,79 @@
           "allRoundsNumber"
         ]
       },
-      "ChampionshipListItem": {
+      "ChampionshipRaceOut": {
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "displayName": {
+            "type": "string",
+            "default": ""
+          },
+          "startsAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "track": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resultsAvailable": {
+            "type": "boolean",
+            "default": false
+          },
+          "ended": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "displayName",
+          "startsAt",
+          "track",
+          "resultsAvailable",
+          "ended"
+        ]
+      },
+      "ChampionshipStandingsOut": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/StandingEntryOut"
+            },
+            "type": "array",
+            "default": []
+          },
+          "races": {
+            "items": {
+              "$ref": "#/components/schemas/StandingRaceOut"
+            },
+            "type": "array",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "entries",
+          "races"
+        ]
+      },
+      "ChampionshipSummaryOut": {
         "properties": {
           "id": {
             "type": "integer"
@@ -7091,78 +7070,6 @@
           "acceptingRegistrations",
           "eventCompleted",
           "isActive"
-        ]
-      },
-      "ChampionshipRace": {
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "displayName": {
-            "type": "string",
-            "default": ""
-          },
-          "startsAt": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "track": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "resultsAvailable": {
-            "type": "boolean",
-            "default": false
-          },
-          "ended": {
-            "type": "boolean",
-            "default": false
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "displayName",
-          "startsAt",
-          "track",
-          "resultsAvailable",
-          "ended"
-        ]
-      },
-      "ChampionshipStandingsData": {
-        "properties": {
-          "entries": {
-            "items": {
-              "$ref": "#/components/schemas/StandingEntry"
-            },
-            "type": "array",
-            "default": []
-          },
-          "races": {
-            "items": {
-              "$ref": "#/components/schemas/StandingRace"
-            },
-            "type": "array",
-            "default": []
-          }
-        },
-        "type": "object",
-        "required": [
-          "entries",
-          "races"
         ]
       },
       "ChampionshipUpdate": {
@@ -7659,7 +7566,48 @@
           "createdAt"
         ]
       },
-      "CustomRaceSync": {
+      "CustomRaceUpdate": {
+        "properties": {
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "endDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "track": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sortOrder": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "CustomRaceUpsert": {
         "properties": {
           "id": {
             "anyOf": [
@@ -7708,47 +7656,6 @@
         },
         "type": "object",
         "description": "Used for batch race sync — id present means update, absent means create."
-      },
-      "CustomRaceUpdate": {
-        "properties": {
-          "date": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "endDate": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "track": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 200
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "sortOrder": {
-            "type": "integer"
-          }
-        },
-        "type": "object"
       },
       "DefaultResolutionsOut": {
         "properties": {
@@ -7808,6 +7715,75 @@
           }
         },
         "type": "object"
+      },
+      "DriverAliasCreate": {
+        "properties": {
+          "normalizedAlias": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "canonicalDisplayName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "driverId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "normalizedAlias",
+          "canonicalDisplayName"
+        ]
+      },
+      "DriverAliasOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "normalizedAlias": {
+            "type": "string"
+          },
+          "canonicalNormalizedName": {
+            "type": "string"
+          },
+          "canonicalDisplayName": {
+            "type": "string"
+          },
+          "driverId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "normalizedAlias",
+          "canonicalNormalizedName",
+          "canonicalDisplayName",
+          "driverId",
+          "createdAt"
+        ]
       },
       "DriverCreate": {
         "properties": {
@@ -8011,7 +7987,7 @@
           "clearances"
         ]
       },
-      "DriverRaceResult": {
+      "DriverRaceResultOut": {
         "properties": {
           "raceId": {
             "type": "integer"
@@ -8054,6 +8030,42 @@
         ],
         "description": "One round of a driver's standings row (class position)."
       },
+      "DriverResolutionItem": {
+        "properties": {
+          "incidentDriverId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Omit to apply the default verdict rule: name the exceptions, the server fills in the rest."
+          },
+          "bwpPoints": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "incidentDriverId"
+        ]
+      },
       "DriverUpdate": {
         "properties": {
           "name": {
@@ -8073,43 +8085,6 @@
           }
         },
         "type": "object"
-      },
-      "EligibilityOut": {
-        "properties": {
-          "championshipSimgridId": {
-            "type": "integer"
-          },
-          "minDistancePct": {
-            "type": "number"
-          },
-          "minRounds": {
-            "type": "integer"
-          },
-          "importedRounds": {
-            "type": "integer"
-          },
-          "carClasses": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "drivers": {
-            "items": {
-              "$ref": "#/components/schemas/EligibleDriverOut"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object",
-        "required": [
-          "championshipSimgridId",
-          "minDistancePct",
-          "minRounds",
-          "importedRounds",
-          "carClasses",
-          "drivers"
-        ]
       },
       "EligibleDriverOut": {
         "properties": {
@@ -8157,89 +8132,41 @@
         ],
         "type": "object"
       },
-      "ImportEntryOut": {
+      "GiveawayEligibilityOut": {
         "properties": {
-          "rawName": {
-            "type": "string"
-          },
-          "carClass": {
-            "type": "string"
-          },
-          "laps": {
+          "championshipId": {
             "type": "integer"
           },
-          "position": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
+          "minDistancePct": {
+            "type": "number"
           },
-          "finishStatus": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Finish status exactly as the result file words it."
-          },
-          "matched": {
-            "type": "boolean",
-            "description": "The name resolves to a driver record."
-          }
-        },
-        "type": "object",
-        "required": [
-          "rawName",
-          "carClass",
-          "laps",
-          "position",
-          "finishStatus",
-          "matched"
-        ]
-      },
-      "ImportResultOut": {
-        "properties": {
-          "raceImport": {
-            "$ref": "#/components/schemas/RaceResultImportOut"
-          },
-          "windowId": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "incidentsCreated": {
+          "minRounds": {
             "type": "integer"
           },
-          "incidentsKept": {
+          "importedRounds": {
             "type": "integer"
           },
-          "entries": {
+          "carClasses": {
             "items": {
-              "$ref": "#/components/schemas/ImportEntryOut"
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "drivers": {
+            "items": {
+              "$ref": "#/components/schemas/EligibleDriverOut"
             },
             "type": "array"
           }
         },
         "type": "object",
         "required": [
-          "raceImport",
-          "windowId",
-          "incidentsCreated",
-          "incidentsKept",
-          "entries"
+          "championshipId",
+          "minDistancePct",
+          "minRounds",
+          "importedRounds",
+          "carClasses",
+          "drivers"
         ]
       },
       "IncidentBatchCreate": {
@@ -8300,75 +8227,7 @@
           "drivers"
         ]
       },
-      "IncidentDriverAdd": {
-        "properties": {
-          "driverName": {
-            "type": "string",
-            "maxLength": 200,
-            "minLength": 1
-          }
-        },
-        "type": "object",
-        "required": [
-          "driverName"
-        ]
-      },
-      "IncidentDriverOut": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "driverName": {
-            "type": "string"
-          },
-          "driverId": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "sortOrder": {
-            "type": "integer"
-          },
-          "resolution": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/IncidentResolutionOut"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "driverName",
-          "driverId",
-          "sortOrder",
-          "resolution"
-        ]
-      },
-      "IncidentDriverUpdate": {
-        "properties": {
-          "driverId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "type": "object",
-        "required": [
-          "driverId"
-        ]
-      },
-      "IncidentFileCreate": {
+      "IncidentCreate": {
         "properties": {
           "sessionName": {
             "anyOf": [
@@ -8428,6 +8287,98 @@
         "type": "object",
         "required": [
           "drivers"
+        ]
+      },
+      "IncidentDriverCreate": {
+        "properties": {
+          "driverName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "driverName"
+        ]
+      },
+      "IncidentDriverOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "driverName": {
+            "type": "string"
+          },
+          "driverId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sortOrder": {
+            "type": "integer"
+          },
+          "resolution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IncidentResolutionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "driverName",
+          "driverId",
+          "sortOrder",
+          "resolution"
+        ]
+      },
+      "IncidentDriverResolutionUpdate": {
+        "properties": {
+          "verdict": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1
+          },
+          "bwpPoints": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "verdict"
+        ]
+      },
+      "IncidentDriverUpdate": {
+        "properties": {
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "driverId"
         ]
       },
       "IncidentOut": {
@@ -8605,6 +8556,32 @@
           "resolvedAt"
         ]
       },
+      "IncidentResolutionUpdate": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "drivers": {
+            "items": {
+              "$ref": "#/components/schemas/DriverResolutionItem"
+            },
+            "type": "array",
+            "minItems": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "drivers"
+        ]
+      },
       "IncidentSource": {
         "type": "string",
         "enum": [
@@ -8680,102 +8657,6 @@
         "type": "object",
         "required": [
           "raceName"
-        ]
-      },
-      "IncidentWindowListItem": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "championshipId": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "championshipName": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "raceId": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "raceName": {
-            "type": "string"
-          },
-          "date": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "The race day as display text, normally `YYYY-MM-DD`."
-          },
-          "intervalHours": {
-            "type": "integer",
-            "description": "How long the window accepts incidents after it opens."
-          },
-          "openedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "closesAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "openedByUserId": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "isManuallyClosed": {
-            "type": "boolean"
-          },
-          "isOpen": {
-            "type": "boolean"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "championshipId",
-          "championshipName",
-          "raceId",
-          "raceName",
-          "date",
-          "intervalHours",
-          "openedAt",
-          "closesAt",
-          "openedByUserId",
-          "isManuallyClosed",
-          "isOpen"
         ]
       },
       "IncidentWindowOut": {
@@ -8882,7 +8763,7 @@
           "incidents"
         ]
       },
-      "IncidentWindowSummaryOut": {
+      "IncidentWindowStatusOut": {
         "properties": {
           "id": {
             "type": "string",
@@ -8918,6 +8799,102 @@
           "incidentsCount"
         ],
         "description": "A round's window at a glance, for lists of rounds."
+      },
+      "IncidentWindowSummaryOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "championshipId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "championshipName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "raceId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "raceName": {
+            "type": "string"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The race day as display text, normally `YYYY-MM-DD`."
+          },
+          "intervalHours": {
+            "type": "integer",
+            "description": "How long the window accepts incidents after it opens."
+          },
+          "openedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closesAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "openedByUserId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isManuallyClosed": {
+            "type": "boolean"
+          },
+          "isOpen": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "championshipId",
+          "championshipName",
+          "raceId",
+          "raceName",
+          "date",
+          "intervalHours",
+          "openedAt",
+          "closesAt",
+          "openedByUserId",
+          "isManuallyClosed",
+          "isOpen"
+        ]
       },
       "IncidentWindowUpdate": {
         "properties": {
@@ -9001,7 +8978,7 @@
           "communityIds"
         ]
       },
-      "MyDriverPhotoUpdate": {
+      "MyDriverUpdate": {
         "properties": {
           "photoUrl": {
             "anyOf": [
@@ -9136,7 +9113,7 @@
         ],
         "type": "object"
       },
-      "RaceResultEntry": {
+      "RaceResultEntryOut": {
         "properties": {
           "userId": {
             "anyOf": [
@@ -9329,6 +9306,53 @@
         ],
         "description": "``POST /race-result-imports``: the multipart form of one round's upload."
       },
+      "RaceResultImportEntryOut": {
+        "properties": {
+          "rawName": {
+            "type": "string"
+          },
+          "carClass": {
+            "type": "string"
+          },
+          "laps": {
+            "type": "integer"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finishStatus": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Finish status exactly as the result file words it."
+          },
+          "matched": {
+            "type": "boolean",
+            "description": "The name resolves to a driver record."
+          }
+        },
+        "type": "object",
+        "required": [
+          "rawName",
+          "carClass",
+          "laps",
+          "position",
+          "finishStatus",
+          "matched"
+        ]
+      },
       "RaceResultImportOut": {
         "properties": {
           "id": {
@@ -9431,6 +9455,44 @@
         ],
         "description": "One uploaded round file."
       },
+      "RaceResultImportResultOut": {
+        "properties": {
+          "raceImport": {
+            "$ref": "#/components/schemas/RaceResultImportOut"
+          },
+          "windowId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "incidentsCreated": {
+            "type": "integer"
+          },
+          "incidentsKept": {
+            "type": "integer"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/RaceResultImportEntryOut"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object",
+        "required": [
+          "raceImport",
+          "windowId",
+          "incidentsCreated",
+          "incidentsKept",
+          "entries"
+        ]
+      },
       "RaceSessionKind": {
         "type": "string",
         "enum": [
@@ -9448,7 +9510,7 @@
           },
           "entries": {
             "items": {
-              "$ref": "#/components/schemas/RaceResultEntry"
+              "$ref": "#/components/schemas/RaceResultEntryOut"
             },
             "type": "array",
             "default": []
@@ -9544,34 +9606,6 @@
           "slug"
         ]
       },
-      "RegulationPageListItem": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "slug": {
-            "type": "string"
-          },
-          "sortOrder": {
-            "type": "integer"
-          },
-          "isVisible": {
-            "type": "boolean"
-          },
-          "title": {
-            "type": "string"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "slug",
-          "sortOrder",
-          "isVisible",
-          "title"
-        ]
-      },
       "RegulationPageOut": {
         "properties": {
           "id": {
@@ -9603,6 +9637,34 @@
           "contents"
         ]
       },
+      "RegulationPageSummaryOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "integer"
+          },
+          "isVisible": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "sortOrder",
+          "isVisible",
+          "title"
+        ]
+      },
       "RegulationPageUpdate": {
         "properties": {
           "slug": {
@@ -9624,66 +9686,6 @@
           }
         },
         "type": "object"
-      },
-      "ResolveDriverIncident": {
-        "properties": {
-          "verdict": {
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 1
-          },
-          "bwpPoints": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 0
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "verdict"
-        ]
-      },
-      "ResolveDriverItem": {
-        "properties": {
-          "incidentDriverId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "verdict": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 2000,
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Omit to apply the default verdict rule: name the exceptions, the server fills in the rest."
-          },
-          "bwpPoints": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 0
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "incidentDriverId"
-        ]
       },
       "RoundBreakdownOut": {
         "properties": {
@@ -9725,7 +9727,7 @@
           "raceId": {
             "type": "integer"
           },
-          "name": {
+          "displayName": {
             "type": "string"
           },
           "startsAt": {
@@ -9756,7 +9758,7 @@
           "window": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/IncidentWindowSummaryOut"
+                "$ref": "#/components/schemas/IncidentWindowStatusOut"
               },
               {
                 "type": "null"
@@ -9767,7 +9769,7 @@
         "type": "object",
         "required": [
           "raceId",
-          "name",
+          "displayName",
           "startsAt",
           "ended",
           "raceImport",
@@ -9824,7 +9826,7 @@
         ],
         "description": "Simulators whose result files can be imported."
       },
-      "StandingEntry": {
+      "StandingEntryOut": {
         "properties": {
           "id": {
             "anyOf": [
@@ -9882,7 +9884,7 @@
           },
           "raceResults": {
             "items": {
-              "$ref": "#/components/schemas/DriverRaceResult"
+              "$ref": "#/components/schemas/DriverRaceResultOut"
             },
             "type": "array",
             "default": []
@@ -9902,7 +9904,7 @@
           "raceResults"
         ]
       },
-      "StandingRace": {
+      "StandingRaceOut": {
         "properties": {
           "id": {
             "type": "integer"
@@ -9946,7 +9948,7 @@
           "upcoming"
         ]
       },
-      "UnmatchedNameOut": {
+      "UnmatchedDriverNameOut": {
         "properties": {
           "rawName": {
             "type": "string"
@@ -10160,6 +10162,21 @@
           "verdict"
         ]
       },
+      "VerdictRuleOrderUpdate": {
+        "properties": {
+          "ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ids"
+        ]
+      },
       "VerdictRuleOut": {
         "properties": {
           "id": {
@@ -10186,21 +10203,6 @@
           "defaultBwp",
           "sortOrder",
           "isDefault"
-        ]
-      },
-      "VerdictRuleReorder": {
-        "properties": {
-          "ids": {
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object",
-        "required": [
-          "ids"
         ]
       },
       "VerdictRuleUpdate": {
@@ -10236,7 +10238,7 @@
           "unlinkedCount"
         ]
       },
-      "YouTubeVideo": {
+      "YouTubeStreamOut": {
         "properties": {
           "videoId": {
             "type": "string"

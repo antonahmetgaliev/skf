@@ -7,13 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.openapi import STALE_RESPONSES
 from app.database import get_db
-from app.schemas.calendar import CalendarEvent
+from app.schemas.calendar import CalendarEventOut
 from app.services import calendar_events as service
 
 router = APIRouter(tags=["Calendar"])
 
 
-@router.get("/calendar-events", response_model=list[CalendarEvent], responses=STALE_RESPONSES)
+@router.get("/calendar-events", response_model=list[CalendarEventOut], responses=STALE_RESPONSES)
 async def list_calendar_events(
     year: int = Query(..., ge=2020, le=2100),
     month: int | None = Query(None, ge=1, le=12),

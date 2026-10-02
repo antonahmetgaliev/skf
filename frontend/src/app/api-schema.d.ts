@@ -124,7 +124,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/championships/{championship_id}': {
+  '/api/v1/championships/{championshipId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -147,7 +147,7 @@ export interface paths {
     patch: operations['updateChampionship'];
     trace?: never;
   };
-  '/api/v1/championships/{championship_id}/standings': {
+  '/api/v1/championships/{championshipId}/standings': {
     parameters: {
       query?: never;
       header?: never;
@@ -164,7 +164,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/championships/{championship_id}/races': {
+  '/api/v1/championships/{championshipId}/races': {
     parameters: {
       query?: never;
       header?: never;
@@ -184,7 +184,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/championships/{championship_id}/races/{race_id}/results': {
+  '/api/v1/championships/{championshipId}/races/{raceId}/results': {
     parameters: {
       query?: never;
       header?: never;
@@ -204,7 +204,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/championships/{championship_id}/incident-windows': {
+  '/api/v1/championships/{championshipId}/incident-windows': {
     parameters: {
       query?: never;
       header?: never;
@@ -224,7 +224,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/championships/{championship_id}/rounds': {
+  '/api/v1/championships/{championshipId}/rounds': {
     parameters: {
       query?: never;
       header?: never;
@@ -246,7 +246,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/championships/{championship_id}/giveaway-eligibility': {
+  '/api/v1/championships/{championshipId}/giveaway-eligibility': {
     parameters: {
       query?: never;
       header?: never;
@@ -268,7 +268,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/championships/{championship_id}/unmatched-driver-names': {
+  '/api/v1/championships/{championshipId}/unmatched-driver-names': {
     parameters: {
       query?: never;
       header?: never;
@@ -317,7 +317,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/communities/{community_id}': {
+  '/api/v1/communities/{communityId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -389,7 +389,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/custom-championships/{champ_id}': {
+  '/api/v1/custom-championships/{championshipId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -417,7 +417,7 @@ export interface paths {
     patch: operations['updateCustomChampionship'];
     trace?: never;
   };
-  '/api/v1/custom-championships/{champ_id}/races': {
+  '/api/v1/custom-championships/{championshipId}/races': {
     parameters: {
       query?: never;
       header?: never;
@@ -443,7 +443,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/custom-championships/{champ_id}/races/{race_id}': {
+  '/api/v1/custom-championships/{championshipId}/races/{raceId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -497,7 +497,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/driver-aliases/{alias_id}': {
+  '/api/v1/driver-aliases/{aliasId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -545,7 +545,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/drivers/{driver_id}': {
+  '/api/v1/drivers/{driverId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -570,7 +570,7 @@ export interface paths {
     patch: operations['updateDriver'];
     trace?: never;
   };
-  '/api/v1/drivers/{driver_id}/bwp-points': {
+  '/api/v1/drivers/{driverId}/bwp-points': {
     parameters: {
       query?: never;
       header?: never;
@@ -590,7 +590,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/bwp-points/{point_id}': {
+  '/api/v1/bwp-points/{pointId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -617,7 +617,7 @@ export interface paths {
     patch: operations['updateBwpPoint'];
     trace?: never;
   };
-  '/api/v1/drivers/{driver_id}/bwp-resets': {
+  '/api/v1/drivers/{driverId}/bwp-resets': {
     parameters: {
       query?: never;
       header?: never;
@@ -639,7 +639,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/drivers/{driver_id}/clearances/{rule_id}': {
+  '/api/v1/drivers/{driverId}/clearances/{ruleId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -711,7 +711,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/incident-windows/{window_id}': {
+  '/api/v1/incident-windows/{windowId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -736,7 +736,7 @@ export interface paths {
     patch: operations['updateIncidentWindow'];
     trace?: never;
   };
-  '/api/v1/incident-windows/{window_id}/incidents': {
+  '/api/v1/incident-windows/{windowId}/incidents': {
     parameters: {
       query?: never;
       header?: never;
@@ -756,7 +756,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/incident-windows/{window_id}/publication': {
+  '/api/v1/incident-windows/{windowId}/publication': {
     parameters: {
       query?: never;
       header?: never;
@@ -782,7 +782,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/incident-windows/{window_id}/default-resolutions': {
+  '/api/v1/incident-windows/{windowId}/default-resolutions': {
     parameters: {
       query?: never;
       header?: never;
@@ -804,7 +804,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/incidents/{incident_id}': {
+  '/api/v1/incidents/{incidentId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -821,7 +821,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/incidents/{incident_id}/copies': {
+  '/api/v1/incidents/{incidentId}/copies': {
     parameters: {
       query?: never;
       header?: never;
@@ -843,7 +843,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/incidents/{incident_id}/drivers': {
+  '/api/v1/incidents/{incidentId}/drivers': {
     parameters: {
       query?: never;
       header?: never;
@@ -863,7 +863,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/incidents/{incident_id}/resolution': {
+  '/api/v1/incidents/{incidentId}/resolution': {
     parameters: {
       query?: never;
       header?: never;
@@ -885,7 +885,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/incident-drivers/{incident_driver_id}': {
+  '/api/v1/incident-drivers/{incidentDriverId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -912,7 +912,7 @@ export interface paths {
     patch: operations['updateIncidentDriver'];
     trace?: never;
   };
-  '/api/v1/incident-drivers/{incident_driver_id}/resolution': {
+  '/api/v1/incident-drivers/{incidentDriverId}/resolution': {
     parameters: {
       query?: never;
       header?: never;
@@ -1135,7 +1135,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/penalty-rules/{rule_id}': {
+  '/api/v1/penalty-rules/{ruleId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -1186,7 +1186,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/race-result-imports/{import_id}': {
+  '/api/v1/race-result-imports/{importId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -1212,7 +1212,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/race-result-imports/{import_id}/file': {
+  '/api/v1/race-result-imports/{importId}/file': {
     parameters: {
       query?: never;
       header?: never;
@@ -1232,7 +1232,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/race-result-imports/{import_id}/parse-runs': {
+  '/api/v1/race-result-imports/{importId}/parse-runs': {
     parameters: {
       query?: never;
       header?: never;
@@ -1318,7 +1318,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/regulation-pages/{page_id}': {
+  '/api/v1/regulation-pages/{pageId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -1400,7 +1400,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/users/{user_id}': {
+  '/api/v1/users/{userId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -1420,7 +1420,7 @@ export interface paths {
     patch: operations['updateUser'];
     trace?: never;
   };
-  '/api/v1/users/{user_id}/sessions': {
+  '/api/v1/users/{userId}/sessions': {
     parameters: {
       query?: never;
       header?: never;
@@ -1442,7 +1442,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/users/{user_id}/managed-communities': {
+  '/api/v1/users/{userId}/managed-communities': {
     parameters: {
       query?: never;
       header?: never;
@@ -1489,7 +1489,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/verdict-rules/{rule_id}': {
+  '/api/v1/verdict-rules/{ruleId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -1555,7 +1555,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/description-presets/{preset_id}': {
+  '/api/v1/description-presets/{presetId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -1648,30 +1648,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
-    AliasCreate: {
-      normalizedAlias: string;
-      canonicalDisplayName: string;
-      driverId?: string | null;
-    };
-    AliasOut: {
-      /** Format: uuid */
-      id: string;
-      normalizedAlias: string;
-      canonicalNormalizedName: string;
-      canonicalDisplayName: string;
-      driverId: string | null;
-      /** Format: date-time */
-      createdAt: string;
-    };
     AuthUrlOut: {
       /** Format: uri */
       url: string;
     };
-    BulkResolveIncident: {
-      description?: string | null;
-      drivers: components['schemas']['ResolveDriverItem'][];
-    };
-    BwpAuditEntry: {
+    BwpAuditEntryOut: {
       /** Format: uuid */
       incidentDriverId: string;
       driverName: string;
@@ -1725,7 +1706,7 @@ export interface components {
       note?: string;
     };
     /** @description Unified calendar event returned by the merge endpoint. */
-    CalendarEvent: {
+    CalendarEventOut: {
       id: string;
       name: string;
       /** @default  */
@@ -1746,19 +1727,19 @@ export interface components {
       spotsTaken: number | null;
       registrationUrl: string | null;
       /** @default [] */
-      races: components['schemas']['CalendarRace'][];
+      races: components['schemas']['CalendarRaceOut'][];
     };
     /** @enum {string} */
     CalendarEventSource: 'simgrid' | 'custom';
     /** @enum {string} */
     CalendarEventType: 'past' | 'ongoing' | 'upcoming' | 'future';
-    CalendarRace: {
+    CalendarRaceOut: {
       date: string | null;
       endDate: string | null;
       track: string | null;
       name: string | null;
     };
-    ChampionshipDetails: {
+    ChampionshipOut: {
       id: number;
       name: string;
       description: string | null;
@@ -1778,7 +1759,24 @@ export interface components {
       roundNumber: number | null;
       allRoundsNumber: number | null;
     };
-    ChampionshipListItem: {
+    ChampionshipRaceOut: {
+      id: number;
+      /** @default  */
+      displayName: string;
+      startsAt: string | null;
+      track: string | null;
+      /** @default false */
+      resultsAvailable: boolean;
+      /** @default false */
+      ended: boolean;
+    };
+    ChampionshipStandingsOut: {
+      /** @default [] */
+      entries: components['schemas']['StandingEntryOut'][];
+      /** @default [] */
+      races: components['schemas']['StandingRaceOut'][];
+    };
+    ChampionshipSummaryOut: {
       id: number;
       name: string;
       startDate: string | null;
@@ -1795,23 +1793,6 @@ export interface components {
        * @default false
        */
       isActive: boolean;
-    };
-    ChampionshipRace: {
-      id: number;
-      /** @default  */
-      displayName: string;
-      startsAt: string | null;
-      track: string | null;
-      /** @default false */
-      resultsAvailable: boolean;
-      /** @default false */
-      ended: boolean;
-    };
-    ChampionshipStandingsData: {
-      /** @default [] */
-      entries: components['schemas']['StandingEntry'][];
-      /** @default [] */
-      races: components['schemas']['StandingRace'][];
     };
     ChampionshipUpdate: {
       isActive: boolean;
@@ -1894,18 +1875,18 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
-    /** @description Used for batch race sync — id present means update, absent means create. */
-    CustomRaceSync: {
-      id?: string | null;
-      date?: string | null;
-      endDate?: string | null;
-      track?: string | null;
-    };
     CustomRaceUpdate: {
       date?: string | null;
       endDate?: string | null;
       track?: string | null;
       sortOrder?: number;
+    };
+    /** @description Used for batch race sync — id present means update, absent means create. */
+    CustomRaceUpsert: {
+      id?: string | null;
+      date?: string | null;
+      endDate?: string | null;
+      track?: string | null;
     };
     DefaultResolutionsOut: {
       window: components['schemas']['IncidentWindowOut'];
@@ -1923,6 +1904,21 @@ export interface components {
     };
     DescriptionPresetUpdate: {
       text?: string;
+    };
+    DriverAliasCreate: {
+      normalizedAlias: string;
+      canonicalDisplayName: string;
+      driverId?: string | null;
+    };
+    DriverAliasOut: {
+      /** Format: uuid */
+      id: string;
+      normalizedAlias: string;
+      canonicalNormalizedName: string;
+      canonicalDisplayName: string;
+      driverId: string | null;
+      /** Format: date-time */
+      createdAt: string;
     };
     DriverCreate: {
       name: string;
@@ -1975,7 +1971,7 @@ export interface components {
       clearances: components['schemas']['PenaltyClearanceOut'][];
     };
     /** @description One round of a driver's standings row (class position). */
-    DriverRaceResult: {
+    DriverRaceResultOut: {
       raceId: number;
       raceIndex: number;
       points: number | null;
@@ -1983,17 +1979,16 @@ export interface components {
       /** @default classified */
       status: components['schemas']['RaceStatus'];
     };
+    DriverResolutionItem: {
+      /** Format: uuid */
+      incidentDriverId: string;
+      /** @description Omit to apply the default verdict rule: name the exceptions, the server fills in the rest. */
+      verdict?: string | null;
+      bwpPoints?: number | null;
+    };
     DriverUpdate: {
       name?: string;
       simgridDriverId?: number | null;
-    };
-    EligibilityOut: {
-      championshipSimgridId: number;
-      minDistancePct: number;
-      minRounds: number;
-      importedRounds: number;
-      carClasses: string[];
-      drivers: components['schemas']['EligibleDriverOut'][];
     };
     EligibleDriverOut: {
       /** @description Normalized name the driver's rounds are grouped under, aliases applied. */
@@ -2007,22 +2002,13 @@ export interface components {
       field: string;
       message: string;
     };
-    ImportEntryOut: {
-      rawName: string;
-      carClass: string;
-      laps: number;
-      position: number | null;
-      /** @description Finish status exactly as the result file words it. */
-      finishStatus: string | null;
-      /** @description The name resolves to a driver record. */
-      matched: boolean;
-    };
-    ImportResultOut: {
-      raceImport: components['schemas']['RaceResultImportOut'];
-      windowId: string | null;
-      incidentsCreated: number;
-      incidentsKept: number;
-      entries: components['schemas']['ImportEntryOut'][];
+    GiveawayEligibilityOut: {
+      championshipId: number;
+      minDistancePct: number;
+      minRounds: number;
+      importedRounds: number;
+      carClasses: string[];
+      drivers: components['schemas']['EligibleDriverOut'][];
     };
     IncidentBatchCreate: {
       raceId: number;
@@ -2034,7 +2020,14 @@ export interface components {
       time?: string | null;
       drivers: string[];
     };
-    IncidentDriverAdd: {
+    IncidentCreate: {
+      sessionName?: string | null;
+      lap?: string | null;
+      corner?: string | null;
+      description?: string | null;
+      drivers: string[];
+    };
+    IncidentDriverCreate: {
       driverName: string;
     };
     IncidentDriverOut: {
@@ -2045,16 +2038,13 @@ export interface components {
       sortOrder: number;
       resolution: components['schemas']['IncidentResolutionOut'] | null;
     };
+    IncidentDriverResolutionUpdate: {
+      verdict: string;
+      bwpPoints?: number | null;
+    };
     IncidentDriverUpdate: {
       /** Format: uuid */
       driverId: string;
-    };
-    IncidentFileCreate: {
-      sessionName?: string | null;
-      lap?: string | null;
-      corner?: string | null;
-      description?: string | null;
-      drivers: string[];
     };
     IncidentOut: {
       /** Format: uuid */
@@ -2090,6 +2080,10 @@ export interface components {
       /** Format: date-time */
       resolvedAt: string;
     };
+    IncidentResolutionUpdate: {
+      description?: string | null;
+      drivers: components['schemas']['DriverResolutionItem'][];
+    };
     /**
      * @description ``filed`` by a person; ``ingested`` from a race-result file.
      * @enum {string}
@@ -2108,25 +2102,6 @@ export interface components {
       date?: string | null;
       /** @default 24 */
       intervalHours?: number;
-    };
-    IncidentWindowListItem: {
-      /** Format: uuid */
-      id: string;
-      championshipId: number | null;
-      championshipName: string | null;
-      raceId: number | null;
-      raceName: string;
-      /** @description The race day as display text, normally `YYYY-MM-DD`. */
-      date: string | null;
-      /** @description How long the window accepts incidents after it opens. */
-      intervalHours: number;
-      /** Format: date-time */
-      openedAt: string;
-      /** Format: date-time */
-      closesAt: string;
-      openedByUserId: string | null;
-      isManuallyClosed: boolean;
-      isOpen: boolean;
     };
     IncidentWindowOut: {
       /** Format: uuid */
@@ -2150,7 +2125,7 @@ export interface components {
       incidents: components['schemas']['IncidentOut'][];
     };
     /** @description A round's window at a glance, for lists of rounds. */
-    IncidentWindowSummaryOut: {
+    IncidentWindowStatusOut: {
       /** Format: uuid */
       id: string;
       raceId: number | null;
@@ -2158,6 +2133,25 @@ export interface components {
       /** Format: date-time */
       closesAt: string;
       incidentsCount: number;
+    };
+    IncidentWindowSummaryOut: {
+      /** Format: uuid */
+      id: string;
+      championshipId: number | null;
+      championshipName: string | null;
+      raceId: number | null;
+      raceName: string;
+      /** @description The race day as display text, normally `YYYY-MM-DD`. */
+      date: string | null;
+      /** @description How long the window accepts incidents after it opens. */
+      intervalHours: number;
+      /** Format: date-time */
+      openedAt: string;
+      /** Format: date-time */
+      closesAt: string;
+      openedByUserId: string | null;
+      isManuallyClosed: boolean;
+      isOpen: boolean;
     };
     IncidentWindowUpdate: {
       isManuallyClosed?: boolean;
@@ -2179,7 +2173,7 @@ export interface components {
       communityIds: string[];
     };
     /** @description ``PATCH /me/driver``: set (https only) or clear the profile photo. */
-    MyDriverPhotoUpdate: {
+    MyDriverUpdate: {
       /** Format: uri */
       photoUrl?: string | null;
     };
@@ -2227,7 +2221,7 @@ export interface components {
       detail: string;
       code: string;
     };
-    RaceResultEntry: {
+    RaceResultEntryOut: {
       userId: number | null;
       displayName: string;
       /** @default  */
@@ -2264,6 +2258,16 @@ export interface components {
       /** @default 24 */
       windowHours?: number;
     };
+    RaceResultImportEntryOut: {
+      rawName: string;
+      carClass: string;
+      laps: number;
+      position: number | null;
+      /** @description Finish status exactly as the result file words it. */
+      finishStatus: string | null;
+      /** @description The name resolves to a driver record. */
+      matched: boolean;
+    };
     /** @description One uploaded round file. */
     RaceResultImportOut: {
       /** Format: uuid */
@@ -2283,13 +2287,20 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    RaceResultImportResultOut: {
+      raceImport: components['schemas']['RaceResultImportOut'];
+      windowId: string | null;
+      incidentsCreated: number;
+      incidentsKept: number;
+      entries: components['schemas']['RaceResultImportEntryOut'][];
+    };
     /** @enum {string} */
     RaceSessionKind: 'race' | 'qualifying';
     RaceSessionOut: {
       raceId: number;
       session: components['schemas']['RaceSessionKind'];
       /** @default [] */
-      entries: components['schemas']['RaceResultEntry'][];
+      entries: components['schemas']['RaceResultEntryOut'][];
     };
     /**
      * @description ``classified`` covers every non-DNS finisher when SimGrid gives no
@@ -2321,14 +2332,6 @@ export interface components {
         [key: string]: components['schemas']['RegulationContentUpdate'];
       };
     };
-    RegulationPageListItem: {
-      /** Format: uuid */
-      id: string;
-      slug: string;
-      sortOrder: number;
-      isVisible: boolean;
-      title: string;
-    };
     RegulationPageOut: {
       /** Format: uuid */
       id: string;
@@ -2339,6 +2342,14 @@ export interface components {
         [key: string]: components['schemas']['RegulationContentOut'];
       };
     };
+    RegulationPageSummaryOut: {
+      /** Format: uuid */
+      id: string;
+      slug: string;
+      sortOrder: number;
+      isVisible: boolean;
+      title: string;
+    };
     RegulationPageUpdate: {
       slug?: string;
       sortOrder?: number;
@@ -2346,17 +2357,6 @@ export interface components {
       contents?: {
         [key: string]: components['schemas']['RegulationContentUpdate'];
       };
-    };
-    ResolveDriverIncident: {
-      verdict: string;
-      bwpPoints?: number | null;
-    };
-    ResolveDriverItem: {
-      /** Format: uuid */
-      incidentDriverId: string;
-      /** @description Omit to apply the default verdict rule: name the exceptions, the server fills in the rest. */
-      verdict?: string | null;
-      bwpPoints?: number | null;
     };
     RoundBreakdownOut: {
       roundKey: string;
@@ -2369,12 +2369,12 @@ export interface components {
     };
     RoundOut: {
       raceId: number;
-      name: string;
+      displayName: string;
       startsAt: string | null;
       /** @default false */
       ended: boolean;
       raceImport: components['schemas']['RaceResultImportOut'] | null;
-      window: components['schemas']['IncidentWindowSummaryOut'] | null;
+      window: components['schemas']['IncidentWindowStatusOut'] | null;
     };
     RoundsOut: {
       championshipId: number;
@@ -2390,7 +2390,7 @@ export interface components {
      * @enum {string}
      */
     Sim: 'lmu' | 'iracing';
-    StandingEntry: {
+    StandingEntryOut: {
       /** @description SimGrid user id; `null` when SimGrid gives none. */
       id: number | null;
       position: number | null;
@@ -2407,9 +2407,9 @@ export interface components {
       /** @default 0 */
       score: number;
       /** @default [] */
-      raceResults: components['schemas']['DriverRaceResult'][];
+      raceResults: components['schemas']['DriverRaceResultOut'][];
     };
-    StandingRace: {
+    StandingRaceOut: {
       id: number;
       displayName: string;
       startsAt: string | null;
@@ -2420,7 +2420,7 @@ export interface components {
     };
     /** @enum {string} */
     StreamStatus: 'past' | 'upcoming';
-    UnmatchedNameOut: {
+    UnmatchedDriverNameOut: {
       rawName: string;
       normalizedName: string;
       rounds: number;
@@ -2484,6 +2484,9 @@ export interface components {
       /** @default false */
       isDefault?: boolean;
     };
+    VerdictRuleOrderUpdate: {
+      ids: string[];
+    };
     VerdictRuleOut: {
       /** Format: uuid */
       id: string;
@@ -2491,9 +2494,6 @@ export interface components {
       defaultBwp: number;
       sortOrder: number;
       isDefault: boolean;
-    };
-    VerdictRuleReorder: {
-      ids: string[];
     };
     VerdictRuleUpdate: {
       verdict?: string;
@@ -2505,7 +2505,7 @@ export interface components {
       /** @description Penalties that reached no licence because the driver name matches no driver record. */
       unlinkedCount: number;
     };
-    YouTubeVideo: {
+    YouTubeStreamOut: {
       videoId: string;
       title: string;
       /** @default  */
@@ -2716,7 +2716,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['CalendarEvent'][];
+          'application/json': components['schemas']['CalendarEventOut'][];
         };
       };
       422: components['responses']['UnprocessableContent'];
@@ -2742,7 +2742,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ChampionshipListItem'][];
+          'application/json': components['schemas']['ChampionshipSummaryOut'][];
         };
       };
       401: components['responses']['Unauthorized'];
@@ -2756,7 +2756,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        championship_id: number;
+        championshipId: number;
       };
       cookie?: never;
     };
@@ -2770,7 +2770,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ChampionshipDetails'];
+          'application/json': components['schemas']['ChampionshipOut'];
         };
       };
       422: components['responses']['UnprocessableContent'];
@@ -2782,7 +2782,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        championship_id: number;
+        championshipId: number;
       };
       cookie?: never;
     };
@@ -2809,7 +2809,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        championship_id: number;
+        championshipId: number;
       };
       cookie?: never;
     };
@@ -2823,7 +2823,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ChampionshipStandingsData'];
+          'application/json': components['schemas']['ChampionshipStandingsOut'];
         };
       };
       422: components['responses']['UnprocessableContent'];
@@ -2835,7 +2835,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        championship_id: number;
+        championshipId: number;
       };
       cookie?: never;
     };
@@ -2849,7 +2849,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ChampionshipRace'][];
+          'application/json': components['schemas']['ChampionshipRaceOut'][];
         };
       };
       422: components['responses']['UnprocessableContent'];
@@ -2863,8 +2863,8 @@ export interface operations {
       };
       header?: never;
       path: {
-        championship_id: number;
-        race_id: number;
+        championshipId: number;
+        raceId: number;
       };
       cookie?: never;
     };
@@ -2890,7 +2890,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        championship_id: number;
+        championshipId: number;
       };
       cookie?: never;
     };
@@ -2902,7 +2902,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['IncidentWindowSummaryOut'][];
+          'application/json': components['schemas']['IncidentWindowStatusOut'][];
         };
       };
       422: components['responses']['UnprocessableContent'];
@@ -2913,7 +2913,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        championship_id: number;
+        championshipId: number;
       };
       cookie?: never;
     };
@@ -2944,7 +2944,7 @@ export interface operations {
       };
       header?: never;
       path: {
-        championship_id: number;
+        championshipId: number;
       };
       cookie?: never;
     };
@@ -2956,7 +2956,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['EligibilityOut'];
+          'application/json': components['schemas']['GiveawayEligibilityOut'];
         };
       };
       401: components['responses']['Unauthorized'];
@@ -2969,7 +2969,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        championship_id: number;
+        championshipId: number;
       };
       cookie?: never;
     };
@@ -2981,7 +2981,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['UnmatchedNameOut'][];
+          'application/json': components['schemas']['UnmatchedDriverNameOut'][];
         };
       };
       401: components['responses']['Unauthorized'];
@@ -3048,7 +3048,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        community_id: string;
+        communityId: string;
       };
       cookie?: never;
     };
@@ -3072,7 +3072,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        community_id: string;
+        communityId: string;
       };
       cookie?: never;
     };
@@ -3097,7 +3097,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        community_id: string;
+        communityId: string;
       };
       cookie?: never;
     };
@@ -3214,7 +3214,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        champ_id: string;
+        championshipId: string;
       };
       cookie?: never;
     };
@@ -3240,7 +3240,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        champ_id: string;
+        championshipId: string;
       };
       cookie?: never;
     };
@@ -3264,7 +3264,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        champ_id: string;
+        championshipId: string;
       };
       cookie?: never;
     };
@@ -3294,13 +3294,13 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        champ_id: string;
+        championshipId: string;
       };
       cookie?: never;
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['CustomRaceSync'][];
+        'application/json': components['schemas']['CustomRaceUpsert'][];
       };
     };
     responses: {
@@ -3324,7 +3324,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        champ_id: string;
+        championshipId: string;
       };
       cookie?: never;
     };
@@ -3356,8 +3356,8 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        race_id: string;
-        champ_id: string;
+        raceId: string;
+        championshipId: string;
       };
       cookie?: never;
     };
@@ -3383,8 +3383,8 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        race_id: string;
-        champ_id: string;
+        raceId: string;
+        championshipId: string;
       };
       cookie?: never;
     };
@@ -3408,8 +3408,8 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        race_id: string;
-        champ_id: string;
+        raceId: string;
+        championshipId: string;
       };
       cookie?: never;
     };
@@ -3456,7 +3456,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['AliasOut'][];
+          'application/json': components['schemas']['DriverAliasOut'][];
         };
       };
       401: components['responses']['Unauthorized'];
@@ -3473,7 +3473,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['AliasCreate'];
+        'application/json': components['schemas']['DriverAliasCreate'];
       };
     };
     responses: {
@@ -3483,7 +3483,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['AliasOut'];
+          'application/json': components['schemas']['DriverAliasOut'];
         };
       };
       /** @description Successful Response */
@@ -3494,7 +3494,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['AliasOut'];
+          'application/json': components['schemas']['DriverAliasOut'];
         };
       };
       400: components['responses']['BadRequest'];
@@ -3508,7 +3508,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        alias_id: string;
+        aliasId: string;
       };
       cookie?: never;
     };
@@ -3520,7 +3520,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['AliasOut'];
+          'application/json': components['schemas']['DriverAliasOut'];
         };
       };
       401: components['responses']['Unauthorized'];
@@ -3534,7 +3534,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        alias_id: string;
+        aliasId: string;
       };
       cookie?: never;
     };
@@ -3626,7 +3626,7 @@ export interface operations {
       };
       header?: never;
       path: {
-        driver_id: string;
+        driverId: string;
       };
       cookie?: never;
     };
@@ -3653,7 +3653,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        driver_id: string;
+        driverId: string;
       };
       cookie?: never;
     };
@@ -3677,7 +3677,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        driver_id: string;
+        driverId: string;
       };
       cookie?: never;
     };
@@ -3708,7 +3708,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        driver_id: string;
+        driverId: string;
       };
       cookie?: never;
     };
@@ -3740,7 +3740,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        point_id: string;
+        pointId: string;
       };
       cookie?: never;
     };
@@ -3764,7 +3764,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        point_id: string;
+        pointId: string;
       };
       cookie?: never;
     };
@@ -3788,7 +3788,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        point_id: string;
+        pointId: string;
       };
       cookie?: never;
     };
@@ -3818,7 +3818,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        driver_id: string;
+        driverId: string;
       };
       cookie?: never;
     };
@@ -3848,8 +3848,8 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        driver_id: string;
-        rule_id: string;
+        driverId: string;
+        ruleId: string;
       };
       cookie?: never;
     };
@@ -3873,8 +3873,8 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        driver_id: string;
-        rule_id: string;
+        driverId: string;
+        ruleId: string;
       };
       cookie?: never;
     };
@@ -3911,8 +3911,8 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        driver_id: string;
-        rule_id: string;
+        driverId: string;
+        ruleId: string;
       };
       cookie?: never;
     };
@@ -3961,7 +3961,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['MyDriverPhotoUpdate'];
+        'application/json': components['schemas']['MyDriverUpdate'];
       };
     };
     responses: {
@@ -4001,7 +4001,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['IncidentWindowListItem'][];
+          'application/json': components['schemas']['IncidentWindowSummaryOut'][];
         };
       };
       422: components['responses']['UnprocessableContent'];
@@ -4042,7 +4042,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        window_id: string;
+        windowId: string;
       };
       cookie?: never;
     };
@@ -4066,7 +4066,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        window_id: string;
+        windowId: string;
       };
       cookie?: never;
     };
@@ -4090,7 +4090,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        window_id: string;
+        windowId: string;
       };
       cookie?: never;
     };
@@ -4120,13 +4120,13 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        window_id: string;
+        windowId: string;
       };
       cookie?: never;
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['IncidentFileCreate'];
+        'application/json': components['schemas']['IncidentCreate'];
       };
     };
     responses: {
@@ -4152,7 +4152,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        window_id: string;
+        windowId: string;
       };
       cookie?: never;
     };
@@ -4179,7 +4179,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        window_id: string;
+        windowId: string;
       };
       cookie?: never;
     };
@@ -4206,7 +4206,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        incident_id: string;
+        incidentId: string;
       };
       cookie?: never;
     };
@@ -4230,7 +4230,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        incident_id: string;
+        incidentId: string;
       };
       cookie?: never;
     };
@@ -4258,13 +4258,13 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        incident_id: string;
+        incidentId: string;
       };
       cookie?: never;
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['IncidentDriverAdd'];
+        'application/json': components['schemas']['IncidentDriverCreate'];
       };
     };
     responses: {
@@ -4290,13 +4290,13 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        incident_id: string;
+        incidentId: string;
       };
       cookie?: never;
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['BulkResolveIncident'];
+        'application/json': components['schemas']['IncidentResolutionUpdate'];
       };
     };
     responses: {
@@ -4322,7 +4322,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        incident_driver_id: string;
+        incidentDriverId: string;
       };
       cookie?: never;
     };
@@ -4346,7 +4346,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        incident_driver_id: string;
+        incidentDriverId: string;
       };
       cookie?: never;
     };
@@ -4370,7 +4370,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        incident_driver_id: string;
+        incidentDriverId: string;
       };
       cookie?: never;
     };
@@ -4400,13 +4400,13 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        incident_driver_id: string;
+        incidentDriverId: string;
       };
       cookie?: never;
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['ResolveDriverIncident'];
+        'application/json': components['schemas']['IncidentDriverResolutionUpdate'];
       };
     };
     responses: {
@@ -4440,7 +4440,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['BwpAuditEntry'][];
+          'application/json': components['schemas']['BwpAuditEntryOut'][];
         };
       };
       401: components['responses']['Unauthorized'];
@@ -4755,7 +4755,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        rule_id: string;
+        ruleId: string;
       };
       cookie?: never;
     };
@@ -4779,7 +4779,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        rule_id: string;
+        ruleId: string;
       };
       cookie?: never;
     };
@@ -4803,7 +4803,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        rule_id: string;
+        ruleId: string;
       };
       cookie?: never;
     };
@@ -4880,7 +4880,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ImportResultOut'];
+          'application/json': components['schemas']['RaceResultImportResultOut'];
         };
       };
       400: components['responses']['BadRequest'];
@@ -4896,7 +4896,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        import_id: string;
+        importId: string;
       };
       cookie?: never;
     };
@@ -4922,7 +4922,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        import_id: string;
+        importId: string;
       };
       cookie?: never;
     };
@@ -4946,7 +4946,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        import_id: string;
+        importId: string;
       };
       cookie?: never;
     };
@@ -4976,7 +4976,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        import_id: string;
+        importId: string;
       };
       cookie?: never;
     };
@@ -4990,7 +4990,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ImportResultOut'];
+          'application/json': components['schemas']['RaceResultImportResultOut'];
         };
       };
       400: components['responses']['BadRequest'];
@@ -5020,7 +5020,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['RegulationPageListItem'][];
+          'application/json': components['schemas']['RegulationPageSummaryOut'][];
         };
       };
       422: components['responses']['UnprocessableContent'];
@@ -5109,7 +5109,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        page_id: string;
+        pageId: string;
       };
       cookie?: never;
     };
@@ -5135,7 +5135,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        page_id: string;
+        pageId: string;
       };
       cookie?: never;
     };
@@ -5159,7 +5159,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        page_id: string;
+        pageId: string;
       };
       cookie?: never;
     };
@@ -5210,7 +5210,8 @@ export interface operations {
   listCarClasses: {
     parameters: {
       query?: {
-        gameId?: number | null;
+        /** @description SimGrid's numeric game id. */
+        simgridGameId?: number | null;
       };
       header?: never;
       path?: never;
@@ -5267,7 +5268,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        user_id: string;
+        userId: string;
       };
       cookie?: never;
     };
@@ -5297,7 +5298,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        user_id: string;
+        userId: string;
       };
       cookie?: never;
     };
@@ -5321,7 +5322,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        user_id: string;
+        userId: string;
       };
       cookie?: never;
     };
@@ -5347,7 +5348,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        user_id: string;
+        userId: string;
       };
       cookie?: never;
     };
@@ -5426,7 +5427,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        rule_id: string;
+        ruleId: string;
       };
       cookie?: never;
     };
@@ -5450,7 +5451,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        rule_id: string;
+        ruleId: string;
       };
       cookie?: never;
     };
@@ -5475,7 +5476,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        rule_id: string;
+        ruleId: string;
       };
       cookie?: never;
     };
@@ -5510,7 +5511,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['VerdictRuleReorder'];
+        'application/json': components['schemas']['VerdictRuleOrderUpdate'];
       };
     };
     responses: {
@@ -5583,7 +5584,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        preset_id: string;
+        presetId: string;
       };
       cookie?: never;
     };
@@ -5608,7 +5609,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        preset_id: string;
+        presetId: string;
       };
       cookie?: never;
     };
@@ -5632,7 +5633,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        preset_id: string;
+        presetId: string;
       };
       cookie?: never;
     };
@@ -5675,7 +5676,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['YouTubeVideo'][];
+          'application/json': components['schemas']['YouTubeStreamOut'][];
         };
       };
       422: components['responses']['UnprocessableContent'];

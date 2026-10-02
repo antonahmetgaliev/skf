@@ -15,12 +15,12 @@ from app.core.errors import BadGateway
 from app.models.active_championship import ActiveChampionship
 from app.models.incidents import Incident, IncidentWindow
 from app.schemas.championship import (
-    ChampionshipDetails,
-    ChampionshipListItem,
-    ChampionshipRace,
-    ChampionshipStandingsData,
+    ChampionshipOut,
+    ChampionshipRaceOut,
+    ChampionshipStandingsOut,
+    ChampionshipSummaryOut,
 )
-from app.schemas.incidents import IncidentWindowSummaryOut
+from app.schemas.incidents import IncidentWindowStatusOut
 from app.services.incidents import window_summary
 from app.services.simgrid import simgrid_service
 
@@ -47,7 +47,7 @@ async def set_active(db: AsyncSession, simgrid_id: int, active: bool) -> None:
 # ── SimGrid proxy ───────────────────────────────────────────────────────────
 
 
-async def list_championships(db: AsyncSession, *, include_inactive: bool) -> list[ChampionshipListItem]:
+async def list_championships(db: AsyncSession, *, include_inactive: bool) -> list[ChampionshipSummaryOut]:
     """Active championships with their details; with *include_inactive* also the rest, as SimGrid lists them."""
     try:
         items = await simgrid_service.get_championships()
@@ -63,7 +63,7 @@ async def list_championships(db: AsyncSession, *, include_inactive: bool) -> lis
     return [enriched.get(item.id, item) for item in items if item.id in active or include_inactive]
 
 
-async def get_championship(championship_id: int) -> ChampionshipDetails:
+async def get_championship(championship_id: int) -> ChampionshipOut:
     try:
         return await simgrid_service.get_championship(championship_id)
     except Exception as exc:
@@ -71,11 +71,11 @@ async def get_championship(championship_id: int) -> ChampionshipDetails:
         raise BadGateway("Failed to fetch championship from SimGrid.") from exc
 
 
-async def get_races(championship_id: int) -> list[ChampionshipRace]:
+async def get_races(championship_id: int) -> list[ChampionshipRaceOut]:
     """All races of a championship (including future ones), by start time."""
     try:
         items = await simgrid_service.get_races(championship_id)
-        races = [ChampionshipRace(**r) for r in items]
+        races = [ChampionshipRaceOut(**r) for r in items]
     except Exception as exc:
         logger.warning("Failed to fetch races for championship %s", championship_id, exc_info=True)
         raise BadGateway("Failed to fetch races from SimGrid.") from exc
@@ -83,7 +83,7 @@ async def get_races(championship_id: int) -> list[ChampionshipRace]:
     return races
 
 
-async def get_standings(championship_id: int) -> tuple[ChampionshipStandingsData, bool]:
+async def get_standings(championship_id: int) -> tuple[ChampionshipStandingsOut, bool]:
     """Standings plus whether SimGrid was actually hit (not cache)."""
     try:
         return await simgrid_service.get_standings(championship_id)
@@ -95,7 +95,7 @@ async def get_standings(championship_id: int) -> tuple[ChampionshipStandingsData
 # ── Incident windows ────────────────────────────────────────────────────────
 
 
-async def incident_windows(db: AsyncSession, championship_id: int) -> list[IncidentWindowSummaryOut]:
+async def incident_windows(db: AsyncSession, championship_id: int) -> list[IncidentWindowStatusOut]:
     """The championship's incident windows, one per round, keyed by race."""
     rows = await db.execute(
         select(IncidentWindow, func.count(Incident.id))

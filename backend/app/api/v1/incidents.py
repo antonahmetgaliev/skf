@@ -7,26 +7,26 @@ an external client still calls that exact path.
 from __future__ import annotations
 
 import logging
-import uuid
 
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.params import IncidentDriverId, IncidentId
 from app.auth import get_current_user_optional, require_admin, require_api_token, require_judge
 from app.core.openapi import problem_responses
 from app.database import get_db
 from app.models.user import User
 from app.schemas.incidents import (
-    BulkResolveIncident,
-    BwpAuditEntry,
+    BwpAuditEntryOut,
     BwpBackfillOut,
     IncidentBatchCreate,
-    IncidentDriverAdd,
+    IncidentDriverCreate,
     IncidentDriverOut,
+    IncidentDriverResolutionUpdate,
     IncidentDriverUpdate,
     IncidentOut,
+    IncidentResolutionUpdate,
     IncidentWindowOut,
-    ResolveDriverIncident,
 )
 from app.services import incident_audit
 from app.services import incidents as svc
@@ -40,9 +40,9 @@ router = APIRouter(tags=["Incidents"])
 # ── Incidents ────────────────────────────────────────────────────────────────
 
 
-@router.get("/incidents/{incident_id}", response_model=IncidentOut)
+@router.get("/incidents/{incidentId}", response_model=IncidentOut)
 async def get_incident(
-    incident_id: uuid.UUID,
+    incident_id: IncidentId,
     db: AsyncSession = Depends(get_db),
     user: User | None = Depends(get_current_user_optional),
 ):
@@ -52,10 +52,10 @@ async def get_incident(
 
 
 @router.post(
-    "/incidents/{incident_id}/copies", response_model=IncidentOut, status_code=status.HTTP_201_CREATED
+    "/incidents/{incidentId}/copies", response_model=IncidentOut, status_code=status.HTTP_201_CREATED
 )
 async def copy_incident(
-    incident_id: uuid.UUID,
+    incident_id: IncidentId,
     response: Response,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_judge),
@@ -67,13 +67,13 @@ async def copy_incident(
 
 
 @router.post(
-    "/incidents/{incident_id}/drivers",
+    "/incidents/{incidentId}/drivers",
     response_model=IncidentDriverOut,
     status_code=status.HTTP_201_CREATED,
 )
 async def add_incident_driver(
-    incident_id: uuid.UUID,
-    payload: IncidentDriverAdd,
+    incident_id: IncidentId,
+    payload: IncidentDriverCreate,
     response: Response,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_judge),
@@ -84,13 +84,13 @@ async def add_incident_driver(
 
 
 @router.put(
-    "/incidents/{incident_id}/resolution",
+    "/incidents/{incidentId}/resolution",
     response_model=IncidentOut,
     responses=problem_responses(400, 409),
 )
 async def resolve_incident(
-    incident_id: uuid.UUID,
-    payload: BulkResolveIncident,
+    incident_id: IncidentId,
+    payload: IncidentResolutionUpdate,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_judge),
 ):
@@ -101,27 +101,27 @@ async def resolve_incident(
 # ── Incident drivers ─────────────────────────────────────────────────────────
 
 
-@router.get("/incident-drivers/{incident_driver_id}", response_model=IncidentDriverOut)
+@router.get("/incident-drivers/{incidentDriverId}", response_model=IncidentDriverOut)
 async def get_incident_driver(
-    incident_driver_id: uuid.UUID,
+    incident_driver_id: IncidentDriverId,
     db: AsyncSession = Depends(get_db),
     user: User | None = Depends(get_current_user_optional),
 ):
     return await svc.incident_driver_out(db, incident_driver_id, user)
 
 
-@router.delete("/incident-drivers/{incident_driver_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/incident-drivers/{incidentDriverId}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_incident_driver(
-    incident_driver_id: uuid.UUID,
+    incident_driver_id: IncidentDriverId,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_judge),
 ):
     await svc.remove_driver(db, incident_driver_id)
 
 
-@router.patch("/incident-drivers/{incident_driver_id}", response_model=IncidentDriverOut)
+@router.patch("/incident-drivers/{incidentDriverId}", response_model=IncidentDriverOut)
 async def update_incident_driver(
-    incident_driver_id: uuid.UUID,
+    incident_driver_id: IncidentDriverId,
     payload: IncidentDriverUpdate,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_judge),
@@ -130,10 +130,10 @@ async def update_incident_driver(
     return await svc.link_driver(db, incident_driver_id, payload.driver_id)
 
 
-@router.put("/incident-drivers/{incident_driver_id}/resolution", response_model=IncidentDriverOut)
+@router.put("/incident-drivers/{incidentDriverId}/resolution", response_model=IncidentDriverOut)
 async def resolve_incident_driver(
-    incident_driver_id: uuid.UUID,
-    payload: ResolveDriverIncident,
+    incident_driver_id: IncidentDriverId,
+    payload: IncidentDriverResolutionUpdate,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_judge),
 ):
@@ -143,7 +143,7 @@ async def resolve_incident_driver(
 # ── BWP audit / backfill ─────────────────────────────────────────────────────
 
 
-@router.get("/bwp-audit-entries", response_model=list[BwpAuditEntry])
+@router.get("/bwp-audit-entries", response_model=list[BwpAuditEntryOut])
 async def list_bwp_audit_entries(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),

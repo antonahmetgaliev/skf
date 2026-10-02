@@ -9,13 +9,13 @@ from sqlalchemy.exc import IntegrityError
 
 from app.models.bwp import Driver
 from app.models.user import User
-from app.schemas.championship import StandingEntry
+from app.schemas.championship import StandingEntryOut
 
 logger = logging.getLogger(__name__)
 
 
 async def sync_drivers_from_standings(
-    entries: list[StandingEntry],
+    entries: list[StandingEntryOut],
     championship_id: int | None = None,
 ) -> None:
     """Upsert Driver rows from SimGrid standings entries.
@@ -59,7 +59,7 @@ async def sync_drivers_from_standings(
                 )
 
 
-async def _upsert_entry(entry: StandingEntry, db) -> None:  # type: ignore[type-arg]
+async def _upsert_entry(entry: StandingEntryOut, db) -> None:  # type: ignore[type-arg]
     display_name = (entry.display_name or "").strip()
     if not display_name:
         return

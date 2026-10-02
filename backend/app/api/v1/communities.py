@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import uuid
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.params import CommunityId
 from app.auth import (
     get_current_user,
     get_current_user_optional,
@@ -59,9 +59,9 @@ async def create_community(
     return community
 
 
-@router.get("/communities/{community_id}", response_model=CommunityOut)
+@router.get("/communities/{communityId}", response_model=CommunityOut)
 async def get_community(
-    community_id: uuid.UUID,
+    community_id: CommunityId,
     user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
@@ -69,9 +69,9 @@ async def get_community(
     return await service.get_visible(db, user, community_id)
 
 
-@router.patch("/communities/{community_id}", response_model=CommunityOut)
+@router.patch("/communities/{communityId}", response_model=CommunityOut)
 async def update_community(
-    community_id: uuid.UUID,
+    community_id: CommunityId,
     body: CommunityUpdate,
     user: User = Depends(require_admin_or_community_manager),
     db: AsyncSession = Depends(get_db),
@@ -80,12 +80,12 @@ async def update_community(
 
 
 @router.delete(
-    "/communities/{community_id}",
+    "/communities/{communityId}",
     status_code=status.HTTP_204_NO_CONTENT,
     responses=problem_responses(400),
 )
 async def delete_community(
-    community_id: uuid.UUID,
+    community_id: CommunityId,
     _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):

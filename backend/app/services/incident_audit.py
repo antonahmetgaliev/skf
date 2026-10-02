@@ -12,7 +12,7 @@ from app.models.incidents import (
     IncidentResolution,
 )
 from app.schemas.incidents import (
-    BwpAuditEntry,
+    BwpAuditEntryOut,
     BwpBackfillOut,
 )
 from app.services.incident_bwp import apply_resolution_bwp
@@ -32,10 +32,10 @@ def _unlinked_applied_query() -> Select:
     )
 
 
-async def bwp_audit(db: AsyncSession) -> list[BwpAuditEntry]:
+async def bwp_audit(db: AsyncSession) -> list[BwpAuditEntryOut]:
     rows = (await db.execute(_unlinked_applied_query())).all()
     return [
-        BwpAuditEntry(
+        BwpAuditEntryOut(
             incident_driver_id=inc_drv.id,
             driver_name=inc_drv.driver_name,
             bwp_points=inc_drv.resolution.bwp_points or 0,

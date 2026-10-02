@@ -153,7 +153,7 @@ export class AdminRaceResultsTabComponent implements OnInit {
   async deleteImport(round: RaceRound, record: RaceImport): Promise<void> {
     const ok = await this.confirmSvc.confirm({
       title: this.transloco.translate('common.confirm.deleteTitle'),
-      message: this.transloco.translate('raceImports.deleteConfirm', { name: round.name }),
+      message: this.transloco.translate('raceImports.deleteConfirm', { name: round.displayName }),
       confirmLabel: this.transloco.translate('common.confirm.delete'),
       danger: true,
     });

@@ -11,16 +11,16 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.schemas.championship import StandingEntry
+from app.schemas.championship import StandingEntryOut
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
-def _entry(**kwargs) -> StandingEntry:
+def _entry(**kwargs) -> StandingEntryOut:
     defaults = {"id": 1, "position": 1, "display_name": "Driver One", "country_code": "GB"}
-    return StandingEntry(**{**defaults, **kwargs})
+    return StandingEntryOut(**{**defaults, **kwargs})
 
 
 async def _patch_and_sync(engine, entries, monkeypatch):

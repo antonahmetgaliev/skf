@@ -8,9 +8,9 @@ export type RoundBreakdown = Schemas['RoundBreakdownOut'];
 
 export type EligibleDriver = Schemas['EligibleDriverOut'];
 
-export type Eligibility = Schemas['EligibilityOut'];
+export type Eligibility = Schemas['GiveawayEligibilityOut'];
 
-export type UnmatchedName = Schemas['UnmatchedNameOut'];
+export type UnmatchedName = Schemas['UnmatchedDriverNameOut'];
 
 @Injectable({ providedIn: 'root' })
 export class GiveawayApiService {

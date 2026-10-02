@@ -13,9 +13,9 @@ import logging
 
 from app.core.errors import BadGateway, NotFound
 from app.schemas.championship import (
-    ChampionshipStandingsData,
-    DriverRaceResult,
-    RaceResultEntry,
+    ChampionshipStandingsOut,
+    DriverRaceResultOut,
+    RaceResultEntryOut,
     RaceSessionOut,
     RaceStatus,
 )
@@ -46,20 +46,20 @@ def _status(r: RawSessionResult) -> RaceStatus:
     return "classified"
 
 
-def map_session(results: list[RawSessionResult], session: str = "race") -> list[RaceResultEntry]:
+def map_session(results: list[RawSessionResult], session: str = "race") -> list[RaceResultEntryOut]:
     """Map raw results, ordered by class then class position.
 
     Race positions are SimGrid's (they include stewards' penalties).
     Qualifying is re-ranked by best lap: SimGrid can put a driver without a
     timed lap on pole.
     """
-    entries: list[RaceResultEntry] = []
+    entries: list[RaceResultEntryOut] = []
     for r in results:
         rf = r.external_data.rfactor if r.external_data else None
         entrant = r.sessionable
         cc = entrant.championship_car_class if entrant else None
         entries.append(
-            RaceResultEntry(
+            RaceResultEntryOut(
                 user_id=entrant.user_id if entrant else None,
                 display_name=r.sessionable_name or r.imported_name or "",
                 car=r.car_name or "",
@@ -85,7 +85,7 @@ def map_session(results: list[RawSessionResult], session: str = "race") -> list[
         )
     )
 
-    by_class: dict[str, list[RaceResultEntry]] = {}
+    by_class: dict[str, list[RaceResultEntryOut]] = {}
     for e in entries:
         by_class.setdefault(e.car_class, []).append(e)
     if session == "qualifying":
@@ -134,8 +134,8 @@ async def race_session(championship_id: int, race_id: int, session: str) -> Race
 
 async def with_round_results(
     championship_id: int,
-    data: ChampionshipStandingsData,
-) -> ChampionshipStandingsData:
+    data: ChampionshipStandingsOut,
+) -> ChampionshipStandingsOut:
     """Fill each standings entry's per-round results (race session only).
 
     A round that fails to load just stays empty; standings never fail on it.
@@ -146,7 +146,7 @@ async def with_round_results(
         return_exceptions=True,
     )
 
-    by_user: dict[int, list[DriverRaceResult]] = {}
+    by_user: dict[int, list[DriverRaceResultOut]] = {}
     for (index, race), raw in zip(rounds, fetched, strict=True):
         if isinstance(raw, BaseException):
             logger.warning("Failed to fetch results for race %s", race.id, exc_info=raw)
@@ -155,7 +155,7 @@ async def with_round_results(
             if e.user_id is None:
                 continue
             by_user.setdefault(e.user_id, []).append(
-                DriverRaceResult(
+                DriverRaceResultOut(
                     race_id=race.id,
                     race_index=index,
                     points=e.points,

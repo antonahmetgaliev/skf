@@ -131,7 +131,7 @@ async def test_race_of_another_championship_is_404(client, simgrid_stub):
 
 
 async def test_standings_carry_round_results(client, simgrid_stub, monkeypatch):
-    from app.schemas.championship import ChampionshipStandingsData, StandingEntry, StandingRace
+    from app.schemas.championship import ChampionshipStandingsOut, StandingEntryOut, StandingRaceOut
     from app.services import simgrid as sg_mod
 
     _stub_lmu_round(simgrid_stub)
@@ -140,15 +140,15 @@ async def test_standings_carry_round_results(client, simgrid_stub, monkeypatch):
     dns = next(r for r in raw if r["dns"])
 
     async def get_standings(championship_id):
-        return ChampionshipStandingsData(
+        return ChampionshipStandingsOut(
             entries=[
-                StandingEntry(id=winner["sessionable"]["user_id"], display_name="Winner"),
-                StandingEntry(id=dns["sessionable"]["user_id"], display_name="Absent"),
-                StandingEntry(id=None, display_name="Unlinked"),
+                StandingEntryOut(id=winner["sessionable"]["user_id"], display_name="Winner"),
+                StandingEntryOut(id=dns["sessionable"]["user_id"], display_name="Absent"),
+                StandingEntryOut(id=None, display_name="Unlinked"),
             ],
             races=[
-                StandingRace(id=LMU_RACE_ID, display_name="Round 1", results_available=True),
-                StandingRace(id=1, display_name="Round 2", results_available=False),
+                StandingRaceOut(id=LMU_RACE_ID, display_name="Round 1", results_available=True),
+                StandingRaceOut(id=1, display_name="Round 2", results_available=False),
             ],
         ), False
 
@@ -170,13 +170,13 @@ async def test_standings_carry_round_results(client, simgrid_stub, monkeypatch):
 
 
 async def test_standings_survive_a_failing_round(client, simgrid_stub, monkeypatch):
-    from app.schemas.championship import ChampionshipStandingsData, StandingEntry, StandingRace
+    from app.schemas.championship import ChampionshipStandingsOut, StandingEntryOut, StandingRaceOut
     from app.services import simgrid as sg_mod
 
     async def get_standings(championship_id):
-        return ChampionshipStandingsData(
-            entries=[StandingEntry(id=5, display_name="Driver")],
-            races=[StandingRace(id=LMU_RACE_ID, display_name="Round 1", results_available=True)],
+        return ChampionshipStandingsOut(
+            entries=[StandingEntryOut(id=5, display_name="Driver")],
+            races=[StandingRaceOut(id=LMU_RACE_ID, display_name="Round 1", results_available=True)],
         ), False
 
     async def failing(*_args):

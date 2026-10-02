@@ -101,7 +101,7 @@ class DriverOut(DriverPublicOut):
     user_id: uuid.UUID | None
 
 
-class MyDriverPhotoUpdate(CamelModel):
+class MyDriverUpdate(CamelModel):
     """``PATCH /me/driver``: set (https only) or clear the profile photo."""
 
     photo_url: str | None = Field(default=None, max_length=500, json_schema_extra={"format": "uri"})

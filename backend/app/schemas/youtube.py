@@ -9,7 +9,7 @@ class StreamStatus(str, Enum):
     UPCOMING = "upcoming"
 
 
-class YouTubeVideo(CamelModel):
+class YouTubeStreamOut(CamelModel):
     video_id: str
     title: str
     description: str = ""

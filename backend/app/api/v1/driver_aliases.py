@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import uuid
-
 from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.params import AliasId
 from app.auth import require_admin
 from app.core.openapi import problem_responses
 from app.core.pagination import PageParams, page_params, paginate
@@ -14,7 +13,7 @@ from app.database import get_db
 from app.models.race_result import GiveawayNameAlias
 from app.models.user import User
 from app.repository import get_or_404
-from app.schemas.giveaway import AliasCreate, AliasOut
+from app.schemas.giveaway import DriverAliasCreate, DriverAliasOut
 from app.services import giveaway as service
 
 router = APIRouter(prefix="/driver-aliases", tags=["Driver aliases"])
@@ -22,7 +21,7 @@ router = APIRouter(prefix="/driver-aliases", tags=["Driver aliases"])
 _NOT_FOUND = "Alias not found"
 
 
-@router.get("", response_model=list[AliasOut])
+@router.get("", response_model=list[DriverAliasOut])
 async def list_driver_aliases(
     request: Request,
     response: Response,
@@ -33,9 +32,9 @@ async def list_driver_aliases(
     return await paginate(db, service.aliases_query(), page, request, response)
 
 
-@router.get("/{alias_id}", response_model=AliasOut)
+@router.get("/{aliasId}", response_model=DriverAliasOut)
 async def get_driver_alias(
-    alias_id: uuid.UUID,
+    alias_id: AliasId,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ):
@@ -44,15 +43,15 @@ async def get_driver_alias(
 
 @router.post(
     "",
-    response_model=AliasOut,
+    response_model=DriverAliasOut,
     status_code=status.HTTP_201_CREATED,
     responses={
-        200: {"model": AliasOut, "description": "An existing alias was updated"},
+        200: {"model": DriverAliasOut, "description": "An existing alias was updated"},
         **problem_responses(400),
     },
 )
 async def upsert_driver_alias(
-    payload: AliasCreate,
+    payload: DriverAliasCreate,
     response: Response,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
@@ -66,9 +65,9 @@ async def upsert_driver_alias(
     return record
 
 
-@router.delete("/{alias_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{aliasId}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_driver_alias(
-    alias_id: uuid.UUID,
+    alias_id: AliasId,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ):

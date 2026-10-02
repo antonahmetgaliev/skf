@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import uuid
-
 from fastapi import APIRouter, Depends, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.params import UserId
 from app.auth import require_admin
 from app.core.pagination import PageParams, page_params, paginate
 from app.database import get_db
@@ -28,9 +27,9 @@ async def list_users(
     return await users_service.build_user_outs(users, db)
 
 
-@router.patch("/{user_id}", response_model=UserOut)
+@router.patch("/{userId}", response_model=UserOut)
 async def update_user(
-    user_id: uuid.UUID,
+    user_id: UserId,
     body: UserUpdate,
     admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
@@ -39,21 +38,21 @@ async def update_user(
     return await users_service.build_user_out(target, db)
 
 
-@router.delete("/{user_id}/sessions", status_code=status.HTTP_204_NO_CONTENT)
-async def revoke_user_sessions(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+@router.delete("/{userId}/sessions", status_code=status.HTTP_204_NO_CONTENT)
+async def revoke_user_sessions(user_id: UserId, db: AsyncSession = Depends(get_db)):
     """Delete all sessions of a user (force logout)."""
     await users_service.revoke_sessions(db, user_id)
 
 
-@router.get("/{user_id}/managed-communities", response_model=ManagedCommunitiesOut)
-async def get_user_managed_communities(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+@router.get("/{userId}/managed-communities", response_model=ManagedCommunitiesOut)
+async def get_user_managed_communities(user_id: UserId, db: AsyncSession = Depends(get_db)):
     ids = await users_service.get_managed_communities(db, user_id)
     return ManagedCommunitiesOut(community_ids=ids)
 
 
-@router.put("/{user_id}/managed-communities", response_model=ManagedCommunitiesOut)
+@router.put("/{userId}/managed-communities", response_model=ManagedCommunitiesOut)
 async def set_user_managed_communities(
-    user_id: uuid.UUID,
+    user_id: UserId,
     body: ManagedCommunitiesUpdate,
     db: AsyncSession = Depends(get_db),
 ):

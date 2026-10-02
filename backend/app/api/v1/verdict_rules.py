@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import uuid
-
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.params import PresetId, RuleId
 from app.auth import get_current_user, get_current_user_optional, require_judge
 from app.core.openapi import problem_responses
 from app.database import get_db
@@ -18,8 +17,8 @@ from app.schemas.incidents import (
     DescriptionPresetOut,
     DescriptionPresetUpdate,
     VerdictRuleCreate,
+    VerdictRuleOrderUpdate,
     VerdictRuleOut,
-    VerdictRuleReorder,
     VerdictRuleUpdate,
 )
 from app.services import incident_rules as svc
@@ -52,14 +51,14 @@ async def create_verdict_rule(
     return rule
 
 
-@router.get("/verdict-rules/{rule_id}", response_model=VerdictRuleOut)
-async def get_verdict_rule(rule_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+@router.get("/verdict-rules/{ruleId}", response_model=VerdictRuleOut)
+async def get_verdict_rule(rule_id: RuleId, db: AsyncSession = Depends(get_db)):
     return await get_or_404(db, VerdictRule, rule_id, detail="Rule not found.")
 
 
 @router.put("/verdict-rules/order", response_model=list[VerdictRuleOut])
 async def reorder_verdict_rules(
-    payload: VerdictRuleReorder,
+    payload: VerdictRuleOrderUpdate,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_judge),
 ):
@@ -67,12 +66,12 @@ async def reorder_verdict_rules(
 
 
 @router.patch(
-    "/verdict-rules/{rule_id}",
+    "/verdict-rules/{ruleId}",
     response_model=VerdictRuleOut,
     responses=problem_responses(400),
 )
 async def update_verdict_rule(
-    rule_id: uuid.UUID,
+    rule_id: RuleId,
     payload: VerdictRuleUpdate,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_judge),
@@ -81,12 +80,12 @@ async def update_verdict_rule(
 
 
 @router.delete(
-    "/verdict-rules/{rule_id}",
+    "/verdict-rules/{ruleId}",
     status_code=status.HTTP_204_NO_CONTENT,
     responses=problem_responses(409),
 )
 async def delete_verdict_rule(
-    rule_id: uuid.UUID,
+    rule_id: RuleId,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_judge),
 ):
@@ -116,18 +115,18 @@ async def create_description_preset(
     return preset
 
 
-@router.get("/description-presets/{preset_id}", response_model=DescriptionPresetOut)
+@router.get("/description-presets/{presetId}", response_model=DescriptionPresetOut)
 async def get_description_preset(
-    preset_id: uuid.UUID,
+    preset_id: PresetId,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
     return await get_or_404(db, DescriptionPreset, preset_id, detail="Preset not found.")
 
 
-@router.patch("/description-presets/{preset_id}", response_model=DescriptionPresetOut)
+@router.patch("/description-presets/{presetId}", response_model=DescriptionPresetOut)
 async def update_description_preset(
-    preset_id: uuid.UUID,
+    preset_id: PresetId,
     payload: DescriptionPresetUpdate,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_judge),
@@ -135,9 +134,9 @@ async def update_description_preset(
     return await svc.update_description_preset(db, preset_id, payload)
 
 
-@router.delete("/description-presets/{preset_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/description-presets/{presetId}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_description_preset(
-    preset_id: uuid.UUID,
+    preset_id: PresetId,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_judge),
 ):

@@ -13,6 +13,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, Query, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.params import ImportId
 from app.auth import require_admin
 from app.core.openapi import problem_responses
 from app.core.pagination import PageParams, page_params, paginate
@@ -20,7 +21,7 @@ from app.database import get_db
 from app.models.race_result import RaceResultImport
 from app.models.user import User
 from app.repository import get_or_404
-from app.schemas.race_results import ImportResultOut, RaceResultImportCreate, RaceResultImportOut
+from app.schemas.race_results import RaceResultImportCreate, RaceResultImportOut, RaceResultImportResultOut
 from app.services import race_import as service
 
 router = APIRouter(prefix="/race-result-imports", tags=["Race results"])
@@ -51,7 +52,7 @@ async def list_race_result_imports(
 
 @router.post(
     "",
-    response_model=ImportResultOut,
+    response_model=RaceResultImportResultOut,
     status_code=status.HTTP_201_CREATED,
     responses=problem_responses(400, 413, 502),
 )
@@ -77,9 +78,9 @@ async def create_race_result_import(
     return service.result_out(result)
 
 
-@router.get("/{import_id}", response_model=RaceResultImportOut)
+@router.get("/{importId}", response_model=RaceResultImportOut)
 async def get_race_result_import(
-    import_id: uuid.UUID,
+    import_id: ImportId,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ):
@@ -87,7 +88,7 @@ async def get_race_result_import(
 
 
 @router.get(
-    "/{import_id}/file",
+    "/{importId}/file",
     response_class=Response,
     responses={
         200: {
@@ -104,7 +105,7 @@ async def get_race_result_import(
     },
 )
 async def download_race_result_import_file(
-    import_id: uuid.UUID,
+    import_id: ImportId,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ):
@@ -117,13 +118,13 @@ async def download_race_result_import_file(
 
 
 @router.post(
-    "/{import_id}/parse-runs",
-    response_model=ImportResultOut,
+    "/{importId}/parse-runs",
+    response_model=RaceResultImportResultOut,
     status_code=status.HTTP_201_CREATED,
     responses=problem_responses(400, 409, 502, 503),
 )
 async def create_parse_run(
-    import_id: uuid.UUID,
+    import_id: ImportId,
     response: Response,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_admin),
@@ -138,9 +139,9 @@ async def create_parse_run(
     return service.result_out(result)
 
 
-@router.delete("/{import_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{importId}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_race_result_import(
-    import_id: uuid.UUID,
+    import_id: ImportId,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ):

@@ -33,9 +33,9 @@ from app.models.race_result import (
     normalize_driver_name,
 )
 from app.schemas.race_results import (
-    ImportEntryOut,
-    ImportResultOut,
+    RaceResultImportEntryOut,
     RaceResultImportOut,
+    RaceResultImportResultOut,
     RoundOut,
     RoundsOut,
 )
@@ -273,15 +273,15 @@ def import_out(record: RaceResultImport, entry_count: int, unmatched: int) -> Ra
     )
 
 
-def result_out(result: ImportResult) -> ImportResultOut:
+def result_out(result: ImportResult) -> RaceResultImportResultOut:
     entries = result.entries
-    return ImportResultOut(
+    return RaceResultImportResultOut(
         race_import=import_out(result.record, len(entries), sum(1 for e in entries if e.driver_id is None)),
         window_id=result.window.id if result.window else None,
         incidents_created=result.incidents_created,
         incidents_kept=result.incidents_kept,
         entries=[
-            ImportEntryOut(
+            RaceResultImportEntryOut(
                 raw_name=e.raw_name,
                 car_class=e.car_class,
                 laps=e.laps,
@@ -447,7 +447,7 @@ async def build_rounds(db: AsyncSession, championship_id: int) -> RoundsOut:
         rounds.append(
             RoundOut(
                 race_id=race["id"],
-                name=race.get("display_name") or race.get("race_name") or "",
+                display_name=race.get("display_name") or race.get("race_name") or "",
                 starts_at=race.get("starts_at"),
                 ended=race.get("ended", False),
                 race_import=(import_out(record, *entry_totals.get(record.id, (0, 0))) if record else None),

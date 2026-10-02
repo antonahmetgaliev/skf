@@ -12,12 +12,12 @@ Account↔driver linking is automatic (SimGrid ``discord_uid``, see
 
 from __future__ import annotations
 
-import uuid
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.params import DriverId, PointId, RuleId
 from app.auth import JUDGE_ROLES, get_current_user, get_current_user_optional, require_admin, require_judge
 from app.core.errors import Forbidden, Unauthorized
 from app.core.openapi import problem_responses
@@ -35,7 +35,7 @@ from app.schemas.bwp import (
     DriverOut,
     DriverPublicOut,
     DriverUpdate,
-    MyDriverPhotoUpdate,
+    MyDriverUpdate,
     PenaltyClearanceOut,
 )
 from app.services import bwp as service
@@ -88,12 +88,12 @@ async def list_drivers(
 
 
 @router.get(
-    "/drivers/{driver_id}",
+    "/drivers/{driverId}",
     response_model=DriverPublicOut | DriverOut,
     responses=problem_responses(401, 403),
 )
 async def get_driver(
-    driver_id: uuid.UUID,
+    driver_id: DriverId,
     include: Include | None = include_query,
     user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
@@ -121,9 +121,9 @@ async def create_driver(
     return driver
 
 
-@router.patch("/drivers/{driver_id}", response_model=DriverOut, responses=problem_responses(409))
+@router.patch("/drivers/{driverId}", response_model=DriverOut, responses=problem_responses(409))
 async def update_driver(
-    driver_id: uuid.UUID,
+    driver_id: DriverId,
     body: DriverUpdate,
     _: User = Depends(require_judge),
     db: AsyncSession = Depends(get_db),
@@ -131,9 +131,9 @@ async def update_driver(
     return await service.update_driver(db, driver_id, body)
 
 
-@router.delete("/drivers/{driver_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/drivers/{driverId}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_driver(
-    driver_id: uuid.UUID,
+    driver_id: DriverId,
     _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -146,12 +146,12 @@ async def delete_driver(
 
 
 @router.post(
-    "/drivers/{driver_id}/bwp-points",
+    "/drivers/{driverId}/bwp-points",
     response_model=BwpPointOut,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_bwp_point(
-    driver_id: uuid.UUID,
+    driver_id: DriverId,
     body: BwpPointCreate,
     response: Response,
     _: User = Depends(require_admin),
@@ -162,14 +162,14 @@ async def create_bwp_point(
     return point
 
 
-@router.get("/bwp-points/{point_id}", response_model=BwpPointOut)
-async def get_bwp_point(point_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+@router.get("/bwp-points/{pointId}", response_model=BwpPointOut)
+async def get_bwp_point(point_id: PointId, db: AsyncSession = Depends(get_db)):
     return await get_or_404(db, BwpPoint, point_id, detail="Point not found.")
 
 
-@router.patch("/bwp-points/{point_id}", response_model=BwpPointOut)
+@router.patch("/bwp-points/{pointId}", response_model=BwpPointOut)
 async def update_bwp_point(
-    point_id: uuid.UUID,
+    point_id: PointId,
     body: BwpPointUpdate,
     _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
@@ -178,18 +178,18 @@ async def update_bwp_point(
     return await service.expire_point(db, point_id, body)
 
 
-@router.delete("/bwp-points/{point_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/bwp-points/{pointId}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_bwp_point(
-    point_id: uuid.UUID,
+    point_id: PointId,
     _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     await service.delete_point(db, point_id)
 
 
-@router.post("/drivers/{driver_id}/bwp-resets", response_model=DriverOut)
+@router.post("/drivers/{driverId}/bwp-resets", response_model=DriverOut)
 async def create_bwp_reset(
-    driver_id: uuid.UUID,
+    driver_id: DriverId,
     body: BwpResetCreate,
     _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
@@ -203,19 +203,19 @@ async def create_bwp_reset(
 # ---------------------------------------------------------------------------
 
 
-@router.get("/drivers/{driver_id}/clearances/{rule_id}", response_model=PenaltyClearanceOut)
-async def get_clearance(driver_id: uuid.UUID, rule_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+@router.get("/drivers/{driverId}/clearances/{ruleId}", response_model=PenaltyClearanceOut)
+async def get_clearance(driver_id: DriverId, rule_id: RuleId, db: AsyncSession = Depends(get_db)):
     return await service.get_clearance(db, driver_id, rule_id)
 
 
 @router.put(
-    "/drivers/{driver_id}/clearances/{rule_id}",
+    "/drivers/{driverId}/clearances/{ruleId}",
     response_model=PenaltyClearanceOut,
     responses={201: {"description": "Clearance created", "model": PenaltyClearanceOut}},
 )
 async def set_clearance(
-    driver_id: uuid.UUID,
-    rule_id: uuid.UUID,
+    driver_id: DriverId,
+    rule_id: RuleId,
     response: Response,
     _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
@@ -229,12 +229,12 @@ async def set_clearance(
 
 
 @router.delete(
-    "/drivers/{driver_id}/clearances/{rule_id}",
+    "/drivers/{driverId}/clearances/{ruleId}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_clearance(
-    driver_id: uuid.UUID,
-    rule_id: uuid.UUID,
+    driver_id: DriverId,
+    rule_id: RuleId,
     _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -257,7 +257,7 @@ async def get_my_driver(
 
 @router.patch("/me/driver", response_model=DriverOut, tags=["Me"])
 async def update_my_driver(
-    body: MyDriverPhotoUpdate,
+    body: MyDriverUpdate,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):

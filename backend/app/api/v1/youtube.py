@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Query
 
-from app.schemas.youtube import StreamStatus, YouTubeVideo
+from app.schemas.youtube import StreamStatus, YouTubeStreamOut
 from app.services.youtube import youtube_service
 
 router = APIRouter(tags=["YouTube"])
 
 
-@router.get("/youtube-streams", response_model=list[YouTubeVideo])
+@router.get("/youtube-streams", response_model=list[YouTubeStreamOut])
 async def list_youtube_streams(
     status: StreamStatus = Query(...),
     limit: int = Query(10, ge=1, le=200),

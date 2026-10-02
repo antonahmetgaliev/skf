@@ -207,7 +207,7 @@ def simgrid_stub(monkeypatch):
     results to ``stub.results[(race_id, session)]`` or games to
     ``stub.games``; unknown championships default to Le Mans Ultimate.
     """
-    from app.schemas.championship import ChampionshipDetails
+    from app.schemas.championship import ChampionshipOut
     from app.schemas.simgrid_raw import RawSessionResult
     from app.services import simgrid as sg_mod
 
@@ -220,7 +220,7 @@ def simgrid_stub(monkeypatch):
         results: dict[tuple[int, str], list[dict]] = {}
 
     async def get_championship(championship_id):
-        return ChampionshipDetails(
+        return ChampionshipOut(
             id=championship_id,
             name=f"Championship {championship_id}",
             game_name=Stub.games.get(championship_id, "Le Mans Ultimate"),

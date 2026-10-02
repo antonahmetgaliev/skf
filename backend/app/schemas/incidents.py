@@ -49,7 +49,7 @@ MAX_FILED_DRIVERS = 20
 DriverName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 
 
-class IncidentFileCreate(CamelModel):
+class IncidentCreate(CamelModel):
     session_name: str | None = Field(default=None, max_length=100)
     lap: str | None = Field(default=None, max_length=20)
     corner: str | None = Field(default=None, max_length=50)
@@ -57,7 +57,7 @@ class IncidentFileCreate(CamelModel):
     drivers: list[DriverName] = Field(min_length=1, max_length=MAX_FILED_DRIVERS)
 
 
-class IncidentDriverAdd(CamelModel):
+class IncidentDriverCreate(CamelModel):
     driver_name: str = Field(min_length=1, max_length=200)
 
 
@@ -68,12 +68,12 @@ class IncidentDriverUpdate(CamelModel):
 # ── Per-driver resolve ──────────────────────────────────────────────────────
 
 
-class ResolveDriverIncident(CamelModel):
+class IncidentDriverResolutionUpdate(CamelModel):
     verdict: str = Field(min_length=1, max_length=2000)
     bwp_points: int | None = Field(default=None, ge=0)
 
 
-class ResolveDriverItem(CamelModel):
+class DriverResolutionItem(CamelModel):
     incident_driver_id: uuid.UUID
     verdict: str | None = Field(
         default=None,
@@ -84,9 +84,9 @@ class ResolveDriverItem(CamelModel):
     bwp_points: int | None = Field(default=None, ge=0)
 
 
-class BulkResolveIncident(CamelModel):
+class IncidentResolutionUpdate(CamelModel):
     description: str | None = Field(default=None, max_length=2000)
-    drivers: list[ResolveDriverItem] = Field(min_length=1)
+    drivers: list[DriverResolutionItem] = Field(min_length=1)
 
 
 # ── Verdict rule schemas ────────────────────────────────────────────────────
@@ -114,7 +114,7 @@ class VerdictRuleUpdate(CamelModel):
     is_default: Omittable[bool] = None
 
 
-class VerdictRuleReorder(CamelModel):
+class VerdictRuleOrderUpdate(CamelModel):
     ids: list[uuid.UUID]
 
 
@@ -181,7 +181,7 @@ class IncidentOut(CamelModel):
     drivers: list[IncidentDriverOut] = []
 
 
-class IncidentWindowListItem(CamelModel):
+class IncidentWindowSummaryOut(CamelModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
@@ -198,7 +198,7 @@ class IncidentWindowListItem(CamelModel):
     is_open: bool
 
 
-class IncidentWindowSummaryOut(CamelModel):
+class IncidentWindowStatusOut(CamelModel):
     """A round's window at a glance, for lists of rounds."""
 
     id: uuid.UUID
@@ -208,7 +208,7 @@ class IncidentWindowSummaryOut(CamelModel):
     incidents_count: int
 
 
-class IncidentWindowOut(IncidentWindowListItem):
+class IncidentWindowOut(IncidentWindowSummaryOut):
     incidents: list[IncidentOut] = []
 
 
@@ -229,7 +229,7 @@ class BwpBackfillOut(CamelModel):
     unmatched: list[str] = Field(description="Names that still match no driver record.")
 
 
-class BwpAuditEntry(CamelModel):
+class BwpAuditEntryOut(CamelModel):
     incident_driver_id: uuid.UUID
     driver_name: str
     bwp_points: int

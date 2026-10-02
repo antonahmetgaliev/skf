@@ -8,7 +8,7 @@ from app.schemas.base import BlankAsNone, CamelModel, IsoDateTime, Url
 from app.schemas.enums import RaceSessionKind, RaceStatus
 
 
-class ChampionshipListItem(CamelModel):
+class ChampionshipSummaryOut(CamelModel):
     id: int
     name: str
     start_date: IsoDateTime | None = None
@@ -45,7 +45,7 @@ class ChampionshipUpdate(CamelModel):
     is_active: bool
 
 
-class ChampionshipDetails(CamelModel):
+class ChampionshipOut(CamelModel):
     id: int
     name: str
     description: str | None = None
@@ -64,7 +64,7 @@ class ChampionshipDetails(CamelModel):
     all_rounds_number: int | None = None
 
 
-class DriverRaceResult(CamelModel):
+class DriverRaceResultOut(CamelModel):
     """One round of a driver's standings row (class position)."""
 
     race_id: int
@@ -74,7 +74,7 @@ class DriverRaceResult(CamelModel):
     status: RaceStatus = RaceStatus.CLASSIFIED
 
 
-class RaceResultEntry(CamelModel):
+class RaceResultEntryOut(CamelModel):
     user_id: int | None = None
     display_name: str
     car: str = ""
@@ -98,10 +98,10 @@ class RaceResultEntry(CamelModel):
 class RaceSessionOut(CamelModel):
     race_id: int
     session: RaceSessionKind
-    entries: list[RaceResultEntry] = []
+    entries: list[RaceResultEntryOut] = []
 
 
-class StandingEntry(CamelModel):
+class StandingEntryOut(CamelModel):
     # Never fall back to the registration id, which is a different id space.
     id: int | None = Field(default=None, description="SimGrid user id; `null` when SimGrid gives none.")
     position: int | None = None
@@ -112,10 +112,10 @@ class StandingEntry(CamelModel):
     points: float = 0
     penalties: float = 0
     score: float = 0
-    race_results: list[DriverRaceResult] = []
+    race_results: list[DriverRaceResultOut] = []
 
 
-class StandingRace(CamelModel):
+class StandingRaceOut(CamelModel):
     id: int
     display_name: str
     starts_at: IsoDateTime | None = None
@@ -123,7 +123,7 @@ class StandingRace(CamelModel):
     ended: bool = False
 
 
-class ChampionshipRace(CamelModel):
+class ChampionshipRaceOut(CamelModel):
     id: int
     display_name: str = ""
     starts_at: IsoDateTime | None = None
@@ -155,9 +155,9 @@ class ChampionshipRace(CamelModel):
         return data
 
 
-class ChampionshipStandingsData(CamelModel):
-    entries: list[StandingEntry] = []
-    races: list[StandingRace] = []
+class ChampionshipStandingsOut(CamelModel):
+    entries: list[StandingEntryOut] = []
+    races: list[StandingRaceOut] = []
 
 
 class ParticipatingUser(CamelModel):

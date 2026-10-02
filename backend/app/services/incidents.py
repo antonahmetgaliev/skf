@@ -25,14 +25,14 @@ from app.models.incidents import (
 from app.models.user import ROLE_JUDGE, User
 from app.repository import get_or_404
 from app.schemas.incidents import (
-    BulkResolveIncident,
+    IncidentCreate,
     IncidentDriverOut,
-    IncidentFileCreate,
+    IncidentDriverResolutionUpdate,
     IncidentOut,
+    IncidentResolutionUpdate,
     IncidentWindowCreate,
-    IncidentWindowSummaryOut,
+    IncidentWindowStatusOut,
     IncidentWindowUpdate,
-    ResolveDriverIncident,
 )
 from app.services import incident_rules
 from app.services.driver_matching import match_driver_id_by_name
@@ -44,8 +44,8 @@ def can_see_verdicts(user: User | None) -> bool:
     return is_admin(user) or (user is not None and user.role is not None and user.role.name == ROLE_JUDGE)
 
 
-def window_summary(window: IncidentWindow, incidents_count: int) -> IncidentWindowSummaryOut:
-    return IncidentWindowSummaryOut(
+def window_summary(window: IncidentWindow, incidents_count: int) -> IncidentWindowStatusOut:
+    return IncidentWindowStatusOut(
         id=window.id,
         race_id=window.race_id,
         is_open=window.is_open,
@@ -204,7 +204,7 @@ async def delete_window(db: AsyncSession, window_id: uuid.UUID) -> None:
 
 
 async def file_incident(
-    db: AsyncSession, window_id: uuid.UUID, payload: IncidentFileCreate, reporter: User | None
+    db: AsyncSession, window_id: uuid.UUID, payload: IncidentCreate, reporter: User | None
 ) -> Incident:
     window = await get_or_404(db, IncidentWindow, window_id, detail="Window not found.")
     if not window.is_open:
@@ -339,7 +339,7 @@ def _set_resolution(
 
 
 async def resolve_driver(
-    db: AsyncSession, incident_driver_id: uuid.UUID, payload: ResolveDriverIncident, judge: User
+    db: AsyncSession, incident_driver_id: uuid.UUID, payload: IncidentDriverResolutionUpdate, judge: User
 ) -> IncidentDriver:
     entry = await load_incident_driver(db, incident_driver_id)
     _set_resolution(db, entry, judge, payload.verdict, payload.bwp_points, now=datetime.now(UTC))
@@ -350,7 +350,7 @@ async def resolve_driver(
 
 
 async def resolve_incident(
-    db: AsyncSession, incident_id: uuid.UUID, payload: BulkResolveIncident, judge: User
+    db: AsyncSession, incident_id: uuid.UUID, payload: IncidentResolutionUpdate, judge: User
 ) -> Incident:
     """Set the verdict of several drivers of one incident at once.
 
