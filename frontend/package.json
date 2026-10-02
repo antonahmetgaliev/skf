@@ -12,7 +12,7 @@
     "lint": "ng lint",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss}\"",
-    "api:types": "openapi-typescript openapi.json --default-non-nullable false -o src/app/api-schema.d.ts && prettier --write src/app/api-schema.d.ts"
+    "api:types": "openapi-typescript ../openapi.json --default-non-nullable false -o src/app/api-schema.d.ts && prettier --write src/app/api-schema.d.ts"
   },
   "prettier": {
     "printWidth": 100,

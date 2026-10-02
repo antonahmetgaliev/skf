@@ -1,6 +1,6 @@
 # SimGrid API v1 Reference
 
-Code paths below are relative to `skf-site/backend/`.
+Code paths below are relative to `backend/`.
 
 **Base URL:** `https://www.thesimgrid.com/api/v1`
 **Auth:** `Authorization: Bearer {token}` (`SIMGRID_API_KEY`)

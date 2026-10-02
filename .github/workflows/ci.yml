@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: skf-site/backend
+        working-directory: backend
     services:
       postgres:
         image: postgres:16
@@ -24,9 +24,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version-file: skf-site/backend/.python-version
+          python-version-file: backend/.python-version
           cache: pip
-          cache-dependency-path: skf-site/backend/requirements*.txt
+          cache-dependency-path: backend/requirements*.txt
       - run: pip install -r requirements-dev.txt
       - run: ruff check .
       - run: ruff format --check .
@@ -46,14 +46,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: skf-site
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version-file: skf-site/.nvmrc
+          node-version-file: frontend/.nvmrc
           cache: npm
-          cache-dependency-path: skf-site/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - name: API types match openapi.json
         run: |

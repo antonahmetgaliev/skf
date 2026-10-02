@@ -1,6 +1,6 @@
 # Features
 
-Paths are relative to `skf-site/`. Pages live in `src/app/pages/`, frontend services in `src/app/services/`, backend routers in `backend/app/api/v1/`, backend services in `backend/app/services/`, models in `backend/app/models/`. For endpoints, see `/docs` on the backend.
+Pages live in `frontend/src/app/pages/`, frontend services in `frontend/src/app/services/`, backend routers in `backend/app/api/v1/`, backend services in `backend/app/services/`, models in `backend/app/models/`. For endpoints, see `/docs` on the backend.
 
 | Feature | Page | Frontend service | Router | Backend service | Models |
 |---|---|---|---|---|---|

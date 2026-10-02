@@ -5,12 +5,12 @@ Everything runs on Railway, which deploys on every push to `main` (Railpack buil
 ## Services
 | Service | Root directory | Start | Health check |
 |---|---|---|---|
-| backend | `skf-site/backend` | `railway.toml`: `python -m app.migrate && uvicorn app.main:app` | `/healthz` |
-| frontend | `skf-site` | `npm start` → `server.js` (serves `dist/`, proxies `/api` to the backend) | `/healthz` |
+| backend | `backend` | `railway.toml`: `python -m app.migrate && uvicorn app.main:app` | `/healthz` |
+| frontend | `frontend` | `npm start` → `server.js` (serves `dist/`, proxies `/api` to the backend) | `/healthz` |
 | Postgres | — | Railway plugin; injects `DATABASE_URL` into the backend | — |
 | Bucket | — | Railway S3-compatible bucket linked to the backend with "Add to Service" | — |
 
-Versions: Python from `backend/.python-version`, Node from `skf-site/.nvmrc`.
+Versions: Python from `backend/.python-version`, Node from `frontend/.nvmrc`.
 
 ## Environment variables
 Values live only in Railway. Defaults are in `backend/app/config.py`.

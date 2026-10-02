@@ -1,6 +1,6 @@
-"""Write the API's OpenAPI spec to skf-site/openapi.json.
+"""Write the API's OpenAPI spec to openapi.json at the repo root.
 
-Run from skf-site/backend: python -m scripts.export_openapi
+Run from backend/: python -m scripts.export_openapi
 The frontend generates its API types from that file (npm run api:types).
 """
 
