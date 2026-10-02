@@ -173,6 +173,29 @@ class TestBwpDriverRename:
 
         assert resp.status_code == 404
 
+    async def test_patch_changes_only_what_is_sent(self, shared_client: AsyncClient, db: AsyncSession):
+        driver = await _create_driver(db, "Linked Driver", simgrid_driver_id=42)
+        _set_auth_user(shared_client._admin_user)
+
+        linked = await shared_client.patch(f"/api/v1/drivers/{driver.id}", json={"simgridDriverId": 43})
+        assert (linked.json()["name"], linked.json()["simgridDriverId"]) == ("Linked Driver", 43)
+
+        renamed = await shared_client.patch(f"/api/v1/drivers/{driver.id}", json={"name": "Renamed"})
+        assert (renamed.json()["name"], renamed.json()["simgridDriverId"]) == ("Renamed", 43)
+
+    async def test_null_simgrid_id_unlinks_but_null_name_is_rejected(
+        self, shared_client: AsyncClient, db: AsyncSession
+    ):
+        driver = await _create_driver(db, "Unlink Me", simgrid_driver_id=42)
+        _set_auth_user(shared_client._admin_user)
+
+        unlinked = await shared_client.patch(f"/api/v1/drivers/{driver.id}", json={"simgridDriverId": None})
+        assert unlinked.status_code == 200
+        assert unlinked.json()["simgridDriverId"] is None
+
+        resp = await shared_client.patch(f"/api/v1/drivers/{driver.id}", json={"name": None})
+        assert resp.status_code == 422
+
 
 class TestDriverList:
     async def test_public_list_hides_account(self, shared_client: AsyncClient, db: AsyncSession):

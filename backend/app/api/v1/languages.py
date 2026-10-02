@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import re
+from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, Query, Response, status
+from fastapi import APIRouter, Body, Depends, Path, Query, Response, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,10 +13,17 @@ from app.auth import get_current_user_optional, is_admin, require_admin
 from app.core.openapi import problem_responses
 from app.database import get_db
 from app.models.user import User
-from app.schemas.translations import LanguageCreate, LanguageOut
+from app.schemas.translations import (
+    LANGUAGE_CODE_MAX_LENGTH,
+    LANGUAGE_CODE_PATTERN,
+    LanguageCreate,
+    LanguageOut,
+)
 from app.services import translations as service
 
 router = APIRouter(prefix="/languages", tags=["Languages"])
+
+LanguageCode = Annotated[str, Path(max_length=LANGUAGE_CODE_MAX_LENGTH, pattern=LANGUAGE_CODE_PATTERN)]
 
 
 @router.get("", response_model=list[LanguageOut])
@@ -41,14 +49,14 @@ async def create_language(body: LanguageCreate, response: Response, db: AsyncSes
 
 
 @router.delete("/{code}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin)])
-async def delete_language(code: str, db: AsyncSession = Depends(get_db)):
+async def delete_language(code: LanguageCode, db: AsyncSession = Depends(get_db)):
     """Delete a language together with its translations and regulation texts."""
     await service.delete_language(db, code)
 
 
 @router.get("/{code}/translations", response_model=dict[str, str])
 async def get_translations(
-    code: str,
+    code: LanguageCode,
     prefix: str | None = Query(None),
     download: bool = Query(False),
     db: AsyncSession = Depends(get_db),
@@ -71,7 +79,7 @@ async def get_translations(
     responses=problem_responses(413),
 )
 async def merge_translations(
-    code: str,
+    code: LanguageCode,
     entries: dict[str, str] = Body(..., description="Keys to add or overwrite."),
     db: AsyncSession = Depends(get_db),
 ):
@@ -84,5 +92,5 @@ async def merge_translations(
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_admin)],
 )
-async def delete_translation(code: str, key: str, db: AsyncSession = Depends(get_db)):
+async def delete_translation(code: LanguageCode, key: str, db: AsyncSession = Depends(get_db)):
     await service.delete_key(db, code, key)

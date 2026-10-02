@@ -8,8 +8,8 @@ from datetime import datetime
 from fastapi import UploadFile
 from pydantic import Field
 
-from app.schemas.base import CamelModel
-from app.services.race_files.types import Sim
+from app.schemas.base import CamelModel, IsoDateTime
+from app.schemas.enums import Sim
 
 
 class RaceResultImportCreate(CamelModel):
@@ -27,8 +27,10 @@ class ImportEntryOut(CamelModel):
     car_class: str
     laps: int
     position: int | None = None
-    finish_status: str | None = None
-    matched: bool
+    finish_status: str | None = Field(
+        default=None, description="Finish status exactly as the result file words it."
+    )
+    matched: bool = Field(description="The name resolves to a driver record.")
 
 
 class ImportOut(CamelModel):
@@ -40,7 +42,7 @@ class ImportOut(CamelModel):
     track_event: str | None = None
     session_started_at: datetime | None = None
     source_filename: str | None = None
-    sim: Sim = "lmu"
+    sim: Sim = Sim.LMU
     created_at: datetime
     entry_count: int
     unmatched_count: int
@@ -71,7 +73,7 @@ class RoundWindowOut(CamelModel):
 class RoundOut(CamelModel):
     race_id: int
     name: str
-    starts_at: str | None = None
+    starts_at: IsoDateTime | None = None
     ended: bool = False
     race_import: RaceImportOut | None = None
     window: RoundWindowOut | None = None
@@ -81,8 +83,9 @@ class RoundsOut(CamelModel):
     championship_id: int
     championship_name: str
     game_name: str
-    # None when the championship's game has no supported result file.
-    sim: Sim | None = None
+    sim: Sim | None = Field(
+        default=None, description="`null` when the championship's game has no supported result file."
+    )
     storage_enabled: bool
     rounds: list[RoundOut]
 

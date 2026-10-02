@@ -232,7 +232,11 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "simgrid",
+                "youtube"
+              ]
             }
           }
         ],
@@ -545,11 +549,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "enum": [
-                "race",
-                "qualifying"
-              ],
-              "type": "string",
+              "$ref": "#/components/schemas/RaceSessionKind",
               "default": "race"
             }
           }
@@ -3773,7 +3773,9 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 10,
+              "pattern": "^[A-Za-z0-9_-]+$"
             }
           }
         ],
@@ -3814,7 +3816,9 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 10,
+              "pattern": "^[A-Za-z0-9_-]+$"
             }
           },
           {
@@ -3882,7 +3886,9 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 10,
+              "pattern": "^[A-Za-z0-9_-]+$"
             }
           }
         ],
@@ -3944,7 +3950,9 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 10,
+              "pattern": "^[A-Za-z0-9_-]+$"
             }
           },
           {
@@ -4652,6 +4660,8 @@
             "required": false,
             "schema": {
               "type": "string",
+              "maxLength": 10,
+              "pattern": "^[A-Za-z0-9_-]+$",
               "default": "en"
             }
           }
@@ -4698,6 +4708,8 @@
             "required": false,
             "schema": {
               "type": "string",
+              "maxLength": 10,
+              "pattern": "^[A-Za-z0-9_-]+$",
               "default": "en"
             }
           }
@@ -6039,10 +6051,12 @@
       "AliasCreate": {
         "properties": {
           "normalizedAlias": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200
           },
           "canonicalDisplayName": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200
           },
           "driverId": {
             "anyOf": [
@@ -6106,7 +6120,8 @@
       "AuthUrlOut": {
         "properties": {
           "url": {
-            "type": "string"
+            "type": "string",
+            "format": "uri"
           }
         },
         "type": "object",
@@ -6186,13 +6201,15 @@
       "BwpBackfillOut": {
         "properties": {
           "fixed": {
-            "type": "integer"
+            "type": "integer",
+            "description": "Penalties that now have a licence point."
           },
           "unmatched": {
             "items": {
               "type": "string"
             },
-            "type": "array"
+            "type": "array",
+            "description": "Names that still match no driver record."
           }
         },
         "type": "object",
@@ -6205,7 +6222,7 @@
         "properties": {
           "points": {
             "type": "integer",
-            "exclusiveMinimum": 0.0
+            "exclusiveMinimum": 0
           },
           "issuedOn": {
             "type": "string",
@@ -6252,6 +6269,7 @@
           },
           "expired": {
             "type": "boolean",
+            "description": "True once `expiresOn` is today or earlier.",
             "default": false
           }
         },
@@ -6273,6 +6291,7 @@
           },
           "note": {
             "type": "string",
+            "maxLength": 500,
             "default": ""
           }
         },
@@ -6286,6 +6305,7 @@
         "properties": {
           "note": {
             "type": "string",
+            "maxLength": 500,
             "default": ""
           }
         },
@@ -6327,7 +6347,8 @@
           "startDate": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"
@@ -6337,7 +6358,8 @@
           "endDate": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"
@@ -6348,7 +6370,7 @@
             "$ref": "#/components/schemas/CalendarEventType"
           },
           "source": {
-            "type": "string"
+            "$ref": "#/components/schemas/CalendarEventSource"
           },
           "image": {
             "anyOf": [
@@ -6453,7 +6475,8 @@
           "registrationUrl": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "uri"
               },
               {
                 "type": "null"
@@ -6495,6 +6518,13 @@
         ],
         "description": "Unified calendar event returned by the merge endpoint."
       },
+      "CalendarEventSource": {
+        "type": "string",
+        "enum": [
+          "simgrid",
+          "custom"
+        ]
+      },
       "CalendarEventType": {
         "type": "string",
         "enum": [
@@ -6509,7 +6539,8 @@
           "date": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"
@@ -6519,7 +6550,8 @@
           "endDate": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"
@@ -6586,7 +6618,8 @@
           "startDate": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"
@@ -6596,7 +6629,8 @@
           "endDate": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"
@@ -6628,24 +6662,50 @@
             "default": false
           },
           "hostName": {
-            "type": "string",
-            "default": ""
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "gameName": {
             "type": "string",
             "default": ""
           },
           "url": {
-            "type": "string",
-            "default": ""
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "resultsUrl": {
-            "type": "string",
-            "default": ""
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "discordUrl": {
-            "type": "string",
-            "default": ""
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "roundNumber": {
             "anyOf": [
@@ -6723,7 +6783,8 @@
           "startDate": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"
@@ -6733,7 +6794,8 @@
           "endDate": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"
@@ -6746,6 +6808,7 @@
           },
           "eventCompleted": {
             "type": "boolean",
+            "description": "SimGrid marks the championship as finished.",
             "default": false
           }
         },
@@ -6762,8 +6825,7 @@
       "ChampionshipRace": {
         "properties": {
           "id": {
-            "type": "integer",
-            "default": 0
+            "type": "integer"
           },
           "displayName": {
             "type": "string",
@@ -6772,7 +6834,8 @@
           "startsAt": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"
@@ -6951,16 +7014,9 @@
       "CommunityUpdate": {
         "properties": {
           "name": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 200,
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
           },
           "color": {
             "anyOf": [
@@ -6985,14 +7041,7 @@
             ]
           },
           "isVisible": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -7023,7 +7072,8 @@
           "description": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 10000
               },
               {
                 "type": "null"
@@ -7174,28 +7224,14 @@
       "CustomChampionshipUpdate": {
         "properties": {
           "name": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 200,
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
           },
           "game": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 100,
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
           },
           "carClass": {
             "anyOf": [
@@ -7211,7 +7247,8 @@
           "description": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 10000
               },
               {
                 "type": "null"
@@ -7219,14 +7256,7 @@
             ]
           },
           "isVisible": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "boolean"
           },
           "communityId": {
             "anyOf": [
@@ -7433,14 +7463,7 @@
             ]
           },
           "sortOrder": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "integer"
           }
         },
         "type": "object"
@@ -7481,16 +7504,9 @@
       "DescriptionPresetUpdate": {
         "properties": {
           "text": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 200,
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
           }
         },
         "type": "object"
@@ -7550,7 +7566,8 @@
           "photoUrl": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "uri"
               },
               {
                 "type": "null"
@@ -7563,6 +7580,7 @@
           },
           "activeBwp": {
             "type": "integer",
+            "description": "Sum of the points that have not expired.",
             "default": 0
           },
           "points": {
@@ -7649,7 +7667,8 @@
           "photoUrl": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "uri"
               },
               {
                 "type": "null"
@@ -7662,6 +7681,7 @@
           },
           "activeBwp": {
             "type": "integer",
+            "description": "Sum of the points that have not expired.",
             "default": 0
           },
           "points": {
@@ -7722,13 +7742,7 @@
             ]
           },
           "status": {
-            "type": "string",
-            "enum": [
-              "classified",
-              "dnf",
-              "dq",
-              "dns"
-            ],
+            "$ref": "#/components/schemas/RaceStatus",
             "default": "classified"
           }
         },
@@ -7760,10 +7774,7 @@
             ]
           }
         },
-        "type": "object",
-        "required": [
-          "name"
-        ]
+        "type": "object"
       },
       "EligibilityOut": {
         "properties": {
@@ -7805,7 +7816,8 @@
       "EligibleDriverOut": {
         "properties": {
           "identity": {
-            "type": "string"
+            "type": "string",
+            "description": "Normalized name the driver's rounds are grouped under, aliases applied."
           },
           "displayName": {
             "type": "string"
@@ -7876,10 +7888,12 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "Finish status exactly as the result file words it."
           },
           "matched": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "The name resolves to a driver record."
           }
         },
         "type": "object",
@@ -7943,11 +7957,7 @@
             ]
           },
           "sim": {
-            "type": "string",
-            "enum": [
-              "lmu",
-              "iracing"
-            ],
+            "$ref": "#/components/schemas/Sim",
             "default": "lmu"
           },
           "createdAt": {
@@ -8241,7 +8251,8 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "Session time of the incident, as text for the judges."
           },
           "lap": {
             "anyOf": [
@@ -8274,10 +8285,10 @@
             ]
           },
           "source": {
-            "type": "string"
+            "$ref": "#/components/schemas/IncidentSource"
           },
           "status": {
-            "type": "string"
+            "$ref": "#/components/schemas/IncidentStatus"
           },
           "isPublished": {
             "type": "boolean"
@@ -8356,7 +8367,8 @@
             ]
           },
           "bwpApplied": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "True once the points were issued to the driver's licence."
           },
           "resolvedAt": {
             "type": "string",
@@ -8374,6 +8386,22 @@
           "bwpApplied",
           "resolvedAt"
         ]
+      },
+      "IncidentSource": {
+        "type": "string",
+        "enum": [
+          "filed",
+          "ingested"
+        ],
+        "description": "``filed`` by a person; ``ingested`` from a race-result file."
+      },
+      "IncidentStatus": {
+        "type": "string",
+        "enum": [
+          "open",
+          "resolved"
+        ],
+        "description": "``resolved`` once every driver in the incident has a resolution."
       },
       "IncidentWindowCreate": {
         "properties": {
@@ -8426,8 +8454,8 @@
           },
           "intervalHours": {
             "type": "integer",
-            "maximum": 168.0,
-            "minimum": 1.0,
+            "maximum": 168,
+            "minimum": 1,
             "default": 24
           }
         },
@@ -8483,10 +8511,12 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "The race day as display text, normally `YYYY-MM-DD`."
           },
           "intervalHours": {
-            "type": "integer"
+            "type": "integer",
+            "description": "How long the window accepts incidents after it opens."
           },
           "openedAt": {
             "type": "string",
@@ -8577,10 +8607,12 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "The race day as display text, normally `YYYY-MM-DD`."
           },
           "intervalHours": {
-            "type": "integer"
+            "type": "integer",
+            "description": "How long the window accepts incidents after it opens."
           },
           "openedAt": {
             "type": "string",
@@ -8635,26 +8667,12 @@
       "IncidentWindowUpdate": {
         "properties": {
           "isManuallyClosed": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "boolean"
           },
           "intervalHours": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 168.0,
-                "minimum": 1.0
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "integer",
+            "maximum": 168,
+            "minimum": 1
           }
         },
         "type": "object"
@@ -8724,7 +8742,8 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "format": "uri"
           }
         },
         "type": "object",
@@ -8761,10 +8780,11 @@
         "properties": {
           "threshold": {
             "type": "integer",
-            "exclusiveMinimum": 0.0
+            "exclusiveMinimum": 0
           },
           "label": {
             "type": "string",
+            "maxLength": 500,
             "default": ""
           }
         },
@@ -8800,31 +8820,25 @@
       "PenaltyRuleUpdate": {
         "properties": {
           "threshold": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "exclusiveMinimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "integer",
+            "exclusiveMinimum": 0
           },
           "label": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "string",
+            "maxLength": 500
           }
         },
         "type": "object"
       },
       "Problem": {
         "description": "An RFC 7807 problem document. Every error response has this shape.",
+        "example": {
+          "code": "not_found",
+          "detail": "Driver not found.",
+          "status": 404,
+          "title": "Not Found",
+          "type": "about:blank"
+        },
         "properties": {
           "type": {
             "default": "about:blank",
@@ -8899,10 +8913,12 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "The race day as display text, normally `YYYY-MM-DD`."
           },
           "intervalHours": {
-            "type": "integer"
+            "type": "integer",
+            "description": "How long the window accepts incidents after it opens."
           },
           "openedAt": {
             "type": "string",
@@ -8938,6 +8954,7 @@
           },
           "unlinkedCount": {
             "type": "integer",
+            "description": "Penalties that reached no licence because the driver name matches no driver record.",
             "default": 0
           }
         },
@@ -8966,11 +8983,7 @@
             "format": "uuid"
           },
           "sim": {
-            "type": "string",
-            "enum": [
-              "lmu",
-              "iracing"
-            ]
+            "$ref": "#/components/schemas/Sim"
           },
           "trackEvent": {
             "anyOf": [
@@ -9175,13 +9188,7 @@
             ]
           },
           "status": {
-            "type": "string",
-            "enum": [
-              "classified",
-              "dnf",
-              "dq",
-              "dns"
-            ],
+            "$ref": "#/components/schemas/RaceStatus",
             "default": "classified"
           },
           "ratingChange": {
@@ -9235,8 +9242,8 @@
           },
           "windowHours": {
             "type": "integer",
-            "maximum": 168.0,
-            "minimum": 1.0,
+            "maximum": 168,
+            "minimum": 1,
             "default": 24
           }
         },
@@ -9248,17 +9255,20 @@
         ],
         "description": "``POST /race-result-imports``: the multipart form of one round's upload."
       },
+      "RaceSessionKind": {
+        "type": "string",
+        "enum": [
+          "race",
+          "qualifying"
+        ]
+      },
       "RaceSessionOut": {
         "properties": {
           "raceId": {
             "type": "integer"
           },
           "session": {
-            "type": "string",
-            "enum": [
-              "race",
-              "qualifying"
-            ]
+            "$ref": "#/components/schemas/RaceSessionKind"
           },
           "entries": {
             "items": {
@@ -9274,6 +9284,16 @@
           "session",
           "entries"
         ]
+      },
+      "RaceStatus": {
+        "type": "string",
+        "enum": [
+          "classified",
+          "dnf",
+          "dq",
+          "dns"
+        ],
+        "description": "``classified`` covers every non-DNS finisher when SimGrid gives no\nstatus (iRacing): it cannot tell a retirement from a car several laps down."
       },
       "RegulationContentOut": {
         "properties": {
@@ -9311,6 +9331,7 @@
           },
           "content": {
             "type": "string",
+            "maxLength": 200000,
             "default": ""
           }
         },
@@ -9409,49 +9430,21 @@
       "RegulationPageUpdate": {
         "properties": {
           "slug": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 100,
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
           },
           "sortOrder": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "integer"
           },
           "isVisible": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "boolean"
           },
           "contents": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "$ref": "#/components/schemas/RegulationContentUpdate"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "additionalProperties": {
+              "$ref": "#/components/schemas/RegulationContentUpdate"
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -9460,13 +9453,14 @@
         "properties": {
           "verdict": {
             "type": "string",
+            "maxLength": 2000,
             "minLength": 1
           },
           "bwpPoints": {
             "anyOf": [
               {
                 "type": "integer",
-                "minimum": 0.0
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -9489,18 +9483,20 @@
             "anyOf": [
               {
                 "type": "string",
+                "maxLength": 2000,
                 "minLength": 1
               },
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "Omit to apply the default verdict rule: name the exceptions, the server fills in the rest."
           },
           "bwpPoints": {
             "anyOf": [
               {
                 "type": "integer",
-                "minimum": 0.0
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -9560,10 +9556,12 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "The race day as display text, normally `YYYY-MM-DD`."
           },
           "intervalHours": {
-            "type": "integer"
+            "type": "integer",
+            "description": "How long the window accepts incidents after it opens."
           },
           "openedAt": {
             "type": "string",
@@ -9599,6 +9597,7 @@
           },
           "resolvedCount": {
             "type": "integer",
+            "description": "Drivers the default verdict was just applied to.",
             "default": 0
           }
         },
@@ -9666,7 +9665,8 @@
           "startsAt": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"
@@ -9747,16 +9747,13 @@
           "sim": {
             "anyOf": [
               {
-                "type": "string",
-                "enum": [
-                  "lmu",
-                  "iracing"
-                ]
+                "$ref": "#/components/schemas/Sim"
               },
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "`null` when the championship's game has no supported result file."
           },
           "storageEnabled": {
             "type": "boolean"
@@ -9778,6 +9775,14 @@
           "rounds"
         ]
       },
+      "Sim": {
+        "type": "string",
+        "enum": [
+          "lmu",
+          "iracing"
+        ],
+        "description": "Simulators whose result files can be imported."
+      },
       "StandingEntry": {
         "properties": {
           "id": {
@@ -9788,7 +9793,8 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "SimGrid user id; `null` when SimGrid gives none."
           },
           "position": {
             "anyOf": [
@@ -9804,8 +9810,14 @@
             "type": "string"
           },
           "countryCode": {
-            "type": "string",
-            "default": ""
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "car": {
             "type": "string",
@@ -9860,7 +9872,8 @@
           "startsAt": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"
@@ -9907,7 +9920,8 @@
             "items": {
               "type": "string"
             },
-            "type": "array"
+            "type": "array",
+            "description": "Ranked spelling hints for the admin; never applied on their own."
           }
         },
         "type": "object",
@@ -9941,12 +9955,14 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "Nickname on the SKF Discord server."
           },
           "avatarUrl": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "uri"
               },
               {
                 "type": "null"
@@ -9954,7 +9970,7 @@
             ]
           },
           "role": {
-            "type": "string"
+            "$ref": "#/components/schemas/UserRole"
           },
           "blocked": {
             "type": "boolean"
@@ -10010,33 +10026,43 @@
           "managedCommunityIds"
         ]
       },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "driver",
+          "moderator",
+          "racing_judge",
+          "community_manager",
+          "admin",
+          "super_admin"
+        ]
+      },
       "UserUpdate": {
         "properties": {
           "role": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/UserRole"
           },
           "blocked": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "boolean"
           }
         },
         "type": "object"
       },
       "ValidationProblem": {
         "description": "A 422: the request did not pass validation.",
+        "example": {
+          "code": "validation_error",
+          "detail": "year: Field required",
+          "errors": [
+            {
+              "field": "year",
+              "message": "Field required"
+            }
+          ],
+          "status": 422,
+          "title": "Unprocessable Content",
+          "type": "about:blank"
+        },
         "properties": {
           "type": {
             "default": "about:blank",
@@ -10080,7 +10106,7 @@
           },
           "defaultBwp": {
             "type": "integer",
-            "minimum": 0.0,
+            "minimum": 0,
             "default": 0
           },
           "isDefault": {
@@ -10139,37 +10165,16 @@
       "VerdictRuleUpdate": {
         "properties": {
           "verdict": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 100,
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
           },
           "defaultBwp": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "integer",
+            "minimum": 0
           },
           "isDefault": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -10199,11 +10204,19 @@
             "default": ""
           },
           "publishedAt": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time"
           },
           "thumbnailUrl": {
-            "type": "string",
-            "default": ""
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",

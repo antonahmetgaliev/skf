@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Literal
 
-Sim = Literal["lmu", "iracing"]
+from app.schemas.enums import Sim
 
 # LMU result XML runs ~600 KB for a full grid, an iRaceControl .bin up to ~4 MB.
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024

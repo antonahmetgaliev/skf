@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, status
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Path, status
 
 from app.auth import require_admin
 from app.core.errors import NotFound
@@ -25,7 +27,7 @@ async def clear_all_caches():
 
 
 @router.delete("/{domain}", status_code=status.HTTP_204_NO_CONTENT)
-async def clear_cache(domain: str):
+async def clear_cache(domain: Annotated[str, Path(json_schema_extra={"enum": list(_DOMAINS)})]):
     clear = _DOMAINS.get(domain)
     if clear is None:
         raise NotFound(f"Unknown cache: {domain}.")

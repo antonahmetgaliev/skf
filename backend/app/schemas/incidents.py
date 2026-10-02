@@ -6,7 +6,8 @@ from typing import Annotated, Literal
 
 from pydantic import ConfigDict, Field, StringConstraints
 
-from app.schemas.base import CamelModel
+from app.schemas.base import CamelModel, Omittable
+from app.schemas.enums import IncidentSource, IncidentStatus
 
 # ── Window schemas ──────────────────────────────────────────────────────────
 
@@ -21,8 +22,8 @@ class IncidentWindowCreate(CamelModel):
 
 
 class IncidentWindowUpdate(CamelModel):
-    is_manually_closed: bool | None = None
-    interval_hours: int | None = Field(default=None, ge=1, le=168)
+    is_manually_closed: Omittable[bool] = None
+    interval_hours: Omittable[Annotated[int, Field(ge=1, le=168)]] = None
 
 
 # ── Batch ingestion schemas ─────────────────────────────────────────────────
@@ -73,15 +74,18 @@ class WindowIncidentsUpdate(CamelModel):
 
 
 class ResolveDriverIncident(CamelModel):
-    verdict: str = Field(min_length=1)
+    verdict: str = Field(min_length=1, max_length=2000)
     bwp_points: int | None = Field(default=None, ge=0)
 
 
 class ResolveDriverItem(CamelModel):
     incident_driver_id: uuid.UUID
-    # Omitted verdict means "apply the default rule" — the steward names the
-    # exceptions, the server fills in everyone else.
-    verdict: str | None = Field(default=None, min_length=1)
+    verdict: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=2000,
+        description="Omit to apply the default verdict rule: name the exceptions, the server fills in the rest.",
+    )
     bwp_points: int | None = Field(default=None, ge=0)
 
 
@@ -110,9 +114,9 @@ class VerdictRuleCreate(CamelModel):
 
 
 class VerdictRuleUpdate(CamelModel):
-    verdict: str | None = Field(default=None, min_length=1, max_length=100)
-    default_bwp: int | None = Field(default=None, ge=0)
-    is_default: bool | None = None
+    verdict: Omittable[Annotated[str, Field(min_length=1, max_length=100)]] = None
+    default_bwp: Omittable[Annotated[int, Field(ge=0)]] = None
+    is_default: Omittable[bool] = None
 
 
 class VerdictRuleReorder(CamelModel):
@@ -135,7 +139,7 @@ class DescriptionPresetCreate(CamelModel):
 
 
 class DescriptionPresetUpdate(CamelModel):
-    text: str | None = Field(default=None, min_length=1, max_length=200)
+    text: Omittable[Annotated[str, Field(min_length=1, max_length=200)]] = None
 
 
 # ── Output schemas ──────────────────────────────────────────────────────────
@@ -150,7 +154,7 @@ class IncidentResolutionOut(CamelModel):
     verdict: str
     bwp_points: int | None
     description: str | None
-    bwp_applied: bool
+    bwp_applied: bool = Field(description="True once the points were issued to the driver's licence.")
     resolved_at: datetime
 
 
@@ -171,12 +175,12 @@ class IncidentOut(CamelModel):
     window_id: uuid.UUID
     reporter_user_id: uuid.UUID | None
     session_name: str | None
-    time: str | None
+    time: str | None = Field(description="Session time of the incident, as text for the judges.")
     lap: str | None
     corner: str | None
     description: str | None
-    source: str
-    status: str
+    source: IncidentSource
+    status: IncidentStatus
     is_published: bool
     created_at: datetime
     drivers: list[IncidentDriverOut] = []
@@ -190,8 +194,8 @@ class IncidentWindowListItem(CamelModel):
     championship_name: str | None
     race_id: int | None
     race_name: str
-    date: str | None
-    interval_hours: int
+    date: str | None = Field(description="The race day as display text, normally `YYYY-MM-DD`.")
+    interval_hours: int = Field(description="How long the window accepts incidents after it opens.")
     opened_at: datetime
     closes_at: datetime
     opened_by_user_id: uuid.UUID | None
@@ -204,21 +208,19 @@ class IncidentWindowOut(IncidentWindowListItem):
 
 
 class ResolveRemainingOut(IncidentWindowOut):
-    # How many drivers the default verdict was just applied to.
-    resolved_count: int = 0
+    resolved_count: int = Field(default=0, description="Drivers the default verdict was just applied to.")
 
 
 class PublishWindowOut(IncidentWindowOut):
-    # Penalties that could not reach a licence because the driver name never
-    # matched a record. Reported out loud rather than lost in silence.
-    unlinked_count: int = 0
+    unlinked_count: int = Field(
+        default=0,
+        description="Penalties that reached no licence because the driver name matches no driver record.",
+    )
 
 
 class BwpBackfillOut(CamelModel):
-    # Penalties that now have a licence point.
-    fixed: int
-    # Names that still match no driver record.
-    unmatched: list[str]
+    fixed: int = Field(description="Penalties that now have a licence point.")
+    unmatched: list[str] = Field(description="Names that still match no driver record.")
 
 
 class BwpAuditEntry(CamelModel):

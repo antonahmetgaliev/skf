@@ -5,6 +5,8 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
+from pydantic import Field
+
 from app.schemas.base import CamelModel
 
 
@@ -19,7 +21,9 @@ class RoundBreakdownOut(CamelModel):
 
 
 class EligibleDriverOut(CamelModel):
-    identity: str
+    identity: str = Field(
+        description="Normalized name the driver's rounds are grouped under, aliases applied."
+    )
     display_name: str
     car_class: str
     qualifying_rounds: int
@@ -39,15 +43,16 @@ class UnmatchedNameOut(CamelModel):
     raw_name: str
     normalized_name: str
     rounds: int
-    # Ranked hints only. They are never applied automatically: on real data the
-    # closest match to "Ars Ilanovich" is "Artur Ivanov", a different driver in
-    # the same race.
-    suggestions: list[str]
+    # Never applied automatically: on real data the closest match to
+    # "Ars Ilanovich" is "Artur Ivanov", a different driver in the same race.
+    suggestions: list[str] = Field(
+        description="Ranked spelling hints for the admin; never applied on their own."
+    )
 
 
 class AliasCreate(CamelModel):
-    normalized_alias: str
-    canonical_display_name: str
+    normalized_alias: str = Field(max_length=200)
+    canonical_display_name: str = Field(max_length=200)
     driver_id: uuid.UUID | None = None
 
 

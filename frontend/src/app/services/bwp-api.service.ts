@@ -9,7 +9,11 @@ export type PenaltyClearance = Schemas['PenaltyClearanceOut'];
 
 export type Driver = Schemas['DriverOut'];
 
+export type DriverUpdate = Schemas['DriverUpdate'];
+
 export type PenaltyRule = Schemas['PenaltyRuleOut'];
+
+export type PenaltyRuleUpdate = Schemas['PenaltyRuleUpdate'];
 
 @Injectable({ providedIn: 'root' })
 export class BwpApiService {
@@ -28,10 +32,7 @@ export class BwpApiService {
     return this.http.post<Driver>(`${API}/drivers`, { name });
   }
 
-  updateDriver(
-    driverId: string,
-    patch: { name: string; simgridDriverId?: number | null },
-  ): Observable<Driver> {
+  updateDriver(driverId: string, patch: DriverUpdate): Observable<Driver> {
     return this.http.patch<Driver>(`${API}/drivers/${driverId}`, patch);
   }
 
@@ -66,10 +67,7 @@ export class BwpApiService {
     return this.http.post<PenaltyRule>(`${API}/penalty-rules`, payload);
   }
 
-  updatePenaltyRule(
-    ruleId: string,
-    patch: { threshold?: number; label?: string },
-  ): Observable<PenaltyRule> {
+  updatePenaltyRule(ruleId: string, patch: PenaltyRuleUpdate): Observable<PenaltyRule> {
     return this.http.patch<PenaltyRule>(`${API}/penalty-rules/${ruleId}`, patch);
   }
 

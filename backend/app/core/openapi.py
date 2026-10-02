@@ -21,6 +21,7 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi.routing import APIRoute
+from pydantic import ConfigDict
 from pydantic.json_schema import models_json_schema
 
 from app.core.errors import PROBLEM_JSON
@@ -80,6 +81,18 @@ class FieldError(CamelModel):
 class Problem(CamelModel):
     """An RFC 7807 problem document. Every error response has this shape."""
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "type": "about:blank",
+                "title": "Not Found",
+                "status": 404,
+                "detail": "Driver not found.",
+                "code": "not_found",
+            }
+        }
+    )
+
     type: str = "about:blank"
     title: str
     status: int
@@ -89,6 +102,19 @@ class Problem(CamelModel):
 
 class ValidationProblem(Problem):
     """A 422: the request did not pass validation."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "type": "about:blank",
+                "title": "Unprocessable Content",
+                "status": 422,
+                "detail": "year: Field required",
+                "code": "validation_error",
+                "errors": [{"field": "year", "message": "Field required"}],
+            }
+        }
+    )
 
     errors: list[FieldError]
 
@@ -207,16 +233,33 @@ def _share_error_responses(schema: dict[str, Any]) -> None:
     schema["components"]["responses"] = dict(sorted(shared.items()))
 
 
-def _strip_titles(node: Any) -> None:
-    """Drop generated ``title`` strings; a property *named* title is a dict and stays."""
+_BOUNDS = {"minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"}
+# Values under these keys are data, not schema: leave them exactly as written.
+_LITERAL_KEYS = {"example", "examples", "default", "enum", "const"}
+
+
+def _tidy(node: Any) -> None:
+    """Drop what Pydantic generates but a reader of the spec should not see.
+
+    * ``title`` strings (a property *named* title is a dict and stays);
+    * ``default: null`` on a schema that does not allow null — an
+      :data:`~app.schemas.base.Omittable` field, whose default means "absent";
+    * integer bounds written as floats (``1.0``).
+    """
     if isinstance(node, dict):
         if isinstance(node.get("title"), str):
             del node["title"]
-        for value in node.values():
-            _strip_titles(value)
+        if "default" in node and node["default"] is None and "type" in node and node["type"] != "null":
+            del node["default"]
+        if node.get("type") == "integer":
+            for bound in _BOUNDS & node.keys():
+                node[bound] = int(node[bound])
+        for key, value in node.items():
+            if key not in _LITERAL_KEYS:
+                _tidy(value)
     elif isinstance(node, list):
         for item in node:
-            _strip_titles(item)
+            _tidy(item)
 
 
 def _build(app: FastAPI) -> dict[str, Any]:
@@ -244,8 +287,8 @@ def _build(app: FastAPI) -> dict[str, Any]:
     schemas.pop("ValidationError", None)
     schema["components"]["schemas"] = dict(sorted(schemas.items()))
 
-    _strip_titles(schema["paths"])
-    _strip_titles(schema["components"])
+    _tidy(schema["paths"])
+    _tidy(schema["components"])
     return schema
 
 

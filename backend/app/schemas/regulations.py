@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import uuid
+from typing import Annotated
 
 from pydantic import Field
 
-from app.schemas.base import CamelModel
+from app.schemas.base import CamelModel, Omittable
 
 
 class RegulationContentOut(CamelModel):
@@ -33,7 +34,7 @@ class RegulationPageOut(CamelModel):
 class RegulationContentUpdate(CamelModel):
     title: str = Field(max_length=300)
     subtitle: str = Field(default="", max_length=500)
-    content: str = ""
+    content: str = Field(default="", max_length=200_000)
 
 
 class RegulationPageCreate(CamelModel):
@@ -44,7 +45,7 @@ class RegulationPageCreate(CamelModel):
 
 
 class RegulationPageUpdate(CamelModel):
-    slug: str | None = Field(default=None, min_length=1, max_length=100)
-    sort_order: int | None = None
-    is_visible: bool | None = None
-    contents: dict[str, RegulationContentUpdate] | None = None
+    slug: Omittable[Annotated[str, Field(min_length=1, max_length=100)]] = None
+    sort_order: Omittable[int] = None
+    is_visible: Omittable[bool] = None
+    contents: Omittable[dict[str, RegulationContentUpdate]] = None

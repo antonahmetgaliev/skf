@@ -2,20 +2,21 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Literal
+from typing import Annotated, Any
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
-from app.schemas.base import CamelModel
+from app.schemas.base import BlankAsNone, CamelModel, IsoDateTime, Url
+from app.schemas.enums import RaceSessionKind, RaceStatus
 
 
 class ChampionshipListItem(CamelModel):
     id: int
     name: str
-    start_date: str | None = None
-    end_date: str | None = None
+    start_date: IsoDateTime | None = None
+    end_date: IsoDateTime | None = None
     accepting_registrations: bool = False
-    event_completed: bool = False
+    event_completed: bool = Field(default=False, description="SimGrid marks the championship as finished.")
 
     @model_validator(mode="before")
     @classmethod
@@ -46,23 +47,18 @@ class ChampionshipDetails(CamelModel):
     name: str
     description: str | None = None
     image: str | None = None
-    start_date: str | None = None
-    end_date: str | None = None
+    start_date: IsoDateTime | None = None
+    end_date: IsoDateTime | None = None
     capacity: int | None = None
     spots_taken: int | None = None
     accepting_registrations: bool = False
-    host_name: str = ""
+    host_name: Annotated[str | None, BlankAsNone] = None
     game_name: str = ""
-    url: str = ""
-    results_url: str = ""
-    discord_url: str = ""
+    url: Annotated[Url | None, BlankAsNone] = None
+    results_url: Annotated[Url | None, BlankAsNone] = None
+    discord_url: Annotated[str | None, BlankAsNone] = None
     round_number: int | None = None
     all_rounds_number: int | None = None
-
-
-# "classified" covers every non-DNS finisher when SimGrid gives no status
-# (iRacing): it cannot tell a retirement from a car several laps down.
-RaceStatus = Literal["classified", "dnf", "dq", "dns"]
 
 
 class DriverRaceResult(CamelModel):
@@ -72,7 +68,7 @@ class DriverRaceResult(CamelModel):
     race_index: int
     points: float | None = None
     position: int | None = None
-    status: RaceStatus = "classified"
+    status: RaceStatus = RaceStatus.CLASSIFIED
 
 
 class RaceResultEntry(CamelModel):
@@ -92,23 +88,22 @@ class RaceResultEntry(CamelModel):
     laps_down: int = 0
     penalty_s: float = 0
     points: float | None = None
-    status: RaceStatus = "classified"
+    status: RaceStatus = RaceStatus.CLASSIFIED
     rating_change: int | None = None
 
 
 class RaceSessionOut(CamelModel):
     race_id: int
-    session: Literal["race", "qualifying"]
+    session: RaceSessionKind
     entries: list[RaceResultEntry] = []
 
 
 class StandingEntry(CamelModel):
-    # SimGrid user id. None when the payload lacks user_id — never fall back
-    # to the registration id, which is a different id space.
-    id: int | None = None
+    # Never fall back to the registration id, which is a different id space.
+    id: int | None = Field(default=None, description="SimGrid user id; `null` when SimGrid gives none.")
     position: int | None = None
     display_name: str
-    country_code: str = ""
+    country_code: Annotated[str | None, BlankAsNone] = None
     car: str = ""
     car_class: str = ""
     points: float = 0
@@ -120,15 +115,15 @@ class StandingEntry(CamelModel):
 class StandingRace(CamelModel):
     id: int
     display_name: str
-    starts_at: str | None = None
+    starts_at: IsoDateTime | None = None
     results_available: bool = False
     ended: bool = False
 
 
 class ChampionshipRace(CamelModel):
-    id: int = 0
+    id: int
     display_name: str = ""
-    starts_at: str | None = None
+    starts_at: IsoDateTime | None = None
     track: str | None = None
     results_available: bool = False
     ended: bool = False

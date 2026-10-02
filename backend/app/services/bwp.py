@@ -69,12 +69,14 @@ async def create_driver(db: AsyncSession, body: DriverCreate) -> Driver:
 
 async def update_driver(db: AsyncSession, driver_id: uuid.UUID, body: DriverUpdate) -> Driver:
     driver = await get_driver(db, driver_id)
-    new_name = body.name.strip()
-    await _ensure_name_free(db, new_name, exclude_id=driver_id)
-    driver.name = new_name
-    if body.simgrid_driver_id is not None:
+    if body.name is not None:
+        new_name = body.name.strip()
+        await _ensure_name_free(db, new_name, exclude_id=driver_id)
+        driver.name = new_name
+    if "simgrid_driver_id" in body.model_fields_set:
         driver.simgrid_driver_id = body.simgrid_driver_id
-        driver.simgrid_display_name = driver.simgrid_display_name or new_name
+        if body.simgrid_driver_id is not None:
+            driver.simgrid_display_name = driver.simgrid_display_name or driver.name
     await db.commit()
     await db.refresh(driver)
     return driver

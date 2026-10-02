@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Literal
-
 from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,6 +17,7 @@ from app.schemas.championship import (
     ChampionshipStandingsData,
     RaceSessionOut,
 )
+from app.schemas.enums import RaceSessionKind
 from app.schemas.giveaway import EligibilityOut, UnmatchedNameOut
 from app.schemas.race_results import RoundsOut
 from app.services import championship_results, giveaway, race_import
@@ -82,7 +81,7 @@ async def list_championship_races(championship_id: int):
 async def get_race_results(
     championship_id: int,
     race_id: int,
-    session: Literal["race", "qualifying"] = "race",
+    session: RaceSessionKind = RaceSessionKind.RACE,
 ):
     """One race's classification (race or qualifying), ordered by class."""
     return await championship_results.race_session(championship_id, race_id, session)

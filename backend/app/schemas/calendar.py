@@ -5,10 +5,12 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from enum import Enum
+from typing import Annotated
 
 from pydantic import ConfigDict, Field
 
-from app.schemas.base import CamelModel
+from app.schemas.base import CamelModel, IsoDateTime, Omittable, Url
+from app.schemas.enums import CalendarEventSource
 
 # ── Enums ────────────────────────────────────────────────────────────────────
 
@@ -30,10 +32,10 @@ class CommunityCreate(CamelModel):
 
 
 class CommunityUpdate(CamelModel):
-    name: str | None = Field(default=None, min_length=1, max_length=200)
+    name: Omittable[Annotated[str, Field(min_length=1, max_length=200)]] = None
     color: str | None = Field(default=None, max_length=20)
     discord_url: str | None = Field(default=None, max_length=500)
-    is_visible: bool | None = None
+    is_visible: Omittable[bool] = None
 
 
 class CommunityOut(CamelModel):
@@ -72,7 +74,7 @@ class CustomRaceUpdate(CamelModel):
     date: datetime | None = None
     end_date: datetime | None = None
     track: str | None = Field(default=None, max_length=200)
-    sort_order: int | None = None
+    sort_order: Omittable[int] = None
 
 
 class CustomRaceSync(CamelModel):
@@ -102,18 +104,18 @@ class CustomChampionshipCreate(CamelModel):
     name: str = Field(min_length=1, max_length=200)
     game: str = Field(min_length=1, max_length=100)
     car_class: str | None = Field(default=None, max_length=100)
-    description: str | None = None
+    description: str | None = Field(default=None, max_length=10_000)
     community_id: uuid.UUID | None = None
     game_id: uuid.UUID | None = None
     races: list[CustomRaceCreate] = []
 
 
 class CustomChampionshipUpdate(CamelModel):
-    name: str | None = Field(default=None, min_length=1, max_length=200)
-    game: str | None = Field(default=None, min_length=1, max_length=100)
+    name: Omittable[Annotated[str, Field(min_length=1, max_length=200)]] = None
+    game: Omittable[Annotated[str, Field(min_length=1, max_length=100)]] = None
     car_class: str | None = Field(default=None, max_length=100)
-    description: str | None = None
-    is_visible: bool | None = None
+    description: str | None = Field(default=None, max_length=10_000)
+    is_visible: Omittable[bool] = None
     community_id: uuid.UUID | None = None
     game_id: uuid.UUID | None = None
 
@@ -139,8 +141,8 @@ class CustomChampionshipOut(CamelModel):
 
 
 class CalendarRace(CamelModel):
-    date: str | None = None
-    end_date: str | None = None
+    date: IsoDateTime | None = None
+    end_date: IsoDateTime | None = None
     track: str | None = None
     name: str | None = None
 
@@ -153,10 +155,10 @@ class CalendarEvent(CamelModel):
     game: str = ""
     car_class: str | None = None
     description: str | None = None
-    start_date: str | None = None
-    end_date: str | None = None
+    start_date: IsoDateTime | None = None
+    end_date: IsoDateTime | None = None
     event_type: CalendarEventType
-    source: str  # "simgrid" or "custom"
+    source: CalendarEventSource
     image: str | None = None
     simgrid_championship_id: int | None = None
     custom_championship_id: uuid.UUID | None = None
@@ -168,5 +170,5 @@ class CalendarEvent(CamelModel):
     accepting_registrations: bool = False
     capacity: int | None = None
     spots_taken: int | None = None
-    registration_url: str | None = None
+    registration_url: Url | None = None
     races: list[CalendarRace] = []

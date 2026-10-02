@@ -25,6 +25,8 @@ export type PublishWindowResult = Schemas['PublishWindowOut'];
 
 export type IncidentWindowCreate = Schemas['IncidentWindowCreate'];
 
+export type IncidentWindowUpdate = Schemas['IncidentWindowUpdate'];
+
 export type IncidentFileCreate = Schemas['IncidentFileCreate'];
 
 export type ResolveDriverIncident = Schemas['ResolveDriverIncident'];
@@ -37,9 +39,13 @@ export type VerdictRule = Schemas['VerdictRuleOut'];
 
 export type VerdictRuleCreate = Schemas['VerdictRuleCreate'];
 
+export type VerdictRuleUpdate = Schemas['VerdictRuleUpdate'];
+
 export type DescriptionPreset = Schemas['DescriptionPresetOut'];
 
 export type DescriptionPresetCreate = Schemas['DescriptionPresetCreate'];
+
+export type DescriptionPresetUpdate = Schemas['DescriptionPresetUpdate'];
 
 export type BwpAuditEntry = Schemas['BwpAuditEntry'];
 
@@ -75,10 +81,7 @@ export class IncidentsApiService {
     return this.updateWindow(windowId, { isManuallyClosed: true });
   }
 
-  updateWindow(
-    windowId: string,
-    payload: Partial<{ isManuallyClosed: boolean; intervalHours: number }>,
-  ): Observable<IncidentWindowOut> {
+  updateWindow(windowId: string, payload: IncidentWindowUpdate): Observable<IncidentWindowOut> {
     return this.http.patch<IncidentWindowOut>(`${this.windows}/${windowId}`, payload);
   }
 
@@ -155,7 +158,7 @@ export class IncidentsApiService {
     return this.http.put<VerdictRule[]>(`${API}/verdict-rules/order`, { ids });
   }
 
-  updateVerdictRule(id: string, payload: Partial<VerdictRuleCreate>): Observable<VerdictRule> {
+  updateVerdictRule(id: string, payload: VerdictRuleUpdate): Observable<VerdictRule> {
     return this.http.patch<VerdictRule>(`${API}/verdict-rules/${id}`, payload);
   }
 
@@ -175,7 +178,7 @@ export class IncidentsApiService {
 
   updateDescriptionPreset(
     id: string,
-    payload: Partial<DescriptionPresetCreate>,
+    payload: DescriptionPresetUpdate,
   ): Observable<DescriptionPreset> {
     return this.http.patch<DescriptionPreset>(`${API}/description-presets/${id}`, payload);
   }

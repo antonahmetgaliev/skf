@@ -13,6 +13,8 @@ export type CustomRaceCreate = Schemas['CustomRaceCreate'];
 
 export type CustomRaceSync = Schemas['CustomRaceSync'];
 
+export type CustomRaceUpdate = Schemas['CustomRaceUpdate'];
+
 export type CustomRaceOut = Schemas['CustomRaceOut'];
 
 export type CustomChampionshipCreate = Schemas['CustomChampionshipCreate'];
@@ -174,7 +176,7 @@ export class CalendarApiService {
   updateRace(
     champId: string,
     raceId: string,
-    payload: Partial<CustomRaceCreate & { sortOrder: number }>,
+    payload: CustomRaceUpdate,
   ): Observable<CustomRaceOut> {
     return this.http.patch<CustomRaceOut>(
       `${this.base}/custom-championships/${champId}/races/${raceId}`,

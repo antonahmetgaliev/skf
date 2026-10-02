@@ -98,3 +98,18 @@ async def test_a_real_validation_error_matches_the_documented_shape(client: Asyn
     problem = ValidationProblem.model_validate(resp.json())
     assert problem.code == "validation_error"
     assert [e.field for e in problem.errors] == ["year"]
+
+
+def test_null_defaults_only_where_null_is_allowed(spec):
+    """An ``Omittable`` PATCH field must not look nullable to a client."""
+
+    def offenders(node, path=""):
+        if isinstance(node, dict):
+            if node.get("default", ...) is None and node.get("type") not in (None, "null"):
+                yield path
+            for key, value in node.items():
+                yield from offenders(value, f"{path}/{key}")
+
+    assert list(offenders(spec["components"]["schemas"])) == []
+    name = spec["components"]["schemas"]["CommunityUpdate"]["properties"]["name"]
+    assert name == {"type": "string", "minLength": 1, "maxLength": 200}

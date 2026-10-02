@@ -17,22 +17,25 @@ from app.schemas.regulations import (
     RegulationPageOut,
     RegulationPageUpdate,
 )
+from app.schemas.translations import LANGUAGE_CODE_MAX_LENGTH, LANGUAGE_CODE_PATTERN
 from app.services import regulations as service
 
 router = APIRouter(tags=["Regulations"])
+
+_lang_query = Query("en", max_length=LANGUAGE_CODE_MAX_LENGTH, pattern=LANGUAGE_CODE_PATTERN)
 
 
 # ── Public ───────────────────────────────────────────────────────────────────
 
 
 @router.get("/regulations", response_model=list[RegulationPageListItem])
-async def list_regulations(lang: str = Query("en"), db: AsyncSession = Depends(get_db)):
+async def list_regulations(lang: str = _lang_query, db: AsyncSession = Depends(get_db)):
     """Visible pages with their title in *lang* (falling back to any language)."""
     return await service.list_public(db, lang)
 
 
 @router.get("/regulations/{slug}", response_model=RegulationContentOut)
-async def get_regulation(slug: str, lang: str = Query("en"), db: AsyncSession = Depends(get_db)):
+async def get_regulation(slug: str, lang: str = _lang_query, db: AsyncSession = Depends(get_db)):
     return await service.get_public(db, slug, lang)
 
 

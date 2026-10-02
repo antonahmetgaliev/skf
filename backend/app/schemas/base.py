@@ -1,7 +1,35 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
+from typing import Annotated, Any, TypeVar
+
+from pydantic import BaseModel, BeforeValidator, ConfigDict, WithJsonSchema
 from pydantic.alias_generators import to_camel
+from pydantic.json_schema import SkipJsonSchema
+
+T = TypeVar("T")
+
+
+def _reject_null(value: Any) -> Any:
+    if value is None:
+        raise ValueError("may be omitted, but not null")
+    return value
+
+
+# A PATCH field that cannot be cleared: leave it out to keep the value, but an
+# explicit ``null`` is an error. Declare it as ``name: Omittable[str] = None``,
+# with any constraints inside (``Omittable[Annotated[str, Field(...)]]``).
+# Fields that *can* be cleared stay ``T | None = None``.
+Omittable = Annotated[T | SkipJsonSchema[None], BeforeValidator(_reject_null)]
+
+# ISO 8601 date-time strings passed through from SimGrid and YouTube. Kept as
+# ``str`` so an upstream value is never re-formatted or rejected on the way out.
+IsoDateTime = Annotated[str, WithJsonSchema({"type": "string", "format": "date-time"})]
+
+# An absolute URL in a response.
+Url = Annotated[str, WithJsonSchema({"type": "string", "format": "uri"})]
+
+# For optional response fields whose source says "no value" with an empty string.
+BlankAsNone = BeforeValidator(lambda value: value or None)
 
 
 class CamelModel(BaseModel):

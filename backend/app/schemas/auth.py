@@ -5,9 +5,10 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, Field
 
-from app.schemas.base import CamelModel
+from app.schemas.base import CamelModel, Omittable, Url
+from app.schemas.enums import UserRole
 
 
 class UserOut(CamelModel):
@@ -17,10 +18,10 @@ class UserOut(CamelModel):
     discord_id: str
     username: str
     display_name: str
-    # Nickname on the SKF Discord server (stored as users.guild_nickname).
-    discord_nickname: str | None = None
-    avatar_url: str | None = None
-    role: str
+    # Stored as users.guild_nickname.
+    discord_nickname: str | None = Field(default=None, description="Nickname on the SKF Discord server.")
+    avatar_url: Url | None = None
+    role: UserRole
     blocked: bool
     created_at: datetime
     last_login_at: datetime | None = None
@@ -29,12 +30,12 @@ class UserOut(CamelModel):
 
 
 class UserUpdate(CamelModel):
-    role: str | None = None
-    blocked: bool | None = None
+    role: Omittable[UserRole] = None
+    blocked: Omittable[bool] = None
 
 
 class AuthUrlOut(CamelModel):
-    url: str
+    url: Url
 
 
 class ManagedCommunitiesUpdate(CamelModel):

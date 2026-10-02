@@ -1,10 +1,10 @@
 import uuid
 from datetime import date, datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import ConfigDict, Field, field_validator
 
-from app.schemas.base import CamelModel
+from app.schemas.base import CamelModel, Omittable, Url
 
 
 # ---------------------------------------------------------------------------
@@ -24,7 +24,7 @@ class BwpPointOut(CamelModel):
     issued_on: date
     expires_on: date
     note: str | None = None
-    expired: bool = False
+    expired: bool = Field(default=False, description="True once `expiresOn` is today or earlier.")
 
 
 class BwpPointUpdate(CamelModel):
@@ -35,13 +35,13 @@ class BwpPointUpdate(CamelModel):
     """
 
     expired: Literal[True]
-    note: str = ""
+    note: str = Field(default="", max_length=500)
 
 
 class BwpResetCreate(CamelModel):
     """``POST /drivers/{id}/bwp-resets``: expire every active point."""
 
-    note: str = ""
+    note: str = Field(default="", max_length=500)
 
 
 # ---------------------------------------------------------------------------
@@ -64,7 +64,8 @@ class DriverCreate(CamelModel):
 
 
 class DriverUpdate(CamelModel):
-    name: str = Field(min_length=1, max_length=200)
+    name: Omittable[Annotated[str, Field(min_length=1, max_length=200)]] = None
+    # ``null`` unlinks the driver from SimGrid.
     simgrid_driver_id: int | None = None
 
 
@@ -83,9 +84,9 @@ class DriverPublicOut(CamelModel):
     simgrid_driver_id: int | None = None
     simgrid_display_name: str | None = None
     country_code: str | None = None
-    photo_url: str | None = None
+    photo_url: Url | None = None
     created_at: datetime
-    active_bwp: int = 0
+    active_bwp: int = Field(default=0, description="Sum of the points that have not expired.")
     points: list[BwpPointOut] = []
     clearances: list[PenaltyClearanceOut] = []
 
@@ -103,7 +104,7 @@ class DriverOut(DriverPublicOut):
 class MyDriverPhotoUpdate(CamelModel):
     """``PATCH /me/driver``: set (https only) or clear the profile photo."""
 
-    photo_url: str | None = Field(default=None, max_length=500)
+    photo_url: str | None = Field(default=None, max_length=500, json_schema_extra={"format": "uri"})
 
     @field_validator("photo_url")
     @classmethod
@@ -123,12 +124,12 @@ class MyDriverPhotoUpdate(CamelModel):
 # ---------------------------------------------------------------------------
 class PenaltyRuleCreate(CamelModel):
     threshold: int = Field(gt=0)
-    label: str = ""
+    label: str = Field(default="", max_length=500)
 
 
 class PenaltyRuleUpdate(CamelModel):
-    threshold: int | None = Field(default=None, gt=0)
-    label: str | None = None
+    threshold: Omittable[Annotated[int, Field(gt=0)]] = None
+    label: Omittable[Annotated[str, Field(max_length=500)]] = None
 
 
 class PenaltyRuleOut(CamelModel):

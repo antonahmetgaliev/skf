@@ -1653,6 +1653,7 @@ export interface components {
       createdAt: string;
     };
     AuthUrlOut: {
+      /** Format: uri */
       url: string;
     };
     BulkResolveIncident: {
@@ -1668,7 +1669,9 @@ export interface components {
       matchedDriverName: string | null;
     };
     BwpBackfillOut: {
+      /** @description Penalties that now have a licence point. */
       fixed: number;
+      /** @description Names that still match no driver record. */
       unmatched: string[];
     };
     BwpPointCreate: {
@@ -1687,7 +1690,10 @@ export interface components {
       /** Format: date */
       expiresOn: string;
       note: string | null;
-      /** @default false */
+      /**
+       * @description True once `expiresOn` is today or earlier.
+       * @default false
+       */
       expired: boolean;
     };
     /**
@@ -1718,7 +1724,7 @@ export interface components {
       startDate: string | null;
       endDate: string | null;
       eventType: components['schemas']['CalendarEventType'];
-      source: string;
+      source: components['schemas']['CalendarEventSource'];
       image: string | null;
       simgridChampionshipId: number | null;
       customChampionshipId: string | null;
@@ -1736,6 +1742,8 @@ export interface components {
       /** @default [] */
       races: components['schemas']['CalendarRace'][];
     };
+    /** @enum {string} */
+    CalendarEventSource: 'simgrid' | 'custom';
     /** @enum {string} */
     CalendarEventType: 'past' | 'ongoing' | 'upcoming' | 'future';
     CalendarRace: {
@@ -1755,16 +1763,12 @@ export interface components {
       spotsTaken: number | null;
       /** @default false */
       acceptingRegistrations: boolean;
-      /** @default  */
-      hostName: string;
+      hostName: string | null;
       /** @default  */
       gameName: string;
-      /** @default  */
-      url: string;
-      /** @default  */
-      resultsUrl: string;
-      /** @default  */
-      discordUrl: string;
+      url: string | null;
+      resultsUrl: string | null;
+      discordUrl: string | null;
       roundNumber: number | null;
       allRoundsNumber: number | null;
     };
@@ -1782,11 +1786,13 @@ export interface components {
       endDate: string | null;
       /** @default false */
       acceptingRegistrations: boolean;
-      /** @default false */
+      /**
+       * @description SimGrid marks the championship as finished.
+       * @default false
+       */
       eventCompleted: boolean;
     };
     ChampionshipRace: {
-      /** @default 0 */
       id: number;
       /** @default  */
       displayName: string;
@@ -1826,10 +1832,10 @@ export interface components {
       description: string;
     };
     CommunityUpdate: {
-      name?: string | null;
+      name?: string;
       color?: string | null;
       discordUrl?: string | null;
-      isVisible?: boolean | null;
+      isVisible?: boolean;
     };
     CustomChampionshipCreate: {
       name: string;
@@ -1858,11 +1864,11 @@ export interface components {
       createdAt: string;
     };
     CustomChampionshipUpdate: {
-      name?: string | null;
-      game?: string | null;
+      name?: string;
+      game?: string;
       carClass?: string | null;
       description?: string | null;
-      isVisible?: boolean | null;
+      isVisible?: boolean;
       communityId?: string | null;
       gameId?: string | null;
     };
@@ -1892,7 +1898,7 @@ export interface components {
       date?: string | null;
       endDate?: string | null;
       track?: string | null;
-      sortOrder?: number | null;
+      sortOrder?: number;
     };
     DescriptionPresetCreate: {
       text: string;
@@ -1904,7 +1910,7 @@ export interface components {
       sortOrder: number;
     };
     DescriptionPresetUpdate: {
-      text?: string | null;
+      text?: string;
     };
     DriverCreate: {
       name: string;
@@ -1925,7 +1931,10 @@ export interface components {
       photoUrl: string | null;
       /** Format: date-time */
       createdAt: string;
-      /** @default 0 */
+      /**
+       * @description Sum of the points that have not expired.
+       * @default 0
+       */
       activeBwp: number;
       /** @default [] */
       points: components['schemas']['BwpPointOut'][];
@@ -1943,7 +1952,10 @@ export interface components {
       photoUrl: string | null;
       /** Format: date-time */
       createdAt: string;
-      /** @default 0 */
+      /**
+       * @description Sum of the points that have not expired.
+       * @default 0
+       */
       activeBwp: number;
       /** @default [] */
       points: components['schemas']['BwpPointOut'][];
@@ -1956,14 +1968,11 @@ export interface components {
       raceIndex: number;
       points: number | null;
       position: number | null;
-      /**
-       * @default classified
-       * @enum {string}
-       */
-      status: 'classified' | 'dnf' | 'dq' | 'dns';
+      /** @default classified */
+      status: components['schemas']['RaceStatus'];
     };
     DriverUpdate: {
-      name: string;
+      name?: string;
       simgridDriverId?: number | null;
     };
     EligibilityOut: {
@@ -1975,6 +1984,7 @@ export interface components {
       drivers: components['schemas']['EligibleDriverOut'][];
     };
     EligibleDriverOut: {
+      /** @description Normalized name the driver's rounds are grouped under, aliases applied. */
       identity: string;
       displayName: string;
       carClass: string;
@@ -1990,7 +2000,9 @@ export interface components {
       carClass: string;
       laps: number;
       position: number | null;
+      /** @description Finish status exactly as the result file words it. */
       finishStatus: string | null;
+      /** @description The name resolves to a driver record. */
       matched: boolean;
     };
     /** @description One uploaded round file, as listed per championship. */
@@ -2002,11 +2014,8 @@ export interface components {
       trackEvent: string | null;
       sessionStartedAt: string | null;
       sourceFilename: string | null;
-      /**
-       * @default lmu
-       * @enum {string}
-       */
-      sim: 'lmu' | 'iracing';
+      /** @default lmu */
+      sim: components['schemas']['Sim'];
       /** Format: date-time */
       createdAt: string;
       entryCount: number;
@@ -2058,12 +2067,13 @@ export interface components {
       windowId: string;
       reporterUserId: string | null;
       sessionName: string | null;
+      /** @description Session time of the incident, as text for the judges. */
       time: string | null;
       lap: string | null;
       corner: string | null;
       description: string | null;
-      source: string;
-      status: string;
+      source: components['schemas']['IncidentSource'];
+      status: components['schemas']['IncidentStatus'];
       isPublished: boolean;
       /** Format: date-time */
       createdAt: string;
@@ -2079,10 +2089,21 @@ export interface components {
       verdict: string;
       bwpPoints: number | null;
       description: string | null;
+      /** @description True once the points were issued to the driver's licence. */
       bwpApplied: boolean;
       /** Format: date-time */
       resolvedAt: string;
     };
+    /**
+     * @description ``filed`` by a person; ``ingested`` from a race-result file.
+     * @enum {string}
+     */
+    IncidentSource: 'filed' | 'ingested';
+    /**
+     * @description ``resolved`` once every driver in the incident has a resolution.
+     * @enum {string}
+     */
+    IncidentStatus: 'open' | 'resolved';
     IncidentWindowCreate: {
       championshipId?: number | null;
       championshipName?: string | null;
@@ -2099,7 +2120,9 @@ export interface components {
       championshipName: string | null;
       raceId: number | null;
       raceName: string;
+      /** @description The race day as display text, normally `YYYY-MM-DD`. */
       date: string | null;
+      /** @description How long the window accepts incidents after it opens. */
       intervalHours: number;
       /** Format: date-time */
       openedAt: string;
@@ -2116,7 +2139,9 @@ export interface components {
       championshipName: string | null;
       raceId: number | null;
       raceName: string;
+      /** @description The race day as display text, normally `YYYY-MM-DD`. */
       date: string | null;
+      /** @description How long the window accepts incidents after it opens. */
       intervalHours: number;
       /** Format: date-time */
       openedAt: string;
@@ -2129,8 +2154,8 @@ export interface components {
       incidents: components['schemas']['IncidentOut'][];
     };
     IncidentWindowUpdate: {
-      isManuallyClosed?: boolean | null;
-      intervalHours?: number | null;
+      isManuallyClosed?: boolean;
+      intervalHours?: number;
     };
     LanguageCreate: {
       code: string;
@@ -2146,6 +2171,7 @@ export interface components {
     };
     /** @description ``PATCH /me/driver``: set (https only) or clear the profile photo. */
     MyDriverPhotoUpdate: {
+      /** Format: uri */
       photoUrl?: string | null;
     };
     PenaltyClearanceOut: {
@@ -2171,10 +2197,19 @@ export interface components {
       sortOrder: number;
     };
     PenaltyRuleUpdate: {
-      threshold?: number | null;
-      label?: string | null;
+      threshold?: number;
+      label?: string;
     };
-    /** @description An RFC 7807 problem document. Every error response has this shape. */
+    /**
+     * @description An RFC 7807 problem document. Every error response has this shape.
+     * @example {
+     *       "code": "not_found",
+     *       "detail": "Driver not found.",
+     *       "status": 404,
+     *       "title": "Not Found",
+     *       "type": "about:blank"
+     *     }
+     */
     Problem: {
       /** @default about:blank */
       type: string;
@@ -2190,7 +2225,9 @@ export interface components {
       championshipName: string | null;
       raceId: number | null;
       raceName: string;
+      /** @description The race day as display text, normally `YYYY-MM-DD`. */
       date: string | null;
+      /** @description How long the window accepts incidents after it opens. */
       intervalHours: number;
       /** Format: date-time */
       openedAt: string;
@@ -2201,14 +2238,16 @@ export interface components {
       isOpen: boolean;
       /** @default [] */
       incidents: components['schemas']['IncidentOut'][];
-      /** @default 0 */
+      /**
+       * @description Penalties that reached no licence because the driver name matches no driver record.
+       * @default 0
+       */
       unlinkedCount: number;
     };
     RaceImportOut: {
       /** Format: uuid */
       id: string;
-      /** @enum {string} */
-      sim: 'lmu' | 'iracing';
+      sim: components['schemas']['Sim'];
       trackEvent: string | null;
       sessionStartedAt: string | null;
       sourceFilename: string | null;
@@ -2243,11 +2282,8 @@ export interface components {
       /** @default 0 */
       penaltyS: number;
       points: number | null;
-      /**
-       * @default classified
-       * @enum {string}
-       */
-      status: 'classified' | 'dnf' | 'dq' | 'dns';
+      /** @default classified */
+      status: components['schemas']['RaceStatus'];
       ratingChange: number | null;
     };
     /** @description ``POST /race-result-imports``: the multipart form of one round's upload. */
@@ -2261,13 +2297,20 @@ export interface components {
       /** @default 24 */
       windowHours?: number;
     };
+    /** @enum {string} */
+    RaceSessionKind: 'race' | 'qualifying';
     RaceSessionOut: {
       raceId: number;
-      /** @enum {string} */
-      session: 'race' | 'qualifying';
+      session: components['schemas']['RaceSessionKind'];
       /** @default [] */
       entries: components['schemas']['RaceResultEntry'][];
     };
+    /**
+     * @description ``classified`` covers every non-DNS finisher when SimGrid gives no
+     *     status (iRacing): it cannot tell a retirement from a car several laps down.
+     * @enum {string}
+     */
+    RaceStatus: 'classified' | 'dnf' | 'dq' | 'dns';
     RegulationContentOut: {
       lang: string;
       title: string;
@@ -2311,12 +2354,12 @@ export interface components {
       };
     };
     RegulationPageUpdate: {
-      slug?: string | null;
-      sortOrder?: number | null;
-      isVisible?: boolean | null;
+      slug?: string;
+      sortOrder?: number;
+      isVisible?: boolean;
       contents?: {
         [key: string]: components['schemas']['RegulationContentUpdate'];
-      } | null;
+      };
     };
     ResolveDriverIncident: {
       verdict: string;
@@ -2325,6 +2368,7 @@ export interface components {
     ResolveDriverItem: {
       /** Format: uuid */
       incidentDriverId: string;
+      /** @description Omit to apply the default verdict rule: name the exceptions, the server fills in the rest. */
       verdict?: string | null;
       bwpPoints?: number | null;
     };
@@ -2335,7 +2379,9 @@ export interface components {
       championshipName: string | null;
       raceId: number | null;
       raceName: string;
+      /** @description The race day as display text, normally `YYYY-MM-DD`. */
       date: string | null;
+      /** @description How long the window accepts incidents after it opens. */
       intervalHours: number;
       /** Format: date-time */
       openedAt: string;
@@ -2346,7 +2392,10 @@ export interface components {
       isOpen: boolean;
       /** @default [] */
       incidents: components['schemas']['IncidentOut'][];
-      /** @default 0 */
+      /**
+       * @description Drivers the default verdict was just applied to.
+       * @default 0
+       */
       resolvedCount: number;
     };
     RoundBreakdownOut: {
@@ -2379,16 +2428,22 @@ export interface components {
       championshipId: number;
       championshipName: string;
       gameName: string;
-      sim: ('lmu' | 'iracing') | null;
+      /** @description `null` when the championship's game has no supported result file. */
+      sim: components['schemas']['Sim'] | null;
       storageEnabled: boolean;
       rounds: components['schemas']['RoundOut'][];
     };
+    /**
+     * @description Simulators whose result files can be imported.
+     * @enum {string}
+     */
+    Sim: 'lmu' | 'iracing';
     StandingEntry: {
+      /** @description SimGrid user id; `null` when SimGrid gives none. */
       id: number | null;
       position: number | null;
       displayName: string;
-      /** @default  */
-      countryCode: string;
+      countryCode: string | null;
       /** @default  */
       car: string;
       /** @default  */
@@ -2417,6 +2472,7 @@ export interface components {
       rawName: string;
       normalizedName: string;
       rounds: number;
+      /** @description Ranked spelling hints for the admin; never applied on their own. */
       suggestions: string[];
     };
     UserOut: {
@@ -2425,9 +2481,10 @@ export interface components {
       discordId: string;
       username: string;
       displayName: string;
+      /** @description Nickname on the SKF Discord server. */
       discordNickname: string | null;
       avatarUrl: string | null;
-      role: string;
+      role: components['schemas']['UserRole'];
       blocked: boolean;
       /** Format: date-time */
       createdAt: string;
@@ -2436,11 +2493,29 @@ export interface components {
       /** @default [] */
       managedCommunityIds: string[];
     };
+    /** @enum {string} */
+    UserRole:
+      'driver' | 'moderator' | 'racing_judge' | 'community_manager' | 'admin' | 'super_admin';
     UserUpdate: {
-      role?: string | null;
-      blocked?: boolean | null;
+      role?: components['schemas']['UserRole'];
+      blocked?: boolean;
     };
-    /** @description A 422: the request did not pass validation. */
+    /**
+     * @description A 422: the request did not pass validation.
+     * @example {
+     *       "code": "validation_error",
+     *       "detail": "year: Field required",
+     *       "errors": [
+     *         {
+     *           "field": "year",
+     *           "message": "Field required"
+     *         }
+     *       ],
+     *       "status": 422,
+     *       "title": "Unprocessable Content",
+     *       "type": "about:blank"
+     *     }
+     */
     ValidationProblem: {
       /** @default about:blank */
       type: string;
@@ -2469,9 +2544,9 @@ export interface components {
       ids: string[];
     };
     VerdictRuleUpdate: {
-      verdict?: string | null;
-      defaultBwp?: number | null;
-      isDefault?: boolean | null;
+      verdict?: string;
+      defaultBwp?: number;
+      isDefault?: boolean;
     };
     WindowIncidentsUpdate: {
       /** @constant */
@@ -2482,9 +2557,9 @@ export interface components {
       title: string;
       /** @default  */
       description: string;
+      /** Format: date-time */
       publishedAt: string;
-      /** @default  */
-      thumbnailUrl: string;
+      thumbnailUrl: string | null;
     };
   };
   responses: {
@@ -2730,7 +2805,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        domain: string;
+        domain: 'simgrid' | 'youtube';
       };
       cookie?: never;
     };
@@ -2879,7 +2954,7 @@ export interface operations {
   getRaceResults: {
     parameters: {
       query?: {
-        session?: 'race' | 'qualifying';
+        session?: components['schemas']['RaceSessionKind'];
       };
       header?: never;
       path: {
