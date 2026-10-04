@@ -1,0 +1,25 @@
+<app-page>
+  <app-card [animated]="true">
+    @switch (error()) {
+      @case (null) {
+        <app-spinner />
+        <p class="status">{{ 'auth.signingIn' | transloco }}</p>
+      }
+      @case ('blocked') {
+        <p class="status">{{ 'auth.errorBlocked' | transloco }}</p>
+        <a appBtn variant="ghost" href="/">{{ 'auth.backHome' | transloco }}</a>
+      }
+      @default {
+        <p class="status">
+          {{ (error() === 'cancelled' ? 'auth.errorCancelled' : 'auth.errorFailed') | transloco }}
+        </p>
+        <div class="actions">
+          <app-btn variant="accent" (click)="auth.login()">{{
+            'auth.signInWithDiscord' | transloco
+          }}</app-btn>
+          <a appBtn variant="ghost" href="/">{{ 'auth.backHome' | transloco }}</a>
+        </div>
+      }
+    }
+  </app-card>
+</app-page>

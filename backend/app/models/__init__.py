@@ -21,8 +21,8 @@ from app.models.user import (
     ROLE_DRIVER,
     ROLE_JUDGE,
     ROLE_SUPER_ADMIN,
+    RefreshToken,
     Role,
-    Session,
     User,
 )
 
@@ -34,7 +34,7 @@ __all__ = [
     "SimgridCache",
     "Role",
     "User",
-    "Session",
+    "RefreshToken",
     "ROLE_DRIVER",
     "ROLE_ADMIN",
     "ROLE_SUPER_ADMIN",

@@ -38,6 +38,20 @@ class AuthUrlOut(CamelModel):
     url: Url
 
 
+class TokenCreate(CamelModel):
+    refresh_token: str = Field(min_length=1, max_length=200)
+
+
+class TokenRevocationCreate(CamelModel):
+    refresh_token: str = Field(min_length=1, max_length=200)
+
+
+class TokenOut(CamelModel):
+    access_token: str = Field(description="Send as `Authorization: Bearer <accessToken>`.")
+    refresh_token: str = Field(description="Replaces the one that was sent; each can be used once.")
+    expires_in: int = Field(description="Lifetime of the access token, in seconds.")
+
+
 class ManagedCommunitiesUpdate(CamelModel):
     community_ids: list[uuid.UUID]
 

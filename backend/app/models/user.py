@@ -1,4 +1,4 @@
-"""User, Role & Session models for Discord OAuth."""
+"""User, Role & RefreshToken models for Discord OAuth."""
 
 from __future__ import annotations
 
@@ -47,10 +47,12 @@ class User(Base):
     blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Access tokens issued up to this moment are refused (force logout, block).
+    tokens_revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     role: Mapped[Role] = relationship(back_populates="users", lazy="joined")
 
-    sessions: Mapped[list[Session]] = relationship(
+    refresh_tokens: Mapped[list[RefreshToken]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="raise"
     )
 
@@ -61,8 +63,15 @@ class User(Base):
         return None
 
 
-class Session(Base):
-    __tablename__ = "sessions"
+class RefreshToken(Base):
+    """One refresh token of a login. Only its SHA-256 is stored.
+
+    Every refresh replaces the token with a new one of the same ``family_id``;
+    the old row stays, marked ``used_at``, so a replayed token is recognised
+    and takes the whole family down with it.
+    """
+
+    __tablename__ = "refresh_tokens"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
@@ -71,7 +80,12 @@ class Session(Base):
         nullable=False,
         index=True,
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    family_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    user: Mapped[User] = relationship(back_populates="sessions")
+    user: Mapped[User] = relationship(back_populates="refresh_tokens")

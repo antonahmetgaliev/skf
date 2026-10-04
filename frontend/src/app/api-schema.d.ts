@@ -24,7 +24,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/auth/session': {
+  '/api/v1/auth/tokens': {
     parameters: {
       query?: never;
       header?: never;
@@ -33,12 +33,35 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    post?: never;
     /**
-     * Logout
-     * @description End the current session and clear the cookie.
+     * Create tokens
+     * @description Exchange a refresh token for an access token and the next refresh token.
+     *
+     *     A refresh token works once. Presenting one that was already replaced ends
+     *     the login it belongs to.
      */
-    delete: operations['logout'];
+    post: operations['createTokens'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/token-revocations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Revoke tokens
+     * @description Sign out: end the login the refresh token belongs to.
+     */
+    post: operations['revokeTokens'];
+    delete?: never;
     options?: never;
     head?: never;
     patch?: never;
@@ -1420,7 +1443,7 @@ export interface paths {
     patch: operations['updateUser'];
     trace?: never;
   };
-  '/api/v1/users/{userId}/sessions': {
+  '/api/v1/users/{userId}/tokens': {
     parameters: {
       query?: never;
       header?: never;
@@ -1431,12 +1454,12 @@ export interface paths {
     put?: never;
     post?: never;
     /**
-     * Revoke user sessions
-     * @description Delete all sessions of a user (force logout).
+     * Revoke user tokens
+     * @description End every login of a user (force logout): their tokens stop working at once.
      *
      *     Requires role: `admin`, `super_admin`.
      */
-    delete: operations['revokeUserSessions'];
+    delete: operations['revokeUserTokens'];
     options?: never;
     head?: never;
     patch?: never;
@@ -2420,6 +2443,20 @@ export interface components {
     };
     /** @enum {string} */
     StreamStatus: 'past' | 'upcoming';
+    TokenCreate: {
+      refreshToken: string;
+    };
+    TokenOut: {
+      /** @description Send as `Authorization: Bearer <accessToken>`. */
+      accessToken: string;
+      /** @description Replaces the one that was sent; each can be used once. */
+      refreshToken: string;
+      /** @description Lifetime of the access token, in seconds. */
+      expiresIn: number;
+    };
+    TokenRevocationCreate: {
+      refreshToken: string;
+    };
     UnmatchedDriverNameOut: {
       rawName: string;
       normalizedName: string;
@@ -2634,14 +2671,45 @@ export interface operations {
       };
     };
   };
-  logout: {
+  createTokens: {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TokenCreate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TokenOut'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      422: components['responses']['UnprocessableContent'];
+      503: components['responses']['ServiceUnavailable'];
+    };
+  };
+  revokeTokens: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TokenRevocationCreate'];
+      };
+    };
     responses: {
       /** @description Successful Response */
       204: {
@@ -2650,6 +2718,7 @@ export interface operations {
         };
         content?: never;
       };
+      422: components['responses']['UnprocessableContent'];
     };
   };
   clearAllCaches: {
@@ -5293,7 +5362,7 @@ export interface operations {
       422: components['responses']['UnprocessableContent'];
     };
   };
-  revokeUserSessions: {
+  revokeUserTokens: {
     parameters: {
       query?: never;
       header?: never;
@@ -5684,9 +5753,10 @@ export interface operations {
   };
   discordCallback: {
     parameters: {
-      query: {
-        code: string;
+      query?: {
+        code?: string | null;
         state?: string;
+        error?: string | null;
       };
       header?: never;
       path?: never;
@@ -5694,7 +5764,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      /** @description Signed in: redirects to the frontend with the session cookie set. */
+      /** @description Redirects to the frontend's `/auth/callback`. The URL fragment carries `token` (a refresh token to exchange at `POST /api/v1/auth/tokens`) or, when the login failed, `error` (a problem `code`). */
       302: {
         headers: {
           /** @description The frontend URL. */
@@ -5703,10 +5773,7 @@ export interface operations {
         };
         content?: never;
       };
-      400: components['responses']['BadRequest'];
-      403: components['responses']['Forbidden'];
       422: components['responses']['UnprocessableContent'];
-      502: components['responses']['BadGateway'];
     };
   };
   ingestIncidents: {

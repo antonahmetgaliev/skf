@@ -205,8 +205,11 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loadCommunities();
     this.loadYearEvents();
     // Deep link from the home page "add your community" prompt
-    if (this.route.snapshot.queryParamMap.get('request') === 'community' && this.auth.user()) {
-      this.openRequestModal();
+    if (this.route.snapshot.queryParamMap.get('request') === 'community') {
+      // On a direct page load the user is not known yet.
+      this.auth.whenLoaded().then(() => {
+        if (this.auth.user()) this.openRequestModal();
+      });
     }
   }
 

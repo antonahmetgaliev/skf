@@ -1,8 +1,9 @@
-"""Tests for /api/v1/me, the session endpoint and the legacy OAuth callback."""
+"""Tests for /api/v1/me and the legacy OAuth callback."""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
+from urllib.parse import parse_qs, urlsplit
 
 from httpx import AsyncClient
 from sqlalchemy import select
@@ -54,17 +55,12 @@ async def test_me_returns_401_problem_when_unauthenticated(client: AsyncClient):
     assert resp.json()["detail"] == "Not authenticated."
 
 
-async def test_me_with_session_cookie(client: AsyncClient, db: AsyncSession, test_user):
-    """A real session cookie (no dependency override) authenticates /me."""
-    from app.auth import SESSION_COOKIE
-    from app.models.user import Session
+async def test_me_with_access_token(client: AsyncClient, test_user):
+    """A real access token (no dependency override) authenticates /me."""
+    from app.services import tokens
 
-    session = Session(user_id=test_user.id, expires_at=_now() + timedelta(days=1))
-    db.add(session)
-    await db.commit()
-
-    client.cookies.set(SESSION_COOKIE, str(session.id))
-    resp = await client.get(ME_URL)
+    token, _ = tokens.issue_access_token(test_user.id)
+    resp = await client.get(ME_URL, headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 200
     assert resp.json()["id"] == str(test_user.id)
 
@@ -79,29 +75,12 @@ async def test_discord_sync_without_bot_token_is_503_without_env_names(auth_clie
     assert "DISCORD_" not in resp.json()["detail"]
 
 
-async def test_logout_deletes_session_and_clears_cookie(client: AsyncClient, db: AsyncSession, test_user):
-    from app.auth import SESSION_COOKIE
-    from app.models.user import Session
-
-    session = Session(user_id=test_user.id, expires_at=_now() + timedelta(days=1))
-    db.add(session)
-    await db.commit()
-    session_id = session.id
-
-    client.cookies.set(SESSION_COOKIE, str(session_id))
-    resp = await client.delete("/api/v1/auth/session")
-    assert resp.status_code == 204
-    set_cookie = resp.headers.get("set-cookie", "")
-    assert f"{SESSION_COOKIE}=" in set_cookie
-    assert "Max-Age=0" in set_cookie or "expires=" in set_cookie.lower()
-
-    db.expire_all()
-    assert (await db.execute(select(Session).where(Session.id == session_id))).first() is None
-
-
-async def test_logout_without_cookie_is_204(client: AsyncClient):
-    resp = await client.delete("/api/v1/auth/session")
-    assert resp.status_code == 204
+def _fragment(resp) -> dict[str, str]:
+    """The callback's outcome, from the fragment of its redirect."""
+    assert resp.status_code == 302
+    location = urlsplit(resp.headers["location"])
+    assert f"{location.scheme}://{location.netloc}{location.path}".endswith("/auth/callback")
+    return {key: values[0] for key, values in parse_qs(location.fragment).items()}
 
 
 async def test_authorization_url_sets_state_cookie(client: AsyncClient):
@@ -114,8 +93,12 @@ async def test_authorization_url_sets_state_cookie(client: AsyncClient):
 async def test_callback_keeps_legacy_path_and_rejects_bad_state(client: AsyncClient):
     client.cookies.set("oauth_state", "expected")
     resp = await client.get("/api/auth/discord/callback", params={"code": "abc", "state": "wrong"})
-    assert resp.status_code == 400
-    assert resp.json()["detail"] == "Invalid OAuth state. Please retry the login."
+    assert _fragment(resp) == {"error": "invalid_state"}
+
+
+async def test_callback_declined_on_discord_redirects_with_error(client: AsyncClient):
+    resp = await client.get("/api/auth/discord/callback", params={"error": "access_denied", "state": "s"})
+    assert _fragment(resp) == {"error": "access_denied"}
 
 
 async def test_callback_not_served_under_v1(client: AsyncClient):
@@ -126,7 +109,7 @@ async def test_callback_not_served_under_v1(client: AsyncClient):
 async def test_callback_logs_in_and_redirects_to_frontend(
     client: AsyncClient, db: AsyncSession, seed_roles, monkeypatch
 ):
-    """Full callback with Discord mocked: user upserted, cookie set, redirect to FRONTEND_URL."""
+    """Full callback with Discord mocked: user upserted, redirect carries a usable refresh token."""
     import httpx
 
     from app.api.v1 import auth as auth_router
@@ -156,19 +139,54 @@ async def test_callback_logs_in_and_redirects_to_frontend(
 
     client.cookies.set("oauth_state", "s")
     resp = await client.get("/api/auth/discord/callback", params={"code": "abc", "state": "s"})
-    assert resp.status_code == 302
-    assert resp.headers["location"] == "https://skf.example"
-    cookies = resp.headers.get_list("set-cookie")
-    session_cookie = next(c for c in cookies if c.startswith("session_id="))
-    assert "Secure" in session_cookie
+    assert resp.headers["location"].startswith("https://skf.example/auth/callback#")
+    assert "session_id=" not in resp.headers.get("set-cookie", "")
 
     from app.models.user import User
 
     user = (await db.execute(select(User).where(User.discord_id == "999"))).scalar_one()
     assert user.guild_nickname == "New Bie"
 
+    resp = await client.post("/api/v1/auth/tokens", json={"refreshToken": _fragment(resp)["token"]})
+    assert resp.status_code == 200
+    me = await client.get(ME_URL, headers={"Authorization": f"Bearer {resp.json()['accessToken']}"})
+    assert me.json()["id"] == str(user.id)
 
-async def test_callback_incomplete_discord_response_is_502(client: AsyncClient, monkeypatch):
+
+async def test_callback_for_blocked_user_redirects_with_error(
+    client: AsyncClient, db: AsyncSession, test_user, monkeypatch
+):
+    import httpx
+
+    from app.config import settings
+    from app.models.user import RefreshToken
+    from app.services import auth as auth_service
+
+    monkeypatch.setattr(settings, "discord_guild_id", "")
+    test_user.blocked = True
+    await db.merge(test_user)
+    await db.commit()
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/oauth2/token"):
+            return httpx.Response(200, json={"access_token": "tok"})
+        return httpx.Response(200, json={"id": test_user.discord_id, "username": "tester"})
+
+    real_client = httpx.AsyncClient
+
+    def mocked_client(*args, **kwargs):
+        kwargs["transport"] = httpx.MockTransport(handler)
+        return real_client(*args, **kwargs)
+
+    monkeypatch.setattr(auth_service.httpx, "AsyncClient", mocked_client)
+
+    client.cookies.set("oauth_state", "s")
+    resp = await client.get("/api/auth/discord/callback", params={"code": "abc", "state": "s"})
+    assert _fragment(resp) == {"error": "blocked"}
+    assert (await db.execute(select(RefreshToken))).first() is None
+
+
+async def test_callback_incomplete_discord_response_redirects_with_error(client: AsyncClient, monkeypatch):
     import httpx
 
     from app.services import auth as auth_service
@@ -186,4 +204,4 @@ async def test_callback_incomplete_discord_response_is_502(client: AsyncClient, 
 
     client.cookies.set("oauth_state", "s")
     resp = await client.get("/api/auth/discord/callback", params={"code": "abc", "state": "s"})
-    assert resp.status_code == 502
+    assert _fragment(resp) == {"error": "upstream_error"}

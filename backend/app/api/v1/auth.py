@@ -1,20 +1,25 @@
-"""Discord OAuth2 login and session endpoints."""
+"""Discord OAuth2 login and token endpoints."""
 
 from __future__ import annotations
 
+import logging
 import secrets
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import SESSION_COOKIE
 from app.config import settings
+from app.core.errors import AppError
 from app.core.openapi import problem_responses
 from app.database import get_db
-from app.schemas.auth import AuthUrlOut
+from app.schemas.auth import AuthUrlOut, TokenCreate, TokenOut, TokenRevocationCreate
 from app.services import auth as auth_service
+from app.services import tokens
 from app.services.drivers import link_driver_for_user
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -23,6 +28,8 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 legacy_router = APIRouter(prefix="/auth/discord", tags=["Auth"])
 
 OAUTH_STATE_COOKIE = "oauth_state"
+# The frontend route that finishes the login.
+FRONTEND_CALLBACK_PATH = "/auth/callback"
 
 
 @router.get("/discord/authorization-url", response_model=AuthUrlOut)
@@ -41,49 +48,81 @@ async def discord_authorization_url(response: Response):
     return AuthUrlOut(url=auth_service.authorization_url(state))
 
 
+def _to_frontend(**fragment: str) -> RedirectResponse:
+    """Send the browser to the frontend's callback page.
+
+    The outcome travels in the URL fragment, which browsers never send to a
+    server, so it stays out of access logs and ``Referer`` headers.
+    """
+    url = f"{settings.frontend_url.rstrip('/')}{FRONTEND_CALLBACK_PATH}#{urlencode(fragment)}"
+    redirect = RedirectResponse(url=url, status_code=status.HTTP_302_FOUND)
+    redirect.delete_cookie(OAUTH_STATE_COOKIE, path="/")
+    return redirect
+
+
 @legacy_router.get(
     "/callback",
     status_code=status.HTTP_302_FOUND,
     response_class=RedirectResponse,
     responses={
         302: {
-            "description": "Signed in: redirects to the frontend with the session cookie set.",
+            "description": (
+                "Redirects to the frontend's `/auth/callback`. The URL fragment carries "
+                "`token` (a refresh token to exchange at `POST /api/v1/auth/tokens`) or, "
+                "when the login failed, `error` (a problem `code`)."
+            ),
             "headers": {"Location": {"description": "The frontend URL.", "schema": {"type": "string"}}},
         },
-        **problem_responses(400, 403, 502),
     },
 )
 async def discord_callback(
-    code: str,
     request: Request,
     background_tasks: BackgroundTasks,
+    code: str | None = None,
     state: str = "",
+    error: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
     """Handle the OAuth2 callback from Discord, then redirect to the frontend."""
-    auth_service.check_state(state, request.cookies.get(OAUTH_STATE_COOKIE))
-    user, session = await auth_service.login_with_discord(db, code)
+    if error or not code:
+        # The user declined on Discord's consent screen.
+        return _to_frontend(error="access_denied")
+    try:
+        auth_service.check_state(state, request.cookies.get(OAUTH_STATE_COOKIE))
+        user, refresh_token = await auth_service.login_with_discord(db, code)
+    except AppError as exc:
+        logger.warning("Discord login failed: %s", exc.detail)
+        return _to_frontend(error=exc.code)
 
     # Auto-link the user's driver via SimGrid discord_uid — after the
     # response, so a SimGrid hiccup never affects login.
     background_tasks.add_task(link_driver_for_user, user.id, user.discord_id)
 
-    redirect = RedirectResponse(url=settings.frontend_url, status_code=status.HTTP_302_FOUND)
-    redirect.delete_cookie(OAUTH_STATE_COOKIE, path="/")
-    redirect.set_cookie(
-        key=SESSION_COOKIE,
-        value=str(session.id),
-        httponly=True,
-        secure=auth_service.frontend_is_secure(),
-        samesite="lax",
-        max_age=settings.session_max_age_hours * 3600,
-        path="/",
+    return _to_frontend(token=refresh_token)
+
+
+@router.post(
+    "/tokens",
+    response_model=TokenOut,
+    status_code=status.HTTP_200_OK,
+    responses=problem_responses(401, 503),
+)
+async def create_tokens(body: TokenCreate, response: Response, db: AsyncSession = Depends(get_db)):
+    """Exchange a refresh token for an access token and the next refresh token.
+
+    A refresh token works once. Presenting one that was already replaced ends
+    the login it belongs to.
+    """
+    response.headers["Cache-Control"] = "no-store"
+    pair = await tokens.refresh(db, body.refresh_token)
+    return TokenOut(
+        access_token=pair.access_token,
+        refresh_token=pair.refresh_token,
+        expires_in=pair.expires_in,
     )
-    return redirect
 
 
-@router.delete("/session", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
-    """End the current session and clear the cookie."""
-    await auth_service.end_session(db, request.cookies.get(SESSION_COOKIE))
-    response.delete_cookie(SESSION_COOKIE, path="/")
+@router.post("/token-revocations", status_code=status.HTTP_204_NO_CONTENT)
+async def revoke_tokens(body: TokenRevocationCreate, db: AsyncSession = Depends(get_db)):
+    """Sign out: end the login the refresh token belongs to."""
+    await tokens.revoke(db, body.refresh_token)

@@ -31,6 +31,31 @@ try {
   console.log('[startup] compression not available, skipping');
 }
 
+// The login's tokens live in localStorage, where any script running on the page
+// can read them — so only our own scripts (and Google Analytics) may run here.
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' https://*.googletagmanager.com",
+  // Angular adds component styles as <style> elements.
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  // Avatars, driver photos and stream thumbnails come from other sites.
+  "img-src 'self' data: https:",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
+
+app.use((req, res, next) => {
+  res.setHeader('Content-Security-Policy', CONTENT_SECURITY_POLICY);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
 // Health check endpoint (Railway uses this to verify the app is alive)
 app.get('/healthz', (req, res) => res.status(200).send('ok'));
 
@@ -67,6 +92,7 @@ try {
       target: BACKEND_URL,
       changeOrigin: true,
       pathFilter: '/api/**',
+      // The OAuth state cookie is the only one the backend sets.
       cookieDomainRewrite: '',
       cookiePathRewrite: '/',
       on: {
@@ -74,19 +100,15 @@ try {
           // Preserve the original host so the backend knows the public domain
           proxyReq.setHeader('X-Forwarded-Host', req.headers.host);
           proxyReq.setHeader('X-Forwarded-Proto', req.protocol);
-          console.log(`[proxy] ${req.method} ${req.originalUrl} → ${BACKEND_URL}${req.originalUrl}`);
         },
+        // Paths only: a query string can carry an OAuth code.
         proxyRes: (proxyRes, req) => {
-          console.log(`[proxy] ${req.method} ${req.originalUrl} ← ${proxyRes.statusCode}`);
+          console.log(`[proxy] ${req.method} ${req.path} ← ${proxyRes.statusCode}`);
         },
         error: (err, req, res) => {
-          console.error(`[proxy] ERROR ${req.method} ${req.originalUrl}:`, err.code || err.message);
+          console.error(`[proxy] ERROR ${req.method} ${req.path}:`, err.code || err.message);
           if (!res.headersSent) {
-            res.status(502).json({
-              error: 'Backend unavailable',
-              detail: err.code || err.message,
-              target: BACKEND_URL,
-            });
+            res.status(502).json({ error: 'Backend unavailable' });
           }
         },
       },

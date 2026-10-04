@@ -1,12 +1,11 @@
-"""Discord OAuth2 login, sessions and Discord nickname sync."""
+"""Discord OAuth2 login and Discord nickname sync."""
 
 from __future__ import annotations
 
 import logging
 import secrets
-import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlencode, urlparse
 
@@ -16,7 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.errors import BadGateway, BadRequest, Forbidden, ServiceUnavailable
-from app.models.user import ROLE_DRIVER, ROLE_SUPER_ADMIN, Role, Session, User
+from app.models.user import ROLE_DRIVER, ROLE_SUPER_ADMIN, Role, User
+from app.services import tokens
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ def authorization_url(state: str) -> str:
 
 
 def frontend_is_secure() -> bool:
-    """Session cookies are ``Secure`` exactly when the frontend is served over https."""
+    """The OAuth state cookie is ``Secure`` exactly when the frontend is served over https."""
     return urlparse(settings.frontend_url).scheme == "https"
 
 
@@ -186,8 +186,11 @@ async def _upsert_user(db: AsyncSession, profile: DiscordProfile, member: Member
     return user
 
 
-async def login_with_discord(db: AsyncSession, code: str) -> tuple[User, Session]:
-    """Complete the OAuth flow: exchange *code*, upsert the user, open a session."""
+async def login_with_discord(db: AsyncSession, code: str) -> tuple[User, str]:
+    """Complete the OAuth flow: exchange *code*, upsert the user, start a login.
+
+    Returns the user and the login's first refresh token.
+    """
     try:
         async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
             access_token = await _exchange_code(client, code)
@@ -207,35 +210,17 @@ async def login_with_discord(db: AsyncSession, code: str) -> tuple[User, Session
     user = await _upsert_user(db, profile, member)
     if user.blocked:
         await db.rollback()
-        raise Forbidden("Your account has been blocked.")
+        raise Forbidden("Your account has been blocked.", code="blocked")
 
-    session = Session(
-        user_id=user.id,
-        expires_at=datetime.now(UTC) + timedelta(hours=settings.session_max_age_hours),
-    )
-    db.add(session)
+    refresh_token = tokens.start_login(db, user.id)
     await db.commit()
-    return user, session
+    return user, refresh_token
 
 
 def check_state(state: str, expected: str | None) -> None:
     """CSRF check: the callback's state must match the cookie set at flow start."""
     if not expected or not state or not secrets.compare_digest(state, expected):
-        raise BadRequest("Invalid OAuth state. Please retry the login.")
-
-
-async def end_session(db: AsyncSession, raw_session_id: str | None) -> None:
-    """Delete the session identified by the cookie value, if any."""
-    if not raw_session_id:
-        return
-    try:
-        session_id = uuid.UUID(raw_session_id)
-    except ValueError:
-        return
-    session = await db.get(Session, session_id)
-    if session is not None:
-        await db.delete(session)
-        await db.commit()
+        raise BadRequest("Invalid OAuth state. Please retry the login.", code="invalid_state")
 
 
 # ── Nickname sync ───────────────────────────────────────────────────────────

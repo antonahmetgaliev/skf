@@ -165,7 +165,7 @@
         <app-btn variant="danger" (click)="logout()">{{ 'profile.logout' | transloco }}</app-btn>
       </div>
     </app-card>
-  } @else {
+  } @else if (auth.loaded()) {
     <app-card [animated]="true">
       <p>{{ 'profile.notSignedIn' | transloco }}</p>
       <app-btn variant="accent" (click)="auth.login()">{{

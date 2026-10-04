@@ -128,7 +128,7 @@
             <button class="btn-logout" type="button" (click)="auth.logout()">
               {{ 'auth.logout' | transloco }}
             </button>
-          } @else {
+          } @else if (auth.loaded()) {
             <button class="btn-discord" type="button" (click)="auth.login()">
               <svg
                 class="discord-icon"
@@ -162,7 +162,7 @@
           <button class="btn-logout" type="button" (click)="auth.logout()">
             {{ 'auth.logout' | transloco }}
           </button>
-        } @else {
+        } @else if (auth.loaded()) {
           <button class="btn-discord" type="button" (click)="auth.login()">
             <svg
               class="discord-icon"

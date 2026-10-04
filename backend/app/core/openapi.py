@@ -5,7 +5,7 @@ cannot know on its own, so the spec matches what the server really sends:
 
 * errors are RFC 7807 problem documents (see :mod:`app.core.errors`), not
   FastAPI's default validation shape;
-* which operations need a session, and which roles;
+* which operations need an access token, and which roles;
 * the response headers set outside the handlers (paging, ``Location``).
 
 Routes declare only what is specific to them, with :func:`problem_responses`
@@ -32,9 +32,12 @@ _SCHEMA_REF = "#/components/schemas/{model}"
 DESCRIPTION = """\
 REST API of the SKF Racing Hub site.
 
-**Authentication.** A `session_id` cookie, set by the Discord login. Operations
-that need a session list it under *security*; the roles they accept are in
-`x-required-roles`.
+**Authentication.** `Authorization: Bearer <access token>`. The Discord login
+hands the frontend a refresh token; `POST /api/v1/auth/tokens` exchanges it for
+a short-lived access token and the next refresh token. Operations that need a
+token list it under *security*; the roles they accept are in `x-required-roles`.
+A request that sends a token which is expired or revoked gets a 401 everywhere,
+also where anonymous access is allowed.
 
 **Errors.** Every error is an `application/problem+json` document (`Problem`).
 `code` is a stable machine-readable identifier, `detail` a message that can be
@@ -50,9 +53,9 @@ problem.
 """
 
 TAGS = [
-    {"name": "Auth", "description": "Discord login and the session cookie."},
+    {"name": "Auth", "description": "Discord login and tokens."},
     {"name": "Me", "description": "The signed-in user and their driver."},
-    {"name": "Users", "description": "Accounts, roles and sessions (admin)."},
+    {"name": "Users", "description": "Accounts, roles and logins (admin)."},
     {"name": "Drivers", "description": "Driver directory and BWP licence points."},
     {"name": "Penalty rules", "description": "BWP thresholds and the sanction each one brings."},
     {"name": "Championships", "description": "SimGrid championships, standings and results."},

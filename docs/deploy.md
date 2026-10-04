@@ -17,7 +17,7 @@ Values live only in Railway. Defaults are in `backend/app/config.py`.
 
 Backend:
 - `DATABASE_URL` — injected by the Postgres plugin.
-- `FRONTEND_URL` — public site origin. Discord login redirects here, and an `https` URL makes the session cookie `Secure`. `CORS_ORIGINS` — allowed origins.
+- `FRONTEND_URL` — public site origin. Discord login redirects to its `/auth/callback`, and an `https` URL makes the OAuth state cookie `Secure`. `CORS_ORIGINS` — allowed origins.
 - `SIMGRID_API_KEY` — SimGrid API.
 - `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_REDIRECT_URI` — Discord login.
 - `DISCORD_GUILD_ID`, `DISCORD_BOT_TOKEN` — read server nicknames for driver matching.
@@ -26,7 +26,8 @@ Backend:
 - `YOUTUBE_API_KEY`, `YOUTUBE_CHANNEL_ID` — media page.
 - `INCIDENT_API_TOKEN` — bearer token for the deprecated incident ingest endpoint.
 - `AWS_*` / `S3_*` — bucket for original race-result files. They are optional: without them uploads still work, but the originals aren't stored.
-- `SESSION_MAX_AGE_HOURS` — optional, defaults to a week.
+- `JWT_SECRET` — signs access tokens; a long random string. **Required**: without it nobody can sign in. Changing it signs everyone's access token out; they get a new one from their refresh token.
+- `ACCESS_TOKEN_TTL_MINUTES`, `REFRESH_TOKEN_TTL_DAYS` — optional, default to 15 minutes and 30 days.
 - `LOG_LEVEL` — optional, defaults to `INFO`.
 
 Frontend:

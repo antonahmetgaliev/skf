@@ -17,8 +17,8 @@ class Settings(BaseSettings):
     simgrid_base_url: str = "https://www.thesimgrid.com"
     cors_origins: str = "http://localhost:4200"
     # Public origin of the Angular app: where the OAuth callback sends the
-    # browser after login. Its scheme also decides the session cookie's
-    # ``Secure`` flag.
+    # browser after login. Its scheme also decides the ``Secure`` flag of the
+    # OAuth state cookie.
     frontend_url: str = "http://localhost:4200"
     port: int = 8000
     log_level: str = "INFO"
@@ -54,8 +54,12 @@ class Settings(BaseSettings):
     s3_region: str = Field("", validation_alias=AliasChoices("s3_region", "aws_default_region"))
     s3_addressing_style: str = "virtual"
 
-    # Session
-    session_max_age_hours: int = 24 * 7  # 1 week
+    # Tokens. Access tokens are JWTs signed with ``jwt_secret``; without it
+    # nobody can sign in. A refresh token lives until it is unused for
+    # ``refresh_token_ttl_days``.
+    jwt_secret: str = ""
+    access_token_ttl_minutes: int = 15
+    refresh_token_ttl_days: int = 30
 
     # Bootstrap super-admin on first login by Discord user ID
     super_admin_discord_id: str = ""

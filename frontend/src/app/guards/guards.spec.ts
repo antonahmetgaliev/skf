@@ -11,9 +11,14 @@ import {
 } from '@angular/router';
 import { API } from '../api';
 import { AuthService } from '../services/auth.service';
+import { clearTokens, writeTokens } from '../services/token-store';
 import { adminGuard } from './admin.guard';
 
-function setup() {
+/** `signedIn` puts a login in storage; without one the user is never requested. */
+function setup(signedIn = true) {
+  if (signedIn) {
+    writeTokens({ accessToken: 'a', refreshToken: 'r', expiresAt: Date.now() + 600_000 });
+  }
   TestBed.configureTestingModule({
     providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
   });
@@ -32,7 +37,10 @@ function run(guard: CanActivateFn) {
 const user = (role: string) => ({ id: '1', role, managedCommunityIds: [] });
 
 describe.each([['adminGuard', adminGuard, 'admin']])('%s', (_name, guard, allowedRole) => {
-  afterEach(() => TestBed.inject(HttpTestingController).verify());
+  afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
+    clearTokens();
+  });
 
   it('waits for the pending /me request before allowing access (hard refresh)', async () => {
     const { auth, http } = setup();
@@ -42,7 +50,22 @@ describe.each([['adminGuard', adminGuard, 'admin']])('%s', (_name, guard, allowe
     expect(await result).toBe(true);
   });
 
-  it('redirects anonymous visitors to / once /me answers 401', async () => {
+  it('redirects visitors without a login to / without asking the server', async () => {
+    const { auth } = setup(false);
+    expect(String(await run(guard))).toBe('/');
+    expect(auth.loaded()).toBe(true);
+  });
+
+  it('keeps an admin previewing the site as a lower role', async () => {
+    const { auth, http } = setup();
+    auth.loadUser();
+    http.expectOne(`${API}/me`).flush(user(allowedRole));
+    await auth.whenLoaded();
+    auth.viewAsRole.set('driver');
+    expect(await run(guard)).toBe(true);
+  });
+
+  it('redirects to / once /me answers 401', async () => {
     const { auth, http } = setup();
     auth.loadUser();
     const result = run(guard);

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -50,11 +49,17 @@ async def admin_client(engine, db: AsyncSession, seed_roles):
     db_module.async_session = original
 
 
-async def _add_users(db: AsyncSession, n: int) -> list:
+async def _add_users(db: AsyncSession, n: int, prefix: str = "d") -> list:
     from app.models.user import User
 
     users = [
-        User(id=uuid.uuid4(), discord_id=f"d{i}", username=f"user{i:02d}", display_name=f"U{i}", role_id=1)
+        User(
+            id=uuid.uuid4(),
+            discord_id=f"{prefix}{i}",
+            username=f"user{i:02d}" if prefix == "d" else f"user{prefix}{i:02d}",
+            display_name=f"U{i}",
+            role_id=1,
+        )
         for i in range(n)
     ]
     db.add_all(users)
@@ -108,10 +113,53 @@ async def test_users_requires_admin(auth_client: AsyncClient):
 
 async def test_update_user_role_and_block(admin_client: AsyncClient, db: AsyncSession):
     (user,) = await _add_users(db, 1)
-    resp = await admin_client.patch(f"{USERS_URL}/{user.id}", json={"role": "admin", "blocked": True})
+    resp = await admin_client.patch(f"{USERS_URL}/{user.id}", json={"role": "admin"})
     assert resp.status_code == 200
     assert resp.json()["role"] == "admin"
+
+    (other,) = await _add_users(db, 1, prefix="x")
+    resp = await admin_client.patch(f"{USERS_URL}/{other.id}", json={"blocked": True})
+    assert resp.status_code == 200
     assert resp.json()["blocked"] is True
+
+
+async def test_admin_cannot_block_an_admin(admin_client: AsyncClient, db: AsyncSession):
+    """Neither an existing admin nor one promoted in the same request."""
+    (user,) = await _add_users(db, 1)
+    resp = await admin_client.patch(f"{USERS_URL}/{user.id}", json={"role": "admin", "blocked": True})
+    assert resp.status_code == 403
+
+    resp = await admin_client.patch(f"{USERS_URL}/{admin_client.admin.id}", json={"blocked": True})
+    assert resp.status_code == 403
+
+
+async def test_admin_cannot_touch_a_super_admin(admin_client: AsyncClient, db: AsyncSession):
+    from tests.roles import make_user
+
+    boss = await make_user(db, "super_admin")
+    community = await _add_community(db)
+
+    assert (await admin_client.patch(f"{USERS_URL}/{boss.id}", json={"role": "driver"})).status_code == 403
+    assert (await admin_client.delete(f"{USERS_URL}/{boss.id}/tokens")).status_code == 403
+    resp = await admin_client.put(
+        f"{USERS_URL}/{boss.id}/managed-communities", json={"communityIds": [str(community.id)]}
+    )
+    assert resp.status_code == 403
+    (user,) = await _add_users(db, 1)
+    resp = await admin_client.patch(f"{USERS_URL}/{user.id}", json={"role": "super_admin"})
+    assert resp.status_code == 403
+
+
+async def test_super_admin_cannot_be_blocked_while_being_promoted(
+    admin_client: AsyncClient, db: AsyncSession
+):
+    from tests.roles import act_as, make_user
+
+    boss = await make_user(db, "super_admin")
+    (user,) = await _add_users(db, 1)
+    act_as(boss)
+    resp = await admin_client.patch(f"{USERS_URL}/{user.id}", json={"role": "super_admin", "blocked": True})
+    assert resp.status_code == 403
 
 
 async def test_update_user_unknown_role_is_422(admin_client: AsyncClient, db: AsyncSession):
@@ -125,19 +173,51 @@ async def test_update_unknown_user_is_404(admin_client: AsyncClient):
     assert resp.status_code == 404
 
 
-async def test_revoke_sessions(admin_client: AsyncClient, db: AsyncSession):
-    from datetime import datetime, timedelta
+async def _login(db: AsyncSession, user) -> tuple[str, str]:
+    """A refresh token and an access token of a fresh login."""
+    from app.services import tokens
 
-    from app.models.user import Session
+    refresh_token = tokens.start_login(db, user.id)
+    await db.commit()
+    access_token, _ = tokens.issue_access_token(user.id)
+    return refresh_token, access_token
+
+
+async def _token_is_accepted(client: AsyncClient, access_token: str) -> bool:
+    """Whether the real token check lets *access_token* through."""
+    from tests.roles import act_as
+
+    act_as(None)
+    resp = await client.get("/api/v1/me", headers={"Authorization": f"Bearer {access_token}"})
+    return resp.status_code == 200
+
+
+async def test_revoke_tokens_ends_every_login_at_once(admin_client: AsyncClient, db: AsyncSession):
+    from app.models.user import RefreshToken
 
     (user,) = await _add_users(db, 1)
-    db.add(Session(user_id=user.id, expires_at=datetime.now(UTC) + timedelta(days=1)))
-    await db.commit()
+    refresh_token, access_token = await _login(db, user)
 
-    resp = await admin_client.delete(f"{USERS_URL}/{user.id}/sessions")
+    resp = await admin_client.delete(f"{USERS_URL}/{user.id}/tokens")
     assert resp.status_code == 204
-    remaining = (await db.execute(select(Session).where(Session.user_id == user.id))).all()
-    assert remaining == []
+    assert (await db.execute(select(RefreshToken).where(RefreshToken.user_id == user.id))).all() == []
+    resp = await admin_client.post("/api/v1/auth/tokens", json={"refreshToken": refresh_token})
+    assert resp.status_code == 401
+    assert not await _token_is_accepted(admin_client, access_token)
+
+
+async def test_block_ends_every_login(admin_client: AsyncClient, db: AsyncSession):
+    (user,) = await _add_users(db, 1)
+    refresh_token, access_token = await _login(db, user)
+
+    resp = await admin_client.patch(f"{USERS_URL}/{user.id}", json={"blocked": True})
+    assert resp.status_code == 200
+    # Unblocking does not bring the old login back.
+    resp = await admin_client.patch(f"{USERS_URL}/{user.id}", json={"blocked": False})
+    assert resp.status_code == 200
+    resp = await admin_client.post("/api/v1/auth/tokens", json={"refreshToken": refresh_token})
+    assert resp.status_code == 401
+    assert not await _token_is_accepted(admin_client, access_token)
 
 
 async def test_managed_communities_roundtrip(admin_client: AsyncClient, db: AsyncSession):

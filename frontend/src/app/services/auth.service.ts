@@ -1,9 +1,12 @@
-import { HttpClient } from '@angular/common/http';
-import { computed, inject, Injectable, signal } from '@angular/core';
-import { catchError, firstValueFrom, Observable, of } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
+import { catchError, firstValueFrom, Observable, of, throwError } from 'rxjs';
 import { API, Schemas } from '../api';
+import { AuthTokensService } from './auth-tokens.service';
 
-/** Canonical role names. Mirrors backend `ROLE_*` constants in `models/user.py`. */
+export type Role = Schemas['UserRole'];
+
+/** Names for the roles the API knows. */
 export const ROLES = {
   DRIVER: 'driver',
   JUDGE: 'racing_judge',
@@ -11,9 +14,7 @@ export const ROLES = {
   COMMUNITY_MANAGER: 'community_manager',
   ADMIN: 'admin',
   SUPER_ADMIN: 'super_admin',
-} as const;
-
-export type Role = (typeof ROLES)[keyof typeof ROLES];
+} as const satisfies Record<string, Role>;
 
 /**
  * Linear rank for the admin tier — higher = more authority.
@@ -29,15 +30,17 @@ const ROLE_RANK: Record<Role, number> = {
   [ROLES.SUPER_ADMIN]: 2,
 };
 
-/** The backend types `role` as a plain string; the UI narrows it to the known roles. */
-export type AuthUser = Omit<Schemas['UserOut'], 'role'> & { role: Role };
+export type AuthUser = Schemas['UserOut'];
+
+const RETURN_URL_KEY = 'skf.returnUrl';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly tokens = inject(AuthTokensService);
 
   readonly user = signal<AuthUser | null>(null);
-  /** True once the initial `/me` request has resolved (with a user or as anonymous). */
+  /** True once it is known who the visitor is (a user or anonymous). */
   readonly loaded = signal(false);
   private loadPromise: Promise<void> | null = null;
   readonly isLoggedIn = computed(() => this.user() !== null);
@@ -72,17 +75,11 @@ export class AuthService {
   readonly isSuperAdmin = computed(() => this.hasRankAtLeast(ROLES.SUPER_ADMIN));
   readonly isAdmin = computed(() => this.hasRankAtLeast(ROLES.ADMIN));
 
-  /** Moderator capability — admin+ inherit it implicitly. */
-  readonly isModerator = computed(() => this.hasCapability(ROLES.MODERATOR));
-
   /** Racing judge capability — admin+ inherit it implicitly. */
   readonly isJudge = computed(() => this.hasCapability(ROLES.JUDGE));
 
   /** True when the effective role is community_manager (respects viewAs). */
   readonly isCommunityManager = computed(() => this.effectiveRole() === ROLES.COMMUNITY_MANAGER);
-
-  /** True when the user can access the admin panel (admin+ or community manager). */
-  readonly canAccessAdmin = computed(() => this.isAdmin() || this.isCommunityManager());
 
   /**
    * When an admin previews as community_manager, this holds the community ID they're impersonating.
@@ -103,30 +100,74 @@ export class AuthService {
     return r === role || ROLE_RANK[r] >= ROLE_RANK[ROLES.ADMIN];
   }
 
+  constructor() {
+    // The login can end underneath us: a refused refresh, or sign-out in another tab.
+    effect(() => {
+      if (!this.tokens.active()) untracked(() => this.clearUser());
+    });
+  }
+
   /**
-   * Fetch the current session user. Call once at app startup.
-   * `/me` answers 401 for anonymous visitors — that simply means "not logged in".
+   * Find out who the visitor is. Without a stored login that is "nobody",
+   * and no request is made.
    */
   loadUser(): Promise<void> {
-    this.loadPromise = firstValueFrom(
-      this.http.get<AuthUser>(`${API}/me`).pipe(catchError(() => of(null))),
-    ).then((user) => {
-      this.user.set(user);
-      this.loaded.set(true);
-    });
+    const request = this.tokens.active()
+      ? this.http.get<AuthUser>(`${API}/me`).pipe(
+          // 401: the login is over. Anything else (5xx, offline) leaves the
+          // stored login alone, so a reload can try again.
+          catchError((err: HttpErrorResponse) =>
+            err.status === 401 ? of(null) : throwError(() => err),
+          ),
+        )
+      : of(null);
+    this.loadPromise = firstValueFrom(request)
+      .catch(() => null)
+      .then((user) => {
+        this.user.set(user);
+        this.loaded.set(true);
+      });
     return this.loadPromise;
   }
 
-  /** Resolves once the session user is known; starts loading it if nobody has yet. */
+  /** Resolves once the visitor is known; starts loading if nobody has yet. */
   whenLoaded(): Promise<void> {
     return this.loadPromise ?? this.loadUser();
   }
 
-  /** Redirect the browser to the Discord OAuth flow. */
+  /** Send the browser through the Discord OAuth flow, then back to the current page. */
   login(): void {
-    this.http.get<{ url: string }>(`${API}/auth/discord/authorization-url`).subscribe({
+    try {
+      sessionStorage.setItem(RETURN_URL_KEY, location.pathname + location.search);
+    } catch {
+      // Without it the visitor lands on the home page.
+    }
+    this.http.get<Schemas['AuthUrlOut']>(`${API}/auth/discord/authorization-url`).subscribe({
       next: (res) => (window.location.href = res.url),
     });
+  }
+
+  /**
+   * Finish the OAuth flow with the refresh token from the callback.
+   * Resolves to whether the visitor is now signed in.
+   */
+  async completeLogin(refreshToken: string): Promise<boolean> {
+    const token = await firstValueFrom(this.tokens.begin(refreshToken)).catch(() => null);
+    if (!token) return false;
+    await this.loadUser();
+    return this.user() !== null;
+  }
+
+  /** The page the visitor was on when they chose to sign in; read once. */
+  takeReturnUrl(): string {
+    try {
+      const url = sessionStorage.getItem(RETURN_URL_KEY);
+      sessionStorage.removeItem(RETURN_URL_KEY);
+      // Only in-app paths: never follow a stored absolute URL.
+      return url && url.startsWith('/') && !url.startsWith('//') ? url : '/';
+    } catch {
+      return '/';
+    }
   }
 
   /** Re-fetch and store the user's Discord server nickname. */
@@ -134,11 +175,14 @@ export class AuthService {
     return this.http.post<AuthUser>(`${API}/me/discord-syncs`, null);
   }
 
-  /** End the current session. */
   logout(): void {
-    this.http.delete(`${API}/auth/session`).subscribe({
-      next: () => this.user.set(null),
-      error: () => this.user.set(null),
-    });
+    this.tokens.end();
+    this.clearUser();
+  }
+
+  private clearUser(): void {
+    this.user.set(null);
+    this.viewAsRole.set(null);
+    this.viewAsCommunityId.set(null);
   }
 }

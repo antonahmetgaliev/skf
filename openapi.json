@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "SKF Racing Hub API",
-    "description": "REST API of the SKF Racing Hub site.\n\n**Authentication.** A `session_id` cookie, set by the Discord login. Operations\nthat need a session list it under *security*; the roles they accept are in\n`x-required-roles`.\n\n**Errors.** Every error is an `application/problem+json` document (`Problem`).\n`code` is a stable machine-readable identifier, `detail` a message that can be\nshown to the user. Validation failures (422) also carry `errors`, one entry per\nrejected field.\n\n**Paging.** Collections that take `limit` and `offset` return a plain array;\nthe total is in `X-Total-Count` and neighbouring pages in an RFC 8288 `Link`\nheader.\n\n**Tracing.** Every response carries `X-Request-ID`; quote it when reporting a\nproblem.\n",
+    "description": "REST API of the SKF Racing Hub site.\n\n**Authentication.** `Authorization: Bearer <access token>`. The Discord login\nhands the frontend a refresh token; `POST /api/v1/auth/tokens` exchanges it for\na short-lived access token and the next refresh token. Operations that need a\ntoken list it under *security*; the roles they accept are in `x-required-roles`.\nA request that sends a token which is expired or revoked gets a 401 everywhere,\nalso where anonymous access is allowed.\n\n**Errors.** Every error is an `application/problem+json` document (`Problem`).\n`code` is a stable machine-readable identifier, `detail` a message that can be\nshown to the user. Validation failures (422) also carry `errors`, one entry per\nrejected field.\n\n**Paging.** Collections that take `limit` and `offset` return a plain array;\nthe total is in `X-Total-Count` and neighbouring pages in an RFC 8288 `Link`\nheader.\n\n**Tracing.** Every response carries `X-Request-ID`; quote it when reporting a\nproblem.\n",
     "version": "1.0.0"
   },
   "paths": {
@@ -28,17 +28,71 @@
         }
       }
     },
-    "/api/v1/auth/session": {
-      "delete": {
+    "/api/v1/auth/tokens": {
+      "post": {
         "tags": [
           "Auth"
         ],
-        "summary": "Logout",
-        "description": "End the current session and clear the cookie.",
-        "operationId": "logout",
+        "summary": "Create tokens",
+        "description": "Exchange a refresh token for an access token and the next refresh token.\n\nA refresh token works once. Presenting one that was already replaced ends\nthe login it belongs to.",
+        "operationId": "createTokens",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/token-revocations": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Revoke tokens",
+        "description": "Sign out: end the login the refresh token belongs to.",
+        "operationId": "revokeTokens",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRevocationCreate"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
           }
         }
       }
@@ -63,7 +117,7 @@
         },
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "x-required-roles": [
@@ -82,7 +136,7 @@
         "operationId": "clearCache",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -269,7 +323,7 @@
         "operationId": "updateChampionship",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -572,7 +626,7 @@
         "operationId": "getChampionshipRounds",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -637,7 +691,7 @@
         "operationId": "getGiveawayEligibility",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -709,7 +763,7 @@
         "operationId": "getUnmatchedDriverNames",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -811,7 +865,7 @@
         "operationId": "createCommunity",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "requestBody": {
@@ -907,7 +961,7 @@
         "operationId": "updateCommunity",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -970,7 +1024,7 @@
         "operationId": "deleteCommunity",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -1051,7 +1105,7 @@
         },
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ]
       }
@@ -1065,7 +1119,7 @@
         "operationId": "listCustomChampionships",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -1160,7 +1214,7 @@
         "operationId": "createCustomChampionship",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "requestBody": {
@@ -1220,7 +1274,7 @@
         "operationId": "getCustomChampionship",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -1273,7 +1327,7 @@
         "operationId": "updateCustomChampionship",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -1336,7 +1390,7 @@
         "operationId": "deleteCustomChampionship",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -1384,7 +1438,7 @@
         "operationId": "createCustomRace",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -1457,7 +1511,7 @@
         "operationId": "replaceCustomRaces",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -1527,7 +1581,7 @@
         "operationId": "getCustomRace",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -1589,7 +1643,7 @@
         "operationId": "updateCustomRace",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -1661,7 +1715,7 @@
         "operationId": "deleteCustomRace",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -1718,7 +1772,7 @@
         "operationId": "listDriverAliases",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -1797,7 +1851,7 @@
         "operationId": "upsertDriverAlias",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "requestBody": {
@@ -1868,7 +1922,7 @@
         "operationId": "getDriverAlias",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -1920,7 +1974,7 @@
         "operationId": "deleteDriverAlias",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -2076,7 +2130,7 @@
         "operationId": "createDriver",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "requestBody": {
@@ -2205,7 +2259,7 @@
         "operationId": "updateDriver",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -2271,7 +2325,7 @@
         "operationId": "deleteDriver",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -2318,7 +2372,7 @@
         "operationId": "createBwpPoint",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -2428,7 +2482,7 @@
         "operationId": "updateBwpPoint",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -2489,7 +2543,7 @@
         "operationId": "deleteBwpPoint",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -2537,7 +2591,7 @@
         "operationId": "createBwpReset",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -2646,7 +2700,7 @@
         "operationId": "setClearance",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -2725,7 +2779,7 @@
         "operationId": "deleteClearance",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -2798,7 +2852,7 @@
         },
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ]
       },
@@ -2840,7 +2894,7 @@
         },
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ]
       }
@@ -2931,7 +2985,7 @@
         "operationId": "createIncidentWindow",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "requestBody": {
@@ -3029,7 +3083,7 @@
         "operationId": "updateIncidentWindow",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -3091,7 +3145,7 @@
         "operationId": "deleteIncidentWindow",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -3203,7 +3257,7 @@
         "operationId": "publishIncidentWindow",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -3261,7 +3315,7 @@
         "operationId": "createDefaultResolutions",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -3357,7 +3411,7 @@
         "operationId": "copyIncident",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -3420,7 +3474,7 @@
         "operationId": "addIncidentDriver",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -3495,7 +3549,7 @@
         "operationId": "resolveIncident",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -3601,7 +3655,7 @@
         "operationId": "removeIncidentDriver",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -3648,7 +3702,7 @@
         "operationId": "updateIncidentDriver",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -3712,7 +3766,7 @@
         "operationId": "resolveIncidentDriver",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -3799,7 +3853,7 @@
         },
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "x-required-roles": [
@@ -3836,7 +3890,7 @@
         },
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "x-required-roles": [
@@ -3906,7 +3960,7 @@
         "operationId": "createLanguage",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "requestBody": {
@@ -4007,7 +4061,7 @@
         "operationId": "deleteLanguage",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -4120,7 +4174,7 @@
         "operationId": "mergeTranslations",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -4184,7 +4238,7 @@
         "operationId": "deleteTranslation",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -4256,7 +4310,7 @@
         },
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ]
       }
@@ -4289,7 +4343,7 @@
         },
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ]
       }
@@ -4365,7 +4419,7 @@
         },
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "x-required-roles": [
@@ -4420,7 +4474,7 @@
         "operationId": "updatePenaltyRule",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -4482,7 +4536,7 @@
         "operationId": "deletePenaltyRule",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -4529,7 +4583,7 @@
         "operationId": "listRaceResultImports",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -4623,7 +4677,7 @@
         "operationId": "createRaceResultImport",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "requestBody": {
@@ -4690,7 +4744,7 @@
         "operationId": "getRaceResultImport",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -4743,7 +4797,7 @@
         "operationId": "deleteRaceResultImport",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -4789,7 +4843,7 @@
         "operationId": "downloadRaceResultImportFile",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -4859,7 +4913,7 @@
         "operationId": "createParseRun",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -5043,7 +5097,7 @@
         },
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "x-required-roles": [
@@ -5103,7 +5157,7 @@
         },
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "x-required-roles": [
@@ -5122,7 +5176,7 @@
         "operationId": "getRegulationPage",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -5174,7 +5228,7 @@
         "operationId": "updateRegulationPage",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -5239,7 +5293,7 @@
         "operationId": "deleteRegulationPage",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -5378,7 +5432,7 @@
         "operationId": "listUsers",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -5458,7 +5512,7 @@
         "operationId": "updateUser",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -5513,17 +5567,17 @@
         "description": "Requires role: `admin`, `super_admin`."
       }
     },
-    "/api/v1/users/{userId}/sessions": {
+    "/api/v1/users/{userId}/tokens": {
       "delete": {
         "tags": [
           "Users"
         ],
-        "summary": "Revoke user sessions",
-        "description": "Delete all sessions of a user (force logout).\n\nRequires role: `admin`, `super_admin`.",
-        "operationId": "revokeUserSessions",
+        "summary": "Revoke user tokens",
+        "description": "End every login of a user (force logout): their tokens stop working at once.\n\nRequires role: `admin`, `super_admin`.",
+        "operationId": "revokeUserTokens",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -5569,7 +5623,7 @@
         "operationId": "getUserManagedCommunities",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -5622,7 +5676,7 @@
         "operationId": "setUserManagedCommunities",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -5747,7 +5801,7 @@
         },
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "x-required-roles": [
@@ -5803,7 +5857,7 @@
         "operationId": "updateVerdictRule",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -5869,7 +5923,7 @@
         "operationId": "deleteVerdictRule",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -5954,7 +6008,7 @@
         },
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "x-required-roles": [
@@ -5992,7 +6046,7 @@
         },
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ]
       },
@@ -6044,7 +6098,7 @@
         },
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "x-required-roles": [
@@ -6064,7 +6118,7 @@
         "operationId": "getDescriptionPreset",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -6108,7 +6162,7 @@
         "operationId": "updateDescriptionPreset",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -6171,7 +6225,7 @@
         "operationId": "deleteDescriptionPreset",
         "security": [
           {
-            "sessionCookie": []
+            "bearerAuth": []
           }
         ],
         "parameters": [
@@ -6271,9 +6325,16 @@
           {
             "name": "code",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           {
@@ -6284,11 +6345,26 @@
               "type": "string",
               "default": ""
             }
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
           }
         ],
         "responses": {
           "302": {
-            "description": "Signed in: redirects to the frontend with the session cookie set.",
+            "description": "Redirects to the frontend's `/auth/callback`. The URL fragment carries `token` (a refresh token to exchange at `POST /api/v1/auth/tokens`) or, when the login failed, `error` (a problem `code`).",
             "headers": {
               "Location": {
                 "description": "The frontend URL.",
@@ -6298,17 +6374,8 @@
               }
             }
           },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
           "422": {
             "$ref": "#/components/responses/UnprocessableContent"
-          },
-          "502": {
-            "$ref": "#/components/responses/BadGateway"
           }
         }
       }
@@ -9948,6 +10015,54 @@
           "upcoming"
         ]
       },
+      "TokenCreate": {
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "TokenOut": {
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Send as `Authorization: Bearer <accessToken>`."
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Replaces the one that was sent; each can be used once."
+          },
+          "expiresIn": {
+            "type": "integer",
+            "description": "Lifetime of the access token, in seconds."
+          }
+        },
+        "type": "object",
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "expiresIn"
+        ]
+      },
+      "TokenRevocationCreate": {
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "refreshToken"
+        ]
+      },
       "UnmatchedDriverNameOut": {
         "properties": {
           "rawName": {
@@ -10277,11 +10392,11 @@
       }
     },
     "securitySchemes": {
-      "sessionCookie": {
-        "type": "apiKey",
-        "description": "Session id, set as a cookie by the Discord login.",
-        "in": "cookie",
-        "name": "session_id"
+      "bearerAuth": {
+        "type": "http",
+        "description": "Access token from `POST /api/v1/auth/tokens`.",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       },
       "ingestToken": {
         "type": "http",
@@ -10395,7 +10510,7 @@
   "tags": [
     {
       "name": "Auth",
-      "description": "Discord login and the session cookie."
+      "description": "Discord login and tokens."
     },
     {
       "name": "Me",
@@ -10403,7 +10518,7 @@
     },
     {
       "name": "Users",
-      "description": "Accounts, roles and sessions (admin)."
+      "description": "Accounts, roles and logins (admin)."
     },
     {
       "name": "Drivers",

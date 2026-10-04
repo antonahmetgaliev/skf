@@ -42,7 +42,7 @@ def _make_engine():
     """
     import app.models.incidents  # noqa: F401 – registers IncidentWindow/Incident/IncidentResolution
     import app.models.simgrid_cache  # noqa: F401 – ensure table is registered
-    import app.models.user  # noqa: F401 – registers Role/User/Session on Base
+    import app.models.user  # noqa: F401 – registers Role/User/RefreshToken on Base
     from app.models.bwp import Base
 
     engine = create_async_engine(
@@ -175,6 +175,13 @@ def _incident_api_token(monkeypatch):
     from app.config import settings
 
     monkeypatch.setattr(settings, "incident_api_token", "test-token-secret")
+
+
+@pytest.fixture(autouse=True)
+def _jwt_secret(monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "jwt_secret", "test-jwt-secret-of-sufficient-length")
 
 
 # ── SimGrid stub ------------------------------------------------------------

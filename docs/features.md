@@ -4,7 +4,7 @@ Pages live in `frontend/src/app/pages/`, frontend services in `frontend/src/app/
 
 | Feature | Page | Frontend service | Router | Backend service | Models |
 |---|---|---|---|---|---|
-| Login and account | `profile/` | `auth.service`, `profile-api.service` | `auth`, `me` | `auth`, `discord` | `user` (User, Role, Session) |
+| Login and account | `profile/`, `auth-callback/` | `auth.service`, `auth-tokens.service`, `profile-api.service` | `auth`, `me` | `auth`, `tokens`, `discord` | `user` (User, Role, RefreshToken) |
 | Users and roles (admin) | `admin/` (`user-item`) | `auth.service` | `users` | `users` | `user`, `community_manager` |
 | Drivers and BWP licence points | `bwp-license/`, `drivers-list/`, `driver-profile/` | `bwp-api.service` | `drivers`, `penalty_rules`, `driver_aliases` | `drivers`, `bwp`, `driver_matching` | `bwp` (Driver, BwpPoint, PenaltyRule, PenaltyClearance) |
 | Championships and standings | `championships/`, `home-visit/` | `simgrid-api.service`, `championship.service` | `championships`, `sim_catalog` | `championships`, `championship_results`, `simgrid`, `cache` | `simgrid_cache`, `active_championship` |

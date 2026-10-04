@@ -140,7 +140,7 @@ export class AdminComponent implements OnInit {
   }
 
   forceLogout(user: AuthUser): void {
-    this.http.delete(`${API}/users/${user.id}/sessions`).subscribe();
+    this.http.delete(`${API}/users/${user.id}/tokens`).subscribe();
   }
 
   canEdit(target: AuthUser): boolean {

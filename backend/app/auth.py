@@ -3,37 +3,24 @@
 from __future__ import annotations
 
 import secrets
-import uuid
 from collections.abc import Callable
-from datetime import UTC, datetime
 
 from fastapi import Depends, Request
-from fastapi.security import APIKeyCookie, HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy import select
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.config import settings
 from app.core.errors import Forbidden, ServiceUnavailable, Unauthorized
 from app.database import get_db
-from app.models.user import (
-    ROLE_ADMIN,
-    ROLE_COMMUNITY_MANAGER,
-    ROLE_JUDGE,
-    ROLE_MODERATOR,
-    ROLE_SUPER_ADMIN,
-    Session,
-    User,
-)
-
-SESSION_COOKIE = "session_id"
+from app.models.user import ROLE_ADMIN, ROLE_COMMUNITY_MANAGER, ROLE_JUDGE, ROLE_SUPER_ADMIN, User
+from app.services import tokens
 
 # Declared only so OpenAPI lists the schemes and marks the operations that
 # need them; the values are still read and checked by the functions below.
-_session_cookie = APIKeyCookie(
-    name=SESSION_COOKIE,
-    scheme_name="sessionCookie",
-    description="Session id, set as a cookie by the Discord login.",
+_access_bearer = HTTPBearer(
+    scheme_name="bearerAuth",
+    bearerFormat="JWT",
+    description="Access token from `POST /api/v1/auth/tokens`.",
     auto_error=False,
 )
 _ingest_bearer = HTTPBearer(
@@ -43,43 +30,41 @@ _ingest_bearer = HTTPBearer(
 )
 
 
+def _bearer_token(request: Request) -> str | None:
+    scheme, _, token = request.headers.get("Authorization", "").partition(" ")
+    return token if scheme.lower() == "bearer" and token else None
+
+
 async def get_current_user_optional(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> User | None:
-    """Return the authenticated user or ``None``."""
-    raw = request.cookies.get(SESSION_COOKIE)
-    if not raw:
-        return None
-    try:
-        session_id = uuid.UUID(raw)
-    except ValueError:
+    """Return the authenticated user, or ``None`` for an anonymous request.
+
+    A request that *does* present a token must present a good one: an expired
+    or revoked token is a 401 even where anonymous access is allowed, so the
+    client refreshes instead of silently being served the public view.
+    """
+    token = _bearer_token(request)
+    if token is None:
         return None
 
-    result = await db.execute(
-        select(Session)
-        .options(
-            selectinload(Session.user).joinedload(User.role),
-        )
-        .where(
-            Session.id == session_id,
-            Session.expires_at > datetime.now(UTC),
-        )
-    )
-    session = result.scalar_one_or_none()
-    if not session:
-        return None
-
-    user = session.user
-    if user.blocked:
-        return None
-    # Ensure role is loaded (joined eager load on User.role)
+    invalid = Unauthorized("The access token is not valid.", code="invalid_token")
+    claims = tokens.read_access_token(token)
+    if claims is None:
+        raise invalid
+    # User.role is joined, so this is the only statement.
+    user = await db.get(User, claims.user_id)
+    if user is None or user.blocked:
+        raise invalid
+    if user.tokens_revoked_at and claims.issued_at <= tokens.as_utc(user.tokens_revoked_at):
+        raise invalid
     return user
 
 
 async def get_current_user(
     user: User | None = Depends(get_current_user_optional),
-    _: str | None = Depends(_session_cookie),
+    _: HTTPAuthorizationCredentials | None = Depends(_access_bearer),
 ) -> User:
     """Return the authenticated user or raise 401."""
     if user is None:
@@ -120,36 +105,7 @@ require_admin_or_community_manager = require_role(ROLE_ADMIN, ROLE_SUPER_ADMIN, 
 # Roles that may judge incidents and see what only judges see.
 JUDGE_ROLES = (ROLE_JUDGE, ROLE_ADMIN, ROLE_SUPER_ADMIN)
 
-require_moderator = require_role(ROLE_MODERATOR, ROLE_ADMIN, ROLE_SUPER_ADMIN)
 require_judge = require_role(*JUDGE_ROLES)
-
-
-async def check_community_access(user: User, community_id: uuid.UUID, db: AsyncSession) -> None:
-    """Raise 403 if user is a community manager without access to this community."""
-    if user.role.name in (ROLE_ADMIN, ROLE_SUPER_ADMIN):
-        return
-    if user.role.name == ROLE_COMMUNITY_MANAGER:
-        from app.models.community_manager import CommunityManager
-
-        result = await db.execute(
-            select(CommunityManager).where(
-                CommunityManager.user_id == user.id,
-                CommunityManager.community_id == community_id,
-            )
-        )
-        if result.scalar_one_or_none() is not None:
-            return
-    raise Forbidden("No access to this community.")
-
-
-async def get_managed_community_ids(user: User, db: AsyncSession) -> list[uuid.UUID]:
-    """Return community IDs that a community manager is assigned to."""
-    from app.models.community_manager import CommunityManager
-
-    result = await db.execute(
-        select(CommunityManager.community_id).where(CommunityManager.user_id == user.id)
-    )
-    return list(result.scalars().all())
 
 
 async def require_api_token(

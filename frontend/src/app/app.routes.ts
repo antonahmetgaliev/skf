@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { adminGuard } from './guards/admin.guard';
 import { AdminComponent } from './pages/admin/admin.component';
+import { AuthCallbackComponent } from './pages/auth-callback/auth-callback.component';
 import { BwpLicenseComponent } from './pages/bwp-license/bwp-license.component';
 import { DriverProfileComponent } from './pages/driver-profile/driver-profile.component';
 import { DriversListComponent } from './pages/drivers-list/drivers-list.component';
@@ -47,6 +48,7 @@ export const appRoutes: Routes = [
     title: 'Driver Profile | SKF Racing Hub',
   },
   { path: 'incidents', component: IncidentsComponent, title: 'Incidents | SKF Racing Hub' },
+  { path: 'auth/callback', component: AuthCallbackComponent, title: 'Signing in | SKF Racing Hub' },
   { path: 'admin/users', pathMatch: 'full', redirectTo: 'admin' },
   {
     path: 'admin',

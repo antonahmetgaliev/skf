@@ -12,9 +12,10 @@ from app.core.errors import Forbidden, Unprocessable
 from app.models.bwp import Driver
 from app.models.community import Community
 from app.models.community_manager import CommunityManager
-from app.models.user import ROLE_ADMIN, ROLE_COMMUNITY_MANAGER, ROLE_SUPER_ADMIN, Role, Session, User
+from app.models.user import ROLE_ADMIN, ROLE_COMMUNITY_MANAGER, ROLE_SUPER_ADMIN, Role, User
 from app.repository import get_or_404
 from app.schemas.auth import UserOut, UserUpdate
+from app.services import tokens
 
 
 def _user_out(user: User, driver_id: uuid.UUID | None, managed_ids: list[uuid.UUID]) -> UserOut:
@@ -73,41 +74,50 @@ def list_users_stmt():
     return select(User).order_by(User.username)
 
 
-async def update_user(db: AsyncSession, admin: User, user_id: uuid.UUID, body: UserUpdate) -> User:
-    target = await get_or_404(db, User, user_id, detail="User not found.")
-
-    # Super-admin protections
+def _ensure_may_manage(admin: User, target: User) -> None:
+    """A super-admin's account is out of reach for everyone but a super-admin."""
     if target.role.name == ROLE_SUPER_ADMIN and admin.role.name != ROLE_SUPER_ADMIN:
         raise Forbidden("Only a super-admin can modify another super-admin.")
 
+
+async def update_user(db: AsyncSession, admin: User, user_id: uuid.UUID, body: UserUpdate) -> User:
+    target = await get_or_404(db, User, user_id, detail="User not found.")
+    _ensure_may_manage(admin, target)
+    is_super_admin = admin.role.name == ROLE_SUPER_ADMIN
+
+    # The role the target ends up with, for the block rules below.
+    role_name = target.role.name
     if body.role is not None:
         new_role = (await db.execute(select(Role).where(Role.name == body.role))).scalar_one_or_none()
         if new_role is None:
             raise Unprocessable(f"Invalid role: {body.role}")
-        # Only super-admin can grant or revoke super_admin
-        if (
-            new_role.name == ROLE_SUPER_ADMIN or target.role.name == ROLE_SUPER_ADMIN
-        ) and admin.role.name != ROLE_SUPER_ADMIN:
+        if new_role.name == ROLE_SUPER_ADMIN and not is_super_admin:
             raise Forbidden("Only a super-admin can grant or revoke the super-admin role.")
         # Admins cannot change the role of other admins or themselves
-        if target.role.name == ROLE_ADMIN and admin.role.name != ROLE_SUPER_ADMIN:
+        if target.role.name == ROLE_ADMIN and not is_super_admin:
             raise Forbidden("Only a super-admin can change an admin's role.")
         target.role_id = new_role.id
+        role_name = new_role.name
 
     if body.blocked is not None:
-        if target.role.name == ROLE_SUPER_ADMIN:
+        if role_name == ROLE_SUPER_ADMIN:
             raise Forbidden("Cannot block a super-admin.")
+        if role_name == ROLE_ADMIN and not is_super_admin:
+            raise Forbidden("Only a super-admin can block an admin.")
         target.blocked = body.blocked
+        if body.blocked:
+            await tokens.revoke_all(db, target)
 
     await db.commit()
     await db.refresh(target)
     return target
 
 
-async def revoke_sessions(db: AsyncSession, user_id: uuid.UUID) -> None:
-    """Delete every session of a user (force logout)."""
-    await get_or_404(db, User, user_id, detail="User not found.")
-    await db.execute(delete(Session).where(Session.user_id == user_id))
+async def revoke_tokens(db: AsyncSession, admin: User, user_id: uuid.UUID) -> None:
+    """End every login of a user (force logout)."""
+    target = await get_or_404(db, User, user_id, detail="User not found.")
+    _ensure_may_manage(admin, target)
+    await tokens.revoke_all(db, target)
     await db.commit()
 
 
@@ -117,10 +127,11 @@ async def get_managed_communities(db: AsyncSession, user_id: uuid.UUID) -> list[
 
 
 async def set_managed_communities(
-    db: AsyncSession, user_id: uuid.UUID, community_ids: list[uuid.UUID]
+    db: AsyncSession, admin: User, user_id: uuid.UUID, community_ids: list[uuid.UUID]
 ) -> list[uuid.UUID]:
     """Replace the full set of communities a user manages."""
-    await get_or_404(db, User, user_id, detail="User not found.")
+    target = await get_or_404(db, User, user_id, detail="User not found.")
+    _ensure_may_manage(admin, target)
     wanted = list(dict.fromkeys(community_ids))
     if wanted:
         existing = set(
