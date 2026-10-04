@@ -23,12 +23,14 @@ def _now():
     return datetime.now(UTC)
 
 
-async def _link_driver(db: AsyncSession, user_id, name="My Driver"):
+async def _link_driver(db: AsyncSession, user, name="My Driver"):
     from app.models.bwp import Driver
+    from tests.roles import link_driver
 
-    driver = Driver(name=name, user_id=user_id, created_at=_now())
+    driver = Driver(name=name, created_at=_now())
     db.add(driver)
     await db.commit()
+    await link_driver(db, user, driver)
     return driver
 
 
@@ -38,7 +40,7 @@ async def _link_driver(db: AsyncSession, user_id, name="My Driver"):
 
 
 async def test_get_my_driver_returns_linked_driver(auth_client: AsyncClient, db: AsyncSession, test_user):
-    await _link_driver(db, test_user.id)
+    await _link_driver(db, test_user)
 
     resp = await auth_client.get("/api/v1/me/driver")
     assert resp.status_code == 200
@@ -63,7 +65,7 @@ async def test_get_my_driver_requires_auth(client: AsyncClient):
 
 
 async def test_set_and_clear_photo(auth_client: AsyncClient, db: AsyncSession, test_user):
-    await _link_driver(db, test_user.id)
+    await _link_driver(db, test_user)
 
     resp = await auth_client.patch("/api/v1/me/driver", json={"photoUrl": "  https://example.com/me.png "})
     assert resp.status_code == 200
@@ -79,13 +81,13 @@ async def test_set_and_clear_photo(auth_client: AsyncClient, db: AsyncSession, t
     ["http://example.com/me.png", "javascript:alert(1)", "https://", "ftp://x/y.png"],
 )
 async def test_photo_must_be_https(auth_client: AsyncClient, db: AsyncSession, test_user, url):
-    await _link_driver(db, test_user.id)
+    await _link_driver(db, test_user)
     resp = await auth_client.patch("/api/v1/me/driver", json={"photoUrl": url})
     assert resp.status_code == 422
 
 
 async def test_photo_url_length_limit(auth_client: AsyncClient, db: AsyncSession, test_user):
-    await _link_driver(db, test_user.id)
+    await _link_driver(db, test_user)
     url = "https://example.com/" + "a" * 500
     resp = await auth_client.patch("/api/v1/me/driver", json={"photoUrl": url})
     assert resp.status_code == 422

@@ -1,9 +1,13 @@
 import uuid
 from datetime import UTC, date, datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import Date, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import Date, DateTime, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 class Base(DeclarativeBase):
@@ -16,20 +20,25 @@ def utc_today() -> date:
 
 
 class Driver(Base):
+    """A person who races with us: one SimGrid user, one row.
+
+    ``simgrid_driver_id`` is the identity; two people may share a name. The
+    site account of the same person, if they have one, points here through
+    ``User.driver_id``.
+    """
+
     __tablename__ = "drivers"
-    __table_args__ = (UniqueConstraint("user_id", name="uq_drivers_user_id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name: Mapped[str] = mapped_column(String(200), nullable=False, unique=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
     simgrid_driver_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     simgrid_display_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     country_code: Mapped[str | None] = mapped_column(String(10), nullable=True)
     photo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    user_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=True,
-    )
+    # What SimGrid knows about the person's other accounts; refreshed by the sync.
+    discord_uid: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    steam64_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=True
     )
@@ -40,6 +49,11 @@ class Driver(Base):
     clearances: Mapped[list["PenaltyClearance"]] = relationship(
         back_populates="driver", cascade="all, delete-orphan", lazy="selectin"
     )
+    account: Mapped["User | None"] = relationship(back_populates="driver", uselist=False, lazy="selectin")
+
+    @property
+    def user_id(self) -> uuid.UUID | None:
+        return self.account.id if self.account else None
 
     @property
     def active_bwp(self) -> int:
@@ -49,10 +63,8 @@ class Driver(Base):
         return sum(p.points for p in self.points if p.expires_on > today)
 
 
-# Case-insensitive uniqueness for driver names: "John Smith" and "john smith"
-# must not coexist (the sync inserts SimGrid casing directly, bypassing the
-# API-level ilike guard).
-Index("ux_drivers_name_lower", func.lower(Driver.name), unique=True)
+# Names are looked up case-insensitively, but are not unique: namesakes exist.
+Index("ix_drivers_name_lower", func.lower(Driver.name))
 
 
 class BwpPoint(Base):

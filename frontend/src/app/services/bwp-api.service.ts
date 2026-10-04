@@ -28,8 +28,9 @@ export class BwpApiService {
     });
   }
 
-  createDriver(name: string): Observable<Driver> {
-    return this.http.post<Driver>(`${API}/drivers`, { name });
+  /** A driver is a SimGrid user, so creating one takes their SimGrid id. */
+  createDriver(name: string, simgridDriverId: number): Observable<Driver> {
+    return this.http.post<Driver>(`${API}/drivers`, { name, simgridDriverId });
   }
 
   updateDriver(driverId: string, patch: DriverUpdate): Observable<Driver> {

@@ -12,8 +12,11 @@ import { FormsModule } from '@angular/forms';
 import { InputDirective } from '../../directives/input.directive';
 import { API, Schemas } from '../../api';
 import { AuthService, AuthUser, ROLES, Role } from '../../services/auth.service';
+import { BwpApiService, Driver } from '../../services/bwp-api.service';
 import { CalendarApiService, Community } from '../../services/calendar-api.service';
+import { DriverAdminApiService } from '../../services/driver-admin-api.service';
 import { AdminCalendarTabComponent } from './admin-calendar-tab/admin-calendar-tab.component';
+import { AdminDriversTabComponent } from './admin-drivers-tab/admin-drivers-tab.component';
 import { AdminGiveawayTabComponent } from './admin-giveaway-tab/admin-giveaway-tab.component';
 import { AdminRaceResultsTabComponent } from './admin-race-results-tab/admin-race-results-tab.component';
 import { AdminRegulationsTabComponent } from './admin-regulations-tab/admin-regulations-tab.component';
@@ -21,7 +24,14 @@ import { AdminTranslationsTabComponent } from './admin-translations-tab/admin-tr
 import { UserItemComponent } from './user-item/user-item.component';
 
 type AdminTab =
-  'users' | 'site' | 'calendar' | 'translations' | 'regulations' | 'raceResults' | 'giveaway';
+  | 'users'
+  | 'drivers'
+  | 'site'
+  | 'calendar'
+  | 'translations'
+  | 'regulations'
+  | 'raceResults'
+  | 'giveaway';
 
 @Component({
   selector: 'app-admin',
@@ -30,6 +40,7 @@ type AdminTab =
     TranslocoPipe,
     InputDirective,
     AdminCalendarTabComponent,
+    AdminDriversTabComponent,
     AdminGiveawayTabComponent,
     AdminRaceResultsTabComponent,
     AdminRegulationsTabComponent,
@@ -50,6 +61,8 @@ export class AdminComponent implements OnInit {
   readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
   private readonly calendarApi = inject(CalendarApiService);
+  private readonly bwpApi = inject(BwpApiService);
+  private readonly driverAdminApi = inject(DriverAdminApiService);
 
   readonly activeTab = signal<AdminTab>('users');
   readonly users = signal<AuthUser[]>([]);
@@ -59,11 +72,24 @@ export class AdminComponent implements OnInit {
   readonly cacheMessage = signal('');
 
   readonly allCommunities = signal<Community[]>([]);
+  readonly allDrivers = signal<Driver[]>([]);
+  readonly userError = signal('');
   readonly editingUserIds = signal(new Set<string>());
 
   ngOnInit(): void {
     this.loadUsers();
     this.loadAllCommunities();
+    this.loadDrivers();
+  }
+
+  /** Users and drivers, after the drivers tab changed who is linked to whom. */
+  reloadPeople(): void {
+    this.loadUsers();
+    this.loadDrivers();
+  }
+
+  private loadDrivers(): void {
+    this.bwpApi.getDrivers().subscribe({ next: (drivers) => this.allDrivers.set(drivers) });
   }
 
   private loadAllCommunities(): void {
@@ -137,6 +163,26 @@ export class AdminComponent implements OnInit {
         this.users.update((list) => list.map((u) => (u.id === updated.id ? updated : u)));
       },
     });
+  }
+
+  /** Link the account to a driver by hand; an empty id unlinks it. */
+  linkDriver(user: AuthUser, driverId: string): void {
+    this.userError.set('');
+    const replace = (updated: AuthUser) =>
+      this.users.update((list) => list.map((u) => (u.id === updated.id ? updated : u)));
+    const fail = (err: { error?: { detail?: string } }) =>
+      this.userError.set(err?.error?.detail ?? 'Failed to update the driver link.');
+
+    if (driverId) {
+      this.driverAdminApi
+        .setUserDriver(user.id, driverId)
+        .subscribe({ next: replace, error: fail });
+    } else {
+      this.driverAdminApi.clearUserDriver(user.id).subscribe({
+        next: () => replace({ ...user, driverId: null, driverLinkSource: 'admin' }),
+        error: fail,
+      });
+    }
   }
 
   forceLogout(user: AuthUser): void {

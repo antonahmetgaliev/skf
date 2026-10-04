@@ -7,10 +7,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.params import UserId
 from app.auth import require_admin
+from app.core.openapi import problem_responses
 from app.core.pagination import PageParams, page_params, paginate
 from app.database import get_db
 from app.models.user import User
-from app.schemas.auth import ManagedCommunitiesOut, ManagedCommunitiesUpdate, UserOut, UserUpdate
+from app.schemas.auth import (
+    ManagedCommunitiesOut,
+    ManagedCommunitiesUpdate,
+    UserDriverUpsert,
+    UserOut,
+    UserUpdate,
+)
 from app.services import users as users_service
 
 router = APIRouter(prefix="/users", tags=["Users"], dependencies=[Depends(require_admin)])
@@ -46,6 +53,30 @@ async def revoke_user_tokens(
 ):
     """End every login of a user (force logout): their tokens stop working at once."""
     await users_service.revoke_tokens(db, admin, user_id)
+
+
+@router.put("/{userId}/driver", response_model=UserOut, responses=problem_responses(409))
+async def set_user_driver(
+    user_id: UserId,
+    body: UserDriverUpsert,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Say which driver this account is. Normally SimGrid tells, through the
+    Discord account connected there; this is for when it cannot. A link set
+    here is never changed by the sync."""
+    target = await users_service.set_driver(db, admin, user_id, body.driver_id)
+    return await users_service.build_user_out(target, db)
+
+
+@router.delete("/{userId}/driver", status_code=status.HTTP_204_NO_CONTENT)
+async def clear_user_driver(
+    user_id: UserId,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Unlink the account from its driver; the sync will not link it back."""
+    await users_service.clear_driver(db, admin, user_id)
 
 
 @router.get("/{userId}/managed-communities", response_model=ManagedCommunitiesOut)

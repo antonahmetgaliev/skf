@@ -9,16 +9,16 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import Forbidden, Unprocessable
-from app.models.bwp import Driver
 from app.models.community import Community
 from app.models.community_manager import CommunityManager
 from app.models.user import ROLE_ADMIN, ROLE_COMMUNITY_MANAGER, ROLE_SUPER_ADMIN, Role, User
 from app.repository import get_or_404
 from app.schemas.auth import UserOut, UserUpdate
+from app.services import drivers as drivers_service
 from app.services import tokens
 
 
-def _user_out(user: User, driver_id: uuid.UUID | None, managed_ids: list[uuid.UUID]) -> UserOut:
+def _user_out(user: User, managed_ids: list[uuid.UUID]) -> UserOut:
     return UserOut(
         id=user.id,
         discord_id=user.discord_id,
@@ -30,7 +30,8 @@ def _user_out(user: User, driver_id: uuid.UUID | None, managed_ids: list[uuid.UU
         blocked=user.blocked,
         created_at=user.created_at,
         last_login_at=user.last_login_at,
-        driver_id=driver_id,
+        driver_id=user.driver_id,
+        driver_link_source=user.driver_link_source,
         managed_community_ids=managed_ids,
     )
 
@@ -39,15 +40,14 @@ async def build_user_out(user: User, db: AsyncSession) -> UserOut:
     """Single source of truth for serialising one user — every endpoint
     must return the same shape (driver link and managed communities
     included), otherwise the frontend's cached user silently loses fields."""
-    driver_id = (await db.execute(select(Driver.id).where(Driver.user_id == user.id))).scalars().first()
     managed_ids: list[uuid.UUID] = []
     if user.role.name == ROLE_COMMUNITY_MANAGER:
         managed_ids = await get_managed_communities(db, user.id)
-    return _user_out(user, driver_id, managed_ids)
+    return _user_out(user, managed_ids)
 
 
 async def build_user_outs(users: Iterable[User], db: AsyncSession) -> list[UserOut]:
-    """Serialise a page of users with two batched lookups."""
+    """Serialise a page of users with one batched lookup."""
     users = list(users)
     ids = [u.id for u in users]
     if not ids:
@@ -62,12 +62,7 @@ async def build_user_outs(users: Iterable[User], db: AsyncSession) -> list[UserO
     for user_id, community_id in rows.all():
         user_communities.setdefault(user_id, []).append(community_id)
 
-    rows = await db.execute(select(Driver.user_id, Driver.id).where(Driver.user_id.in_(ids)))
-    driver_by_user: dict[uuid.UUID, uuid.UUID] = {}
-    for user_id, driver_id in rows.all():
-        driver_by_user.setdefault(user_id, driver_id)
-
-    return [_user_out(u, driver_by_user.get(u.id), user_communities.get(u.id, [])) for u in users]
+    return [_user_out(u, user_communities.get(u.id, [])) for u in users]
 
 
 def list_users_stmt():
@@ -118,6 +113,22 @@ async def revoke_tokens(db: AsyncSession, admin: User, user_id: uuid.UUID) -> No
     target = await get_or_404(db, User, user_id, detail="User not found.")
     _ensure_may_manage(admin, target)
     await tokens.revoke_all(db, target)
+    await db.commit()
+
+
+async def set_driver(db: AsyncSession, admin: User, user_id: uuid.UUID, driver_id: uuid.UUID) -> User:
+    """Link a user to a driver by hand, where SimGrid cannot tell who they are."""
+    target = await get_or_404(db, User, user_id, detail="User not found.")
+    _ensure_may_manage(admin, target)
+    await drivers_service.set_user_driver(db, target, driver_id)
+    await db.commit()
+    return target
+
+
+async def clear_driver(db: AsyncSession, admin: User, user_id: uuid.UUID) -> None:
+    target = await get_or_404(db, User, user_id, detail="User not found.")
+    _ensure_may_manage(admin, target)
+    drivers_service.clear_user_driver(target)
     await db.commit()
 
 

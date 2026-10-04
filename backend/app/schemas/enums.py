@@ -18,6 +18,37 @@ class UserRole(StrEnum):
     SUPER_ADMIN = "super_admin"
 
 
+class DriverLinkSource(StrEnum):
+    """Who linked an account to its driver: the SimGrid sync, or an admin by hand."""
+
+    SIMGRID = "simgrid"
+    ADMIN = "admin"
+
+
+class DriverLinkStatus(StrEnum):
+    """Why an account has, or lacks, a driver.
+
+    ``no_simgrid_account``: SimGrid knows nobody with this Discord account.
+    ``driver_not_synced``: SimGrid knows the person, but they have not shown up
+    in one of our championships yet. ``driver_taken``: their driver is linked
+    to another account. ``unlinked_by_admin``: an admin removed the link, so
+    it is not made again automatically.
+    """
+
+    LINKED = "linked"
+    NO_SIMGRID_ACCOUNT = "no_simgrid_account"
+    DRIVER_NOT_SYNCED = "driver_not_synced"
+    DRIVER_TAKEN = "driver_taken"
+    UNLINKED_BY_ADMIN = "unlinked_by_admin"
+
+
+class DriverIssueKind(StrEnum):
+    """What keeps a driver row from being one SimGrid user's only row."""
+
+    NO_SIMGRID_ID = "no_simgrid_id"
+    DUPLICATE_SIMGRID_ID = "duplicate_simgrid_id"
+
+
 class Sim(StrEnum):
     """Simulators whose result files can be imported."""
 

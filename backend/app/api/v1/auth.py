@@ -94,9 +94,9 @@ async def discord_callback(
         logger.warning("Discord login failed: %s", exc.detail)
         return _to_frontend(error=exc.code)
 
-    # Auto-link the user's driver via SimGrid discord_uid — after the
-    # response, so a SimGrid hiccup never affects login.
-    background_tasks.add_task(link_driver_for_user, user.id, user.discord_id)
+    # Find the user's driver through SimGrid — after the response, so a
+    # SimGrid hiccup never affects login.
+    background_tasks.add_task(link_driver_for_user, user.id)
 
     return _to_frontend(token=refresh_token)
 

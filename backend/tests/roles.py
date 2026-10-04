@@ -41,3 +41,14 @@ async def assign_manager(db, user, community_id) -> None:
 
     db.add(CommunityManager(user_id=user.id, community_id=community_id))
     await db.commit()
+
+
+async def link_driver(db, user, driver) -> None:
+    """Link *user* to *driver*, both in the database and on the object tests authenticate with."""
+    from sqlalchemy import update
+
+    from app.models.user import User
+
+    await db.execute(update(User).where(User.id == user.id).values(driver_id=driver.id))
+    await db.commit()
+    user.driver_id = driver.id

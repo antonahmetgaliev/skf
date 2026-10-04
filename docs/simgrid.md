@@ -246,7 +246,9 @@ Fields: `id`, `race_name`, `track`, `starts_at`, `ended`, `results_available`,
 
 ### Retrieve a user
 `GET /users/:id` — also `?attribute=discord` to look up by Discord ID, which is
-how `app/services/drivers.py` links accounts deterministically.
+how `app/services/drivers.py` finds the driver of an account at sign-in. The
+sync stores `discord_uid` and `steam64_id` from `participating_users` on each
+driver and links accounts from there.
 
 ```json
 {

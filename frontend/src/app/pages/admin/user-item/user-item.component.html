@@ -32,6 +32,9 @@
           <a class="user-item__driver-link" [routerLink]="['/drivers', u.driverId]">{{
             'profile.driverProfile' | transloco
           }}</a>
+          @if (u.driverLinkSource === 'admin') {
+            <span class="user-item__hint">({{ 'admin.linkedByHand' | transloco }})</span>
+          }
         }
         @if (u.lastLoginAt) {
           <span class="user-item__sep">·</span>
@@ -48,6 +51,22 @@
           <select appSelect size="sm" [ngModel]="u.role" (ngModelChange)="onRoleChange($event)">
             @for (r of availableRoles(); track r) {
               <option [value]="r">{{ formatRole(r) }}</option>
+            }
+          </select>
+        </app-form-field>
+
+        <app-form-field [label]="'admin.driver' | transloco">
+          <select
+            appSelect
+            size="sm"
+            [ngModel]="u.driverId ?? ''"
+            (ngModelChange)="onDriverChange($event)"
+          >
+            <option value="">{{ 'admin.none' | transloco }}</option>
+            @for (d of drivers(); track d.id) {
+              <option [value]="d.id" [disabled]="d.userId !== null && d.userId !== u.id">
+                {{ d.name }}{{ d.simgridDriverId ? ' · ' + d.simgridDriverId : '' }}
+              </option>
             }
           </select>
         </app-form-field>

@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 from pydantic import ConfigDict, Field, field_validator
 
 from app.schemas.base import CamelModel, Omittable, Url
+from app.schemas.enums import DriverIssueKind
 
 
 # ---------------------------------------------------------------------------
@@ -60,13 +61,28 @@ class PenaltyClearanceOut(CamelModel):
 # Driver
 # ---------------------------------------------------------------------------
 class DriverCreate(CamelModel):
+    """A driver is a SimGrid user, so there is none without a SimGrid id."""
+
     name: str = Field(min_length=1, max_length=200)
+    simgrid_driver_id: int = Field(gt=0)
 
 
 class DriverUpdate(CamelModel):
     name: Omittable[Annotated[str, Field(min_length=1, max_length=200)]] = None
-    # ``null`` unlinks the driver from SimGrid.
-    simgrid_driver_id: int | None = None
+    simgrid_driver_id: Omittable[Annotated[int, Field(gt=0)]] = None
+
+
+class DriverMergeCreate(CamelModel):
+    """``POST /drivers/{id}/merges``: fold another row of the same person into this one."""
+
+    source_driver_id: uuid.UUID
+
+
+class DriverSyncOut(CamelModel):
+    championships: int = Field(description="Active championships read from SimGrid.")
+    failed: int = Field(description="Championships SimGrid did not answer for.")
+    created: int
+    linked: int = Field(description="Accounts newly linked to their driver.")
 
 
 class DriverBrief(CamelModel):
@@ -99,6 +115,15 @@ class DriverOut(DriverPublicOut):
     """
 
     user_id: uuid.UUID | None
+
+
+class DriverIssueOut(CamelModel):
+    kind: DriverIssueKind
+    driver: DriverOut
+    suggested_target: DriverBrief | None = Field(
+        default=None,
+        description="A driver with a SimGrid id that this row looks like a duplicate of.",
+    )
 
 
 class MyDriverUpdate(CamelModel):

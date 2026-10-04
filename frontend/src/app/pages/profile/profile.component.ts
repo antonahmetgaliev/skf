@@ -9,6 +9,7 @@ import { CardComponent } from '../../components/card/card.component';
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { AuthService } from '../../services/auth.service';
+import { DriverAdminApiService, DriverLink } from '../../services/driver-admin-api.service';
 import { DriverPublic, ProfileApiService } from '../../services/profile-api.service';
 
 @Component({
@@ -30,6 +31,10 @@ import { DriverPublic, ProfileApiService } from '../../services/profile-api.serv
 export class ProfileComponent {
   readonly auth = inject(AuthService);
   private readonly profileApi = inject(ProfileApiService);
+  private readonly driverApi = inject(DriverAdminApiService);
+
+  /** Why the account has no driver; `null` until SimGrid has been asked. */
+  readonly linkStatus = signal<DriverLink['status'] | null>(null);
 
   readonly linkedDriver = signal<DriverPublic | null>(null);
   readonly loadingDriver = signal(false);
@@ -54,13 +59,29 @@ export class ProfileComponent {
 
       if (user.driverId) {
         this.loadLinkedDriver();
+      } else {
+        this.findMyDriver();
       }
     });
   }
 
+  /** Ask SimGrid who this account is: links the driver, or learns why there is none. */
+  private findMyDriver(): void {
+    this.driverApi.linkMyDriver().subscribe({
+      next: (link) => {
+        this.linkStatus.set(link.status);
+        const user = this.auth.user();
+        if (link.driverId && user) {
+          this.auth.user.set({ ...user, driverId: link.driverId });
+          this.loadLinkedDriver();
+        }
+      },
+      error: () => {},
+    });
+  }
+
   /** Refresh the Discord nickname and user snapshot without any button.
-   *  Errors (no bot token, Discord hiccup) are silently ignored. Linking is
-   *  fully automatic server-side, so a driver linked at login shows up here. */
+   *  Errors (no bot token, Discord hiccup) are silently ignored. */
   private refreshUserSilently(): void {
     this.auth.refreshDiscordNickname().subscribe({
       next: (user) => {

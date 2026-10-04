@@ -4,6 +4,7 @@
   <app-tabs
     [tabs]="[
       { key: 'users', label: ('admin.tabUsers' | transloco) },
+      { key: 'drivers', label: ('admin.tabDrivers' | transloco) },
       { key: 'site', label: ('admin.tabSite' | transloco) },
       { key: 'calendar', label: ('admin.tabCalendar' | transloco) },
       { key: 'regulations', label: ('admin.tabRegulations' | transloco) },
@@ -34,6 +35,10 @@
         <span class="meta">{{ filteredUsers().length }} {{ 'admin.userCount' | transloco }}</span>
       </div>
 
+      @if (userError()) {
+        <p class="empty" role="alert">{{ userError() }}</p>
+      }
+
       @if (loading()) {
         <app-spinner />
       } @else if (filteredUsers().length === 0) {
@@ -47,9 +52,11 @@
               [canEdit]="canEdit(user)"
               [availableRoles]="availableRoles()"
               [communities]="allCommunities()"
+              [drivers]="allDrivers()"
               (toggleEdit)="toggleEdit(user)"
               (changeRole)="changeRole(user, $event)"
               (assignCommunity)="assignCommunity(user, $event)"
+              (linkDriver)="linkDriver(user, $event)"
               (toggleBlock)="toggleBlock(user)"
               (forceLogout)="forceLogout(user)"
             />
@@ -57,6 +64,10 @@
         </div>
       }
     </app-card>
+  }
+
+  @if (activeTab() === 'drivers') {
+    <app-admin-drivers-tab (changed)="reloadPeople()" />
   }
 
   @if (activeTab() === 'site') {

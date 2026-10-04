@@ -29,7 +29,9 @@ async def test_catalogue_resources_can_be_read_back(admin_client: AsyncClient): 
 
 
 async def test_driver_resources_can_be_read_back(admin_client: AsyncClient):  # noqa: F811
-    driver = await _create(admin_client, "POST", "/drivers", {"name": "Readable Driver"})
+    driver = await _create(
+        admin_client, "POST", "/drivers", {"name": "Readable Driver", "simgridDriverId": 501}
+    )
     rule = await _create(admin_client, "POST", "/penalty-rules", {"threshold": 5, "label": "Race ban"})
     await _create(
         admin_client,

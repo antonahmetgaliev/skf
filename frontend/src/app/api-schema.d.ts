@@ -689,6 +689,75 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/driver-syncs': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Sync drivers
+     * @description Refresh drivers and account links from every active championship on SimGrid.
+     *
+     *     Requires role: `admin`, `super_admin`.
+     */
+    post: operations['syncDrivers'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/driver-issues': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List driver issues
+     * @description Drivers that are not one SimGrid user's only row: no SimGrid id, or one shared with another row.
+     *
+     *     Requires role: `admin`, `super_admin`.
+     */
+    get: operations['listDriverIssues'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/drivers/{driverId}/merges': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Merge driver
+     * @description Fold another row of the same person into this driver.
+     *
+     *     BWP points, clearances, incidents, result entries, aliases and the linked
+     *     account move over; the source row is deleted.
+     *
+     *     Requires role: `admin`, `super_admin`.
+     */
+    post: operations['mergeDriver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/me/driver': {
     parameters: {
       query?: never;
@@ -1137,6 +1206,28 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/me/driver-links': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Link my driver
+     * @description Look the user up on SimGrid and link their driver, or say why there is none.
+     *
+     *     Called silently by the profile page of a user without a driver.
+     */
+    post: operations['linkMyDriver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/penalty-rules': {
     parameters: {
       query?: never;
@@ -1460,6 +1551,36 @@ export interface paths {
      *     Requires role: `admin`, `super_admin`.
      */
     delete: operations['revokeUserTokens'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/users/{userId}/driver': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Set user driver
+     * @description Say which driver this account is. Normally SimGrid tells, through the
+     *     Discord account connected there; this is for when it cannot. A link set
+     *     here is never changed by the sync.
+     *
+     *     Requires role: `admin`, `super_admin`.
+     */
+    put: operations['setUserDriver'];
+    post?: never;
+    /**
+     * Clear user driver
+     * @description Unlink the account from its driver; the sync will not link it back.
+     *
+     *     Requires role: `admin`, `super_admin`.
+     */
+    delete: operations['clearUserDriver'];
     options?: never;
     head?: never;
     patch?: never;
@@ -1943,8 +2064,52 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    DriverBrief: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+    };
+    /** @description A driver is a SimGrid user, so there is none without a SimGrid id. */
     DriverCreate: {
       name: string;
+      simgridDriverId: number;
+    };
+    /**
+     * @description What keeps a driver row from being one SimGrid user's only row.
+     * @enum {string}
+     */
+    DriverIssueKind: 'no_simgrid_id' | 'duplicate_simgrid_id';
+    DriverIssueOut: {
+      kind: components['schemas']['DriverIssueKind'];
+      driver: components['schemas']['DriverOut'];
+      /** @description A driver with a SimGrid id that this row looks like a duplicate of. */
+      suggestedTarget: components['schemas']['DriverBrief'] | null;
+    };
+    DriverLinkOut: {
+      status: components['schemas']['DriverLinkStatus'];
+      driverId: string | null;
+    };
+    /**
+     * @description Who linked an account to its driver: the SimGrid sync, or an admin by hand.
+     * @enum {string}
+     */
+    DriverLinkSource: 'simgrid' | 'admin';
+    /**
+     * @description Why an account has, or lacks, a driver.
+     *
+     *     ``no_simgrid_account``: SimGrid knows nobody with this Discord account.
+     *     ``driver_not_synced``: SimGrid knows the person, but they have not shown up
+     *     in one of our championships yet. ``driver_taken``: their driver is linked
+     *     to another account. ``unlinked_by_admin``: an admin removed the link, so
+     *     it is not made again automatically.
+     * @enum {string}
+     */
+    DriverLinkStatus:
+      'linked' | 'no_simgrid_account' | 'driver_not_synced' | 'driver_taken' | 'unlinked_by_admin';
+    /** @description ``POST /drivers/{id}/merges``: fold another row of the same person into this one. */
+    DriverMergeCreate: {
+      /** Format: uuid */
+      sourceDriverId: string;
     };
     /**
      * @description Judge view: the public projection plus the linked site account.
@@ -2009,9 +2174,18 @@ export interface components {
       verdict?: string | null;
       bwpPoints?: number | null;
     };
+    DriverSyncOut: {
+      /** @description Active championships read from SimGrid. */
+      championships: number;
+      /** @description Championships SimGrid did not answer for. */
+      failed: number;
+      created: number;
+      /** @description Accounts newly linked to their driver. */
+      linked: number;
+    };
     DriverUpdate: {
       name?: string;
-      simgridDriverId?: number | null;
+      simgridDriverId?: number;
     };
     EligibleDriverOut: {
       /** @description Normalized name the driver's rounds are grouped under, aliases applied. */
@@ -2464,6 +2638,10 @@ export interface components {
       /** @description Ranked spelling hints for the admin; never applied on their own. */
       suggestions: string[];
     };
+    UserDriverUpsert: {
+      /** Format: uuid */
+      driverId: string;
+    };
     UserOut: {
       /** Format: uuid */
       id: string;
@@ -2479,6 +2657,7 @@ export interface components {
       createdAt: string;
       lastLoginAt: string | null;
       driverId: string | null;
+      driverLinkSource: components['schemas']['DriverLinkSource'] | null;
       /** @default [] */
       managedCommunityIds: string[];
     };
@@ -4000,6 +4179,81 @@ export interface operations {
       422: components['responses']['UnprocessableContent'];
     };
   };
+  syncDrivers: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DriverSyncOut'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+    };
+  };
+  listDriverIssues: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DriverIssueOut'][];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+    };
+  };
+  mergeDriver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        driverId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DriverMergeCreate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DriverOut'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
+    };
+  };
   getMyDriver: {
     parameters: {
       query?: never;
@@ -4770,6 +5024,27 @@ export interface operations {
       503: components['responses']['ServiceUnavailable'];
     };
   };
+  linkMyDriver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DriverLinkOut'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+    };
+  };
   listPenaltyRules: {
     parameters: {
       query?: never;
@@ -5363,6 +5638,61 @@ export interface operations {
     };
   };
   revokeUserTokens: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      422: components['responses']['UnprocessableContent'];
+    };
+  };
+  setUserDriver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UserDriverUpsert'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserOut'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['UnprocessableContent'];
+    };
+  };
+  clearUserDriver: {
     parameters: {
       query?: never;
       header?: never;

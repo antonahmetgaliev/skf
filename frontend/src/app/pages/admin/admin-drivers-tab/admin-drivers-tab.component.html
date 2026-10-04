@@ -1,0 +1,102 @@
+<app-card [animated]="true">
+  <h3 class="section-title">{{ 'adminDrivers.syncTitle' | transloco }}</h3>
+  <p class="section-description">{{ 'adminDrivers.syncDescription' | transloco }}</p>
+  <div class="sync-row">
+    <app-btn variant="accent" size="sm" [loading]="syncing()" (click)="sync()">
+      {{ 'adminDrivers.sync' | transloco }}
+    </app-btn>
+    @if (syncResult(); as result) {
+      <span class="sync-result">
+        {{ 'adminDrivers.syncResult' | transloco: result }}
+      </span>
+    }
+  </div>
+</app-card>
+
+<app-card [animated]="true">
+  <h3 class="section-title">{{ 'adminDrivers.issuesTitle' | transloco }}</h3>
+  <p class="section-description">{{ 'adminDrivers.issuesDescription' | transloco }}</p>
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <app-spinner />
+  } @else if (issues().length === 0) {
+    <app-empty>{{ 'adminDrivers.noIssues' | transloco }}</app-empty>
+  } @else {
+    <div class="issue-list">
+      @for (issue of issues(); track issue.driver.id) {
+        <div class="issue-row">
+          <div class="issue-main">
+            <a class="issue-name" [routerLink]="['/drivers', issue.driver.id]">{{
+              issue.driver.name
+            }}</a>
+            <span class="issue-meta">
+              @if (issue.kind === 'duplicate_simgrid_id') {
+                {{ 'adminDrivers.duplicateId' | transloco }} {{ issue.driver.simgridDriverId }}
+              } @else {
+                {{ 'adminDrivers.noSimgridId' | transloco }}
+              }
+              · {{ issue.driver.activeBwp }} BWP
+              @if (issue.driver.userId) {
+                · {{ 'adminDrivers.hasAccount' | transloco }}
+              }
+            </span>
+          </div>
+
+          <div class="issue-actions">
+            <select
+              appSelect
+              size="sm"
+              [attr.aria-label]="'adminDrivers.mergeInto' | transloco"
+              [ngModel]="mergeTargets()[issue.driver.id]"
+              (ngModelChange)="setMergeTarget(issue.driver.id, $event)"
+            >
+              <option value="">{{ 'adminDrivers.pickTarget' | transloco }}</option>
+              @for (target of targetsFor(issue); track target.id) {
+                <option [value]="target.id">
+                  {{ target.name }} · {{ target.simgridDriverId }}
+                </option>
+              }
+            </select>
+            <app-btn
+              variant="accent"
+              size="xs"
+              [disabled]="!mergeTargets()[issue.driver.id]"
+              (click)="merge(issue)"
+            >
+              {{ 'adminDrivers.mergeInto' | transloco }}
+            </app-btn>
+
+            @if (issue.kind === 'no_simgrid_id') {
+              <input
+                appInput
+                size="sm"
+                class="simgrid-input"
+                type="number"
+                min="1"
+                [placeholder]="'adminDrivers.simgridId' | transloco"
+                [ngModel]="simgridIds()[issue.driver.id]"
+                (ngModelChange)="setSimgridId(issue.driver.id, $event)"
+              />
+              <app-btn
+                variant="outline"
+                size="xs"
+                [disabled]="!simgridIds()[issue.driver.id]"
+                (click)="saveSimgridId(issue)"
+              >
+                {{ 'adminDrivers.setId' | transloco }}
+              </app-btn>
+            }
+
+            <app-btn variant="danger" size="xs" (click)="remove(issue)">
+              {{ 'adminDrivers.delete' | transloco }}
+            </app-btn>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</app-card>

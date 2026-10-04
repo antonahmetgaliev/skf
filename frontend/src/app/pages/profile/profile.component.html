@@ -158,6 +158,20 @@
       } @else {
         <div class="driver-section">
           <p class="hint">{{ 'profile.noDriverLinked' | transloco }}</p>
+          @switch (linkStatus()) {
+            @case ('no_simgrid_account') {
+              <p class="hint">{{ 'profile.linkNoSimgridAccount' | transloco }}</p>
+            }
+            @case ('driver_not_synced') {
+              <p class="hint">{{ 'profile.linkDriverNotSynced' | transloco }}</p>
+            }
+            @case ('driver_taken') {
+              <p class="hint">{{ 'profile.linkContactAdmin' | transloco }}</p>
+            }
+            @case ('unlinked_by_admin') {
+              <p class="hint">{{ 'profile.linkContactAdmin' | transloco }}</p>
+            }
+          }
         </div>
       }
 

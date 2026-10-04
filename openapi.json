@@ -2826,6 +2826,150 @@
         "description": "Requires role: `admin`, `super_admin`."
       }
     },
+    "/api/v1/driver-syncs": {
+      "post": {
+        "tags": [
+          "Drivers"
+        ],
+        "summary": "Sync drivers",
+        "description": "Refresh drivers and account links from every active championship on SimGrid.\n\nRequires role: `admin`, `super_admin`.",
+        "operationId": "syncDrivers",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverSyncOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "admin",
+          "super_admin"
+        ]
+      }
+    },
+    "/api/v1/driver-issues": {
+      "get": {
+        "tags": [
+          "Drivers"
+        ],
+        "summary": "List driver issues",
+        "description": "Drivers that are not one SimGrid user's only row: no SimGrid id, or one shared with another row.\n\nRequires role: `admin`, `super_admin`.",
+        "operationId": "listDriverIssues",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DriverIssueOut"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "admin",
+          "super_admin"
+        ]
+      }
+    },
+    "/api/v1/drivers/{driverId}/merges": {
+      "post": {
+        "tags": [
+          "Drivers"
+        ],
+        "summary": "Merge driver",
+        "description": "Fold another row of the same person into this driver.\n\nBWP points, clearances, incidents, result entries, aliases and the linked\naccount move over; the source row is deleted.\n\nRequires role: `admin`, `super_admin`.",
+        "operationId": "mergeDriver",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "driverId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriverMergeCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
+          }
+        },
+        "x-required-roles": [
+          "admin",
+          "super_admin"
+        ]
+      }
+    },
     "/api/v1/me/driver": {
       "get": {
         "tags": [
@@ -4348,6 +4492,36 @@
         ]
       }
     },
+    "/api/v1/me/driver-links": {
+      "post": {
+        "tags": [
+          "Me"
+        ],
+        "summary": "Link my driver",
+        "description": "Look the user up on SimGrid and link their driver, or say why there is none.\n\nCalled silently by the profile page of a user without a driver.",
+        "operationId": "linkMyDriver",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverLinkOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/penalty-rules": {
       "get": {
         "tags": [
@@ -5575,6 +5749,118 @@
         "summary": "Revoke user tokens",
         "description": "End every login of a user (force logout): their tokens stop working at once.\n\nRequires role: `admin`, `super_admin`.",
         "operationId": "revokeUserTokens",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
+          }
+        },
+        "x-required-roles": [
+          "admin",
+          "super_admin"
+        ]
+      }
+    },
+    "/api/v1/users/{userId}/driver": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Set user driver",
+        "description": "Say which driver this account is. Normally SimGrid tells, through the\nDiscord account connected there; this is for when it cannot. A link set\nhere is never changed by the sync.\n\nRequires role: `admin`, `super_admin`.",
+        "operationId": "setUserDriver",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserDriverUpsert"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableContent"
+          }
+        },
+        "x-required-roles": [
+          "admin",
+          "super_admin"
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Clear user driver",
+        "description": "Unlink the account from its driver; the sync will not link it back.\n\nRequires role: `admin`, `super_admin`.",
+        "operationId": "clearUserDriver",
         "security": [
           {
             "bearerAuth": []
@@ -7852,18 +8138,130 @@
           "createdAt"
         ]
       },
+      "DriverBrief": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ]
+      },
       "DriverCreate": {
         "properties": {
           "name": {
             "type": "string",
             "maxLength": 200,
             "minLength": 1
+          },
+          "simgridDriverId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
           }
         },
         "type": "object",
         "required": [
-          "name"
+          "name",
+          "simgridDriverId"
+        ],
+        "description": "A driver is a SimGrid user, so there is none without a SimGrid id."
+      },
+      "DriverIssueKind": {
+        "type": "string",
+        "enum": [
+          "no_simgrid_id",
+          "duplicate_simgrid_id"
+        ],
+        "description": "What keeps a driver row from being one SimGrid user's only row."
+      },
+      "DriverIssueOut": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/DriverIssueKind"
+          },
+          "driver": {
+            "$ref": "#/components/schemas/DriverOut"
+          },
+          "suggestedTarget": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DriverBrief"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A driver with a SimGrid id that this row looks like a duplicate of."
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "driver",
+          "suggestedTarget"
         ]
+      },
+      "DriverLinkOut": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/DriverLinkStatus"
+          },
+          "driverId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "driverId"
+        ]
+      },
+      "DriverLinkSource": {
+        "type": "string",
+        "enum": [
+          "simgrid",
+          "admin"
+        ],
+        "description": "Who linked an account to its driver: the SimGrid sync, or an admin by hand."
+      },
+      "DriverLinkStatus": {
+        "type": "string",
+        "enum": [
+          "linked",
+          "no_simgrid_account",
+          "driver_not_synced",
+          "driver_taken",
+          "unlinked_by_admin"
+        ],
+        "description": "Why an account has, or lacks, a driver.\n\n``no_simgrid_account``: SimGrid knows nobody with this Discord account.\n``driver_not_synced``: SimGrid knows the person, but they have not shown up\nin one of our championships yet. ``driver_taken``: their driver is linked\nto another account. ``unlinked_by_admin``: an admin removed the link, so\nit is not made again automatically."
+      },
+      "DriverMergeCreate": {
+        "properties": {
+          "sourceDriverId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sourceDriverId"
+        ],
+        "description": "``POST /drivers/{id}/merges``: fold another row of the same person into this one."
       },
       "DriverOut": {
         "properties": {
@@ -8133,6 +8531,32 @@
           "incidentDriverId"
         ]
       },
+      "DriverSyncOut": {
+        "properties": {
+          "championships": {
+            "type": "integer",
+            "description": "Active championships read from SimGrid."
+          },
+          "failed": {
+            "type": "integer",
+            "description": "Championships SimGrid did not answer for."
+          },
+          "created": {
+            "type": "integer"
+          },
+          "linked": {
+            "type": "integer",
+            "description": "Accounts newly linked to their driver."
+          }
+        },
+        "type": "object",
+        "required": [
+          "championships",
+          "failed",
+          "created",
+          "linked"
+        ]
+      },
       "DriverUpdate": {
         "properties": {
           "name": {
@@ -8141,14 +8565,8 @@
             "minLength": 1
           },
           "simgridDriverId": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "integer",
+            "exclusiveMinimum": 0
           }
         },
         "type": "object"
@@ -10090,6 +10508,18 @@
           "suggestions"
         ]
       },
+      "UserDriverUpsert": {
+        "properties": {
+          "driverId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "driverId"
+        ]
+      },
       "UserOut": {
         "properties": {
           "id": {
@@ -10159,6 +10589,16 @@
               }
             ]
           },
+          "driverLinkSource": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DriverLinkSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "managedCommunityIds": {
             "items": {
               "type": "string",
@@ -10181,6 +10621,7 @@
           "createdAt",
           "lastLoginAt",
           "driverId",
+          "driverLinkSource",
           "managedCommunityIds"
         ]
       },

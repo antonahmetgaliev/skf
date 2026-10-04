@@ -90,6 +90,7 @@ export class BwpLicenseComponent {
 
   newDriverSelection = signal<string>('__none__'); // '__none__' | '__new__' | driverId
   newDriverNameOverride = '';
+  newDriverSimgridId: number | null = null;
   selectedDriverId = '';
   pointDriverFilter = signal('');
   readonly filteredSelectDrivers = computed(() => {
@@ -180,8 +181,13 @@ export class BwpLicenseComponent {
         this.driverError = 'Enter a driver name to continue.';
         return;
       }
+      const simgridId = Number(this.newDriverSimgridId);
+      if (!Number.isInteger(simgridId) || simgridId <= 0) {
+        this.driverError = "Enter the driver's SimGrid ID: every driver is a SimGrid user.";
+        return;
+      }
       this.driverError = '';
-      this.api.createDriver(name).subscribe({
+      this.api.createDriver(name, simgridId).subscribe({
         next: (driver) => {
           this.drivers.update((list) => [...list, driver]);
           this.collapsedDrivers.update((set) => {
@@ -190,6 +196,7 @@ export class BwpLicenseComponent {
             return next;
           });
           this.newDriverNameOverride = '';
+          this.newDriverSimgridId = null;
           this.newDriverSelection.set('__none__');
           this.selectedDriverId = driver.id;
         },
@@ -258,16 +265,15 @@ export class BwpLicenseComponent {
     const input = window.prompt('Enter SimGrid driver ID (numeric):', current);
     if (input === null) return;
 
-    const trimmed = input.trim();
-    const parsed = trimmed === '' ? null : Number(trimmed);
-    if (trimmed !== '' && (!Number.isInteger(parsed) || (parsed as number) <= 0)) {
+    const parsed = Number(input.trim());
+    if (!Number.isInteger(parsed) || parsed <= 0) {
       this.driverError = 'SimGrid ID must be a positive integer.';
       return;
     }
     if (parsed === driver.simgridDriverId) return;
 
     this.driverError = '';
-    this.api.updateDriver(driverId, { name: driver.name, simgridDriverId: parsed }).subscribe({
+    this.api.updateDriver(driverId, { simgridDriverId: parsed }).subscribe({
       next: (updated) => {
         this.drivers.update((list) => list.map((d) => (d.id === driverId ? updated : d)));
       },

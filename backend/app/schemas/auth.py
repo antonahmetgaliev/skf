@@ -8,7 +8,7 @@ from datetime import datetime
 from pydantic import ConfigDict, Field
 
 from app.schemas.base import CamelModel, Omittable, Url
-from app.schemas.enums import UserRole
+from app.schemas.enums import DriverLinkSource, DriverLinkStatus, UserRole
 
 
 class UserOut(CamelModel):
@@ -26,12 +26,22 @@ class UserOut(CamelModel):
     created_at: datetime
     last_login_at: datetime | None = None
     driver_id: uuid.UUID | None = None
+    driver_link_source: DriverLinkSource | None = None
     managed_community_ids: list[uuid.UUID] = []
 
 
 class UserUpdate(CamelModel):
     role: Omittable[UserRole] = None
     blocked: Omittable[bool] = None
+
+
+class UserDriverUpsert(CamelModel):
+    driver_id: uuid.UUID
+
+
+class DriverLinkOut(CamelModel):
+    status: DriverLinkStatus
+    driver_id: uuid.UUID | None = None
 
 
 class AuthUrlOut(CamelModel):

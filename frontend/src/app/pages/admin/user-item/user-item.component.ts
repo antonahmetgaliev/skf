@@ -16,6 +16,7 @@ import { BadgeComponent, BadgeVariant } from '../../../components/badge/badge.co
 import { BtnComponent } from '../../../components/btn/btn.component';
 import { FormFieldComponent } from '../../../components/form-field/form-field.component';
 import { SelectDirective } from '../../../directives/select.directive';
+import { Driver } from '../../../services/bwp-api.service';
 import { AuthUser, ROLES, Role } from '../../../services/auth.service';
 import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 import { Community } from '../../../services/calendar-api.service';
@@ -54,10 +55,13 @@ export class UserItemComponent {
   readonly canEdit = input(false);
   readonly availableRoles = input<Role[]>([]);
   readonly communities = input<Community[]>([]);
+  readonly drivers = input<Driver[]>([]);
 
   readonly toggleEdit = output<void>();
   readonly changeRole = output<Role>();
   readonly assignCommunity = output<string>();
+  /** The driver id to link the account to; empty to unlink. */
+  readonly linkDriver = output<string>();
   readonly toggleBlock = output<void>();
   readonly forceLogout = output<void>();
 
@@ -85,6 +89,10 @@ export class UserItemComponent {
 
   onRoleChange(role: Role): void {
     this.changeRole.emit(role);
+  }
+
+  onDriverChange(id: string): void {
+    this.linkDriver.emit(id);
   }
 
   onCommunityChange(id: string): void {

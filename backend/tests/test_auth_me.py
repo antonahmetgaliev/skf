@@ -26,10 +26,12 @@ async def test_me_returns_null_driver_id_when_not_linked(auth_client: AsyncClien
 async def test_me_returns_driver_id_when_linked(auth_client: AsyncClient, db: AsyncSession, test_user):
     """When the user has a linked driver, driverId matches driver.id."""
     from app.models.bwp import Driver
+    from tests.roles import link_driver
 
-    driver = Driver(name="Linked Driver", user_id=test_user.id, created_at=_now())
+    driver = Driver(name="Linked Driver", created_at=_now())
     db.add(driver)
     await db.commit()
+    await link_driver(db, test_user, driver)
 
     resp = await auth_client.get(ME_URL)
     assert resp.status_code == 200

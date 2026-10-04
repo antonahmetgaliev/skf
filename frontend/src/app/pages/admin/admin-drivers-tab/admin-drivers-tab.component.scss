@@ -1,0 +1,76 @@
+:host {
+  display: contents;
+}
+
+.section-title {
+  margin: 0 0 0.4rem;
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+}
+
+.section-description {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: var(--text-md);
+  line-height: 1.5;
+}
+
+.sync-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.sync-result,
+.issue-meta {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.error {
+  margin: 0 0 1rem;
+  color: var(--danger, #ff6b6b);
+  font-size: var(--text-md);
+}
+
+.issue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.issue-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.issue-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.issue-name {
+  font-size: var(--text-md);
+  color: inherit;
+}
+
+.issue-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.simgrid-input {
+  width: 8rem;
+}

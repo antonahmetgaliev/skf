@@ -6,8 +6,9 @@ to the judge view (:class:`DriverOut`, adds ``userId``) and needs the judge
 role. In OpenAPI both are documented as ``DriverPublicOut | DriverOut``; the
 judge view is the one that carries ``userId``.
 
-Account↔driver linking is automatic (SimGrid ``discord_uid``, see
-:mod:`app.services.drivers`); there is no manual claim flow.
+A driver is a SimGrid user (see :mod:`app.services.drivers`): rows come from
+the sync, and ``/driver-issues`` lists the ones left over from before that
+rule, for an admin to merge or give a SimGrid id.
 """
 
 from __future__ import annotations
@@ -32,13 +33,17 @@ from app.schemas.bwp import (
     BwpPointUpdate,
     BwpResetCreate,
     DriverCreate,
+    DriverIssueOut,
+    DriverMergeCreate,
     DriverOut,
     DriverPublicOut,
+    DriverSyncOut,
     DriverUpdate,
     MyDriverUpdate,
     PenaltyClearanceOut,
 )
 from app.services import bwp as service
+from app.services import drivers as drivers_service
 
 router = APIRouter(tags=["Drivers"])
 
@@ -242,6 +247,56 @@ async def delete_clearance(
 
 
 # ---------------------------------------------------------------------------
+# Keeping drivers one-per-person
+# ---------------------------------------------------------------------------
+
+
+@router.post("/driver-syncs", response_model=DriverSyncOut, status_code=status.HTTP_200_OK)
+async def sync_drivers(_: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    """Refresh drivers and account links from every active championship on SimGrid."""
+    result = await drivers_service.sync_active_championships(db)
+    return DriverSyncOut(
+        championships=result.championships,
+        failed=result.failed,
+        created=result.created,
+        linked=result.linked,
+    )
+
+
+@router.get("/driver-issues", response_model=list[DriverIssueOut])
+async def list_driver_issues(_: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    """Drivers that are not one SimGrid user's only row: no SimGrid id, or one shared with another row."""
+    return [
+        DriverIssueOut(
+            kind=issue.kind,
+            driver=DriverOut.model_validate(issue.driver),
+            suggested_target=issue.suggested_target,
+        )
+        for issue in await drivers_service.list_issues(db)
+    ]
+
+
+@router.post(
+    "/drivers/{driverId}/merges",
+    response_model=DriverOut,
+    status_code=status.HTTP_200_OK,
+    responses=problem_responses(409),
+)
+async def merge_driver(
+    driver_id: DriverId,
+    body: DriverMergeCreate,
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Fold another row of the same person into this driver.
+
+    BWP points, clearances, incidents, result entries, aliases and the linked
+    account move over; the source row is deleted.
+    """
+    return await drivers_service.merge_drivers(db, driver_id, body.source_driver_id)
+
+
+# ---------------------------------------------------------------------------
 # The caller's own driver
 # ---------------------------------------------------------------------------
 
@@ -252,7 +307,7 @@ async def get_my_driver(
     db: AsyncSession = Depends(get_db),
 ):
     """The driver linked to the signed-in user (404 when none is linked)."""
-    return await service.get_driver_for_user(db, user.id)
+    return await service.get_driver_for_user(db, user)
 
 
 @router.patch("/me/driver", response_model=DriverOut, tags=["Me"])
@@ -262,4 +317,4 @@ async def update_my_driver(
     db: AsyncSession = Depends(get_db),
 ):
     """Set (``https://`` only) or clear (``null``) the profile photo."""
-    return await service.set_my_driver_photo(db, user.id, body.photo_url)
+    return await service.set_my_driver_photo(db, user, body.photo_url)

@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import Conflict, NotFound
 from app.models.bwp import BwpPoint, Driver, PenaltyClearance, PenaltyRule, utc_today
+from app.models.user import User
 from app.repository import get_or_404, next_sort_order
 from app.schemas.bwp import (
     BwpPointCreate,
@@ -23,6 +24,7 @@ from app.schemas.bwp import (
     PenaltyRuleCreate,
     PenaltyRuleUpdate,
 )
+from app.schemas.enums import DriverLinkSource
 
 DEFAULT_RESET_NOTE = "All penalties cleared — points reset"
 
@@ -42,8 +44,8 @@ async def get_driver(db: AsyncSession, driver_id: uuid.UUID) -> Driver:
     return await get_or_404(db, Driver, driver_id, detail="Driver not found.")
 
 
-async def get_driver_for_user(db: AsyncSession, user_id: uuid.UUID) -> Driver:
-    driver = (await db.execute(select(Driver).where(Driver.user_id == user_id))).scalars().first()
+async def get_driver_for_user(db: AsyncSession, user: User) -> Driver:
+    driver = await db.get(Driver, user.driver_id) if user.driver_id else None
     if driver is None:
         raise NotFound("No linked driver.")
     return driver
@@ -57,10 +59,22 @@ async def _ensure_name_free(db: AsyncSession, name: str, exclude_id: uuid.UUID |
         raise Conflict("Driver name already exists.")
 
 
+async def _ensure_simgrid_id_free(
+    db: AsyncSession, simgrid_id: int, exclude_id: uuid.UUID | None = None
+) -> None:
+    stmt = select(Driver.name).where(Driver.simgrid_driver_id == simgrid_id)
+    if exclude_id is not None:
+        stmt = stmt.where(Driver.id != exclude_id)
+    holder = (await db.execute(stmt)).scalars().first()
+    if holder is not None:
+        raise Conflict(f"This SimGrid id belongs to the driver {holder}.")
+
+
 async def create_driver(db: AsyncSession, body: DriverCreate) -> Driver:
     name = body.name.strip()
     await _ensure_name_free(db, name)
-    driver = Driver(name=name)
+    await _ensure_simgrid_id_free(db, body.simgrid_driver_id)
+    driver = Driver(name=name, simgrid_driver_id=body.simgrid_driver_id, simgrid_display_name=name)
     db.add(driver)
     await db.commit()
     await db.refresh(driver)
@@ -73,10 +87,18 @@ async def update_driver(db: AsyncSession, driver_id: uuid.UUID, body: DriverUpda
         new_name = body.name.strip()
         await _ensure_name_free(db, new_name, exclude_id=driver_id)
         driver.name = new_name
-    if "simgrid_driver_id" in body.model_fields_set:
+    if body.simgrid_driver_id is not None and body.simgrid_driver_id != driver.simgrid_driver_id:
+        await _ensure_simgrid_id_free(db, body.simgrid_driver_id, exclude_id=driver_id)
         driver.simgrid_driver_id = body.simgrid_driver_id
-        if body.simgrid_driver_id is not None:
-            driver.simgrid_display_name = driver.simgrid_display_name or driver.name
+        driver.simgrid_display_name = driver.simgrid_display_name or driver.name
+        # The row now stands for another SimGrid user: what SimGrid said about
+        # the previous one, and the account it brought along, no longer apply.
+        driver.discord_uid = None
+        driver.steam64_id = None
+        account = driver.account
+        if account is not None and account.driver_link_source != DriverLinkSource.ADMIN:
+            account.driver_id = None
+            account.driver_link_source = None
     await db.commit()
     await db.refresh(driver)
     return driver
@@ -88,8 +110,8 @@ async def delete_driver(db: AsyncSession, driver_id: uuid.UUID) -> None:
     await db.commit()
 
 
-async def set_my_driver_photo(db: AsyncSession, user_id: uuid.UUID, photo_url: str | None) -> Driver:
-    driver = await get_driver_for_user(db, user_id)
+async def set_my_driver_photo(db: AsyncSession, user: User, photo_url: str | None) -> Driver:
+    driver = await get_driver_for_user(db, user)
     driver.photo_url = photo_url
     await db.commit()
     await db.refresh(driver)

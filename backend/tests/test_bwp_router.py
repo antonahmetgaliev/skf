@@ -11,7 +11,7 @@ from datetime import UTC, date, datetime, timedelta
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -183,23 +183,56 @@ class TestBwpDriverRename:
         renamed = await shared_client.patch(f"/api/v1/drivers/{driver.id}", json={"name": "Renamed"})
         assert (renamed.json()["name"], renamed.json()["simgridDriverId"]) == ("Renamed", 43)
 
-    async def test_null_simgrid_id_unlinks_but_null_name_is_rejected(
-        self, shared_client: AsyncClient, db: AsyncSession
-    ):
-        driver = await _create_driver(db, "Unlink Me", simgrid_driver_id=42)
+    async def test_simgrid_id_and_name_cannot_be_cleared(self, shared_client: AsyncClient, db: AsyncSession):
+        driver = await _create_driver(db, "Keep Me", simgrid_driver_id=42)
         _set_auth_user(shared_client._admin_user)
 
-        unlinked = await shared_client.patch(f"/api/v1/drivers/{driver.id}", json={"simgridDriverId": None})
-        assert unlinked.status_code == 200
-        assert unlinked.json()["simgridDriverId"] is None
+        for body in ({"simgridDriverId": None}, {"name": None}):
+            resp = await shared_client.patch(f"/api/v1/drivers/{driver.id}", json=body)
+            assert resp.status_code == 422
 
-        resp = await shared_client.patch(f"/api/v1/drivers/{driver.id}", json={"name": None})
-        assert resp.status_code == 422
+    async def test_simgrid_id_of_another_driver_conflicts(self, shared_client: AsyncClient, db: AsyncSession):
+        await _create_driver(db, "Holder", simgrid_driver_id=42)
+        driver = await _create_driver(db, "Wants It")
+        _set_auth_user(shared_client._admin_user)
+
+        resp = await shared_client.patch(f"/api/v1/drivers/{driver.id}", json={"simgridDriverId": 42})
+        assert resp.status_code == 409
+        assert "Holder" in resp.json()["detail"]
+
+    async def test_new_simgrid_id_drops_what_belonged_to_the_old_one(
+        self, shared_client: AsyncClient, db: AsyncSession
+    ):
+        """The row now stands for another person: the synced link and ids go, an admin's link stays."""
+        from app.models.user import User
+        from tests.roles import link_driver, make_user
+
+        synced = await _create_driver(db, "Synced", simgrid_driver_id=42, discord_uid="d42", steam64_id="s42")
+        by_hand = await _create_driver(db, "By Hand", simgrid_driver_id=43)
+        auto_user, admin_linked_user = await make_user(db, "driver"), await make_user(db, "driver")
+        await link_driver(db, auto_user, synced)
+        await link_driver(db, admin_linked_user, by_hand)
+        await db.execute(
+            update(User).where(User.id == admin_linked_user.id).values(driver_link_source="admin")
+        )
+        await db.commit()
+        _set_auth_user(shared_client._admin_user)
+
+        resp = await shared_client.patch(f"/api/v1/drivers/{synced.id}", json={"simgridDriverId": 99})
+        assert resp.status_code == 200
+        assert resp.json()["userId"] is None
+        await db.refresh(synced)
+        assert (synced.discord_uid, synced.steam64_id) == (None, None)
+
+        resp = await shared_client.patch(f"/api/v1/drivers/{by_hand.id}", json={"simgridDriverId": 98})
+        assert resp.json()["userId"] == str(admin_linked_user.id)
 
 
 class TestDriverList:
     async def test_public_list_hides_account(self, shared_client: AsyncClient, db: AsyncSession):
-        await _create_driver(db, "Linked Racer", user_id=uuid.uuid4())
+        from tests.roles import link_driver
+
+        await link_driver(db, shared_client._driver_user, await _create_driver(db, "Linked Racer"))
 
         _set_auth_user(shared_client._driver_user)
         resp = await shared_client.get("/api/v1/drivers")
@@ -210,8 +243,10 @@ class TestDriverList:
         assert "userId" not in body[0]
 
     async def test_include_account_for_judge(self, shared_client: AsyncClient, db: AsyncSession):
-        linked = uuid.uuid4()
-        await _create_driver(db, "Linked Racer", user_id=linked)
+        from tests.roles import link_driver
+
+        linked = shared_client._driver_user.id
+        await link_driver(db, shared_client._driver_user, await _create_driver(db, "Linked Racer"))
 
         _set_auth_user(shared_client._judge_user)
         resp = await shared_client.get("/api/v1/drivers", params={"include": "account"})
@@ -278,23 +313,31 @@ class TestDriverList:
 class TestDriverCrud:
     async def test_admin_creates_driver(self, shared_client: AsyncClient):
         _set_auth_user(shared_client._admin_user)
-        resp = await shared_client.post("/api/v1/drivers", json={"name": "  Fresh  "})
+        resp = await shared_client.post("/api/v1/drivers", json={"name": "  Fresh  ", "simgridDriverId": 77})
 
         assert resp.status_code == 201
         body = resp.json()
-        assert body["name"] == "Fresh"
+        assert (body["name"], body["simgridDriverId"]) == ("Fresh", 77)
         assert resp.headers["Location"] == f"/api/v1/drivers/{body['id']}"
 
     async def test_duplicate_name_conflicts(self, shared_client: AsyncClient, db: AsyncSession):
-        await _create_driver(db, "Taken")
+        await _create_driver(db, "Taken", simgrid_driver_id=5)
         _set_auth_user(shared_client._admin_user)
-        resp = await shared_client.post("/api/v1/drivers", json={"name": "taken"})
+        resp = await shared_client.post("/api/v1/drivers", json={"name": "taken", "simgridDriverId": 6})
         assert resp.status_code == 409
+        resp = await shared_client.post("/api/v1/drivers", json={"name": "Free", "simgridDriverId": 5})
+        assert resp.status_code == 409
+
+    async def test_driver_needs_a_simgrid_id(self, shared_client: AsyncClient):
+        _set_auth_user(shared_client._admin_user)
+        resp = await shared_client.post("/api/v1/drivers", json={"name": "Nobody On SimGrid"})
+        assert resp.status_code == 422
 
     async def test_judge_cannot_create_or_delete(self, shared_client: AsyncClient, db: AsyncSession):
         driver = await _create_driver(db, "Keep")
         _set_auth_user(shared_client._judge_user)
-        assert (await shared_client.post("/api/v1/drivers", json={"name": "X"})).status_code == 403
+        body = {"name": "X", "simgridDriverId": 1}
+        assert (await shared_client.post("/api/v1/drivers", json=body)).status_code == 403
         assert (await shared_client.delete(f"/api/v1/drivers/{driver.id}")).status_code == 403
 
     async def test_admin_deletes_driver(self, shared_client: AsyncClient, db: AsyncSession):

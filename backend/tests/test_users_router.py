@@ -92,17 +92,16 @@ async def test_list_users_includes_driver_and_communities(admin_client: AsyncCli
 
     (user,) = await _add_users(db, 1)
     community = await _add_community(db)
-    db.add_all(
-        [
-            Driver(name="Linked", user_id=user.id),
-            CommunityManager(user_id=user.id, community_id=community.id),
-        ]
-    )
+    from tests.roles import link_driver
+
+    driver = Driver(name="Linked")
+    db.add_all([driver, CommunityManager(user_id=user.id, community_id=community.id)])
     await db.commit()
+    await link_driver(db, user, driver)
 
     resp = await admin_client.get(USERS_URL, params={"limit": 1000})
     row = next(u for u in resp.json() if u["id"] == str(user.id))
-    assert row["driverId"] is not None
+    assert row["driverId"] == str(driver.id)
     assert row["managedCommunityIds"] == [str(community.id)]
 
 

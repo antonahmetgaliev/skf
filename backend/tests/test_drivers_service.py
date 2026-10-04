@@ -1,21 +1,25 @@
-"""Tests for app.services.drivers.sync_drivers_from_standings.
-
-Covers all four match paths and edge cases (empty name, duplicate key,
-batch processing).
-"""
+"""Drivers come from SimGrid, keyed on its user id; accounts are linked through Discord."""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
+import pytest
+from httpx import AsyncClient
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.championship import StandingEntryOut
+from app.models.bwp import BwpPoint, Driver, PenaltyClearance, PenaltyRule
+from app.models.incidents import Incident, IncidentDriver, IncidentWindow
+from app.models.race_result import GiveawayNameAlias, RaceResultEntry, RaceResultImport
+from app.models.user import User
+from app.schemas.championship import ParticipatingUser, StandingEntryOut
+from app.schemas.enums import DriverLinkStatus
+from app.services import drivers as service
+from tests.roles import act_as, link_driver, make_user
+from tests.test_users_router import admin_client  # noqa: F401
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+CHAMPIONSHIP_ID = 700
 
 
 def _entry(**kwargs) -> StandingEntryOut:
@@ -23,338 +27,380 @@ def _entry(**kwargs) -> StandingEntryOut:
     return StandingEntryOut(**{**defaults, **kwargs})
 
 
-async def _patch_and_sync(engine, entries, monkeypatch):
-    """Swap app.database.async_session for the test engine, then run sync."""
+async def _driver(db: AsyncSession, name: str, age_days: int = 0, **fields) -> Driver:
+    driver = Driver(name=name, created_at=datetime.now(UTC) - timedelta(days=age_days), **fields)
+    db.add(driver)
+    await db.commit()
+    return driver
+
+
+async def _all_drivers(db: AsyncSession) -> list[Driver]:
+    db.expire_all()
+    return list((await db.execute(select(Driver).order_by(Driver.name))).scalars())
+
+
+@pytest.fixture
+def simgrid(monkeypatch):
+    """SimGrid's view of people: participants per championship and Discord lookups."""
+    from app.services import simgrid as simgrid_module
+
+    class Stub:
+        participants: list[ParticipatingUser] = []
+        simgrid_id_by_discord: dict[str, int] = {}
+
+    async def get_participating_users(_self, _championship_id):
+        return Stub.participants
+
+    async def get_user_by_discord_id(_self, discord_uid):
+        return Stub.simgrid_id_by_discord.get(discord_uid)
+
+    cls = type(simgrid_module.simgrid_service)
+    monkeypatch.setattr(cls, "get_participating_users", get_participating_users)
+    monkeypatch.setattr(cls, "get_user_by_discord_id", get_user_by_discord_id)
+    return Stub
+
+
+# ---------------------------------------------------------------------------
+# Drivers from standings
+# ---------------------------------------------------------------------------
+
+
+async def test_new_simgrid_user_becomes_a_driver(db: AsyncSession):
+    created = await service.upsert_from_standings(db, [_entry(id=7, display_name=" New Racer ")])
+    await db.commit()
+
+    (driver,) = await _all_drivers(db)
+    assert created == 1
+    assert (driver.name, driver.simgrid_driver_id, driver.simgrid_display_name) == (
+        "New Racer",
+        7,
+        "New Racer",
+    )
+    assert driver.country_code == "GB" and driver.synced_at is not None
+
+
+async def test_known_simgrid_user_is_refreshed_not_renamed(db: AsyncSession):
+    await _driver(db, "Hub Name", simgrid_driver_id=7, country_code="UA")
+
+    created = await service.upsert_from_standings(
+        db, [_entry(id=7, display_name="SimGrid Name", country_code=None)]
+    )
+    await db.commit()
+
+    (driver,) = await _all_drivers(db)
+    assert created == 0
+    assert (driver.name, driver.simgrid_display_name, driver.country_code) == (
+        "Hub Name",
+        "SimGrid Name",
+        "UA",
+    )
+
+
+async def test_a_name_never_identifies_a_driver(db: AsyncSession):
+    """A row without a SimGrid id is not handed to a namesake; it is left for an admin to merge."""
+    manual = await _driver(db, "John Smith")
+
+    await service.upsert_from_standings(db, [_entry(id=7, display_name="john smith")])
+    await db.commit()
+
+    drivers = await _all_drivers(db)
+    assert len(drivers) == 2
+    await db.refresh(manual)
+    assert manual.simgrid_driver_id is None
+
+
+async def test_namesakes_are_two_drivers(db: AsyncSession):
+    await service.upsert_from_standings(
+        db, [_entry(id=7, display_name="Ivan Petrenko"), _entry(id=8, display_name="Ivan Petrenko")]
+    )
+    await db.commit()
+
+    assert sorted(d.simgrid_driver_id for d in await _all_drivers(db)) == [7, 8]
+
+
+async def test_entries_that_identify_nobody_are_skipped(db: AsyncSession):
+    await service.upsert_from_standings(
+        db,
+        [_entry(id=None, display_name="No Id"), _entry(id=0, display_name="Zero"), _entry(display_name="  ")],
+    )
+    await db.commit()
+
+    assert await _all_drivers(db) == []
+
+
+async def test_participants_bring_discord_and_steam_ids(db: AsyncSession):
+    await _driver(db, "Known", simgrid_driver_id=7, discord_uid="old")
+    await _driver(db, "Gone Quiet", simgrid_driver_id=8, discord_uid="was-connected")
+
+    await service.apply_participants(
+        db,
+        [
+            ParticipatingUser(user_id=7, username="known", discord_uid="d7", steam64_id="s7"),
+            ParticipatingUser(user_id=8, username="quiet"),
+            ParticipatingUser(user_id=9, username="not ours"),
+        ],
+    )
+    await db.commit()
+
+    known, quiet = sorted(await _all_drivers(db), key=lambda d: d.simgrid_driver_id)
+    assert (known.discord_uid, known.steam64_id) == ("d7", "s7")
+    assert quiet.discord_uid is None
+
+
+# ---------------------------------------------------------------------------
+# Account ↔ driver
+# ---------------------------------------------------------------------------
+
+
+async def test_sync_links_accounts_by_discord_id(db: AsyncSession, simgrid, test_user):
+    simgrid.participants = [
+        ParticipatingUser(user_id=7, username="me", discord_uid=test_user.discord_id),
+    ]
+
+    created, linked = await service.sync_championship(db, CHAMPIONSHIP_ID, [_entry(id=7)])
+
+    assert (created, linked) == (1, 1)
+    user = await db.get(User, test_user.id, populate_existing=True)
+    (driver,) = await _all_drivers(db)
+    assert (user.driver_id, user.driver_link_source) == (driver.id, "simgrid")
+    # Running it again changes nothing.
+    assert await service.sync_championship(db, CHAMPIONSHIP_ID, [_entry(id=7)]) == (0, 0)
+
+
+async def test_sync_leaves_an_admins_decision_alone(db: AsyncSession, simgrid, test_user):
+    mine = await _driver(db, "Mine By Hand", simgrid_driver_id=1)
+    other_user = await make_user(db, "driver")
+    await service.set_user_driver(db, await db.get(User, test_user.id), mine.id)
+    service.clear_user_driver(await db.get(User, other_user.id))
+    await db.commit()
+    simgrid.participants = [
+        ParticipatingUser(user_id=7, username="a", discord_uid=test_user.discord_id),
+        ParticipatingUser(user_id=8, username="b", discord_uid=other_user.discord_id),
+    ]
+
+    _, linked = await service.sync_championship(db, CHAMPIONSHIP_ID, [_entry(id=7), _entry(id=8)])
+
+    assert linked == 0
+    assert (await db.get(User, test_user.id, populate_existing=True)).driver_id == mine.id
+    assert (await db.get(User, other_user.id, populate_existing=True)).driver_id is None
+
+
+async def test_one_driver_is_linked_to_one_account(db: AsyncSession, simgrid, test_user):
+    """Two accounts cannot share a driver, whatever SimGrid says."""
+    driver = await _driver(db, "Shared", simgrid_driver_id=7, discord_uid=test_user.discord_id)
+    holder = await make_user(db, "driver")
+    await link_driver(db, holder, driver)
+
+    assert await service.link_accounts(db) == 0
+
+
+@pytest.mark.parametrize(
+    ("simgrid_id", "driver_exists", "taken", "expected"),
+    [
+        (None, True, False, DriverLinkStatus.NO_SIMGRID_ACCOUNT),
+        (7, False, False, DriverLinkStatus.DRIVER_NOT_SYNCED),
+        (7, True, True, DriverLinkStatus.DRIVER_TAKEN),
+        (7, True, False, DriverLinkStatus.LINKED),
+    ],
+)
+async def test_link_user_says_why(db, simgrid, test_user, simgrid_id, driver_exists, taken, expected):
+    if simgrid_id:
+        simgrid.simgrid_id_by_discord = {test_user.discord_id: simgrid_id}
+    if driver_exists:
+        driver = await _driver(db, "Me", simgrid_driver_id=7)
+        if taken:
+            await link_driver(db, await make_user(db, "driver"), driver)
+
+    user = await db.get(User, test_user.id)
+    assert await service.link_user(db, user) is expected
+    assert (user.driver_id is not None) == (expected is DriverLinkStatus.LINKED)
+
+
+async def test_link_user_respects_an_admins_unlink(db: AsyncSession, simgrid, test_user):
+    await _driver(db, "Me", simgrid_driver_id=7)
+    simgrid.simgrid_id_by_discord = {test_user.discord_id: 7}
+    user = await db.get(User, test_user.id)
+    service.clear_user_driver(user)
+    await db.commit()
+
+    assert await service.link_user(db, user) is DriverLinkStatus.UNLINKED_BY_ADMIN
+    assert user.driver_id is None
+
+
+async def test_login_links_in_the_background(engine, db, simgrid, test_user, monkeypatch):
     import app.database as db_module
-    from app.services.drivers import sync_drivers_from_standings
+    from tests.conftest import _factory
 
-    factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    monkeypatch.setattr(db_module, "async_session", factory)
-    await sync_drivers_from_standings(entries)
+    monkeypatch.setattr(db_module, "async_session", _factory(engine))
+    driver = await _driver(db, "Me", simgrid_driver_id=7)
+    simgrid.simgrid_id_by_discord = {test_user.discord_id: 7}
+
+    await service.link_driver_for_user(test_user.id)
+
+    assert (await db.get(User, test_user.id, populate_existing=True)).driver_id == driver.id
 
 
-def _now():
-    return datetime.now(UTC)
+async def test_my_driver_link_endpoint(auth_client: AsyncClient, db: AsyncSession, simgrid):
+    resp = await auth_client.post("/api/v1/me/driver-links")
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "no_simgrid_account", "driverId": None}
+
+
+async def test_admin_links_and_unlinks_by_hand(admin_client: AsyncClient, db: AsyncSession):  # noqa: F811
+    user, other = await make_user(db, "driver"), await make_user(db, "driver")
+    driver = await _driver(db, "No Discord On SimGrid", simgrid_driver_id=7)
+    url = f"/api/v1/users/{user.id}/driver"
+
+    resp = await admin_client.put(url, json={"driverId": str(driver.id)})
+    assert resp.status_code == 200
+    assert (resp.json()["driverId"], resp.json()["driverLinkSource"]) == (str(driver.id), "admin")
+
+    taken = await admin_client.put(f"/api/v1/users/{other.id}/driver", json={"driverId": str(driver.id)})
+    assert taken.status_code == 409
+    assert user.username in taken.json()["detail"]
+
+    assert (await admin_client.delete(url)).status_code == 204
+    stored = await db.get(User, user.id, populate_existing=True)
+    assert (stored.driver_id, stored.driver_link_source) == (None, "admin")
+
+
+async def test_linking_by_hand_is_admin_only(admin_client: AsyncClient, db: AsyncSession):  # noqa: F811
+    user = await make_user(db, "driver")
+    driver = await _driver(db, "D", simgrid_driver_id=7)
+    act_as(await make_user(db, "racing_judge"))
+
+    resp = await admin_client.put(f"/api/v1/users/{user.id}/driver", json={"driverId": str(driver.id)})
+    assert resp.status_code == 403
 
 
 # ---------------------------------------------------------------------------
-# Tests
+# Cleaning up
 # ---------------------------------------------------------------------------
 
 
-async def test_empty_display_name_is_skipped(engine, db, monkeypatch):
-    """Entries whose display_name is blank/whitespace are silently ignored."""
-    from app.models.bwp import Driver
+async def test_issues_list_rows_that_are_not_one_simgrid_users_only_row(
+    admin_client: AsyncClient,  # noqa: F811
+    db: AsyncSession,
+):
+    await _driver(db, "Fine", simgrid_driver_id=1)
+    keeper = await _driver(db, "Twice", age_days=2, simgrid_driver_id=2)
+    copy = await _driver(db, "Twice Again", age_days=1, simgrid_driver_id=2)
+    orphan = await _driver(db, "john smith")
+    lookalike = await _driver(db, "John Smith", simgrid_driver_id=3)
+    lone = await _driver(db, "Nobody Knows")
 
-    await _patch_and_sync(engine, [_entry(display_name="  ")], monkeypatch)
+    resp = await admin_client.get("/api/v1/driver-issues")
 
-    result = await db.execute(select(Driver))
-    assert result.scalars().all() == []
-
-
-async def test_path1_updates_simgrid_display_name_and_country(engine, db, monkeypatch):
-    """Path 1: existing driver matched by simgrid_driver_id gets display_name + country updated."""
-    from app.models.bwp import Driver
-
-    driver = Driver(name="Old Name", simgrid_driver_id=42, created_at=_now())
-    db.add(driver)
-    await db.commit()
-
-    await _patch_and_sync(engine, [_entry(id=42, display_name="New Name", country_code="DE")], monkeypatch)
-
-    await db.refresh(driver)
-    assert driver.simgrid_display_name == "New Name"
-    assert driver.country_code == "DE"
-
-
-async def test_path1_canonical_name_is_unchanged(engine, db, monkeypatch):
-    """Path 1: the driver's canonical name column is NOT overwritten."""
-    from app.models.bwp import Driver
-
-    driver = Driver(name="Canonical Name", simgrid_driver_id=10, created_at=_now())
-    db.add(driver)
-    await db.commit()
-
-    await _patch_and_sync(
-        engine, [_entry(id=10, display_name="SimGrid Name", country_code="FR")], monkeypatch
-    )
-
-    await db.refresh(driver)
-    assert driver.name == "Canonical Name"
+    assert resp.status_code == 200
+    issues = {i["driver"]["id"]: i for i in resp.json()}
+    assert set(issues) == {str(d.id) for d in (keeper, copy, orphan, lone)}
+    assert issues[str(keeper.id)]["kind"] == "duplicate_simgrid_id"
+    assert issues[str(keeper.id)]["suggestedTarget"] is None
+    assert issues[str(copy.id)]["suggestedTarget"]["id"] == str(keeper.id)
+    assert issues[str(orphan.id)]["kind"] == "no_simgrid_id"
+    assert issues[str(orphan.id)]["suggestedTarget"]["id"] == str(lookalike.id)
+    assert issues[str(lone.id)]["suggestedTarget"] is None
 
 
-async def test_path1_empty_country_preserves_existing(engine, db, monkeypatch):
-    """Path 1: an empty country_code in the entry does NOT overwrite an existing value."""
-    from app.models.bwp import Driver
+async def test_merge_moves_everything_and_deletes_the_source(
+    admin_client: AsyncClient,  # noqa: F811
+    db: AsyncSession,
+):
+    target = await _driver(db, "John Smith", simgrid_driver_id=7)
+    source = await _driver(db, "john smith", photo_url="https://example.com/p.png", discord_uid="d7")
+    user = await make_user(db, "driver")
+    await link_driver(db, user, source)
 
-    driver = Driver(name="Driver FR", simgrid_driver_id=11, country_code="FR", created_at=_now())
-    db.add(driver)
-    await db.commit()
-
-    await _patch_and_sync(engine, [_entry(id=11, display_name="Driver FR", country_code="")], monkeypatch)
-
-    await db.refresh(driver)
-    assert driver.country_code == "FR"
-
-
-async def test_path2_links_unlinked_driver_by_name(engine, db, monkeypatch):
-    """Path 2: case-insensitive name match assigns simgrid_driver_id when it was NULL."""
-    from app.models.bwp import Driver
-
-    driver = Driver(name="John Smith", simgrid_driver_id=None, created_at=_now())
-    db.add(driver)
-    await db.commit()
-
-    await _patch_and_sync(engine, [_entry(id=99, display_name="john smith", country_code="US")], monkeypatch)
-
-    await db.refresh(driver)
-    assert driver.simgrid_driver_id == 99
-    assert driver.simgrid_display_name == "john smith"
-    assert driver.country_code == "US"
-
-
-async def test_path2_skips_already_simgrid_linked_driver(engine, db, monkeypatch):
-    """Path 2 won't match a driver that already has a different simgrid_driver_id.
-
-    Falls through to path 4, which tries to INSERT a new row with the same
-    canonical name and hits the unique constraint, so the row is skipped
-    and the original driver is left unchanged.
-    """
-    from app.models.bwp import Driver
-
-    existing = Driver(name="Alice Brown", simgrid_driver_id=5, created_at=_now())
-    db.add(existing)
-    await db.commit()
-
-    await _patch_and_sync(engine, [_entry(id=88, display_name="Alice Brown", country_code="AU")], monkeypatch)
-
-    result = await db.execute(select(Driver))
-    drivers = result.scalars().all()
-    # The new entry collides on the unique name — it is gracefully skipped.
-    assert len(drivers) == 1, "Duplicate name should be skipped, not duplicated"
-    await db.refresh(existing)
-    assert existing.simgrid_driver_id == 5  # original is unchanged
-
-
-async def test_path3_links_via_simgrid_display_name(engine, db, monkeypatch):
-    """Path 3: match via stored simgrid_display_name when the canonical name differs."""
-    from app.models.bwp import Driver
-
-    driver = Driver(
-        name="Johny",
-        simgrid_display_name="John Smith",
-        simgrid_driver_id=None,
-        created_at=_now(),
-    )
-    db.add(driver)
-    await db.commit()
-
-    await _patch_and_sync(engine, [_entry(id=77, display_name="John Smith", country_code="CA")], monkeypatch)
-
-    await db.refresh(driver)
-    assert driver.simgrid_driver_id == 77
-    assert driver.country_code == "CA"
-    assert driver.name == "Johny"  # canonical name stays the same
-
-
-async def test_path4_inserts_new_driver(engine, db, monkeypatch):
-    """Path 4: no match → a new Driver row is created."""
-    from app.models.bwp import Driver
-
-    await _patch_and_sync(
-        engine, [_entry(id=55, display_name="Brand New Driver", country_code="IT")], monkeypatch
-    )
-
-    result = await db.execute(select(Driver).where(Driver.simgrid_driver_id == 55))
-    driver = result.scalar_one_or_none()
-    assert driver is not None
-    assert driver.name == "Brand New Driver"
-    assert driver.country_code == "IT"
-
-
-async def test_path4_duplicate_name_skipped_gracefully(engine, db, monkeypatch):
-    """Path 4: unique-name IntegrityError is swallowed per row; the batch continues."""
-    from app.models.bwp import Driver
-
-    # A driver that owns the canonical name "Existing Driver".
-    # It already has a simgrid_driver_id so path 2 won't match a new entry
-    # with the same display_name → falls to path 4 → IntegrityError caught.
-    existing = Driver(name="Existing Driver", simgrid_driver_id=1, created_at=_now())
-    db.add(existing)
-    await db.commit()
-
-    entries = [
-        _entry(id=100, display_name="Existing Driver", country_code="GB"),  # duplicate → skip
-        _entry(id=101, display_name="Fresh Entry", country_code="NL"),  # new → insert
-    ]
-    await _patch_and_sync(engine, entries, monkeypatch)
-
-    result = await db.execute(select(Driver))
-    all_drivers = result.scalars().all()
-    names = {d.name for d in all_drivers}
-
-    assert "Existing Driver" in names
-    assert "Fresh Entry" in names
-    assert len([d for d in all_drivers if d.name == "Existing Driver"]) == 1  # no duplicate
-
-
-async def test_entry_without_simgrid_id_is_skipped(engine, db, monkeypatch):
-    """Entries with no user_id (id=None) must not create or match anything —
-    especially not drivers whose simgrid_driver_id is NULL."""
-    from app.models.bwp import Driver
-
-    unlinked = Driver(name="No SimGrid Yet", simgrid_driver_id=None, created_at=_now())
-    db.add(unlinked)
-    await db.commit()
-
-    await _patch_and_sync(
-        engine, [_entry(id=None, display_name="Ghost Entry", country_code="PL")], monkeypatch
-    )
-
-    result = await db.execute(select(Driver))
-    drivers = result.scalars().all()
-    assert len(drivers) == 1
-    await db.refresh(unlinked)
-    assert unlinked.simgrid_driver_id is None
-    assert unlinked.simgrid_display_name is None
-
-
-async def test_path3_does_not_steal_assigned_simgrid_id(engine, db, monkeypatch):
-    """A colliding display name must not reassign a driver already bound to a
-    different SimGrid id — a new row is created instead."""
-    from app.models.bwp import Driver
-
-    existing = Driver(
-        name="Johny",
-        simgrid_display_name="John Smith",
-        simgrid_driver_id=5,
-        created_at=_now(),
-    )
-    db.add(existing)
-    await db.commit()
-
-    await _patch_and_sync(engine, [_entry(id=77, display_name="John Smith", country_code="CA")], monkeypatch)
-
-    await db.refresh(existing)
-    assert existing.simgrid_driver_id == 5  # identity NOT stolen
-
-    result = await db.execute(select(Driver).where(Driver.simgrid_driver_id == 77))
-    new_driver = result.scalar_one_or_none()
-    assert new_driver is not None
-    assert new_driver.name == "John Smith"
-
-
-async def test_case_variant_duplicate_name_is_not_inserted(engine, db, monkeypatch):
-    """The case-insensitive unique index blocks 'JOHN SMITH' next to
-    'John Smith'; the entry is skipped and the batch continues."""
-    from app.models.bwp import Driver
-
-    existing = Driver(name="John Smith", simgrid_driver_id=1, created_at=_now())
-    db.add(existing)
-    await db.commit()
-
-    entries = [
-        _entry(id=2, display_name="JOHN SMITH", country_code="GB"),
-        _entry(id=3, display_name="Other Guy", country_code="NL"),
-    ]
-    await _patch_and_sync(engine, entries, monkeypatch)
-
-    result = await db.execute(select(Driver))
-    names = sorted(d.name for d in result.scalars().all())
-    assert names == ["John Smith", "Other Guy"]
-
-
-async def test_duplicate_simgrid_ids_do_not_abort_batch(engine, db, monkeypatch):
-    """Two rows sharing a simgrid_driver_id (legacy data) must not raise
-    MultipleResultsFound and kill the whole sync."""
-    from app.models.bwp import Driver
-
+    today = datetime.now(UTC).date()
+    rule_both, rule_source = PenaltyRule(threshold=3), PenaltyRule(threshold=6)
+    window = IncidentWindow(race_name="R1", closes_at=datetime.now(UTC) + timedelta(days=1))
+    db.add_all([rule_both, rule_source, window])
+    await db.flush()
+    incident = Incident(window_id=window.id)
+    race_import = RaceResultImport(championship_simgrid_id=1)
+    db.add_all([incident, race_import])
+    await db.flush()
     db.add_all(
         [
-            Driver(name="Dup A", simgrid_driver_id=9, created_at=_now()),
-            Driver(name="Dup B", simgrid_driver_id=9, created_at=_now()),
+            BwpPoint(driver_id=source.id, points=2, issued_on=today, expires_on=today + timedelta(days=30)),
+            BwpPoint(driver_id=target.id, points=1, issued_on=today, expires_on=today + timedelta(days=30)),
+            PenaltyClearance(driver_id=source.id, penalty_rule_id=rule_both.id),
+            PenaltyClearance(driver_id=target.id, penalty_rule_id=rule_both.id),
+            PenaltyClearance(driver_id=source.id, penalty_rule_id=rule_source.id),
+            IncidentDriver(incident_id=incident.id, driver_name="john smith", driver_id=source.id),
+            RaceResultEntry(
+                import_id=race_import.id,
+                raw_name="john smith",
+                normalized_name="john smith",
+                driver_id=source.id,
+            ),
+            GiveawayNameAlias(
+                normalized_alias="j smith",
+                canonical_normalized_name="john smith",
+                canonical_display_name="John Smith",
+                driver_id=source.id,
+            ),
         ]
     )
     await db.commit()
 
-    entries = [
-        _entry(id=9, display_name="Dup A", country_code="GB"),
-        _entry(id=500, display_name="Survivor", country_code="SE"),
-    ]
-    await _patch_and_sync(engine, entries, monkeypatch)
+    resp = await admin_client.post(
+        f"/api/v1/drivers/{target.id}/merges", json={"sourceDriverId": str(source.id)}
+    )
 
-    result = await db.execute(select(Driver).where(Driver.name == "Survivor"))
-    assert result.scalar_one_or_none() is not None
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["activeBwp"] == 3
+    assert body["userId"] == str(user.id)
+    assert body["photoUrl"] == "https://example.com/p.png"
+    assert sorted(c["penaltyRuleId"] for c in body["clearances"]) == sorted(
+        [str(rule_both.id), str(rule_source.id)]
+    )
 
-
-async def _patch_and_link(engine, monkeypatch, user_id, discord_id, simgrid_user_id):
-    """Patch the DB session + SimGrid discord lookup, then run the login link."""
-    import app.database as db_module
-    from app.services import simgrid as simgrid_module
-    from app.services.drivers import link_driver_for_user
-
-    factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    monkeypatch.setattr(db_module, "async_session", factory)
-
-    async def _fake_lookup(self, uid):
-        return simgrid_user_id if uid == discord_id else None
-
-    monkeypatch.setattr(type(simgrid_module.simgrid_service), "get_user_by_discord_id", _fake_lookup)
-    await link_driver_for_user(user_id, discord_id)
+    db.expire_all()
+    assert [d.id for d in await _all_drivers(db)] == [target.id]
+    assert (await db.get(Driver, target.id)).discord_uid == "d7"
+    for model in (IncidentDriver, RaceResultEntry, GiveawayNameAlias):
+        assert (await db.execute(select(model.driver_id))).scalars().all() == [target.id]
 
 
-async def test_login_auto_link_claims_unclaimed_driver(engine, db, monkeypatch, test_user):
-    """A logged-in user whose SimGrid account has discord_uid gets linked."""
-    from app.models.bwp import Driver
+async def test_merge_refuses_two_different_people(admin_client: AsyncClient, db: AsyncSession):  # noqa: F811
+    one = await _driver(db, "One", simgrid_driver_id=1)
+    two = await _driver(db, "Two", simgrid_driver_id=2)
+    url = f"/api/v1/drivers/{one.id}/merges"
 
-    driver = Driver(name="Auto Linked", simgrid_driver_id=321, created_at=_now())
-    db.add(driver)
+    assert (await admin_client.post(url, json={"sourceDriverId": str(two.id)})).status_code == 409
+    assert (await admin_client.post(url, json={"sourceDriverId": str(one.id)})).status_code == 422
+
+    same_a = await _driver(db, "A", simgrid_driver_id=1)
+    await link_driver(db, await make_user(db, "driver"), one)
+    await link_driver(db, await make_user(db, "driver"), same_a)
+    resp = await admin_client.post(url, json={"sourceDriverId": str(same_a.id)})
+    assert resp.status_code == 409
+    assert "Unlink" in resp.json()["detail"]
+
+
+async def test_admin_sync_reads_every_active_championship(
+    admin_client: AsyncClient,  # noqa: F811
+    db: AsyncSession,
+    simgrid,
+    monkeypatch,
+):
+    from app.models.active_championship import ActiveChampionship
+    from app.schemas.championship import ChampionshipStandingsOut
+    from app.services import championships as championships_service
+
+    db.add_all([ActiveChampionship(simgrid_id=1), ActiveChampionship(simgrid_id=2)])
     await db.commit()
 
-    await _patch_and_link(engine, monkeypatch, test_user.id, test_user.discord_id, 321)
+    async def get_standings(championship_id):
+        if championship_id == 2:
+            raise RuntimeError("SimGrid is down")
+        return ChampionshipStandingsOut(entries=[_entry(id=7), _entry(id=8, display_name="Two")]), True
 
-    await db.refresh(driver)
-    assert driver.user_id == test_user.id
+    monkeypatch.setattr(championships_service, "get_standings", get_standings)
 
+    resp = await admin_client.post("/api/v1/driver-syncs")
 
-async def test_login_auto_link_noop_when_user_already_linked(engine, db, monkeypatch, test_user):
-    from app.models.bwp import Driver
-
-    mine = Driver(name="Already Mine", user_id=test_user.id, created_at=_now())
-    other = Driver(name="Other Driver", simgrid_driver_id=321, created_at=_now())
-    db.add_all([mine, other])
-    await db.commit()
-
-    await _patch_and_link(engine, monkeypatch, test_user.id, test_user.discord_id, 321)
-
-    await db.refresh(other)
-    assert other.user_id is None
-
-
-async def test_login_auto_link_noop_when_simgrid_unknown(engine, db, monkeypatch, test_user):
-    from app.models.bwp import Driver
-
-    driver = Driver(name="Unclaimed", simgrid_driver_id=321, created_at=_now())
-    db.add(driver)
-    await db.commit()
-
-    await _patch_and_link(engine, monkeypatch, test_user.id, test_user.discord_id, None)
-
-    await db.refresh(driver)
-    assert driver.user_id is None
-
-
-async def test_batch_inserts_all_new_entries(engine, db, monkeypatch):
-    """All entries in a batch with no existing matches are inserted."""
-    from app.models.bwp import Driver
-
-    entries = [
-        _entry(id=10, display_name="Alpha", country_code="AF"),
-        _entry(id=20, display_name="Beta", country_code="BE"),
-        _entry(id=30, display_name="Gamma", country_code="GR"),
-    ]
-    await _patch_and_sync(engine, entries, monkeypatch)
-
-    result = await db.execute(select(Driver))
-    names = {d.name for d in result.scalars().all()}
-    assert names == {"Alpha", "Beta", "Gamma"}
+    assert resp.status_code == 200
+    assert resp.json() == {"championships": 1, "failed": 1, "created": 2, "linked": 0}
