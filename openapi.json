@@ -7334,6 +7334,17 @@
           "ended": {
             "type": "boolean",
             "default": false
+          },
+          "resultsStatus": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResultsStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Whether a finished race's results can still change; null until the race has ended."
           }
         },
         "type": "object",
@@ -7343,7 +7354,8 @@
           "startsAt",
           "track",
           "resultsAvailable",
-          "ended"
+          "ended",
+          "resultsStatus"
         ]
       },
       "ChampionshipStandingsOut": {
@@ -10171,6 +10183,14 @@
           }
         },
         "type": "object"
+      },
+      "ResultsStatus": {
+        "type": "string",
+        "enum": [
+          "preliminary",
+          "final"
+        ],
+        "description": "``preliminary`` until SimGrid has the results and no longer marks them\nprovisional: stewards' penalties may still change positions and points."
       },
       "RoundBreakdownOut": {
         "properties": {

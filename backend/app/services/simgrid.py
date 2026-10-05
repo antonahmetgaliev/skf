@@ -47,7 +47,8 @@ from app.services.cache import (
     write_cache,
 )
 
-_TTL_STATIC = timedelta(days=1)  # championships list, details, races
+_TTL_STATIC = timedelta(days=1)  # championships list, details
+_TTL_RACES = timedelta(hours=1)  # races (their results turn from preliminary to final)
 _TTL_LIVE = timedelta(minutes=10)  # participants
 _TTL_STANDINGS = timedelta(hours=1)  # standings
 _TTL_RESULTS = timedelta(days=1)  # session results (stewards may amend them)
@@ -182,7 +183,7 @@ class SimgridService:
         championship_id: int,
     ) -> list[dict]:
         key = f"races_{championship_id}"
-        cached = _cached_list(await read_cache(key, _TTL_STATIC))
+        cached = _cached_list(await read_cache(key, _TTL_RACES))
         if cached is not None:
             return cached
 

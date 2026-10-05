@@ -71,6 +71,14 @@ class RaceSessionKind(StrEnum):
     QUALIFYING = "qualifying"
 
 
+class ResultsStatus(StrEnum):
+    """``preliminary`` until SimGrid has the results and no longer marks them
+    provisional: stewards' penalties may still change positions and points."""
+
+    PRELIMINARY = "preliminary"
+    FINAL = "final"
+
+
 class IncidentSource(StrEnum):
     """``filed`` by a person; ``ingested`` from a race-result file."""
 

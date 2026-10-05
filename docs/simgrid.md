@@ -214,6 +214,13 @@ the second an undocumented convenience. Returns registration id, `user_id`,
 
 `track` may be a dict or a plain string.
 
+`provisional_results` drives the Preliminary / Final badge on the site
+(`ChampionshipRaceOut.resultsStatus`): an ended race is final only when
+`results_available` is true and `provisional_results` is false. Seen so far: an
+ended race without results has `provisional_results: true`, a published one
+`false`. Whether SimGrid sets the flag by itself while results are uploaded but
+unconfirmed, or a steward has to, is **not verified**.
+
 ### List the races one driver actually took part in
 `GET /races?user_id=:id`
 

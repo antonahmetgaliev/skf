@@ -54,6 +54,8 @@ class RawRace(RawModel):
     track: RawTrack | str | None = None
     results_available: bool = False
     ended: bool = False
+    published_at: str | None = None
+    provisional_results: bool = False
 
 
 class RawParticipant(RawModel):

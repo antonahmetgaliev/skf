@@ -1913,6 +1913,8 @@ export interface components {
       resultsAvailable: boolean;
       /** @default false */
       ended: boolean;
+      /** @description Whether a finished race's results can still change; null until the race has ended. */
+      resultsStatus: components['schemas']['ResultsStatus'] | null;
     };
     ChampionshipStandingsOut: {
       /** @default [] */
@@ -2555,6 +2557,12 @@ export interface components {
         [key: string]: components['schemas']['RegulationContentUpdate'];
       };
     };
+    /**
+     * @description ``preliminary`` until SimGrid has the results and no longer marks them
+     *     provisional: stewards' penalties may still change positions and points.
+     * @enum {string}
+     */
+    ResultsStatus: 'preliminary' | 'final';
     RoundBreakdownOut: {
       roundKey: string;
       roundLabel: string;

@@ -170,6 +170,11 @@
                 {{ 'championships.standings' | transloco }}
               }
             </h3>
+            @if (preliminaryRounds(); as rounds) {
+              <app-alert variant="warning">{{
+                'championships.standingsPreliminaryNotice' | transloco: { rounds }
+              }}</app-alert>
+            }
             <div class="table-wrap">
               <table class="standings-table">
                 <thead>
@@ -297,7 +302,11 @@
                             {{ 'incidents.incidentCount' | transloco: { count: w.incidentsCount } }}
                           </a>
                         }
-                        @if (getRaceStatus(race) === 'completed') {
+                        @if (resultsStatusChip(race); as chip) {
+                          <app-badge [variant]="chip.variant">{{
+                            chip.label | transloco
+                          }}</app-badge>
+                        } @else if (getRaceStatus(race) === 'completed') {
                           <app-badge variant="completed">{{
                             'championships.completed' | transloco
                           }}</app-badge>
@@ -319,6 +328,16 @@
 
                     @if (expandedRaceId() === race.id) {
                       <div class="race-results-panel">
+                        @if (race.resultsStatus === 'preliminary') {
+                          <app-alert variant="warning" class="race-preliminary-notice">
+                            {{ 'championships.preliminaryNotice' | transloco }}
+                            @if (incidentWindows().get(race.id); as w) {
+                              <a routerLink="/incidents" [queryParams]="{ window: w.id }">{{
+                                'championships.incidents' | transloco
+                              }}</a>
+                            }
+                          </app-alert>
+                        }
                         <div class="race-results-toolbar">
                           <div class="session-toggle" role="group">
                             <button

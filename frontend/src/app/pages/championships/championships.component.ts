@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
@@ -29,6 +29,7 @@ import { PageIntroComponent } from '../../components/page-intro/page-intro.compo
 import { PageLayoutComponent } from '../../components/page-layout/page-layout.component';
 import { SpinnerComponent } from '../../components/spinner/spinner.component';
 import { TabsComponent } from '../../components/tabs/tabs.component';
+import { preliminaryRounds, resultsStatusChip } from './results-status';
 
 @Component({
   selector: 'app-championships',
@@ -48,6 +49,7 @@ import { TabsComponent } from '../../components/tabs/tabs.component';
   ],
   templateUrl: './championships.component.html',
   styleUrl: './championships.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChampionshipsComponent {
   readonly cs = inject(ChampionshipService);
@@ -74,6 +76,9 @@ export class ChampionshipsComponent {
   readonly loadingRaces = signal(false);
   /** The selected championship's incident windows by SimGrid race id. */
   readonly incidentWindows = signal<Map<number, ChampionshipIncidentWindow>>(new Map());
+  /** Rounds whose results the standings count although they may still change. */
+  readonly preliminaryRounds = computed(() => preliminaryRounds(this.allRaces()).join(', '));
+  readonly resultsStatusChip = resultsStatusChip;
 
   readonly isStaleData = computed(() => {
     const key = this.selectedChampionshipKey();
@@ -381,7 +386,7 @@ export class ChampionshipsComponent {
     this.activeTab.set(tab);
     if (tab === 'races') {
       const simgridId = this.getSelectedSimgridId();
-      if (simgridId !== null && this.allRaces().length === 0) {
+      if (simgridId !== null && this.allRaces().length === 0 && !this.loadingRaces()) {
         void this.loadAllRaces(simgridId);
       }
     }
@@ -423,8 +428,10 @@ export class ChampionshipsComponent {
         this.cs.refreshDriverMap();
       }
       if (this.pendingRaceId !== null) {
-        this.setActiveTab('races');
-      } else if (isUpcoming && this.allRaces().length === 0) {
+        this.activeTab.set('races');
+      }
+      // The standings need the races too: they say which rounds are still preliminary.
+      if (this.allRaces().length === 0) {
         void this.loadAllRaces(championshipId);
       }
     } catch (error) {

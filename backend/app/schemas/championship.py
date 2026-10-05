@@ -5,7 +5,7 @@ from typing import Annotated, Any
 from pydantic import Field, model_validator
 
 from app.schemas.base import BlankAsNone, CamelModel, IsoDateTime, Url
-from app.schemas.enums import RaceSessionKind, RaceStatus
+from app.schemas.enums import RaceSessionKind, RaceStatus, ResultsStatus
 
 
 class ChampionshipSummaryOut(CamelModel):
@@ -130,6 +130,10 @@ class ChampionshipRaceOut(CamelModel):
     track: str | None = None
     results_available: bool = False
     ended: bool = False
+    results_status: ResultsStatus | None = Field(
+        default=None,
+        description="Whether a finished race's results can still change; null until the race has ended.",
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -152,6 +156,10 @@ class ChampionshipRaceOut(CamelModel):
         track_raw = data.get("track")
         if isinstance(track_raw, dict):
             data["track"] = track_raw.get("name")
+        # results status: SimGrid's own flags, see docs/simgrid.md
+        if data.get("ended"):
+            confirmed = data.get("results_available") and not data.get("provisional_results")
+            data["results_status"] = ResultsStatus.FINAL if confirmed else ResultsStatus.PRELIMINARY
         return data
 
 

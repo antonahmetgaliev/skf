@@ -163,6 +163,9 @@ async def test_championship_details_and_races(admin_client, simgrid_stub):
             "display_name": "Laguna Seca",
             "starts_at": "2026-09-12T18:00:00Z",
             "track": {"name": "Laguna Seca"},
+            "ended": True,
+            "results_available": True,
+            "provisional_results": False,
         },
     ]
 
@@ -173,6 +176,7 @@ async def test_championship_details_and_races(admin_client, simgrid_stub):
     races = (await admin_client.get(f"/api/v1/championships/{LMU_CHAMPIONSHIP_ID}/races")).json()
     assert [(r["id"], r["displayName"]) for r in races] == [(1, "Laguna Seca"), (2, "Spa")]
     assert races[0]["track"] == "Laguna Seca"
+    assert [r["resultsStatus"] for r in races] == ["final", None]
 
 
 async def test_unknown_championship_is_a_502(client):

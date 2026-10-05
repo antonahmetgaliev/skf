@@ -16,7 +16,8 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from app.schemas.championship import ChampionshipOut
+from app.schemas.championship import ChampionshipOut, ChampionshipRaceOut
+from app.schemas.enums import ResultsStatus
 from app.schemas.simgrid_raw import (
     RawChampionshipCarClass,
     RawChampionshipRef,
@@ -165,6 +166,21 @@ async def test_races_cache_raw_items(monkeypatch, memory_cache):
 
     assert await service.get_races(1) == body["data"]
     assert memory_cache["races_1"] == body["data"]
+
+
+def test_recorded_races_map_to_results_status():
+    """An ended race is preliminary until SimGrid publishes non-provisional results."""
+    races = {r["id"]: ChampionshipRaceOut(**r) for r in _fixture("races")["data"]}
+
+    assert races[256744].results_status == ResultsStatus.PRELIMINARY
+    assert races[256745].results_status is None
+
+    published = {**_fixture("races")["data"][1], "results_available": True}
+    assert ChampionshipRaceOut(**published).results_status == ResultsStatus.PRELIMINARY
+    assert (
+        ChampionshipRaceOut(**{**published, "provisional_results": False}).results_status
+        == ResultsStatus.FINAL
+    )
 
 
 async def test_non_list_cache_is_refetched(monkeypatch, memory_cache):

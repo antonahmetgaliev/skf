@@ -714,3 +714,17 @@ $class-palette: #ffd600, #4a9fd4, #5ab95a, #e07b54, #b47fd4, #c8a23a;
 .btn-remove {
   flex-shrink: 0;
 }
+
+.section-title + app-alert {
+  margin-bottom: 0.75rem;
+}
+
+.race-preliminary-notice {
+  margin-top: 0.6rem;
+
+  a {
+    margin-left: 0.35rem;
+    color: inherit;
+    text-decoration: underline;
+  }
+}
