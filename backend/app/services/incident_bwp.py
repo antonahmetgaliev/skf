@@ -23,8 +23,13 @@ def utc_today() -> date:
     return datetime.now(UTC).date()
 
 
-async def apply_resolution_bwp(entry: IncidentDriver, db: AsyncSession) -> bool:
+async def apply_resolution_bwp(
+    entry: IncidentDriver, db: AsyncSession, *, issued_on: date | None = None
+) -> bool:
     """Issue this driver's BWP onto their licence. Returns True if a point was created.
+
+    The point runs from *issued_on*, today unless a late repair says when the
+    penalty should have started.
 
     Does **not** commit: the caller owns the transaction, which is what lets a
     whole window's penalties be issued atomically.
@@ -48,12 +53,12 @@ async def apply_resolution_bwp(entry: IncidentDriver, db: AsyncSession) -> bool:
         # marking it applied against nobody.
         return False
 
-    today = utc_today()
+    issued_on = issued_on or utc_today()
     point = BwpPoint(
         driver_id=entry.driver_id,
         points=resolution.bwp_points,
-        issued_on=today,
-        expires_on=today + timedelta(days=BWP_ACTIVE_DAYS),
+        issued_on=issued_on,
+        expires_on=issued_on + timedelta(days=BWP_ACTIVE_DAYS),
     )
     db.add(point)
     await db.flush()

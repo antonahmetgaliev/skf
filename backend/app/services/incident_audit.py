@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import UTC, date, datetime
+
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -32,6 +34,12 @@ def _unlinked_applied_query() -> Select:
     )
 
 
+def _verdict_day(resolved_at: datetime | None) -> date | None:
+    if resolved_at is None:
+        return None
+    return (resolved_at.astimezone(UTC) if resolved_at.tzinfo else resolved_at).date()
+
+
 async def bwp_audit(db: AsyncSession) -> list[BwpAuditEntryOut]:
     rows = (await db.execute(_unlinked_applied_query())).all()
     return [
@@ -50,7 +58,9 @@ async def bwp_backfill(db: AsyncSession) -> BwpBackfillOut:
     """Issue the missing points for penalties applied against an unlinked driver.
 
     Each such driver whose name now matches a record is linked to it and gets
-    its point through the same rule publishing uses.
+    its point through the same rule publishing uses. The point is dated by the
+    verdict, not by today: a penalty that is months old must not start its 90
+    days again, or it shows up as active on a driver who has long served it.
     """
     rows = (await db.execute(_unlinked_applied_query())).all()
     fixed = 0
@@ -65,7 +75,7 @@ async def bwp_backfill(db: AsyncSession) -> BwpBackfillOut:
             # Marked applied although no point exists: clear the flag so the
             # shared rule issues the point and records which one it was.
             inc_drv.resolution.bwp_applied = False
-            await apply_resolution_bwp(inc_drv, db)
+            await apply_resolution_bwp(inc_drv, db, issued_on=_verdict_day(inc_drv.resolution.resolved_at))
         fixed += 1
     await db.commit()
     return BwpBackfillOut(fixed=fixed, unmatched=unmatched)

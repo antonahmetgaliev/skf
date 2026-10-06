@@ -1701,7 +1701,11 @@ class TestBwpBackfill:
         db.add_all(
             [
                 IncidentResolution(
-                    incident_driver_id=known.id, verdict="Penalty", bwp_points=3, bwp_applied=True
+                    incident_driver_id=known.id,
+                    verdict="Penalty",
+                    bwp_points=3,
+                    bwp_applied=True,
+                    resolved_at=now - timedelta(days=120),
                 ),
                 IncidentResolution(
                     incident_driver_id=ghost.id, verdict="Penalty", bwp_points=2, bwp_applied=True
@@ -1721,7 +1725,10 @@ class TestBwpBackfill:
         points = (await db.execute(select(BwpPoint).where(BwpPoint.driver_id == driver.id))).scalars().all()
         assert len(points) == 1
         assert points[0].points == 3
+        # Dated by the verdict: a penalty from four months ago is already served.
+        assert points[0].issued_on == (now - timedelta(days=120)).date()
         assert (points[0].expires_on - points[0].issued_on).days == BWP_ACTIVE_DAYS
+        assert points[0].expired
 
         audit = await admin_client.get("/api/v1/bwp-audit-entries")
         assert [e["driverName"] for e in audit.json()] == ["Ghost"]
