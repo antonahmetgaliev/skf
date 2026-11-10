@@ -28,6 +28,19 @@ h2 {
   text-transform: uppercase;
 }
 
+.empty-state {
+  display: block;
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.empty-state-hint {
+  max-width: 34rem;
+  margin: 0.75rem auto 1.5rem;
+  color: var(--muted);
+  font-size: var(--text-md);
+}
+
 .section-title {
   margin: 0 0 0.45rem;
   font-family: var(--font-display);
