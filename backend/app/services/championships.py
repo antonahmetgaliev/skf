@@ -21,6 +21,7 @@ from app.schemas.championship import (
     ChampionshipSummaryOut,
 )
 from app.schemas.incidents import IncidentWindowStatusOut
+from app.services import calendar_events
 from app.services.incidents import window_summary
 from app.services.simgrid import simgrid_service
 
@@ -42,6 +43,7 @@ async def set_active(db: AsyncSession, simgrid_id: int, active: bool) -> None:
     elif await db.get(ActiveChampionship, simgrid_id) is None:
         db.add(ActiveChampionship(simgrid_id=simgrid_id))
     await db.commit()
+    calendar_events.invalidate_snapshot()
 
 
 # ── SimGrid proxy ───────────────────────────────────────────────────────────

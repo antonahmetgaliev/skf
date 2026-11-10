@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,9 +17,9 @@ router = APIRouter(tags=["Calendar"])
 
 @router.get("/calendar-events", response_model=list[CalendarEventOut], responses=STALE_RESPONSES)
 async def list_calendar_events(
-    year: int = Query(..., ge=2020, le=2100),
-    month: int | None = Query(None, ge=1, le=12),
+    from_: date = Query(..., alias="from"),
+    to: date = Query(...),
     db: AsyncSession = Depends(get_db),
 ):
-    """SimGrid + custom championship events for a month, or the whole year."""
-    return await service.list_calendar_events(db, year, month)
+    """SimGrid + custom championship events between two dates, both included."""
+    return await service.list_calendar_events(db, from_, to)

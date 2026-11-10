@@ -116,7 +116,7 @@ export interface paths {
     };
     /**
      * List calendar events
-     * @description SimGrid + custom championship events for a month, or the whole year.
+     * @description SimGrid + custom championship events between two dates, both included.
      */
     get: operations['listCalendarEvents'];
     put?: never;
@@ -2955,8 +2955,8 @@ export interface operations {
   listCalendarEvents: {
     parameters: {
       query: {
-        year: number;
-        month?: number | null;
+        from: string;
+        to: string;
       };
       header?: never;
       path?: never;

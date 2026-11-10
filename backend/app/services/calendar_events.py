@@ -7,13 +7,16 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from calendar import monthrange
-from datetime import UTC, datetime
+from dataclasses import dataclass
+from datetime import UTC, date, datetime, time, timedelta
+from time import monotonic
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app import database
+from app.core.errors import Unprocessable
 from app.models.active_championship import ActiveChampionship
 from app.models.community import Community
 from app.models.custom_championship import CustomChampionship
@@ -115,16 +118,10 @@ def _overlaps_range(
     return False
 
 
-def _date_range(year: int, month: int | None) -> tuple[datetime, datetime]:
-    if month is not None:
-        _, days_in_month = monthrange(year, month)
-        return (
-            datetime(year, month, 1, tzinfo=UTC),
-            datetime(year, month, days_in_month, 23, 59, 59, tzinfo=UTC),
-        )
+def _date_range(start: date, end: date) -> tuple[datetime, datetime]:
     return (
-        datetime(year, 1, 1, tzinfo=UTC),
-        datetime(year, 12, 31, 23, 59, 59, tzinfo=UTC),
+        datetime.combine(start, time.min, tzinfo=UTC),
+        datetime.combine(end, time(23, 59, 59), tzinfo=UTC),
     )
 
 
@@ -168,83 +165,159 @@ def _simgrid_races(raw_races: list[dict]) -> list[CalendarRaceOut]:
     return races
 
 
-async def _simgrid_events(
-    db: AsyncSession, range_start: datetime, range_end: datetime
-) -> list[CalendarEventOut]:
-    skf = (
-        await db.execute(select(Community).where(Community.is_skf.is_(True)).limit(1))
-    ).scalar_one_or_none()
+@dataclass(frozen=True)
+class _SimgridEntry:
+    """A SimGrid championship as the calendar shows it, minus what depends on the request."""
 
-    active_ids = set((await db.execute(select(ActiveChampionship.simgrid_id))).scalars().all())
-    try:
-        championships = await simgrid_service.with_details(
-            [c for c in await simgrid_service.get_championships() if c.id in active_ids]
-        )
-    except Exception:
-        logger.warning("Could not load SimGrid championships for the calendar", exc_info=True)
-        championships = []
+    event: CalendarEventOut
+    completed: bool
 
-    races_by_id = dict(await asyncio.gather(*[_fetch_races(c.id) for c in championships]))
-    details_by_id = {
-        cid: data
-        for cid, data in await asyncio.gather(*[_fetch_detail(c.id) for c in championships])
-        if data is not None
-    }
 
-    events: list[CalendarEventOut] = []
+@dataclass(frozen=True)
+class _Snapshot:
+    built_at: datetime
+    entries: list[_SimgridEntry]
+
+
+# Building the SimGrid half costs three cache-table reads per active
+# championship (or SimGrid calls on a miss), whatever range is asked for. It is
+# built once, kept in memory and rebuilt in the background when it gets old, so
+# a request never waits for it except right after a start or an invalidation.
+_SNAPSHOT_TTL = timedelta(minutes=5)
+_snapshot: _Snapshot | None = None
+_refresh_task: asyncio.Task[None] | None = None
+_running: set[asyncio.Task[None]] = set()
+_generation = 0
+
+
+def invalidate_snapshot() -> None:
+    """Forget the SimGrid half; call after a write that changes what it shows."""
+    global _snapshot, _refresh_task, _generation
+    _generation += 1
+    _snapshot = None
+    _refresh_task = None
+
+
+async def _build_simgrid_entries() -> list[_SimgridEntry]:
+    async with database.async_session() as db:
+        skf = (
+            await db.execute(select(Community).where(Community.is_skf.is_(True)).limit(1))
+        ).scalar_one_or_none()
+        community = CommunityOut.model_validate(skf) if skf else None
+        active_ids = set((await db.execute(select(ActiveChampionship.simgrid_id))).scalars().all())
+    if not active_ids:
+        return []
+
+    championships = [c for c in await simgrid_service.get_championships() if c.id in active_ids]
+    race_pairs, detail_pairs = await asyncio.gather(
+        asyncio.gather(*[_fetch_races(c.id) for c in championships]),
+        asyncio.gather(*[_fetch_detail(c.id) for c in championships]),
+    )
+    races_by_id = dict(race_pairs)
+    details_by_id = {cid: data for cid, data in detail_pairs if data is not None}
+
+    entries: list[_SimgridEntry] = []
     for champ in championships:
         raw_races = races_by_id.get(champ.id, [])
         races = _simgrid_races(raw_races)
         all_races_ended = bool(raw_races) and all(r.get("ended", False) for r in raw_races)
         detail: dict[str, Any] = details_by_id.get(champ.id, {})
 
-        effective_start = champ.start_date
-        effective_end = champ.end_date
-        # Dateless single-event championships: fall back to the detail dates.
-        if not effective_start and not races and detail:
-            effective_start = detail.get("start_date")
-            effective_end = detail.get("end_date")
+        # The list endpoint only returns ``id`` and ``name``; dates and the
+        # registration state come from the details, then from the races.
+        effective_start = champ.start_date or detail.get("start_date")
+        effective_end = champ.end_date or detail.get("end_date")
         race_dates = [d for d in (_parse_date(r.date) for r in races if r.date) if d]
         if race_dates:
             effective_start = effective_start or min(race_dates).isoformat()
             effective_end = effective_end or max(race_dates).isoformat()
 
-        start = _parse_date(effective_start)
-        end = _parse_date(effective_end)
-        event_type = _classify_simgrid(
-            effective_start,
-            effective_end,
-            champ.event_completed or all_races_ended,
-            champ.accepting_registrations,
-        )
-
-        # Dateless championships are included (unscheduled) — skip the range filter.
-        has_any_date = start is not None or end is not None or any(r.date for r in races)
-        if has_any_date and not _overlaps_range(start, end, races, range_start, range_end):
-            continue
-
-        events.append(
-            CalendarEventOut(
-                id=str(champ.id),
-                name=champ.name,
-                game=detail.get("game_name") or "",
-                description=detail.get("description"),
-                image=detail.get("image"),
-                start_date=effective_start,
-                end_date=effective_end,
-                event_type=event_type,
-                source="simgrid",
-                simgrid_championship_id=champ.id,
-                community=CommunityOut.model_validate(skf) if skf else None,
-                accepting_registrations=(
-                    champ.accepting_registrations or bool(detail.get("accepting_registrations"))
+        completed = champ.event_completed or all_races_ended
+        accepting_registrations = champ.accepting_registrations or bool(detail.get("accepting_registrations"))
+        entries.append(
+            _SimgridEntry(
+                event=CalendarEventOut(
+                    id=str(champ.id),
+                    name=champ.name,
+                    game=detail.get("game_name") or "",
+                    description=detail.get("description"),
+                    image=detail.get("image"),
+                    start_date=effective_start,
+                    end_date=effective_end,
+                    event_type=_classify_simgrid(
+                        effective_start, effective_end, completed, accepting_registrations
+                    ),
+                    source="simgrid",
+                    simgrid_championship_id=champ.id,
+                    community=community,
+                    accepting_registrations=accepting_registrations,
+                    capacity=detail.get("capacity"),
+                    spots_taken=detail.get("spots_taken"),
+                    registration_url=detail.get("url") or None,
+                    races=races,
                 ),
-                capacity=detail.get("capacity"),
-                spots_taken=detail.get("spots_taken"),
-                registration_url=detail.get("url") or None,
-                races=races,
+                completed=completed,
             )
         )
+    return entries
+
+
+async def _refresh_snapshot(generation: int) -> None:
+    global _snapshot
+    started = monotonic()
+    try:
+        entries = await _build_simgrid_entries()
+    except Exception:
+        logger.warning("Could not load SimGrid championships for the calendar", exc_info=True)
+        return
+    # An invalidation while this was running makes the result out of date.
+    if generation != _generation:
+        return
+    _snapshot = _Snapshot(built_at=datetime.now(UTC), entries=entries)
+    logger.info(
+        "Calendar SimGrid snapshot built: %d championships in %.2fs", len(entries), monotonic() - started
+    )
+
+
+def _start_refresh() -> asyncio.Task[None]:
+    """The running rebuild, started if there is none: callers share one."""
+    global _refresh_task
+    if _refresh_task is None or _refresh_task.done():
+        _refresh_task = asyncio.create_task(_refresh_snapshot(_generation))
+        _running.add(_refresh_task)
+        _refresh_task.add_done_callback(_running.discard)
+    return _refresh_task
+
+
+async def _simgrid_entries() -> list[_SimgridEntry]:
+    snapshot = _snapshot
+    if snapshot is None:
+        # Shielded: a client that goes away must not cancel the build others wait for.
+        await asyncio.shield(_start_refresh())
+        snapshot = _snapshot
+        return snapshot.entries if snapshot else []
+    if datetime.now(UTC) - snapshot.built_at > _SNAPSHOT_TTL:
+        _start_refresh()
+    return snapshot.entries
+
+
+async def _simgrid_events(range_start: datetime, range_end: datetime) -> list[CalendarEventOut]:
+    events: list[CalendarEventOut] = []
+    for entry in await _simgrid_entries():
+        event = entry.event
+        start = _parse_date(event.start_date)
+        end = _parse_date(event.end_date)
+
+        # Dateless championships are included (unscheduled) — skip the range filter.
+        has_any_date = start is not None or end is not None or any(r.date for r in event.races)
+        if has_any_date and not _overlaps_range(start, end, event.races, range_start, range_end):
+            continue
+
+        # The type depends on the current time, so it is not part of the snapshot.
+        event_type = _classify_simgrid(
+            event.start_date, event.end_date, entry.completed, event.accepting_registrations
+        )
+        events.append(event.model_copy(update={"event_type": event_type}))
     return events
 
 
@@ -295,14 +368,16 @@ async def _custom_events(
     return events
 
 
-async def list_calendar_events(db: AsyncSession, year: int, month: int | None) -> list[CalendarEventOut]:
-    """Merged SimGrid + custom championship events for a month (or a whole year).
+async def list_calendar_events(db: AsyncSession, start: date, end: date) -> list[CalendarEventOut]:
+    """Merged SimGrid + custom championship events between two dates, both included.
 
     Always includes every visible community's championships alongside SKF
     events; filtering by community/game/class happens on the frontend.
     """
-    range_start, range_end = _date_range(year, month)
+    if end < start:
+        raise Unprocessable("`to` must not be earlier than `from`.")
+    range_start, range_end = _date_range(start, end)
     return [
-        *await _simgrid_events(db, range_start, range_end),
+        *await _simgrid_events(range_start, range_end),
         *await _custom_events(db, range_start, range_end),
     ]

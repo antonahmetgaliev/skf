@@ -90,6 +90,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly currentYear = signal(new Date().getFullYear());
   readonly currentMonth = signal(new Date().getMonth() + 1); // 1-based
   readonly yearEvents = signal<CalendarEvent[]>([]);
+  private yearEventsRequest = 0;
   readonly loading = signal(false);
   readonly errorMessage = signal('');
   readonly selectedDay = signal<number | null>(null);
@@ -462,15 +463,20 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private async loadYearEvents(): Promise<void> {
+    // Only the latest request may write: a slow answer for a year the user
+    // has already left must not replace the current one.
+    const request = ++this.yearEventsRequest;
     this.loading.set(true);
     this.errorMessage.set('');
     try {
       const data = await firstValueFrom(this.calendarApi.getYearEvents(this.currentYear()));
-      this.yearEvents.set(data);
+      if (request === this.yearEventsRequest) this.yearEvents.set(data);
     } catch {
-      this.errorMessage.set('Failed to load calendar events.');
+      if (request === this.yearEventsRequest) {
+        this.errorMessage.set('Failed to load calendar events.');
+      }
     } finally {
-      this.loading.set(false);
+      if (request === this.yearEventsRequest) this.loading.set(false);
     }
   }
 

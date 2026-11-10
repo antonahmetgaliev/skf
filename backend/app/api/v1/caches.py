@@ -8,14 +8,21 @@ from fastapi import APIRouter, Depends, Path, status
 
 from app.auth import require_admin
 from app.core.errors import NotFound
+from app.services import calendar_events
 from app.services.simgrid import simgrid_service
 from app.services.youtube import youtube_service
 
 router = APIRouter(prefix="/caches", tags=["Caches"], dependencies=[Depends(require_admin)])
 
+
 # Looked up at call time so the services' ``invalidate_cache`` can be patched.
+async def _clear_simgrid() -> None:
+    await simgrid_service.invalidate_cache()
+    calendar_events.invalidate_snapshot()
+
+
 _DOMAINS = {
-    "simgrid": lambda: simgrid_service.invalidate_cache(),
+    "simgrid": _clear_simgrid,
     "youtube": lambda: youtube_service.invalidate_cache(),
 }
 

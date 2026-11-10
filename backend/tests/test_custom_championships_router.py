@@ -145,7 +145,7 @@ async def test_calendar_events_include_visible_custom_championships(client, setu
         return []
 
     monkeypatch.setattr(sg_mod.simgrid_service, "get_championships", no_championships)
-    resp = await client.get("/api/v1/calendar-events", params={"year": 2026})
+    resp = await client.get("/api/v1/calendar-events", params={"from": "2026-01-01", "to": "2026-12-31"})
     assert resp.status_code == 200
     events = {e["name"]: e for e in resp.json()}
     # Championships without dated races are listed as unscheduled.

@@ -23,6 +23,7 @@ from app.models.community_manager import CommunityManager
 from app.models.user import ROLE_COMMUNITY_MANAGER, User
 from app.repository import get_or_404
 from app.schemas.calendar import CommunityCreate, CommunityRequestCreate, CommunityUpdate
+from app.services import calendar_events
 from app.services.discord import (
     DiscordNotConfigured,
     DiscordSendFailed,
@@ -117,6 +118,9 @@ async def update(db: AsyncSession, user: User, community_id: uuid.UUID, body: Co
     for field, value in body.model_dump(exclude_unset=True, by_alias=False).items():
         setattr(community, field, value.strip() if isinstance(value, str) else value)
     await db.commit()
+    if community.is_skf:
+        # SimGrid championships carry the SKF community on the calendar.
+        calendar_events.invalidate_snapshot()
     await db.refresh(community)
     return community
 

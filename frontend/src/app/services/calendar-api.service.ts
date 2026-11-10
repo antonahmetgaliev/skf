@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { forkJoin, map, Observable, shareReplay, tap } from 'rxjs';
+import { Observable, shareReplay, tap } from 'rxjs';
 import { API, Schemas } from '../api';
 
 export type CalendarEventType = Schemas['CalendarEventType'];
@@ -42,36 +42,31 @@ export class CalendarApiService {
 
   // ── Events ──
 
-  getEvents(year: number, month: number): Observable<CalendarEvent[]> {
+  /** Events between two `YYYY-MM-DD` dates, both included. */
+  getEvents(from: string, to: string): Observable<CalendarEvent[]> {
     return this.http.get<CalendarEvent[]>(`${this.base}/calendar-events`, {
-      params: { year: String(year), month: String(month) },
+      params: { from, to },
     });
   }
 
   getYearEvents(year: number): Observable<CalendarEvent[]> {
-    return this.http.get<CalendarEvent[]>(`${this.base}/calendar-events`, {
-      params: { year: String(year) },
-    });
+    return this.getEvents(`${year}-01-01`, `${year}-12-31`);
   }
 
   /**
    * Events relevant "around now": this year, plus next year once the season
    * rolls over (from October or when the current week crosses New Year).
-   * Shared between home page widgets so the request runs once.
+   * Shared between home page widgets so the request runs once; edits to custom
+   * championships drop the cache.
    */
   getCurrentEvents(): Observable<CalendarEvent[]> {
     if (!this.currentEvents$) {
       const now = new Date();
       const weekAhead = new Date(now);
       weekAhead.setDate(now.getDate() + 7);
-      const years = new Set<number>([now.getFullYear(), weekAhead.getFullYear()]);
-      if (now.getMonth() >= 9) years.add(now.getFullYear() + 1);
+      const lastYear = now.getMonth() >= 9 ? now.getFullYear() + 1 : weekAhead.getFullYear();
 
-      this.currentEvents$ = forkJoin([...years].map((y) => this.getYearEvents(y))).pipe(
-        map((lists) => {
-          const seen = new Set<string>();
-          return lists.flat().filter((ev) => !seen.has(ev.id) && !!seen.add(ev.id));
-        }),
+      this.currentEvents$ = this.getEvents(`${now.getFullYear()}-01-01`, `${lastYear}-12-31`).pipe(
         shareReplay({ bufferSize: 1, refCount: false }),
       );
     }
@@ -147,30 +142,32 @@ export class CalendarApiService {
   }
 
   createCustomChampionship(payload: CustomChampionshipCreate): Observable<CustomChampionshipOut> {
-    return this.http.post<CustomChampionshipOut>(`${this.base}/custom-championships`, payload);
+    return this.http
+      .post<CustomChampionshipOut>(`${this.base}/custom-championships`, payload)
+      .pipe(this.dropCurrentEvents());
   }
 
   updateCustomChampionship(
     id: string,
     payload: CustomChampionshipUpdate,
   ): Observable<CustomChampionshipOut> {
-    return this.http.patch<CustomChampionshipOut>(
-      `${this.base}/custom-championships/${id}`,
-      payload,
-    );
+    return this.http
+      .patch<CustomChampionshipOut>(`${this.base}/custom-championships/${id}`, payload)
+      .pipe(this.dropCurrentEvents());
   }
 
   deleteCustomChampionship(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.base}/custom-championships/${id}`);
+    return this.http
+      .delete<void>(`${this.base}/custom-championships/${id}`)
+      .pipe(this.dropCurrentEvents());
   }
 
   // ── Custom Races ──
 
   addRace(champId: string, payload: CustomRaceCreate): Observable<CustomRaceOut> {
-    return this.http.post<CustomRaceOut>(
-      `${this.base}/custom-championships/${champId}/races`,
-      payload,
-    );
+    return this.http
+      .post<CustomRaceOut>(`${this.base}/custom-championships/${champId}/races`, payload)
+      .pipe(this.dropCurrentEvents());
   }
 
   updateRace(
@@ -178,20 +175,24 @@ export class CalendarApiService {
     raceId: string,
     payload: CustomRaceUpdate,
   ): Observable<CustomRaceOut> {
-    return this.http.patch<CustomRaceOut>(
-      `${this.base}/custom-championships/${champId}/races/${raceId}`,
-      payload,
-    );
+    return this.http
+      .patch<CustomRaceOut>(`${this.base}/custom-championships/${champId}/races/${raceId}`, payload)
+      .pipe(this.dropCurrentEvents());
   }
 
   deleteRace(champId: string, raceId: string): Observable<void> {
-    return this.http.delete<void>(`${this.base}/custom-championships/${champId}/races/${raceId}`);
+    return this.http
+      .delete<void>(`${this.base}/custom-championships/${champId}/races/${raceId}`)
+      .pipe(this.dropCurrentEvents());
   }
 
   syncRaces(champId: string, races: CustomRaceSync[]): Observable<CustomRaceOut[]> {
-    return this.http.put<CustomRaceOut[]>(
-      `${this.base}/custom-championships/${champId}/races`,
-      races,
-    );
+    return this.http
+      .put<CustomRaceOut[]>(`${this.base}/custom-championships/${champId}/races`, races)
+      .pipe(this.dropCurrentEvents());
+  }
+
+  private dropCurrentEvents<T>() {
+    return tap<T>(() => (this.currentEvents$ = undefined));
   }
 }

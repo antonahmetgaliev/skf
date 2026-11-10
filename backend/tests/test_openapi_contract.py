@@ -91,13 +91,13 @@ def test_schema_properties_are_camel_case(spec):
 
 
 async def test_a_real_validation_error_matches_the_documented_shape(client: AsyncClient):
-    resp = await client.get("/api/v1/calendar-events")  # required `year` is missing
+    resp = await client.get("/api/v1/calendar-events")  # required `from` and `to` are missing
 
     assert resp.status_code == 422
     assert resp.headers["content-type"] == PROBLEM_JSON
     problem = ValidationProblem.model_validate(resp.json())
     assert problem.code == "validation_error"
-    assert [e.field for e in problem.errors] == ["year"]
+    assert [e.field for e in problem.errors] == ["from", "to"]
 
 
 def test_null_defaults_only_where_null_is_allowed(spec):

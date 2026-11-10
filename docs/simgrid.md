@@ -313,7 +313,7 @@ talks only to our own `/api/v1/championships/*`.
 |---|---|---|---|
 | `get_championships` | `/championships` (paged) | `championships_list_{limit}` | 1 day |
 | `get_championship` | `/championships/{id}` | `championship_{id}` | 1 day |
-| `get_races` | `/races?championship_id=&limit=100` | `races_{id}` | 1 day |
+| `get_races` | `/races?championship_id=&limit=100` | `races_{id}` | 1 hour |
 | `get_standings` | `/championships/{id}/standings` (+ per class, paged) | `standings_{id}` | 1 hour |
 | `get_participating_users` | `/championships/{id}/participating_users` | `participants_{id}` | 10 min |
 | `get_user_by_discord_id` | `/users/{uid}?attribute=discord` | `user_by_discord_{uid}` | 10 min |

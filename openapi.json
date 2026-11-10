@@ -183,34 +183,25 @@
           "Calendar"
         ],
         "summary": "List calendar events",
-        "description": "SimGrid + custom championship events for a month, or the whole year.",
+        "description": "SimGrid + custom championship events between two dates, both included.",
         "operationId": "listCalendarEvents",
         "parameters": [
           {
-            "name": "year",
+            "name": "from",
             "in": "query",
             "required": true,
             "schema": {
-              "type": "integer",
-              "maximum": 2100,
-              "minimum": 2020
+              "type": "string",
+              "format": "date"
             }
           },
           {
-            "name": "month",
+            "name": "to",
             "in": "query",
-            "required": false,
+            "required": true,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "integer",
-                  "maximum": 12,
-                  "minimum": 1
-                },
-                {
-                  "type": "null"
-                }
-              ]
+              "type": "string",
+              "format": "date"
             }
           }
         ],

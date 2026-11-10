@@ -184,6 +184,16 @@ def _jwt_secret(monkeypatch):
     monkeypatch.setattr(settings, "jwt_secret", "test-jwt-secret-of-sufficient-length")
 
 
+@pytest.fixture(autouse=True)
+def _fresh_calendar_snapshot():
+    """The calendar keeps its SimGrid half in module state; start each test without it."""
+    from app.services import calendar_events
+
+    calendar_events.invalidate_snapshot()
+    yield
+    calendar_events.invalidate_snapshot()
+
+
 # ── SimGrid stub ------------------------------------------------------------
 
 LMU_CHAMPIONSHIP_ID = 26927
